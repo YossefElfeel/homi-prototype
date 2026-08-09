@@ -1,0 +1,580 @@
+import type {
+  Application,
+  Booking,
+  ClosurePeriod,
+  Customer,
+  Invoice,
+  JobPosting,
+  Photo,
+  Property,
+  Review,
+  ServiceRequest,
+  Subscription,
+  TeamMember,
+} from './schema';
+import type { Locale } from '@/i18n/routing';
+
+/**
+ * Demo scenarios.
+ *
+ * `fresh` is the important one: it is the company on launch day, and walking
+ * every screen in it is how we prove the empty states are designed rather than
+ * left blank. The brief is blunt about this — "مش صفحة بيضا مكتوب عليها لا يوجد
+ * بيانات".
+ */
+export const SCENARIOS = [
+  'demo',
+  'fresh',
+  'busy',
+  'overdue',
+  'away',
+  'conflict',
+  'hiring',
+] as const;
+export type ScenarioName = (typeof SCENARIOS)[number];
+
+export interface DataSet {
+  customers: Customer[];
+  properties: Property[];
+  requests: ServiceRequest[];
+  bookings: Booking[];
+  subscriptions: Subscription[];
+  invoices: Invoice[];
+  reviews: Review[];
+  photos: Photo[];
+  closures: ClosurePeriod[];
+  team: TeamMember[];
+  postings: JobPosting[];
+  applications: Application[];
+}
+
+const EMPTY: DataSet = {
+  customers: [],
+  properties: [],
+  requests: [],
+  bookings: [],
+  subscriptions: [],
+  invoices: [],
+  reviews: [],
+  photos: [],
+  closures: [],
+  team: [],
+  postings: [],
+  applications: [],
+};
+
+const iso = (d: Date) => d.toISOString();
+const days = (from: Date, n: number) => {
+  const out = new Date(from);
+  out.setDate(out.getDate() + n);
+  return out;
+};
+const at = (d: Date, h: number, m = 0) => {
+  const out = new Date(d);
+  out.setHours(h, m, 0, 0);
+  return out;
+};
+
+/** The owner. One person — this is the whole company at launch. */
+function owner(now: Date): TeamMember {
+  return {
+    id: 'tm_owner',
+    firstName: 'Marco',
+    lastName: 'Brunner',
+    email: 'marco@homivaro.ch',
+    phone: '+41 76 227 79 66',
+    role: 'owner',
+    active: true,
+    regions: ['8700', '8706', '8707', '8708', '8712', '8132', '8627', '8634'],
+    skills: [
+      'unterhaltsreinigung',
+      'einmalreinigung',
+      'grundreinigung',
+      'umzugsreinigung',
+      'fensterreinigung',
+      'bueroreinigung',
+      'moebelmontage',
+    ],
+    startedAt: iso(days(now, -120)),
+  };
+}
+
+function person(
+  id: string,
+  firstName: string,
+  lastName: string,
+  language: Locale,
+  now: Date,
+  daysAgo: number,
+): Customer {
+  return {
+    id,
+    firstName,
+    lastName,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/[^a-z]/g, '')}@example.ch`,
+    phone: '+41 79 000 00 00',
+    language,
+    loginMethod: 'magic-link',
+    status: 'active',
+    createdAt: iso(days(now, -daysAgo)),
+    notifications: {
+      operational: true,
+      marketing: false,
+      channelEmail: true,
+      channelSms: true,
+    },
+  };
+}
+
+function baseData(now: Date): DataSet {
+  const customers: Customer[] = [
+    person('cus_1', 'Andrea', 'Keller', 'de', now, 64),
+    person('cus_2', 'Thomas', 'Widmer', 'de', now, 31),
+    person('cus_3', 'Sophie', 'Marchand', 'fr', now, 12),
+    person('cus_4', 'James', 'Whitfield', 'en', now, 5),
+  ];
+
+  const properties: Property[] = [
+    {
+      id: 'prp_1',
+      customerId: 'cus_1',
+      label: 'Zuhause',
+      street: 'Seestrasse 44',
+      postcode: '8700',
+      city: 'Küsnacht',
+      kind: 'house',
+      area: 180,
+      rooms: 6.5,
+      bathrooms: 3,
+      floor: 0,
+      hasElevator: false,
+      hasPets: true,
+      needsExtraEffort: false,
+      access: {
+        method: 'key-box',
+        boxLocation: 'Rechts neben der Haustür, unter dem Briefkasten',
+        boxCode: '4417',
+        keyReturnLocation: 'Zurück in den Schlüsselkasten',
+        alarmCode: '90210',
+        emergencyName: 'Andrea Keller',
+        emergencyPhone: '+41 79 000 00 01',
+      },
+      permanentNotes: 'Hund (Nala) ist tagsüber zuhause, sehr freundlich.',
+    },
+    {
+      id: 'prp_2',
+      customerId: 'cus_2',
+      label: 'Wohnung',
+      street: 'Dorfstrasse 12',
+      postcode: '8706',
+      city: 'Meilen',
+      kind: 'apartment',
+      area: 96,
+      rooms: 3.5,
+      bathrooms: 1,
+      floor: 2,
+      hasElevator: true,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: { method: 'customer-present', contactPhone: '+41 79 000 00 02' },
+    },
+    {
+      id: 'prp_3',
+      customerId: 'cus_3',
+      label: 'Alte Wohnung',
+      street: 'Bergstrasse 8',
+      postcode: '8712',
+      city: 'Stäfa',
+      kind: 'apartment',
+      area: 72,
+      rooms: 2.5,
+      bathrooms: 1,
+      floor: 3,
+      hasElevator: false,
+      hasPets: false,
+      needsExtraEffort: true,
+      access: {
+        method: 'key-left',
+        keyLocation: 'Beim Nachbarn, Wohnung 3b (Herr Sutter)',
+        keyReturnLocation: 'Briefkasten',
+        emergencyName: 'Sophie Marchand',
+        emergencyPhone: '+41 79 000 00 03',
+      },
+    },
+    {
+      id: 'prp_4',
+      customerId: 'cus_4',
+      label: 'Büro',
+      street: 'Seestrasse 101',
+      postcode: '8708',
+      city: 'Männedorf',
+      kind: 'office',
+      area: 120,
+      rooms: 5,
+      bathrooms: 2,
+      floor: 1,
+      hasElevator: true,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: {
+        method: 'other-person',
+        personName: 'Rita Amrein',
+        personPhone: '+41 79 000 00 04',
+        personRelation: 'Empfang',
+        alarmCode: '1408',
+        emergencyName: 'James Whitfield',
+        emergencyPhone: '+41 79 000 00 05',
+      },
+    },
+  ];
+
+  const requests: ServiceRequest[] = [
+    {
+      id: 'req_1',
+      reference: 'A-2481',
+      customerId: 'cus_3',
+      propertyId: 'prp_3',
+      serviceSlug: 'umzugsreinigung',
+      addOnIds: ['add_backofen', 'add_schraenke'],
+      preferred: { date: iso(days(now, 9)), band: 'morning', flexible: false },
+      photoIds: ['pho_1', 'pho_2'],
+      customerNote:
+        'Übergabe ist am 20., die Verwaltung ist streng. Backofen ist der kritische Punkt.',
+      status: 'new',
+      outOfArea: false,
+      createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * 19)),
+    },
+    {
+      id: 'req_2',
+      reference: 'A-2482',
+      customerId: 'cus_4',
+      propertyId: 'prp_4',
+      serviceSlug: 'bueroreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Weekly would be ideal. Invoice must go to the company address.',
+      status: 'new',
+      outOfArea: false,
+      createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * 3)),
+      subscriptionIntent: 'premium',
+    },
+    {
+      id: 'req_3',
+      reference: 'A-2479',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      addOnIds: ['add_fenster'],
+      preferred: { date: iso(days(now, 4)), band: 'afternoon', flexible: false },
+      photoIds: [],
+      status: 'offerSent',
+      outOfArea: false,
+      createdAt: iso(days(now, -2)),
+      openedAt: iso(days(now, -2)),
+      respondedAt: iso(days(now, -2)),
+    },
+  ];
+
+  const bookings: Booking[] = [
+    {
+      id: 'bkg_1',
+      reference: 'B-1043',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'unterhaltsreinigung',
+      subscriptionId: 'sub_1',
+      start: iso(at(days(now, 0), 9)),
+      duration: 300,
+      arrivalWindow: 120,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -14)), kind: 'created', label: 'Abo-Termin geplant' }],
+    },
+    {
+      id: 'bkg_2',
+      reference: 'B-1044',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, 1), 8, 30)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -3)), kind: 'created', label: 'Gebucht' }],
+    },
+  ];
+
+  const subscriptions: Subscription[] = [
+    {
+      id: 'sub_1',
+      reference: 'S-0012',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      plan: 'premium',
+      serviceSlug: 'unterhaltsreinigung',
+      startDate: iso(days(now, -60)),
+      commitmentEndsAt: iso(days(now, 305)),
+      status: 'active',
+      skipsUsedThisMonth: 0,
+      lastChargedAt: iso(days(now, -8)),
+      nextChargeAt: iso(days(now, 22)),
+    },
+  ];
+
+  const photos: Photo[] = [
+    {
+      id: 'pho_1',
+      src: '/placeholder/kitchen.svg',
+      source: 'customer',
+      kind: 'context',
+      visibleToCustomer: true,
+      publishConsent: false,
+      note: 'Backofen — hier ist einiges eingebrannt.',
+      requestId: 'req_1',
+      takenAt: iso(days(now, -1)),
+    },
+    {
+      id: 'pho_2',
+      src: '/placeholder/bathroom.svg',
+      source: 'customer',
+      kind: 'context',
+      visibleToCustomer: true,
+      publishConsent: false,
+      note: 'Bad, Fugen.',
+      requestId: 'req_1',
+      takenAt: iso(days(now, -1)),
+    },
+  ];
+
+  return {
+    ...EMPTY,
+    customers,
+    properties,
+    requests,
+    bookings,
+    subscriptions,
+    photos,
+    team: [owner(now)],
+  };
+}
+
+/* ------------------------------------------------------------- variations */
+
+function withClosure(data: DataSet, now: Date): DataSet {
+  // §14 — the owner is away. Subscription visits inside the window move to the
+  // next free slot and the customer is told, with a skip offered instead.
+  return {
+    ...data,
+    closures: [
+      {
+        id: 'clo_1',
+        start: iso(days(now, 2)),
+        end: iso(days(now, 12)),
+        reason: 'Betriebsferien',
+        recurringYearly: false,
+      },
+    ],
+  };
+}
+
+function withHiring(data: DataSet, now: Date): DataSet {
+  const postings: JobPosting[] = [
+    {
+      id: 'job_1',
+      slug: 'reinigungskraft-teilzeit',
+      title: {
+        de: 'Reinigungskraft 40–60% (m/w/d)',
+        en: 'Cleaner 40–60%',
+        fr: 'Reinigungskraft 40–60% (m/w/d)',
+        it: 'Reinigungskraft 40–60% (m/w/d)',
+      },
+      kind: 'part-time',
+      workload: [40, 60],
+      regions: ['8700', '8706', '8707', '8708', '8712'],
+      summary: {
+        de: 'Sie reinigen Privathaushalte am rechten Zürichseeufer — feste Kundschaft, planbare Einsätze, Fahrzeug von Vorteil.',
+        en: 'You clean private homes on the right shore of Lake Zurich — regular clients, predictable shifts, a car helps.',
+        fr: 'Sie reinigen Privathaushalte am rechten Zürichseeufer.',
+        it: 'Sie reinigen Privathaushalte am rechten Zürichseeufer.',
+      },
+      responsibilities: { de: [], en: [], fr: [], it: [] },
+      requirements: { de: [], en: [], fr: [], it: [] },
+      offer: { de: [], en: [], fr: [], it: [] },
+      published: true,
+      createdAt: iso(days(now, -18)),
+    },
+  ];
+
+  const applications: Application[] = [
+    {
+      id: 'app_1',
+      reference: 'BW-0031',
+      postingId: 'job_1',
+      spontaneous: false,
+      firstName: 'Elena',
+      lastName: 'Ferreira',
+      email: 'elena.ferreira@example.ch',
+      phone: '+41 78 000 00 11',
+      postcode: '8706',
+      city: 'Meilen',
+      permit: 'c',
+      languages: { de: 'fluent', en: 'conversational', it: 'native' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 6,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '07:00', latest: '16:00' },
+      references: [{ name: 'Frau Hunziker', company: 'Privat', phone: '+41 79 000 00 12' }],
+      documents: [{ id: 'doc_1', name: 'Lebenslauf_Ferreira.pdf', kind: 'cv', sizeKb: 240 }],
+      status: 'new',
+      submittedAt: iso(days(now, -2)),
+      retainUntil: iso(days(now, 178)),
+      consentGivenAt: iso(days(now, -2)),
+    },
+    {
+      id: 'app_2',
+      reference: 'BW-0030',
+      spontaneous: true,
+      firstName: 'Dritan',
+      lastName: 'Krasniqi',
+      email: 'd.krasniqi@example.ch',
+      phone: '+41 78 000 00 13',
+      postcode: '8712',
+      city: 'Stäfa',
+      permit: 'b',
+      languages: { de: 'conversational', en: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: false,
+      yearsExperience: 3,
+      experienceAreas: ['cleaning', 'assembly'],
+      availability: { days: [1, 2, 3, 4, 5, 6], earliest: '07:00', latest: '18:00' },
+      references: [],
+      documents: [{ id: 'doc_2', name: 'CV.pdf', kind: 'cv', sizeKb: 180 }],
+      status: 'inReview',
+      submittedAt: iso(days(now, -9)),
+      retainUntil: iso(days(now, 171)),
+      consentGivenAt: iso(days(now, -9)),
+    },
+  ];
+
+  return { ...data, postings, applications };
+}
+
+export function buildScenario(name: ScenarioName, now: Date): DataSet {
+  switch (name) {
+    case 'fresh':
+      // Launch day. One person, no customers, no reviews, nothing booked.
+      return { ...EMPTY, team: [owner(now)] };
+
+    case 'busy': {
+      const data = baseData(now);
+      const extra: ServiceRequest[] = Array.from({ length: 5 }, (_, i) => ({
+        ...data.requests[0]!,
+        id: `req_b${i}`,
+        reference: `A-25${10 + i}`,
+        status: 'new' as const,
+        createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * (26 + i * 4))),
+      }));
+      const reviews: Review[] = [
+        {
+          id: 'rev_1',
+          bookingId: 'bkg_1',
+          customerId: 'cus_1',
+          rating: 5,
+          text: 'Pünktlich, gründlich, und man merkt, dass mitgedacht wird. Sehr empfehlenswert.',
+          status: 'published',
+          submittedAt: iso(days(now, -20)),
+        },
+        {
+          id: 'rev_2',
+          bookingId: 'bkg_2',
+          customerId: 'cus_2',
+          rating: 5,
+          text: 'Endreinigung hat die Abnahme auf Anhieb bestanden. Genau das, was versprochen war.',
+          status: 'published',
+          submittedAt: iso(days(now, -6)),
+        },
+      ];
+      // §20.6 — only photos with recorded written consent reach the public
+      // gallery. These two pairs are the ones that have it; the seed photos
+      // deliberately do not, so the launch state stays empty.
+      const consented: Photo[] = (['bkg_1', 'bkg_2'] as const).flatMap((bookingId, i) =>
+        (['before', 'after'] as const).map((kind) => ({
+          id: `pho_${bookingId}_${kind}`,
+          src: `/placeholder/${bookingId}-${kind}.svg`,
+          source: 'field' as const,
+          kind,
+          visibleToCustomer: true,
+          publishConsent: true,
+          note: i === 0 ? 'Küche, Küsnacht' : 'Badezimmer, Meilen',
+          bookingId,
+          takenAt: iso(days(now, -20 + i * 14)),
+        })),
+      );
+
+      return {
+        ...data,
+        requests: [...data.requests, ...extra],
+        reviews,
+        photos: [...data.photos, ...consented],
+      };
+    }
+
+    case 'overdue': {
+      const data = baseData(now);
+      const invoices: Invoice[] = [
+        {
+          id: 'inv_1',
+          reference: 'RE-2026-0044',
+          customerId: 'cus_2',
+          bookingId: 'bkg_2',
+          lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
+          status: 'overdue',
+          issuedAt: iso(days(now, -44)),
+          dueAt: iso(days(now, -14)),
+          qrReference: '21 00000 00003 13947 14300 09017',
+        },
+      ];
+      return {
+        ...data,
+        invoices,
+        subscriptions: data.subscriptions.map((s) => ({ ...s, status: 'pastDue' as const })),
+      };
+    }
+
+    case 'away':
+      return withClosure(baseData(now), now);
+
+    case 'conflict': {
+      // §20.2 — two jobs far apart on the same day, travel time short.
+      const data = baseData(now);
+      return {
+        ...data,
+        bookings: [
+          ...data.bookings,
+          {
+            ...data.bookings[0]!,
+            id: 'bkg_x',
+            reference: 'B-1045',
+            propertyId: 'prp_3',
+            customerId: 'cus_3',
+            start: iso(at(days(now, 0), 14, 15)),
+            duration: 180,
+            subscriptionId: undefined,
+          },
+        ],
+      };
+    }
+
+    case 'hiring':
+      return withHiring(baseData(now), now);
+
+    case 'demo':
+    default:
+      return baseData(now);
+  }
+}
