@@ -191,6 +191,36 @@ interface StoreState {
   reset: () => void;
 }
 
+/**
+ * Re-point "who am I" after the dataset is rebuilt.
+ *
+ * Switching scenario or moving the clock throws the data away and builds it
+ * again, which can delete the very customer or team member the demo bar is
+ * currently standing in. Left alone, the account screens greet nobody and the
+ * field screens show an empty day that looks like a bug rather than a state.
+ *
+ * A contractor with no contractor in the scenario resolves to *nobody* rather
+ * than falling back to the owner: showing the owner's day through a
+ * contractor's permissions is exactly the confusion the role gate exists to
+ * prevent, and "no jobs" is the honest answer for a company that has not hired
+ * anyone yet.
+ */
+function repoint(demo: DemoState, data: DataSet): DemoState {
+  const wantedRole = demo.role === 'contractor' ? 'contractor' : 'owner';
+  const current = data.team.find((m) => m.id === demo.currentMemberId);
+
+  return {
+    ...demo,
+    currentCustomerId: data.customers.some((c) => c.id === demo.currentCustomerId)
+      ? demo.currentCustomerId
+      : (data.customers[0]?.id ?? ''),
+    currentMemberId:
+      current?.role === wantedRole
+        ? demo.currentMemberId
+        : (data.team.find((m) => m.role === wantedRole)?.id ?? ''),
+  };
+}
+
 function initialDemo(): DemoState {
   return {
     role: 'visitor',
@@ -827,42 +857,29 @@ export const useStore = create<StoreState>()(
         })),
 
       /**
-       * Switching to "contractor" also picks a contractor to *be*.
-       *
-       * The field screens read `currentMemberId`, and leaving it on the owner
-       * would show the owner's whole day through a contractor's permissions —
-       * exactly the confusion the role gate exists to prevent. Falls back to
-       * the owner when no contractor has been hired yet, which is the launch
-       * state and correctly shows an empty day.
+       * Switching role also picks somebody to *be* — see `repoint`. The field
+       * screens read `currentMemberId`, and leaving it on the owner would show
+       * the owner's whole day through a contractor's permissions.
        */
-      setRole: (role) =>
-        set((s) => {
-          if (role !== 'contractor') return { demo: { ...s.demo, role } };
-          const contractor = s.data.team.find((m) => m.role === 'contractor');
-          return {
-            demo: {
-              ...s.demo,
-              role,
-              currentMemberId: contractor?.id ?? s.demo.currentMemberId,
-            },
-          };
-        }),
+      setRole: (role) => set((s) => ({ demo: repoint({ ...s.demo, role }, s.data) })),
 
       setScenario: (scenario) =>
-        set((s) => ({
-          demo: { ...s.demo, scenario },
-          data: buildScenario(scenario, effectiveNow(s.demo.dateOverride)),
-          holds: [],
-        })),
+        set((s) => {
+          const data = buildScenario(scenario, effectiveNow(s.demo.dateOverride));
+          return { demo: repoint(s.demo, data), data, holds: [] };
+        }),
 
       setDateOverride: (dateOverride) =>
-        set((s) => ({
-          demo: { ...s.demo, dateOverride },
+        set((s) => {
           // Seed data is written relative to "now", so moving the clock has to
           // rebuild it — otherwise today's jobs would sit in the past.
-          data: buildScenario(s.demo.scenario, effectiveNow(dateOverride)),
-          holds: [],
-        })),
+          const data = buildScenario(s.demo.scenario, effectiveNow(dateOverride));
+          return {
+            demo: { ...repoint(s.demo, data), dateOverride },
+            data,
+            holds: [],
+          };
+        }),
 
       setCurrentCustomer: (currentCustomerId) =>
         set((s) => ({ demo: { ...s.demo, currentCustomerId } })),

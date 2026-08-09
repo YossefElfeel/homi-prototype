@@ -192,6 +192,8 @@ export const de = {
     role: 'Rolle',
     scenario: 'Szenario',
     today: 'Heute ist',
+    todayReset: 'Heute',
+    todayActive: 'Datum überschrieben',
     insurance: 'Haftpflichtversicherung',
     stress: 'DE-Stresstest',
     stressHint: 'Verlängert jeden Text um ~30% — deckt Layoutbrüche jetzt auf.',

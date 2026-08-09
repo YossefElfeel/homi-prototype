@@ -24,6 +24,7 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
  */
 export default function AccountDashboardPage() {
   const t = useTranslations('account.dashboard');
+  const nav = useTranslations('account.shell');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
@@ -52,8 +53,11 @@ export default function AccountDashboardPage() {
   if (nothingYet) {
     return (
       <>
+        {/* No customer at all (the launch-day scenario) means there is no name
+            to greet — "Hello" with a hole after it reads as a bug. The page
+            falls back to its own name and lets the empty state do the welcome. */}
         <h1 className="display-type text-3xl">
-          {t('greeting', { name: customer?.firstName ?? '' })}
+          {customer ? t('greeting', { name: customer.firstName }) : nav('nav.dashboard')}
         </h1>
         <EmptyState
           className="mt-8"
