@@ -1,0 +1,163 @@
+'use client';
+
+import { use } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { ArrowLeft, Eye, KeyRound, Pencil } from 'lucide-react';
+
+import { Link } from '@/i18n/navigation';
+import { useFormatter } from '@/i18n/format';
+import type { Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
+import { Field, Textarea } from '@/components/ui/field';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { useAccount } from '@/lib/use-account';
+import { useHydrated, useStore } from '@/mock/store';
+
+/**
+ * Screen 42 — one property.
+ *
+ * The access block states who sees these details and when, in the customer's
+ * own account — the same sentence the owner sees on the conversion screen and
+ * the contractor's permissions. §13 is the most sensitive thing this product
+ * stores, and the customer is the one person who is never told about it
+ * anywhere else.
+ */
+export default function AccountPropertyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const t = useTranslations('account.property');
+  const format = useFormatter();
+  const locale = useLocale() as Locale;
+  const hydrated = useHydrated();
+
+  const { properties, bookings } = useAccount();
+  const services = useStore((s) => s.services);
+  const patchData = useStore((s) => s.patchData);
+  const allProperties = useStore((s) => s.data.properties);
+
+  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+
+  const property = properties.find((p) => p.id === id);
+  if (!property) return <p className="text-ink-tertiary">—</p>;
+
+  const history = bookings
+    .filter((b) => b.propertyId === property.id)
+    .sort((a, b) => (a.start < b.start ? 1 : -1));
+
+  const facts: [string, string][] = [
+    [t('area'), `${property.area} m²`],
+    [t('rooms'), `${property.rooms}`],
+    [t('bathrooms'), `${property.bathrooms}`],
+    [t('floor'), `${property.floor}`],
+    [t('elevator'), property.hasElevator ? t('yes') : t('no')],
+    [t('pets'), property.hasPets ? t('yes') : t('no')],
+  ];
+
+  return (
+    <div className="max-w-3xl">
+      <Button asChild variant="link" className="mb-6">
+        <Link href="/konto/objekte">
+          <ArrowLeft className="size-4" aria-hidden />
+          {t('back')}
+        </Link>
+      </Button>
+
+      <h1 className="display-type text-3xl">{property.label}</h1>
+      <p className="mt-2 text-ink-secondary">
+        {property.street}, <span data-numeric>{property.postcode}</span> {property.city}
+      </p>
+
+      <section className="mt-10">
+        <h2 className="label-type text-ink-tertiary">{t('factsTitle')}</h2>
+        <dl className="mt-3 grid gap-x-8 sm:grid-cols-2">
+          {facts.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex justify-between gap-4 border-b border-line-subtle py-2 text-sm"
+            >
+              <dt className="text-ink-secondary">{label}</dt>
+              <dd data-numeric>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="surface-card mt-10 p-6">
+        <h2 className="flex items-center gap-2 display-type text-xl">
+          <KeyRound className="size-4 text-ink-tertiary" aria-hidden />
+          {t('accessTitle')}
+        </h2>
+        <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-secondary">
+          {t('accessBody')}
+        </p>
+
+        {property.access ? (
+          <p className="mt-4 text-sm">
+            {t(`method.${property.access.method}` as 'method.key-box')}
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-ink-tertiary">{t('accessNone')}</p>
+        )}
+
+        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken p-4">
+          <Eye className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
+          <div>
+            <h3 className="text-sm font-medium">{t('accessWhoTitle')}</h3>
+            <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+              {t('accessWho')}
+            </p>
+          </div>
+        </div>
+
+        <Button variant="secondary" size="sm" className="mt-5">
+          <Pencil className="size-3.5" aria-hidden />
+          {t('accessEdit')}
+        </Button>
+      </section>
+
+      <Field label={t('notesTitle')} hint={t('notesHint')} className="mt-10">
+        {(props) => (
+          <Textarea
+            rows={3}
+            value={property.permanentNotes ?? ''}
+            onChange={(e) =>
+              patchData({
+                properties: allProperties.map((p) =>
+                  p.id === property.id ? { ...p, permanentNotes: e.target.value } : p,
+                ),
+              })
+            }
+            {...props}
+          />
+        )}
+      </Field>
+
+      <section className="mt-10">
+        <h2 className="label-type text-ink-tertiary">{t('historyTitle')}</h2>
+        {history.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-tertiary">{t('historyEmpty')}</p>
+        ) : (
+          <ul className="mt-3 border-t border-line-subtle">
+            {history.map((booking) => (
+              <li
+                key={booking.id}
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line-subtle py-3"
+              >
+                <span data-numeric className="text-sm">
+                  {format.dateTime(new Date(booking.start), 'full')}
+                </span>
+                <span className="flex items-center gap-3 text-sm text-ink-secondary">
+                  {services.find((s) => s.slug === booking.serviceSlug)?.name[locale]}
+                  <StatusBadge entity="booking" state={booking.status} size="sm" />
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}

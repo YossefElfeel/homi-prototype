@@ -8,6 +8,8 @@ import type {
   Invoice,
   JobPosting,
   KeyLogEntry,
+  CustomerMessage,
+  PackageCredit,
   Offer,
   Payment,
   Photo,
@@ -50,6 +52,8 @@ export interface DataSet {
   invoices: Invoice[];
   payments: Payment[];
   keyLog: KeyLogEntry[];
+  credits: PackageCredit[];
+  messages: CustomerMessage[];
   coupons: Coupon[];
   changeLog: ChangeLogEntry[];
   reviews: Review[];
@@ -70,6 +74,8 @@ const EMPTY: DataSet = {
   invoices: [],
   payments: [],
   keyLog: [],
+  credits: [],
+  messages: [],
   coupons: [],
   changeLog: [],
   reviews: [],
@@ -438,6 +444,54 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  // §11.3 — hours bought as a package, spent against bookings. The expiry is
+  // the part customers get caught by, so the seed puts one close to it.
+  const credits: PackageCredit[] = [
+    {
+      id: 'cr_1',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      hoursRemaining: 6.5,
+      purchasedAt: iso(days(now, -300)),
+      expiresAt: iso(days(now, 65)),
+      ledger: [
+        { at: iso(days(now, -300)), hours: 10, reason: 'Paket 10 Stunden gekauft' },
+        { at: iso(days(now, -120)), hours: -2, reason: 'Einsatz', bookingId: 'bkg_2' },
+        { at: iso(days(now, -40)), hours: -1.5, reason: 'Einsatz', bookingId: 'bkg_2' },
+      ],
+    },
+  ];
+
+  const messages: CustomerMessage[] = [
+    {
+      id: 'msg_1',
+      customerId: 'cus_2',
+      subject: requests[2]!.reference,
+      from: 'homivaro',
+      body: 'Guten Tag Herr Widmer, vielen Dank für Ihre Anfrage. Die Offerte finden Sie in Ihrem Konto. Bei Fragen erreichen Sie mich direkt.',
+      at: iso(days(now, -3)),
+      readByCustomer: true,
+    },
+    {
+      id: 'msg_2',
+      customerId: 'cus_2',
+      subject: requests[2]!.reference,
+      from: 'customer',
+      body: 'Danke — passt der Termin auch eine Stunde später?',
+      at: iso(days(now, -2)),
+      readByCustomer: true,
+    },
+    {
+      id: 'msg_3',
+      customerId: 'cus_2',
+      subject: requests[2]!.reference,
+      from: 'homivaro',
+      body: 'Ja, das geht. Ich habe den Termin auf 09:00 verschoben und die Bestätigung angepasst.',
+      at: iso(days(now, -2)),
+      readByCustomer: false,
+    },
+  ];
+
   return {
     ...EMPTY,
     customers,
@@ -448,6 +502,8 @@ function baseData(now: Date): DataSet {
     subscriptions,
     invoices,
     keyLog,
+    credits,
+    messages,
     changeLog,
     photos,
     team: [owner(now)],

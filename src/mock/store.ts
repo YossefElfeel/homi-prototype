@@ -196,7 +196,10 @@ function initialDemo(): DemoState {
     role: 'visitor',
     scenario: 'demo',
     dateOverride: null,
-    currentCustomerId: 'cus_1',
+    // The demo account. cus_2 is the only seeded customer with a request, a
+    // subscription, an invoice and an hour credit at once, so every account
+    // screen has something to show without switching customer first.
+    currentCustomerId: 'cus_2',
     currentMemberId: 'tm_owner',
   };
 }
