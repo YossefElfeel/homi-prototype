@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Bell,
+  Briefcase,
   CalendarDays,
   FileText,
   History,
@@ -22,7 +23,9 @@ import {
   Sparkles,
   Star,
   Tags,
+  UserPlus,
   Users,
+  UsersRound,
   X,
 } from 'lucide-react';
 
@@ -47,6 +50,9 @@ type NavKey =
   | 'coupons'
   | 'reviews'
   | 'templates'
+  | 'applications'
+  | 'postings'
+  | 'teamMembers'
   | 'settings'
   | 'changelog';
 
@@ -65,7 +71,10 @@ interface NavItem {
  * three — requests, quotes, calendar — stop reading as the daily three. The
  * order is by frequency, not by the specification's chapter order.
  */
-const NAV: { group: 'operations' | 'customers' | 'content' | 'system'; items: NavItem[] }[] =
+const NAV: {
+  group: 'operations' | 'customers' | 'content' | 'hiring' | 'system';
+  items: NavItem[];
+}[] =
   [
     {
       group: 'operations',
@@ -94,6 +103,14 @@ const NAV: { group: 'operations' | 'customers' | 'content' | 'system'; items: Na
         { href: '/admin/gutscheine', key: 'coupons', icon: Percent },
         { href: '/admin/bewertungen', key: 'reviews', icon: Star },
         { href: '/admin/vorlagen', key: 'templates', icon: Mail },
+      ],
+    },
+    {
+      group: 'hiring',
+      items: [
+        { href: '/admin/bewerbungen', key: 'applications', icon: UserPlus },
+        { href: '/admin/stellen', key: 'postings', icon: Briefcase },
+        { href: '/admin/team', key: 'teamMembers', icon: UsersRound },
       ],
     },
     {

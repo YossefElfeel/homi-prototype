@@ -569,6 +569,36 @@ export interface Application {
   convertedTeamMemberId?: ID;
 }
 
+/**
+ * The public application, mid-flight.
+ *
+ * Mirrors `RequestDraft`: the form is two steps, so the answers have to
+ * survive the step boundary and a reload. Consent is deliberately not
+ * pre-filled and not remembered — §14 wants it given, not inherited.
+ */
+export interface ApplicationDraft {
+  postingId: ID | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  postcode: string;
+  city: string;
+  permit: WorkPermit | null;
+  languages: Partial<Record<Locale, LanguageLevel>>;
+  hasDrivingLicence: boolean;
+  hasCar: boolean;
+  yearsExperience: number | null;
+  experienceAreas: ('cleaning' | 'assembly')[];
+  availability: { days: number[]; earliest: string; latest: string };
+  startFrom: string;
+  references: { name: string; company?: string; phone: string }[];
+  documents: ApplicantDocument[];
+  motivation: string;
+  consent: boolean;
+  updatedAt: ISODate | null;
+}
+
 export type TeamRole = 'owner' | 'contractor';
 
 export interface TeamMember {

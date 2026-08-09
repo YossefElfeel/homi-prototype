@@ -86,12 +86,20 @@ export const TRACKS: Track[] = [
     en: 'Careers',
     note: 'Wave 7 · linked from the footer and About — never from the main nav, which belongs to customers',
     screens: [
-      todo('C1', 'Offene Stellen', 'Open roles', ['no openings → Spontanbewerbung']),
-      todo('C2', 'Stelle (Vorlage)', 'Role template'),
-      todo('C3', 'Bewerbung — Schritt 1', 'Application — step 1', ['field error']),
-      todo('C4', 'Bewerbung — Schritt 2', 'Application — step 2', ['upload', 'upload error']),
-      todo('C5', 'Bewerbung eingegangen', 'Application received'),
-      todo('C6', 'Status abfragen', 'Check status', ['not found']),
+      done('C1', 'Offene Stellen', 'Open roles', '/jobs', [
+        'no openings → Spontanbewerbung',
+      ], 'The default scenario has no postings on purpose — the empty state is the one a reviewer sees first'),
+      done('C2', 'Stelle (Vorlage)', 'Role template', '/jobs/reinigungskraft-teilzeit', [], 'Scenario "hiring" — requirements come before benefits, so nobody applies who cannot be hired'),
+      done('C3', 'Bewerbung — Schritt 1', 'Application — step 1', '/jobs/bewerbung', [
+        'field error',
+        'no permit',
+      ], 'The work permit is the first question, not the last'),
+      done('C4', 'Bewerbung — Schritt 2', 'Application — step 2', '/jobs/bewerbung', [
+        'upload',
+        'file too large',
+      ]),
+      done('C5', 'Bewerbung eingegangen', 'Application received', '/jobs/bewerbung/gesendet'),
+      done('C6', 'Status abfragen', 'Check status', '/jobs/status', ['idle', 'not found']),
     ],
   },
   {
@@ -300,13 +308,28 @@ export const TRACKS: Track[] = [
     en: 'Applications & team',
     note: 'Wave 7 · applicant data is owner-only (revDSG) — contractors never reach these screens',
     screens: [
-      todo('H1', 'Bewerbungen', 'Applications', ['empty']),
-      todo('H2', 'Bewerbung', 'Application detail', ['reject with reason', 'delete record']),
-      todo('H3', 'Stellen', 'Postings', ['empty']),
-      todo('H4', 'Stelle bearbeiten', 'Edit posting'),
-      todo('H5', 'In Mitarbeiterkonto umwandeln', 'Convert to team account'),
-      todo('H6', 'Team', 'Team', ['owner only']),
-      todo('H7', 'Teammitglied', 'Team member'),
+      done('H1', 'Bewerbungen', 'Applications', '/admin/bewerbungen', [
+        'empty',
+        'owner only',
+        'retention expiring',
+      ], 'Contractors lose this screen entirely — a redacted version would still leak that somebody applied'),
+      done('H2', 'Bewerbung', 'Application detail', '/admin/bewerbungen/app_1', [
+        'reject with reason',
+        'delete record',
+        'no permit',
+      ]),
+      done('H3', 'Stellen', 'Postings', '/admin/stellen', ['empty']),
+      done('H4', 'Stelle bearbeiten', 'Edit posting', '/admin/stellen/reinigungskraft-teilzeit'),
+      done(
+        'H5',
+        'In Mitarbeiterkonto umwandeln',
+        'Convert to team account',
+        '/admin/bewerbungen/app_1/konto',
+        [],
+        'The permission summary is the screen — four plain sentences before the button',
+      ),
+      done('H6', 'Team', 'Team', '/admin/team', ['owner only']),
+      done('H7', 'Teammitglied', 'Team member', '/admin/team/tm_marta'),
     ],
   },
   {
