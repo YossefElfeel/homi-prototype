@@ -48,7 +48,7 @@ Marco Brunner`;
 // undefined, which makes Zustand discard the stored state and re-seed — the
 // right trade for a prototype, and it prevents a stale localStorage from
 // crashing on a field that did not exist yet.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
 
@@ -661,6 +661,27 @@ export const useStore = create<StoreState>()(
       version: SCHEMA_VERSION,
       storage: createJSONStorage(() => localStorage),
       migrate: () => undefined as never,
+      /**
+       * Defensive rehydrate.
+       *
+       * Bumping SCHEMA_VERSION handles a *known* shape change, but relying on
+       * remembering to bump it is how a reviewer's stale localStorage ends up
+       * crashing a screen on `undefined.length`. Any collection missing from
+       * the persisted blob is filled from the current defaults, so a new
+       * entity can never take a page down.
+       */
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<StoreState> | undefined;
+        if (!saved) return current;
+        return {
+          ...current,
+          ...saved,
+          data: { ...current.data, ...(saved.data ?? {}) },
+          settings: { ...current.settings, ...(saved.settings ?? {}) },
+          demo: { ...current.demo, ...(saved.demo ?? {}) },
+          draft: { ...current.draft, ...(saved.draft ?? {}) },
+        };
+      },
     },
   ),
 );

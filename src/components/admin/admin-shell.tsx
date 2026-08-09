@@ -6,7 +6,9 @@ import {
   Bell,
   CalendarDays,
   FileText,
+  Home,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   Lock,
   Menu,
@@ -25,7 +27,17 @@ import { useHydrated, useStore } from '@/mock/store';
 
 interface NavItem {
   href: string;
-  key: 'dashboard' | 'requests' | 'offers' | 'calendar' | 'customers' | 'subscriptions' | 'invoices' | 'settings';
+  key:
+    | 'dashboard'
+    | 'requests'
+    | 'offers'
+    | 'calendar'
+    | 'customers'
+    | 'properties'
+    | 'keys'
+    | 'subscriptions'
+    | 'invoices'
+    | 'settings';
   icon: typeof LayoutDashboard;
   /** Only /admin needs an exact match; every other item owns its subtree. */
   exact?: boolean;
@@ -37,6 +49,8 @@ const NAV: NavItem[] = [
   { href: '/admin/offerten', key: 'offers', icon: FileText },
   { href: '/admin/kalender', key: 'calendar', icon: CalendarDays },
   { href: '/admin/kunden', key: 'customers', icon: Users },
+  { href: '/admin/objekte', key: 'properties', icon: Home },
+  { href: '/admin/schluessel', key: 'keys', icon: KeyRound },
   { href: '/admin/abos', key: 'subscriptions', icon: RefreshCw },
   { href: '/admin/rechnungen', key: 'invoices', icon: Receipt },
   { href: '/admin/einstellungen', key: 'settings', icon: Settings },
