@@ -38,13 +38,9 @@ export interface Track {
   screens: ScreenEntry[];
 }
 
-const todo = (
-  ref: string,
-  de: string,
-  en: string,
-  states?: string[],
-  note?: string,
-): ScreenEntry => ({ ref, de, en, status: 'todo', states, note });
+// The `todo` helper lived here through waves 0–9 and is gone now that every
+// entry is built. Adding a screen means adding a `done` row with its href —
+// there is no longer a way to list a screen that does not exist.
 
 const done = (
   ref: string,
@@ -338,10 +334,10 @@ export const TRACKS: Track[] = [
     en: 'Field',
     note: 'Wave 9 · mobile only · access codes visible on the job day only',
     screens: [
-      todo('85', 'Heutige Einsätze', 'Today’s jobs', ['no jobs']),
-      todo('86', 'Einsatz-Detail', 'Job detail', ['codes revealed']),
-      todo('87', 'Ein- & Auschecken', 'Check in & out', ['photos required']),
-      todo('88', 'Freigabe anfragen', 'Request approval', ['no access logged']),
+      done('85', 'Heutige Einsätze', 'Today’s jobs', '/einsatz', ['no jobs'], 'Scenario "hiring" + role "Team member" — today only, plus a glance at tomorrow'),
+      done('86', 'Einsatz-Detail', 'Job detail', '/einsatz/bkg_1', ['codes locked', 'codes revealed'], 'Move the demo clock off the job day and the access block genuinely empties (§13)'),
+      done('87', 'Ein- & Auschecken', 'Check in & out', '/einsatz/bkg_1/check', ['photos required']),
+      done('88', 'Kein Zutritt melden', 'No access', '/einsatz/bkg_1/kein-zutritt', ['no access logged'], 'The wait comes before the form — the fee only holds up if it happened'),
     ],
   },
 ];

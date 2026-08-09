@@ -17,6 +17,8 @@ import { adminContentEn } from './admin/content.en';
 import { adminHiringDe } from './admin/hiring.de';
 import { adminHiringEn } from './admin/hiring.en';
 import { careersDe } from './careers/de';
+import { fieldDe } from './field/de';
+import { fieldEn } from './field/en';
 import { careersEn } from './careers/en';
 
 /**
@@ -31,6 +33,7 @@ export const de = {
   offer: offerDe,
   account: accountDe,
   careers: careersDe,
+  field: fieldDe,
   admin: { ...adminDe, ...adminCrmDe, ...adminContentDe, ...adminHiringDe },
 };
 export const en = {
@@ -40,6 +43,7 @@ export const en = {
   offer: offerEn,
   account: accountEn,
   careers: careersEn,
+  field: fieldEn,
   admin: { ...adminEn, ...adminCrmEn, ...adminContentEn, ...adminHiringEn },
 };
 
