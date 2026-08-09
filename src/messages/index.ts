@@ -12,6 +12,10 @@ import { adminCrmDe } from './admin/crm.de';
 import { adminCrmEn } from './admin/crm.en';
 import { adminContentDe } from './admin/content.de';
 import { adminContentEn } from './admin/content.en';
+import { adminHiringDe } from './admin/hiring.de';
+import { adminHiringEn } from './admin/hiring.en';
+import { careersDe } from './careers/de';
+import { careersEn } from './careers/en';
 
 /**
  * Dictionaries are composed per domain rather than kept in one file — at 101
@@ -23,14 +27,16 @@ export const de = {
   site: siteDe,
   booking: bookingDe,
   offer: offerDe,
-  admin: { ...adminDe, ...adminCrmDe, ...adminContentDe },
+  careers: careersDe,
+  admin: { ...adminDe, ...adminCrmDe, ...adminContentDe, ...adminHiringDe },
 };
 export const en = {
   ...enCore,
   site: siteEn,
   booking: bookingEn,
   offer: offerEn,
-  admin: { ...adminEn, ...adminCrmEn, ...adminContentEn },
+  careers: careersEn,
+  admin: { ...adminEn, ...adminCrmEn, ...adminContentEn, ...adminHiringEn },
 };
 
 export type Messages = typeof de;

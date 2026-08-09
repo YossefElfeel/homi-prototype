@@ -6,8 +6,13 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import type {
   AddOn,
+  Application,
+  ApplicationDraft,
+  ApplicationStatus,
   Booking,
   ID,
+  JobPosting,
+  TeamMember,
   Offer,
   OfferLine,
   Payment,
@@ -48,7 +53,7 @@ Marco Brunner`;
 // undefined, which makes Zustand discard the stored state and re-seed — the
 // right trade for a prototype, and it prevents a stale localStorage from
 // crashing on a field that did not exist yet.
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
 
@@ -93,6 +98,31 @@ export function emptyDraft(): RequestDraft {
   };
 }
 
+export function emptyApplicationDraft(): ApplicationDraft {
+  return {
+    postingId: null,
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    postcode: '',
+    city: '',
+    permit: null,
+    languages: {},
+    hasDrivingLicence: false,
+    hasCar: false,
+    yearsExperience: null,
+    experienceAreas: [],
+    availability: { days: [], earliest: '07:00', latest: '18:00' },
+    startFrom: '',
+    references: [],
+    documents: [],
+    motivation: '',
+    consent: false,
+    updatedAt: null,
+  };
+}
+
 interface StoreState {
   data: DataSet;
   settings: Settings;
@@ -101,6 +131,7 @@ interface StoreState {
   holds: SlotHold[];
   demo: DemoState;
   draft: RequestDraft;
+  applicationDraft: ApplicationDraft;
 
   updateDraft: (patch: Partial<RequestDraft>) => void;
   resetDraft: () => void;
@@ -130,6 +161,21 @@ interface StoreState {
   ) => { bookingReference?: string; failureReason?: string };
   requestOfferChange: (offerId: ID, message: string) => void;
   reissueOffer: (offerId: ID, now: Date) => void;
+
+  /* ---- hiring (screens C3–C6, H1–H7) ---- */
+  updateApplicationDraft: (patch: Partial<ApplicationDraft>) => void;
+  resetApplicationDraft: () => void;
+  /** Turns the draft into an application. Returns the reference for the receipt. */
+  submitApplication: (now: Date) => { reference: string };
+  setApplicationStatus: (id: ID, status: ApplicationStatus) => void;
+  rejectApplication: (id: ID, reason: string) => void;
+  /** revDSG — a real deletion, not an archive flag. */
+  deleteApplication: (id: ID) => void;
+  /** §2 — an accepted applicant becomes a contractor account. */
+  convertApplicant: (id: ID, now: Date) => ID;
+  updateApplication: (id: ID, patch: Partial<Application>) => void;
+  updatePosting: (id: ID, patch: Partial<JobPosting>) => void;
+  updateTeamMember: (id: ID, patch: Partial<TeamMember>) => void;
 
   setRole: (role: DemoRole) => void;
   setScenario: (scenario: ScenarioName) => void;
@@ -165,6 +211,7 @@ export const useStore = create<StoreState>()(
       holds: [],
       demo: initialDemo(),
       draft: emptyDraft(),
+      applicationDraft: emptyApplicationDraft(),
 
       updateDraft: (patch) =>
         set((s) => ({
@@ -626,6 +673,156 @@ export const useStore = create<StoreState>()(
           },
         })),
 
+      /* ------------------------------------------------------- hiring */
+
+      updateApplicationDraft: (patch) =>
+        set((s) => ({
+          applicationDraft: {
+            ...s.applicationDraft,
+            ...patch,
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      resetApplicationDraft: () => set({ applicationDraft: emptyApplicationDraft() }),
+
+      submitApplication: (now) => {
+        const s = get();
+        const d = s.applicationDraft;
+        // Continue the existing series rather than counting rows: deleting an
+        // application (§14) must not hand its number to the next applicant.
+        const highest = s.data.applications.reduce(
+          (max, a) => Math.max(max, Number(a.reference.replace('BW-', '')) || 0),
+          0,
+        );
+        const reference = `BW-${String(10_000 + highest + 1).slice(1)}`;
+
+        const retain = new Date(now);
+        retain.setMonth(retain.getMonth() + s.settings.applicationRetentionMonths);
+
+        const application: Application = {
+          id: `app_${now.getTime().toString(36).toUpperCase().slice(-5)}`,
+          reference,
+          postingId: d.postingId ?? undefined,
+          spontaneous: d.postingId === null,
+          firstName: d.firstName,
+          lastName: d.lastName,
+          email: d.email,
+          phone: d.phone,
+          postcode: d.postcode,
+          city: d.city,
+          permit: d.permit ?? 'other',
+          languages: d.languages,
+          hasDrivingLicence: d.hasDrivingLicence,
+          hasCar: d.hasCar,
+          yearsExperience: d.yearsExperience ?? 0,
+          experienceAreas: d.experienceAreas,
+          availability: d.availability,
+          startFrom: d.startFrom || undefined,
+          references: d.references,
+          documents: d.documents,
+          motivation: d.motivation || undefined,
+          status: 'new',
+          submittedAt: now.toISOString(),
+          // §14 — the retention window is recorded at submission, from the
+          // value that was in force then. Changing the setting later must not
+          // silently extend how long an existing record is kept.
+          retainUntil: retain.toISOString(),
+          consentGivenAt: now.toISOString(),
+        };
+
+        set({
+          data: { ...s.data, applications: [application, ...s.data.applications] },
+          applicationDraft: emptyApplicationDraft(),
+        });
+
+        return { reference };
+      },
+
+      updateApplication: (id, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            applications: s.data.applications.map((a) =>
+              a.id === id ? { ...a, ...patch } : a,
+            ),
+          },
+        })),
+
+      setApplicationStatus: (id, status) => get().updateApplication(id, { status }),
+
+      rejectApplication: (id, reason) =>
+        get().updateApplication(id, { status: 'rejected', rejectionReason: reason }),
+
+      deleteApplication: (id) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            applications: s.data.applications.filter((a) => a.id !== id),
+          },
+        })),
+
+      /**
+       * The bridge from applicant to contractor.
+       *
+       * The new member starts with the regions the applicant lives near and no
+       * skills beyond cleaning — a furniture assembler is granted assembly
+       * explicitly, because the field screens read `skills` to decide which
+       * jobs a person may open.
+       */
+      convertApplicant: (id, now) => {
+        const s = get();
+        const app = s.data.applications.find((a) => a.id === id)!;
+        if (app.convertedTeamMemberId) return app.convertedTeamMemberId;
+
+        const memberId = `tm_${now.getTime().toString(36).toUpperCase().slice(-5)}`;
+        const member: TeamMember = {
+          id: memberId,
+          firstName: app.firstName,
+          lastName: app.lastName,
+          email: `${app.firstName.toLowerCase()}.${app.lastName.toLowerCase()}@homivaro.ch`,
+          phone: app.phone,
+          role: 'contractor',
+          active: true,
+          regions: s.settings.servedPostcodes,
+          skills: app.experienceAreas.includes('assembly')
+            ? ['moebelmontage']
+            : ['unterhaltsreinigung', 'einmalreinigung'],
+          startedAt: now.toISOString(),
+          fromApplicationId: app.id,
+        };
+
+        set({
+          data: {
+            ...s.data,
+            team: [...s.data.team, member],
+            applications: s.data.applications.map((a) =>
+              a.id === id
+                ? { ...a, status: 'accepted' as const, convertedTeamMemberId: memberId }
+                : a,
+            ),
+          },
+        });
+
+        return memberId;
+      },
+
+      updatePosting: (id, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            postings: s.data.postings.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+          },
+        })),
+
+      updateTeamMember: (id, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            team: s.data.team.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+          },
+        })),
+
       setRole: (role) => set((s) => ({ demo: { ...s.demo, role } })),
 
       setScenario: (scenario) =>
@@ -667,6 +864,7 @@ export const useStore = create<StoreState>()(
           holds: [],
           demo: initialDemo(),
           draft: emptyDraft(),
+          applicationDraft: emptyApplicationDraft(),
         }),
     }),
     {
@@ -693,6 +891,10 @@ export const useStore = create<StoreState>()(
           settings: { ...current.settings, ...(saved.settings ?? {}) },
           demo: { ...current.demo, ...(saved.demo ?? {}) },
           draft: { ...current.draft, ...(saved.draft ?? {}) },
+          applicationDraft: {
+            ...current.applicationDraft,
+            ...(saved.applicationDraft ?? {}),
+          },
         };
       },
     },
