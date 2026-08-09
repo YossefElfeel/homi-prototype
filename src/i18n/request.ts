@@ -3,6 +3,7 @@ import { hasLocale } from 'next-intl';
 import { cookies } from 'next/headers';
 import { routing, INTL_LOCALES, TRANSLATED_LOCALES, type Locale } from './routing';
 import { stressMessages } from './stress';
+import { DATE_FORMATS, NUMBER_FORMATS, TIME_ZONE } from './formats';
 import { STRESS_COOKIE } from '@/lib/theme';
 import { de, en, type Messages } from '@/messages';
 
@@ -28,21 +29,16 @@ export default getRequestConfig(async ({ requestLocale }) => {
   return {
     locale,
     messages: stressed ? stressMessages(base) : base,
+    // These presets stay declared for anything that reaches for next-intl's
+    // own formatter, but dates are rendered through @/i18n/format, which binds
+    // the Swiss tag (en-CH, de-CH, …). The routing locales are URL segments,
+    // and bare "en" formats dates the American way.
     formats: {
-      dateTime: {
-        full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
-        dayMonth: { weekday: 'long', day: 'numeric', month: 'long' },
-        short: { day: '2-digit', month: '2-digit', year: 'numeric' },
-        time: { hour: '2-digit', minute: '2-digit' },
-      },
-      number: {
-        chf: { style: 'currency', currency: 'CHF' },
-      },
+      dateTime: DATE_FORMATS,
+      number: NUMBER_FORMATS,
     },
-    // Swiss formatting: CHF 1'234.50 with the apostrophe group separator,
-    // and "Donnerstag, 12. September" for dates.
     now: new Date(),
-    timeZone: 'Europe/Zurich',
+    timeZone: TIME_ZONE,
     onError() {
       // Untranslated FR/IT keys fall back to German by design — don't shout.
     },

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getFormatter } from '@/i18n/format-server';
 import { AlertTriangle } from 'lucide-react';
 
 import { routing, type Locale } from '@/i18n/routing';

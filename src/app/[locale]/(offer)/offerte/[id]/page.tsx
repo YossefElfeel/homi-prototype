@@ -1,7 +1,8 @@
 'use client';
 
 import { use } from 'react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { ArrowRight, Check, Download, Info, ShieldCheck } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';

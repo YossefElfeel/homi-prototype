@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { SearchX } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';

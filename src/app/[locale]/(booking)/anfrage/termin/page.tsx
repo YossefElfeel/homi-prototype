@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { Info } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/field';
