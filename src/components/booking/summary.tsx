@@ -71,8 +71,11 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
             </div>
             <div className="mt-1.5 flex items-baseline justify-between gap-3">
               <span className="text-sm text-ink-tertiary">{t('hoursLabel')}</span>
+              {/* scheduledHours, not hours: this is how long we will be in
+                  the property, which includes add-on time that is not billed
+                  by the hour. */}
               <span data-numeric className="text-sm text-ink-secondary">
-                ca. {estimate.hours} Std.
+                ca. {estimate.scheduledHours} Std.
               </span>
             </div>
             <p className="mt-3 flex gap-2 text-xs text-ink-tertiary">

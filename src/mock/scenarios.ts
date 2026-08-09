@@ -5,6 +5,8 @@ import type {
   Customer,
   Invoice,
   JobPosting,
+  Offer,
+  Payment,
   Photo,
   Property,
   Review,
@@ -13,6 +15,8 @@ import type {
   TeamMember,
 } from './schema';
 import type { Locale } from '@/i18n/routing';
+import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
+import { buildOfferLines } from './engines/offers';
 
 /**
  * Demo scenarios.
@@ -37,9 +41,11 @@ export interface DataSet {
   customers: Customer[];
   properties: Property[];
   requests: ServiceRequest[];
+  offers: Offer[];
   bookings: Booking[];
   subscriptions: Subscription[];
   invoices: Invoice[];
+  payments: Payment[];
   reviews: Review[];
   photos: Photo[];
   closures: ClosurePeriod[];
@@ -52,9 +58,11 @@ const EMPTY: DataSet = {
   customers: [],
   properties: [],
   requests: [],
+  offers: [],
   bookings: [],
   subscriptions: [],
   invoices: [],
+  payments: [],
   reviews: [],
   photos: [],
   closures: [],
@@ -350,15 +358,66 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  // A live quote for req_3 and an expired one, so both states of screen 23 are
+  // reachable without first walking through the admin quote builder.
+  const offers: Offer[] = [
+    makeOffer('off_1', requests[2]!, properties[1]!, now, { issuedDaysAgo: 2, validDays: 14 }),
+    makeOffer('off_2', requests[0]!, properties[2]!, now, {
+      issuedDaysAgo: 20,
+      validDays: 14,
+      status: 'expired',
+      reference: 'O-2481-1',
+    }),
+  ];
+
   return {
     ...EMPTY,
     customers,
     properties,
     requests,
+    offers,
     bookings,
     subscriptions,
     photos,
     team: [owner(now)],
+  };
+}
+
+function makeOffer(
+  id: string,
+  request: ServiceRequest,
+  property: Property,
+  now: Date,
+  opts: {
+    issuedDaysAgo: number;
+    validDays: number;
+    status?: Offer['status'];
+    reference?: string;
+  },
+): Offer {
+  const service = SEED_SERVICES.find((s) => s.slug === request.serviceSlug)!;
+  const { lines, estimatedHours } = buildOfferLines({
+    request,
+    property,
+    service,
+    addOns: SEED_ADDONS,
+    settings: SEED_SETTINGS,
+  });
+
+  const issuedAt = days(now, -opts.issuedDaysAgo);
+
+  return {
+    id,
+    reference: opts.reference ?? `O-${request.reference.replace('A-', '')}-1`,
+    requestId: request.id,
+    version: 1,
+    lines,
+    message:
+      'Guten Tag\n\nvielen Dank für Ihre Anfrage. Nachfolgend finden Sie unsere Offerte, Position für Position aufgeschlüsselt. Der Betrag ist verbindlich; Zuschläge und Anfahrt sind – falls zutreffend – separat ausgewiesen.\n\nWählen Sie einen freien Termin, und wir bestätigen ihn sofort.\n\nFreundliche Grüsse\nMarco Brunner',
+    status: opts.status ?? 'sent',
+    issuedAt: iso(issuedAt),
+    expiresAt: iso(days(issuedAt, opts.validDays)),
+    estimatedHours,
   };
 }
 

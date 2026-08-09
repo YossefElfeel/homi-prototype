@@ -100,7 +100,18 @@ export interface PriceLine {
 }
 
 export interface Estimate {
+  /** Hours actually billed at the hourly rate — the base service only. */
   hours: number;
+  /**
+   * Hours the scheduler must reserve: billed hours plus the time add-ons take.
+   *
+   * These two are deliberately different. §3 gives an add-on both a price and
+   * an extra duration; the price is what the customer pays and the duration is
+   * what the calendar has to hold. Billing the duration *as well* would charge
+   * for the same add-on twice — CHF 45 for the windows plus CHF 24.50 for the
+   * half hour they take.
+   */
+  scheduledHours: number;
   durationBreakdown: DurationBreakdownRow[];
   lines: PriceLine[];
   subtotal: number;
@@ -140,21 +151,26 @@ export function estimateHours(input: EstimateInput, settings: Settings) {
     rows.push({ key: 'pieces', hours: input.furniturePieces * 0.75 });
   }
 
+  const raw = rows.reduce((sum, r) => sum + r.hours, 0);
+  // Round to the nearest half hour — the unit the owner actually schedules in.
+  const rounded = Math.round(raw * 2) / 2;
+  const billable = Math.max(rounded, service.minDuration, settings.minimumHours);
+
+  // Add-on time extends the visit but is not billed by the hour — the add-on's
+  // own price already covers it. Kept in the breakdown so the owner can see
+  // where the calendar time goes.
+  const addOnHours = addOns.reduce((sum, addOn) => sum + addOn.extraDuration, 0);
   for (const addOn of addOns) {
     if (addOn.extraDuration > 0) {
       rows.push({ key: `addon:${addOn.slug}`, hours: addOn.extraDuration });
     }
   }
 
-  const raw = rows.reduce((sum, r) => sum + r.hours, 0);
-  // Round to the nearest half hour — the unit the owner actually schedules in.
-  const rounded = Math.round(raw * 2) / 2;
-  const floored = Math.max(rounded, service.minDuration, settings.minimumHours);
-
   return {
-    hours: floored,
+    hours: billable,
+    scheduledHours: billable + addOnHours,
     rows,
-    minimumApplied: floored > rounded,
+    minimumApplied: billable > rounded,
   };
 }
 
@@ -267,6 +283,7 @@ export function priceEstimate(input: EstimateInput, settings: Settings): Estimat
 
   return {
     hours: duration.hours,
+    scheduledHours: duration.scheduledHours,
     durationBreakdown: duration.rows,
     lines,
     subtotal,
