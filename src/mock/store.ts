@@ -8,6 +8,8 @@ import type {
   AddOn,
   Booking,
   ID,
+  Offer,
+  OfferLine,
   Payment,
   PaymentMethod,
   Property,
@@ -21,8 +23,18 @@ import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildScenario, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import { createHold, type Slot } from './engines/availability';
-import { offerHours, offerTotal } from './engines/offers';
+import { buildOfferLines, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
+
+/** §17.2 — editable from the message templates screen in wave 6. */
+const DEFAULT_OFFER_MESSAGE = `Guten Tag
+
+vielen Dank für Ihre Anfrage. Nachfolgend finden Sie unsere Offerte, Position für Position aufgeschlüsselt. Der Betrag ist verbindlich; Zuschläge und Anfahrt sind – falls zutreffend – separat ausgewiesen.
+
+Wählen Sie einen freien Termin, und wir bestätigen ihn sofort.
+
+Freundliche Grüsse
+Marco Brunner`;
 
 /**
  * The prototype's single source of truth.
@@ -94,6 +106,16 @@ interface StoreState {
   resetDraft: () => void;
   /** Turns the draft into a request. Returns the reference for the receipt. */
   submitDraft: (now: Date) => { reference: string; outOfArea: boolean };
+
+  /* ---- quote building (screens 54–56) ---- */
+  /** Idempotent: returns the existing draft for a request, or creates one. */
+  ensureDraftOffer: (requestId: ID, now: Date) => ID;
+  updateOffer: (offerId: ID, patch: Partial<Offer>) => void;
+  updateOfferLine: (offerId: ID, lineId: ID, patch: Partial<OfferLine>) => void;
+  addOfferLine: (offerId: ID) => void;
+  removeOfferLine: (offerId: ID, lineId: ID) => void;
+  sendOffer: (offerId: ID, now: Date) => void;
+  rejectRequest: (requestId: ID, reason: string, now: Date) => void;
 
   /* ---- offer acceptance (screens 23–31) ---- */
   toggleOfferLine: (offerId: ID, lineId: ID) => void;
@@ -265,6 +287,181 @@ export const useStore = create<StoreState>()(
 
         return { reference, outOfArea };
       },
+
+      /* ----------------------------------------------- quote building ---- */
+
+      /**
+       * §9.1 — the quote screen opens with lines already filled in. This is
+       * that pre-fill, and it runs through the same buildOfferLines the
+       * customer-facing quote uses, so the two can never disagree.
+       */
+      ensureDraftOffer: (requestId, now) => {
+        const s = get();
+        const existing = s.data.offers.find(
+          (o) => o.requestId === requestId && o.status === 'draft',
+        );
+        if (existing) return existing.id;
+
+        const request = s.data.requests.find((r) => r.id === requestId)!;
+        const property = s.data.properties.find((p) => p.id === request.propertyId)!;
+        const service = s.services.find((x) => x.slug === request.serviceSlug)!;
+        const { lines, estimatedHours } = buildOfferLines({
+          request,
+          property,
+          service,
+          addOns: s.addOns,
+          settings: s.settings,
+        });
+
+        const id = `off_${now.getTime().toString(36).toUpperCase().slice(-5)}`;
+        const offer: Offer = {
+          id,
+          reference: `O-${request.reference.replace('A-', '')}-1`,
+          requestId,
+          version: 1,
+          lines,
+          message: DEFAULT_OFFER_MESSAGE,
+          status: 'draft',
+          estimatedHours,
+        };
+
+        set({
+          data: {
+            ...s.data,
+            offers: [offer, ...s.data.offers],
+            // Opening the builder counts as reading the request.
+            requests: s.data.requests.map((r) =>
+              r.id === requestId && r.status === 'new'
+                ? { ...r, status: 'inReview' as const, openedAt: now.toISOString() }
+                : r,
+            ),
+          },
+        });
+
+        return id;
+      },
+
+      updateOffer: (offerId, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) => (o.id === offerId ? { ...o, ...patch } : o)),
+          },
+        })),
+
+      updateOfferLine: (offerId, lineId, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id !== offerId
+                ? o
+                : {
+                    ...o,
+                    lines: o.lines.map((line) =>
+                      line.id !== lineId
+                        ? line
+                        : {
+                            ...line,
+                            ...patch,
+                            // Editing the hours of an hourly line has to move
+                            // the scheduled time with it, or the calendar and
+                            // the invoice stop agreeing.
+                            hours:
+                              patch.hours ??
+                              (line.calc === 'hourly' && patch.quantity !== undefined
+                                ? patch.quantity
+                                : line.hours),
+                          },
+                    ),
+                  },
+            ),
+          },
+        })),
+
+      addOfferLine: (offerId) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id !== offerId
+                ? o
+                : {
+                    ...o,
+                    lines: [
+                      ...o.lines,
+                      {
+                        id: `oli_new_${o.lines.length}`,
+                        label: '',
+                        calc: 'hourly' as const,
+                        quantity: 1,
+                        unitPrice: s.settings.hourlyRate,
+                        hours: 1,
+                        optional: false,
+                        selected: true,
+                      },
+                    ],
+                  },
+            ),
+          },
+        })),
+
+      removeOfferLine: (offerId, lineId) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id !== offerId ? o : { ...o, lines: o.lines.filter((l) => l.id !== lineId) },
+            ),
+          },
+        })),
+
+      sendOffer: (offerId, now) =>
+        set((s) => {
+          const offer = s.data.offers.find((o) => o.id === offerId);
+          if (!offer) return {};
+          return {
+            data: {
+              ...s.data,
+              offers: s.data.offers.map((o) =>
+                o.id !== offerId
+                  ? o
+                  : {
+                      ...o,
+                      status: 'sent' as const,
+                      issuedAt: now.toISOString(),
+                      expiresAt: new Date(
+                        now.getTime() + s.settings.offerValidityDays * 86_400_000,
+                      ).toISOString(),
+                    },
+              ),
+              requests: s.data.requests.map((r) =>
+                r.id === offer.requestId
+                  ? { ...r, status: 'offerSent' as const, respondedAt: now.toISOString() }
+                  : r,
+              ),
+            },
+          };
+        }),
+
+      // §4.1 — a decline sends a reason. Silence is the one answer that is
+      // never acceptable.
+      rejectRequest: (requestId, reason, now) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            requests: s.data.requests.map((r) =>
+              r.id === requestId
+                ? {
+                    ...r,
+                    status: 'rejected' as const,
+                    respondedAt: now.toISOString(),
+                    internalNote: [r.internalNote, reason].filter(Boolean).join('\n'),
+                  }
+                : r,
+            ),
+          },
+        })),
 
       /* -------------------------------------------- offer acceptance ---- */
 
