@@ -170,6 +170,7 @@ export function DemoBar({
 
         <Field label={t('scenario')}>
           <select
+            aria-label={t('scenario')}
             value={demo.scenario}
             onChange={(e) => setScenario(e.target.value as ScenarioName)}
             className="w-full rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
@@ -185,6 +186,7 @@ export function DemoBar({
         <Field label={t('today')}>
           <input
             type="date"
+            aria-label={t('today')}
             value={demo.dateOverride?.slice(0, 10) ?? ''}
             onChange={(e) =>
               setDateOverride(e.target.value ? new Date(e.target.value).toISOString() : null)

@@ -26,7 +26,7 @@ import { createHold, type Slot } from './engines/availability';
 import { buildOfferLines, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
 
-/** §17.2 — editable from the message templates screen in wave 6. */
+/** Used only if the "offer-sent" template has been emptied on screen 79. */
 const DEFAULT_OFFER_MESSAGE = `Guten Tag
 
 vielen Dank für Ihre Anfrage. Nachfolgend finden Sie unsere Offerte, Position für Position aufgeschlüsselt. Der Betrag ist verbindlich; Zuschläge und Anfahrt sind – falls zutreffend – separat ausgewiesen.
@@ -48,7 +48,7 @@ Marco Brunner`;
 // undefined, which makes Zustand discard the stored state and re-seed — the
 // right trade for a prototype, and it prevents a stale localStorage from
 // crashing on a field that did not exist yet.
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
 
@@ -136,6 +136,9 @@ interface StoreState {
   setDateOverride: (iso: string | null) => void;
   setCurrentCustomer: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
+  /** §17.2 — the catalogue is editable, and edits reach the site immediately. */
+  setServices: (services: Service[]) => void;
+  setAddOns: (addOns: AddOn[]) => void;
   patchData: (patch: Partial<DataSet>) => void;
   addHold: (hold: SlotHold) => void;
   releaseHold: (id: string) => void;
@@ -320,7 +323,14 @@ export const useStore = create<StoreState>()(
           requestId,
           version: 1,
           lines,
-          message: DEFAULT_OFFER_MESSAGE,
+          // §17.2 — the quote opens with whatever screen 79 currently holds,
+          // in the customer's language, falling back to German (§20.6).
+          message:
+            s.settings.messageTemplates['offer-sent'][
+              s.data.customers.find((c) => c.id === request.customerId)?.language ?? 'de'
+            ] ??
+            s.settings.messageTemplates['offer-sent'].de ??
+            DEFAULT_OFFER_MESSAGE,
           status: 'draft',
           estimatedHours,
         };
@@ -638,6 +648,9 @@ export const useStore = create<StoreState>()(
         set((s) => ({ demo: { ...s.demo, currentCustomerId } })),
 
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
+
+      setServices: (services) => set({ services }),
+      setAddOns: (addOns) => set({ addOns }),
 
       patchData: (patch) => set((s) => ({ data: { ...s.data, ...patch } })),
 
