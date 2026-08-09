@@ -236,6 +236,13 @@ export function DemoBar({
   );
 }
 
+/**
+ * The demo bar is the one place in the codebase with raw hex.
+ *
+ * That is deliberate: it must look identical in all four themes so nobody
+ * mistakes it for part of the design being reviewed. Theming it would make it
+ * a fifth surface to evaluate, which is the opposite of what it is for.
+ */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">

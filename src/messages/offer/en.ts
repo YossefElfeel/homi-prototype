@@ -145,6 +145,10 @@ export const offerEn: typeof offerDe = {
   },
 
   confirmed: {
+    missingTitle: 'We cannot find this booking',
+    missingBody:
+      'This link belongs to a quote that has no booking yet — or the booking was cancelled. The quote itself is still available.',
+    missingAction: 'Open the quote',
     badge: 'Booked',
     title: 'Your slot is confirmed.',
     reference: 'Booking',

@@ -160,6 +160,12 @@ export const de = {
     genericBody: 'Bitte versuchen Sie es noch einmal. Bleibt es dabei, rufen Sie uns an.',
     notFoundTitle: 'Diese Seite gibt es nicht',
     notFoundBody: 'Der Link ist möglicherweise veraltet. Diese Wege führen weiter:',
+    retry: 'Nochmals versuchen',
+    home: 'Zur Startseite',
+    callUs: 'Anrufen',
+    reference: 'Fehlerkennung {id}',
+    referenceHint: 'Nennen Sie diese Kennung, wenn Sie anrufen.',
+    loading: 'Wird geladen',
   },
 
   footer: {

@@ -159,6 +159,12 @@ export const en: Messages = {
     genericBody: 'Please try again. If it keeps happening, give us a call.',
     notFoundTitle: 'This page does not exist',
     notFoundBody: 'The link may be out of date. These routes will get you back:',
+    retry: 'Try again',
+    home: 'Back to the homepage',
+    callUs: 'Call us',
+    reference: 'Error reference {id}',
+    referenceHint: 'Quote this reference if you call.',
+    loading: 'Loading',
   },
 
   footer: {

@@ -113,6 +113,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
       <div className="py-section">
         <EmptyState
           icon={Lock}
+          headingLevel={1}
           title={t('gateTitle')}
           body={`${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`}
         />

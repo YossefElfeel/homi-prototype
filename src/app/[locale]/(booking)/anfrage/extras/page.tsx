@@ -38,7 +38,7 @@ export default function AddOnsStep() {
       canContinue={draft.addOnIds.length > 0}
     >
       {available.length === 0 ? (
-        <EmptyState compact title={t('none')} body={t('lead')} />
+        <EmptyState compact headingLevel={2} title={t('none')} body={t('lead')} />
       ) : (
         <ul className="divide-y divide-line-subtle border-y border-line-subtle">
           {available.map((addOn) => {

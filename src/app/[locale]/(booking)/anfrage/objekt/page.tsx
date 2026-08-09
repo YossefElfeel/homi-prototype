@@ -165,7 +165,7 @@ export default function PropertyStep() {
             <div className="flex gap-3 border-l-2 border-rule bg-sunken p-4">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
               <div>
-                <h3 className="font-medium">{t('coverageOutsideTitle')}</h3>
+                <h2 className="font-medium">{t('coverageOutsideTitle')}</h2>
                 <p className="mt-1.5 text-sm text-ink-secondary">
                   {t('coverageOutsideBody', { postcode: coverage.postcode })}
                 </p>
@@ -248,7 +248,7 @@ export default function PropertyStep() {
           <div className="flex gap-3 bg-sunken p-4">
             <Info className="mt-0.5 size-4 shrink-0 text-ink-tertiary" aria-hidden />
             <div>
-              <h3 className="text-sm font-medium">{t('whyTitle')}</h3>
+              <h2 className="text-sm font-medium">{t('whyTitle')}</h2>
               <p className="mt-1 text-sm text-ink-secondary">{t('whyBody')}</p>
             </div>
           </div>

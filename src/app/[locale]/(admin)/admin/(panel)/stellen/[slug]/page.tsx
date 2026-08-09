@@ -8,6 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { LOCALE_LABELS, TRANSLATED_LOCALES, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea, Checkbox } from '@/components/ui/field';
+import { KIND_KEY } from '@/components/careers/job-list';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useStore } from '@/mock/store';
 import type { EmploymentKind, JobPosting } from '@/mock/schema';
@@ -31,6 +32,7 @@ const LISTS = ['responsibilities', 'requirements', 'offer'] as const;
 export default function EditPostingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const t = useTranslations('admin.posting');
+  const careers = useTranslations('careers.index');
   const hydrated = useHydrated();
 
   const postings = useStore((s) => s.data.postings);
@@ -99,7 +101,7 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
               >
                 {KINDS.map((kind) => (
                   <option key={kind} value={kind}>
-                    {kind}
+                    {careers(KIND_KEY[kind])}
                   </option>
                 ))}
               </Select>
