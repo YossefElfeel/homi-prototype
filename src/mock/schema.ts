@@ -240,6 +240,12 @@ export interface OfferLine {
   /** Hours for hourly lines, pieces for per-unit lines. */
   quantity: number;
   unitPrice: number;
+  /**
+   * Calendar time this line consumes, which is not always what it bills.
+   * An add-on charges a flat price but still takes half an hour; switching it
+   * off has to shorten the visit as well as lower the total.
+   */
+  hours: number;
   optional: boolean;
   /** Optional lines the customer has switched on (§9.1). */
   selected: boolean;

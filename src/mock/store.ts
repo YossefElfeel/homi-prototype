@@ -6,6 +6,10 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import type {
   AddOn,
+  Booking,
+  ID,
+  Payment,
+  PaymentMethod,
   Property,
   RequestDraft,
   Service,
@@ -16,6 +20,9 @@ import type {
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildScenario, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
+import { createHold, type Slot } from './engines/availability';
+import { offerHours, offerTotal } from './engines/offers';
+import { arrivalWindowMinutes } from './engines/pricing';
 
 /**
  * The prototype's single source of truth.
@@ -25,7 +32,11 @@ import { checkCoverage } from './engines/coverage';
  * across reloads. `SCHEMA_VERSION` throws the store away when the shape moves,
  * which is the right trade for a prototype.
  */
-const SCHEMA_VERSION = 1;
+// Bump whenever the shape of DataSet or the draft changes. `migrate` returns
+// undefined, which makes Zustand discard the stored state and re-seed — the
+// right trade for a prototype, and it prevents a stale localStorage from
+// crashing on a field that did not exist yet.
+const SCHEMA_VERSION = 3;
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
 
@@ -83,6 +94,20 @@ interface StoreState {
   resetDraft: () => void;
   /** Turns the draft into a request. Returns the reference for the receipt. */
   submitDraft: (now: Date) => { reference: string; outOfArea: boolean };
+
+  /* ---- offer acceptance (screens 23–31) ---- */
+  toggleOfferLine: (offerId: ID, lineId: ID) => void;
+  holdOfferSlot: (offerId: ID, slot: Slot, now: Date) => void;
+  signOffer: (offerId: ID, now: Date) => void;
+  /** Mock gateway. `outcome` decides which of the two states we land in. */
+  payOffer: (
+    offerId: ID,
+    method: PaymentMethod,
+    outcome: 'succeeded' | 'failed',
+    now: Date,
+  ) => { bookingReference?: string; failureReason?: string };
+  requestOfferChange: (offerId: ID, message: string) => void;
+  reissueOffer: (offerId: ID, now: Date) => void;
 
   setRole: (role: DemoRole) => void;
   setScenario: (scenario: ScenarioName) => void;
@@ -240,6 +265,159 @@ export const useStore = create<StoreState>()(
 
         return { reference, outOfArea };
       },
+
+      /* -------------------------------------------- offer acceptance ---- */
+
+      // §9.1 — switching an optional line off updates the total immediately,
+      // and (via offerHours) genuinely shortens the visit. Price and duration
+      // must move together or the scheduler books time nobody paid for.
+      toggleOfferLine: (offerId, lineId) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((offer) =>
+              offer.id !== offerId
+                ? offer
+                : {
+                    ...offer,
+                    lines: offer.lines.map((line) =>
+                      line.id === lineId ? { ...line, selected: !line.selected } : line,
+                    ),
+                  },
+            ),
+          },
+        })),
+
+      holdOfferSlot: (offerId, slot, now) =>
+        set((s) => ({
+          // One hold per offer — re-picking replaces it rather than stacking.
+          holds: [...s.holds.filter((h) => h.offerId !== offerId), createHold(offerId, slot, now)],
+        })),
+
+      signOffer: (offerId, now) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((offer) =>
+              offer.id === offerId ? { ...offer, signedAt: now.toISOString() } : offer,
+            ),
+          },
+        })),
+
+      /**
+       * §10 — payment in full on acceptance, then the slot becomes a booking.
+       *
+       * On failure the offer stays accepted-but-unpaid and the slot is NOT
+       * booked (§20.2); the hold keeps running so the customer can retry
+       * without losing the time they picked.
+       */
+      payOffer: (offerId, method, outcome, now) => {
+        const s = get();
+        const offer = s.data.offers.find((o) => o.id === offerId);
+        const hold = s.holds.find((h) => h.offerId === offerId);
+        if (!offer) return {};
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        const amount = offerTotal(offer);
+
+        const payment: Payment = {
+          id: `pay_${stamp}`,
+          offerId,
+          amount,
+          method,
+          at: now.toISOString(),
+          status: outcome,
+          gatewayRef: `mock_${stamp}`,
+          failureReason: outcome === 'failed' ? 'card_declined' : undefined,
+        };
+
+        if (outcome === 'failed') {
+          set({ data: { ...s.data, payments: [...s.data.payments, payment] } });
+          return { failureReason: 'card_declined' };
+        }
+
+        const request = s.data.requests.find((r) => r.id === offer.requestId)!;
+        const hours = offerHours(offer);
+        const duration = Math.round(hours * 60);
+        const reference = `B-${1050 + s.data.bookings.length}`;
+
+        const booking: Booking = {
+          id: `bkg_${stamp}`,
+          reference,
+          offerId,
+          customerId: request.customerId,
+          propertyId: request.propertyId,
+          serviceSlug: request.serviceSlug,
+          start: hold?.start ?? now.toISOString(),
+          duration,
+          arrivalWindow: arrivalWindowMinutes(hours),
+          status: 'scheduled',
+          photoIds: [],
+          history: [
+            { at: now.toISOString(), kind: 'created', label: 'Gebucht und bezahlt' },
+          ],
+        };
+
+        set({
+          data: {
+            ...s.data,
+            payments: [...s.data.payments, payment],
+            bookings: [booking, ...s.data.bookings],
+            offers: s.data.offers.map((o) =>
+              o.id === offerId ? { ...o, status: 'accepted' as const } : o,
+            ),
+            requests: s.data.requests.map((r) =>
+              r.id === offer.requestId ? { ...r, status: 'accepted' as const } : r,
+            ),
+          },
+          // The hold has done its job; releasing it frees the slot record.
+          holds: s.holds.filter((h) => h.offerId !== offerId),
+        });
+
+        return { bookingReference: reference };
+      },
+
+      // §20.1 — a negotiation produces a new version and voids the current one.
+      requestOfferChange: (offerId, message) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id === offerId
+                ? { ...o, status: 'revisionRequested' as const, message }
+                : o,
+            ),
+            requests: s.data.requests.map((r) =>
+              r.id === s.data.offers.find((o) => o.id === offerId)?.requestId
+                ? { ...r, status: 'revisionRequested' as const }
+                : r,
+            ),
+          },
+          holds: s.holds.filter((h) => h.offerId !== offerId),
+        })),
+
+      // §20.1 — an expired quote can be reissued in one action.
+      reissueOffer: (offerId, now) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id === offerId
+                ? {
+                    ...o,
+                    version: o.version + 1,
+                    reference: o.reference.replace(/-\d+$/, `-${o.version + 1}`),
+                    status: 'sent' as const,
+                    issuedAt: now.toISOString(),
+                    expiresAt: new Date(
+                      now.getTime() + s.settings.offerValidityDays * 86_400_000,
+                    ).toISOString(),
+                    signedAt: undefined,
+                  }
+                : o,
+            ),
+          },
+        })),
 
       setRole: (role) => set((s) => ({ demo: { ...s.demo, role } })),
 
