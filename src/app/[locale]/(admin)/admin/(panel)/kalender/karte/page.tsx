@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, ChevronLeft, ChevronRight, Car, MapPin } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';

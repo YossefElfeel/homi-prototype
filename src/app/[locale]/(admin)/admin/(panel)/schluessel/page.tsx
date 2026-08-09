@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { KeyRound, Plus, ShieldAlert } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';

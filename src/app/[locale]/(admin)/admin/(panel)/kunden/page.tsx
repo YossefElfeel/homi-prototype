@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { Search } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';

@@ -1,7 +1,8 @@
 'use client';
 
 import { use, useEffect, useMemo } from 'react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, CalendarClock, Plus, Send, Trash2 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
