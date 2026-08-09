@@ -826,7 +826,27 @@ export const useStore = create<StoreState>()(
           },
         })),
 
-      setRole: (role) => set((s) => ({ demo: { ...s.demo, role } })),
+      /**
+       * Switching to "contractor" also picks a contractor to *be*.
+       *
+       * The field screens read `currentMemberId`, and leaving it on the owner
+       * would show the owner's whole day through a contractor's permissions —
+       * exactly the confusion the role gate exists to prevent. Falls back to
+       * the owner when no contractor has been hired yet, which is the launch
+       * state and correctly shows an empty day.
+       */
+      setRole: (role) =>
+        set((s) => {
+          if (role !== 'contractor') return { demo: { ...s.demo, role } };
+          const contractor = s.data.team.find((m) => m.role === 'contractor');
+          return {
+            demo: {
+              ...s.demo,
+              role,
+              currentMemberId: contractor?.id ?? s.demo.currentMemberId,
+            },
+          };
+        }),
 
       setScenario: (scenario) =>
         set((s) => ({

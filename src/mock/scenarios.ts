@@ -904,7 +904,18 @@ function withHiring(data: DataSet, now: Date): DataSet {
     fromApplicationId: 'app_3',
   };
 
-  return { ...data, postings, applications, team: [...data.team, marta] };
+  // The point of this scenario is the whole arc: applied → accepted → working.
+  // Without reassigning the day, "switch to the contractor" would show an
+  // empty field screen and the last third of that arc would be untestable.
+  const bookings = data.bookings.map((b) => ({ ...b, assigneeId: 'tm_marta' }));
+
+  return {
+    ...data,
+    postings,
+    applications,
+    bookings,
+    team: [...data.team, marta],
+  };
 }
 
 export function buildScenario(name: ScenarioName, now: Date): DataSet {
