@@ -587,6 +587,20 @@ export interface TeamMember {
 
 /* ---------------------------------------------------------------- settings */
 
+/** §15 — the events that trigger an automatic message. */
+export type MessageTemplateKey =
+  | 'request-received'
+  | 'offer-sent'
+  | 'offer-reminder'
+  | 'booking-confirmed'
+  | 'appointment-reminder'
+  | 'on-the-way'
+  | 'job-done'
+  | 'invoice-sent'
+  | 'payment-reminder'
+  | 'cancellation'
+  | 'review-request';
+
 export interface Settings {
   hourlyRate: number;
   minimumHours: number;
@@ -620,4 +634,13 @@ export interface Settings {
    */
   hasLiabilityInsurance: boolean;
   applicationRetentionMonths: number;
+  /**
+   * §15 — the automatic messages, per event and language.
+   *
+   * French and Italian are deliberately absent rather than copied from German.
+   * §20.6 makes German the fallback, so an untranslated message still sends;
+   * modelling the gap as missing keys is what lets the templates screen count
+   * it and the language switcher expose it.
+   */
+  messageTemplates: Record<MessageTemplateKey, Partial<Record<Locale, string>>>;
 }

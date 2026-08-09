@@ -1,7 +1,9 @@
 import type {
   Application,
   Booking,
+  ChangeLogEntry,
   ClosurePeriod,
+  Coupon,
   Customer,
   Invoice,
   JobPosting,
@@ -48,6 +50,8 @@ export interface DataSet {
   invoices: Invoice[];
   payments: Payment[];
   keyLog: KeyLogEntry[];
+  coupons: Coupon[];
+  changeLog: ChangeLogEntry[];
   reviews: Review[];
   photos: Photo[];
   closures: ClosurePeriod[];
@@ -66,6 +70,8 @@ const EMPTY: DataSet = {
   invoices: [],
   payments: [],
   keyLog: [],
+  coupons: [],
+  changeLog: [],
   reviews: [],
   photos: [],
   closures: [],
@@ -413,6 +419,25 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  const changeLog: ChangeLogEntry[] = [
+    {
+      id: 'chg_1',
+      at: iso(days(now, -12)),
+      actor: 'Marco Brunner',
+      entity: 'Einstellungen',
+      entityId: 'settings',
+      summary: 'Samstagszuschlag von 20% auf 25% erhöht',
+    },
+    {
+      id: 'chg_2',
+      at: iso(days(now, -30)),
+      actor: 'Marco Brunner',
+      entity: 'Leistung',
+      entityId: 'svc_grund',
+      summary: 'Grundreinigung: Mindestdauer auf 3 Stunden gesetzt',
+    },
+  ];
+
   return {
     ...EMPTY,
     customers,
@@ -423,6 +448,7 @@ function baseData(now: Date): DataSet {
     subscriptions,
     invoices,
     keyLog,
+    changeLog,
     photos,
     team: [owner(now)],
   };
@@ -601,6 +627,27 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           text: 'Endreinigung hat die Abnahme auf Anhieb bestanden. Genau das, was versprochen war.',
           status: 'published',
           submittedAt: iso(days(now, -6)),
+        },
+        {
+          id: 'rev_3',
+          bookingId: 'bkg_3',
+          customerId: 'cus_3',
+          rating: 4,
+          text: 'Sehr saubere Arbeit. Die Ankunft war etwas später als angekündigt, wurde aber vorher gemeldet.',
+          status: 'pending',
+          submittedAt: iso(days(now, -2)),
+        },
+        {
+          // The one the moderation screen exists for. §17.2 leaves publishing
+          // to the owner; this is the case where that discretion matters, and
+          // the screen refuses to publish it without a reply.
+          id: 'rev_4',
+          bookingId: 'bkg_4',
+          customerId: 'cus_4',
+          rating: 2,
+          text: 'Zwei Fenster wurden ausgelassen und die Küche war nur oberflächlich gemacht. Auf meine Nachricht kam erst am nächsten Tag eine Antwort.',
+          status: 'pending',
+          submittedAt: iso(days(now, -1)),
         },
       ];
       // §20.6 — only photos with recorded written consent reach the public

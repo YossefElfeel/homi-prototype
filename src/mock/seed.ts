@@ -210,6 +210,60 @@ export const SEED_ADDONS: AddOn[] = [
   },
 ];
 
+/**
+ * §15 — the automatic messages.
+ *
+ * German and English are written; French and Italian are left out on purpose.
+ * They fall back to German (§20.6), which is the behaviour the templates screen
+ * has to make visible rather than hide.
+ */
+const SEED_TEMPLATES: Settings['messageTemplates'] = {
+  'request-received': {
+    de: 'Guten Tag {name}\n\nIhre Anfrage ist bei uns eingegangen — Referenz {reference}. Wir melden uns innerhalb von 24 Stunden mit einer Offerte.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nWe have your request — reference {reference}. You will hear back from us with a quote within 24 hours.\n\nKind regards\nHomivaro',
+  },
+  'offer-sent': {
+    de: 'Guten Tag {name}\n\nIhre Offerte ist bereit: {link}\nSie ist bis {validUntil} gültig. Termin wählen und bestätigen können Sie direkt darin.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nYour quote is ready: {link}\nIt is valid until {validUntil}. You can pick a slot and confirm inside it.\n\nKind regards\nHomivaro',
+  },
+  'offer-reminder': {
+    de: 'Guten Tag {name}\n\nIhre Offerte läuft am {validUntil} ab. Falls Sie Fragen haben, antworten Sie einfach auf diese Nachricht.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nYour quote expires on {validUntil}. If anything is unclear, simply reply to this message.\n\nKind regards\nHomivaro',
+  },
+  'booking-confirmed': {
+    de: 'Guten Tag {name}\n\nIhr Termin ist bestätigt: {date}, Ankunft zwischen {windowStart} und {windowEnd}. Referenz {reference}.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nYour appointment is confirmed: {date}, arrival between {windowStart} and {windowEnd}. Reference {reference}.\n\nKind regards\nHomivaro',
+  },
+  'appointment-reminder': {
+    de: 'Erinnerung: morgen, {date}, Ankunft zwischen {windowStart} und {windowEnd}. Kostenlose Absage noch bis {freeUntil}.',
+    en: 'Reminder: tomorrow, {date}, arrival between {windowStart} and {windowEnd}. Free cancellation until {freeUntil}.',
+  },
+  'on-the-way': {
+    de: '{member} ist unterwegs zu Ihnen und trifft voraussichtlich um {eta} ein.',
+    en: '{member} is on the way and should arrive around {eta}.',
+  },
+  'job-done': {
+    de: 'Guten Tag {name}\n\nDie Arbeiten sind abgeschlossen. Bericht und Fotos: {link}\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nThe work is finished. Report and photos: {link}\n\nKind regards\nHomivaro',
+  },
+  'invoice-sent': {
+    de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount}, zahlbar bis {dueDate}. QR-Rechnung im Anhang.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount}, due {dueDate}. QR invoice attached.\n\nKind regards\nHomivaro',
+  },
+  'payment-reminder': {
+    de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount} ist seit {dueDate} offen. Falls sie sich überschnitten hat, betrachten Sie diese Nachricht als gegenstandslos.\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount} has been open since {dueDate}. If your payment crossed with this message, please disregard it.\n\nKind regards\nHomivaro',
+  },
+  cancellation: {
+    de: 'Guten Tag {name}\n\nIhr Termin am {date} ist storniert. {feeNote}\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nYour appointment on {date} is cancelled. {feeNote}\n\nKind regards\nHomivaro',
+  },
+  'review-request': {
+    de: 'Guten Tag {name}\n\nWaren Sie zufrieden? Eine kurze Rückmeldung hilft uns sehr: {link}\n\nFreundliche Grüsse\nHomivaro',
+    en: 'Hello {name}\n\nWere you happy with the work? A short review helps us a great deal: {link}\n\nKind regards\nHomivaro',
+  },
+};
+
 export const SEED_SETTINGS: Settings = {
   hourlyRate: 49, // §5.1
   minimumHours: 2, // §5.1
@@ -238,4 +292,5 @@ export const SEED_SETTINGS: Settings = {
   // §21 item 12 — key holding stays locked until a policy exists.
   hasLiabilityInsurance: false,
   applicationRetentionMonths: 6, // revDSG
+  messageTemplates: SEED_TEMPLATES,
 };
