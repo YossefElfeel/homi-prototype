@@ -377,6 +377,25 @@ export interface PackageCredit {
   ledger: CreditLedgerEntry[];
 }
 
+/**
+ * §16 — the message thread a customer sees in their account.
+ *
+ * Not a chat. Everything the business sends is already recorded against a
+ * request, a quote or a booking; this is the same trail, readable, with the
+ * customer able to reply in context. Modelling it as a flat list keyed by a
+ * subject reference is enough for that and keeps §22's "no live chat" honest.
+ */
+export interface CustomerMessage {
+  id: ID;
+  customerId: ID;
+  /** The reference the thread hangs off — A-…, O-…, B-… or RE-…. */
+  subject: string;
+  from: 'customer' | 'homivaro';
+  body: string;
+  at: ISODate;
+  readByCustomer: boolean;
+}
+
 /* ----------------------------------------------------------------- billing */
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';

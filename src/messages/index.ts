@@ -6,6 +6,8 @@ import { bookingDe } from './booking/de';
 import { bookingEn } from './booking/en';
 import { offerDe } from './offer/de';
 import { offerEn } from './offer/en';
+import { accountDe } from './account/de';
+import { accountEn } from './account/en';
 import { adminDe } from './admin/de';
 import { adminEn } from './admin/en';
 import { adminCrmDe } from './admin/crm.de';
@@ -27,6 +29,7 @@ export const de = {
   site: siteDe,
   booking: bookingDe,
   offer: offerDe,
+  account: accountDe,
   careers: careersDe,
   admin: { ...adminDe, ...adminCrmDe, ...adminContentDe, ...adminHiringDe },
 };
@@ -35,6 +38,7 @@ export const en = {
   site: siteEn,
   booking: bookingEn,
   offer: offerEn,
+  account: accountEn,
   careers: careersEn,
   admin: { ...adminEn, ...adminCrmEn, ...adminContentEn, ...adminHiringEn },
 };
