@@ -190,6 +190,8 @@ export const en: Messages = {
     role: 'Role',
     scenario: 'Scenario',
     today: 'Today is',
+    todayReset: 'Today',
+    todayActive: 'Date overridden',
     insurance: 'Liability insurance',
     stress: 'DE stress test',
     stressHint: 'Grows every string by ~30% — surfaces layout breaks now.',
