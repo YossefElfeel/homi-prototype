@@ -16,6 +16,8 @@ export const adminDe = {
       offers: 'Offerten',
       calendar: 'Kalender',
       customers: 'Kunden',
+      properties: 'Objekte',
+      keys: 'Schlüssel',
       subscriptions: 'Abos',
       invoices: 'Rechnungen',
       settings: 'Einstellungen',

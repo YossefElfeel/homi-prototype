@@ -8,6 +8,8 @@ import { offerDe } from './offer/de';
 import { offerEn } from './offer/en';
 import { adminDe } from './admin/de';
 import { adminEn } from './admin/en';
+import { adminCrmDe } from './admin/crm.de';
+import { adminCrmEn } from './admin/crm.en';
 
 /**
  * Dictionaries are composed per domain rather than kept in one file — at 101
@@ -19,14 +21,14 @@ export const de = {
   site: siteDe,
   booking: bookingDe,
   offer: offerDe,
-  admin: adminDe,
+  admin: { ...adminDe, ...adminCrmDe },
 };
 export const en = {
   ...enCore,
   site: siteEn,
   booking: bookingEn,
   offer: offerEn,
-  admin: adminEn,
+  admin: { ...adminEn, ...adminCrmEn },
 };
 
 export type Messages = typeof de;

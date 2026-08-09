@@ -11,6 +11,8 @@ export const adminEn: typeof adminDe = {
       offers: 'Quotes',
       calendar: 'Calendar',
       customers: 'Customers',
+      properties: 'Properties',
+      keys: 'Keys',
       subscriptions: 'Plans',
       invoices: 'Invoices',
       settings: 'Settings',

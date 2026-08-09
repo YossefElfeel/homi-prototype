@@ -5,6 +5,7 @@ import type {
   Customer,
   Invoice,
   JobPosting,
+  KeyLogEntry,
   Offer,
   Payment,
   Photo,
@@ -46,6 +47,7 @@ export interface DataSet {
   subscriptions: Subscription[];
   invoices: Invoice[];
   payments: Payment[];
+  keyLog: KeyLogEntry[];
   reviews: Review[];
   photos: Photo[];
   closures: ClosurePeriod[];
@@ -63,6 +65,7 @@ const EMPTY: DataSet = {
   subscriptions: [],
   invoices: [],
   payments: [],
+  keyLog: [],
   reviews: [],
   photos: [],
   closures: [],
@@ -370,6 +373,46 @@ function baseData(now: Date): DataSet {
     }),
   ];
 
+  // §13.2 — a key held permanently for a subscription customer gets its own
+  // record: when it was taken, by whom, and where it is kept.
+  const keyLog: KeyLogEntry[] = [
+    {
+      id: 'key_1',
+      propertyId: 'prp_1',
+      receivedAt: iso(days(now, -58)),
+      receivedBy: 'Marco Brunner',
+      storageLocation: 'Schlüsselschrank Büro, Fach 3',
+      status: 'held',
+    },
+  ];
+
+  const invoices: Invoice[] = [
+    {
+      id: 'inv_draft',
+      reference: 'RE-2026-0051',
+      customerId: 'cus_1',
+      bookingId: 'bkg_1',
+      lines: [{ label: 'Unterhaltsreinigung', quantity: 5, unitPrice: 49 }],
+      // §10 — generated automatically after the job, then waits for approval.
+      status: 'draft',
+      issuedAt: iso(days(now, -1)),
+      dueAt: iso(days(now, 29)),
+      qrReference: '21 00000 00003 13947 14300 09017',
+    },
+    {
+      id: 'inv_paid',
+      reference: 'RE-2026-0048',
+      customerId: 'cus_2',
+      bookingId: 'bkg_2',
+      lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -26)),
+      dueAt: iso(days(now, 4)),
+      paidAt: iso(days(now, -19)),
+      qrReference: '21 00000 00003 13947 14300 08994',
+    },
+  ];
+
   return {
     ...EMPTY,
     customers,
@@ -378,6 +421,8 @@ function baseData(now: Date): DataSet {
     offers,
     bookings,
     subscriptions,
+    invoices,
+    keyLog,
     photos,
     team: [owner(now)],
   };
@@ -600,7 +645,9 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
       ];
       return {
         ...data,
-        invoices,
+        // Appended, not replaced: the point of this scenario is an overdue
+        // invoice sitting next to normal ones, not a world with only one.
+        invoices: [...invoices, ...data.invoices],
         subscriptions: data.subscriptions.map((s) => ({ ...s, status: 'pastDue' as const })),
       };
     }
