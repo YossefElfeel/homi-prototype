@@ -18,6 +18,7 @@ export function EmptyState({
   action,
   className,
   compact = false,
+  headingLevel = 3,
 }: {
   icon?: typeof Inbox;
   title: string;
@@ -25,7 +26,16 @@ export function EmptyState({
   action?: React.ReactNode;
   className?: string;
   compact?: boolean;
+  /**
+   * h3 under a section heading, h2 directly under a page title, h1 when the
+   * empty state *is* the page — a role gate or a link that no longer
+   * resolves. Getting this wrong skips a level, which is exactly what a
+   * screen reader navigating by heading trips over.
+   */
+  headingLevel?: 1 | 2 | 3;
 }) {
+  const Heading = headingLevel === 1 ? 'h1' : headingLevel === 2 ? 'h2' : 'h3';
+
   return (
     <div
       className={cn(
@@ -35,7 +45,7 @@ export function EmptyState({
       )}
     >
       <Icon className="size-7 text-ink-tertiary" aria-hidden />
-      <h3 className="mt-5 text-lg font-medium">{title}</h3>
+      <Heading className="mt-5 text-lg font-medium">{title}</Heading>
       <p className="mt-2 max-w-[46ch] text-ink-secondary">{body}</p>
       {action && <div className="mt-7">{action}</div>}
     </div>

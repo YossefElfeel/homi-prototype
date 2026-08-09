@@ -20,6 +20,7 @@ import { cn } from '@/lib/cn';
 /** Screen 52 — filters by status, area and free text, per §17.2. */
 export default function RequestsPage() {
   const t = useTranslations('admin.requests');
+  const statusLabel = useTranslations('status.request');
   const locale = useLocale() as Locale;
   const router = useRouter();
   const now = useNow();
@@ -150,9 +151,11 @@ export default function RequestsPage() {
             <option value="all">
               {t('filterStatus')}: {t('filterAll')}
             </option>
+            {/* Labels come from the status registry, not the enum — the filter
+                and the badge it filters must read identically. */}
             {statesOf('request').map((state) => (
               <option key={state} value={state}>
-                {state}
+                {statusLabel(state)}
               </option>
             ))}
           </Select>

@@ -156,6 +156,10 @@ export const offerDe = {
   },
 
   confirmed: {
+    missingTitle: 'Diese Buchung finden wir nicht',
+    missingBody:
+      'Der Link gehört zu einer Offerte, zu der noch keine Buchung besteht — oder sie wurde storniert. Die Offerte selbst ist weiterhin abrufbar.',
+    missingAction: 'Offerte öffnen',
     badge: 'Gebucht',
     title: 'Ihr Termin steht.',
     reference: 'Buchung',

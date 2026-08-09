@@ -3,24 +3,18 @@
 import { use } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { CalendarPlus, Check, Clock, KeyRound, MapPin } from 'lucide-react';
+import { CalendarPlus, Check, Clock, FileQuestion, KeyRound, MapPin } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { OfferShell } from '@/components/offer/offer-shell';
 import { useOffer } from '@/components/offer/use-offer';
 import { addMinutes } from '@/mock/engines/availability';
 import { offerTotal } from '@/mock/engines/offers';
 import { useHydrated, useStore } from '@/mock/store';
-
-const ACCESS_LABELS: Record<string, string> = {
-  'customer-present': 'Sie sind da',
-  'key-left': 'Schlüssel liegt bereit',
-  'key-box': 'Schlüsselkasten mit Code',
-  'other-person': 'Jemand anderes ist da',
-};
 
 /**
  * Screen 28 — the booking confirmation.
@@ -33,6 +27,7 @@ const ACCESS_LABELS: Record<string, string> = {
 export default function ConfirmedPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('offer.confirmed');
+  const pt = useTranslations('account.property');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const hydrated = useHydrated();
@@ -40,7 +35,28 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
 
   const data = useOffer(id);
   if (!hydrated) return <div className="p-gutter text-ink-tertiary">…</div>;
-  if (!data?.booking) return null;
+
+  // This link lives in a confirmation email, so it gets opened weeks later,
+  // on a different device, after the booking is gone. Rendering nothing there
+  // is a white screen at the exact moment somebody is checking whether their
+  // payment worked — the worst possible place for one.
+  if (!data?.booking) {
+    return (
+      <main id="main" className="mx-auto max-w-2xl px-gutter py-section">
+        <EmptyState
+          icon={FileQuestion}
+          headingLevel={1}
+          title={t('missingTitle')}
+          body={t('missingBody')}
+          action={
+            <Button asChild>
+              <Link href={`/offerte/${id}`}>{t('missingAction')}</Link>
+            </Button>
+          }
+        />
+      </main>
+    );
+  }
 
   const { offer, booking, property, service } = data;
   const start = new Date(booking.start);
@@ -101,7 +117,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
             {/* Named, not shown. The code is never rendered on a page that
                 arrives by email link. */}
             <dd className="mt-2">
-              {property.access ? ACCESS_LABELS[property.access.method] : '—'}
+              {property.access ? pt(`method.${property.access.method}` as 'method.key-box') : '—'}
             </dd>
           </div>
         </dl>
@@ -134,7 +150,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/konto/termine">{t('toAccount')}</Link>
+            <Link href="/konto">{t('toAccount')}</Link>
           </Button>
           <Button
             variant="secondary"

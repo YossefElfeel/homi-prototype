@@ -43,7 +43,8 @@ export default async function ServicesIndexPage({
           level={1}
         />
         <div className="mt-10 border border-line-subtle">
-          <ServiceGrid />
+          {/* Directly under the page h1 — the cards are the top level here. */}
+          <ServiceGrid headingLevel={2} />
         </div>
       </Section>
       <CtaBand theme={theme} />

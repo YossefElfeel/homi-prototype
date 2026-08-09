@@ -37,7 +37,20 @@ export function serviceFromPrice(minDuration: number) {
   return Math.max(minDuration, SEED_SETTINGS.minimumHours) * SEED_SETTINGS.hourlyRate;
 }
 
-export function ServiceGrid({ limit }: { limit?: number }) {
+/**
+ * `headingLevel` exists because the same grid appears under a section heading
+ * on the homepage and directly under the page title on /leistungen. Leaving it
+ * fixed at h3 skipped a level there, which is what a screen reader navigating
+ * by heading actually trips over.
+ */
+export function ServiceGrid({
+  limit,
+  headingLevel = 3,
+}: {
+  limit?: number;
+  headingLevel?: 2 | 3;
+}) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const locale = useLocale() as Locale;
   const services = SEED_SERVICES.filter((s) => s.active)
     .sort((a, b) => a.order - b.order)
@@ -57,7 +70,7 @@ export function ServiceGrid({ limit }: { limit?: number }) {
               )}
             >
               <Icon className="size-6 text-ink-accent" aria-hidden />
-              <h3 className="mt-5 text-lg font-medium">{service.name[locale]}</h3>
+              <Heading className="mt-5 text-lg font-medium">{service.name[locale]}</Heading>
               <p className="mt-2 flex-1 text-sm text-ink-secondary">
                 {service.short[locale]}
               </p>

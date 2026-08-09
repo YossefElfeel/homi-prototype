@@ -44,6 +44,8 @@ export function Gallery() {
   if (works.length === 0) {
     return (
       <EmptyState
+        // Sits directly under the page title, with no section heading between.
+        headingLevel={2}
         title={t('emptyTitle')}
         body={t('emptyBody')}
         action={

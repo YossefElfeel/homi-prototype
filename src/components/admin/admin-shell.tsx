@@ -152,6 +152,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <main id="main" className="mx-auto max-w-2xl px-gutter py-section">
         <EmptyState
           icon={Lock}
+          headingLevel={1}
           title={t('gateTitle')}
           body={`${t('gateBody')} ${t('gateCurrent', { role: demo(role) })}`}
         />

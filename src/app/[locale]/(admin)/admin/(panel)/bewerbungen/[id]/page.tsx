@@ -100,6 +100,7 @@ export default function ApplicationDetailPage({
     return (
       <EmptyState
         icon={Lock}
+          headingLevel={1}
         title={shell('gateTitle')}
         body={`${shell('gateBody')} ${shell('gateCurrent', { role: demoRoles(role) })}`}
       />
