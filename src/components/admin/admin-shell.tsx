@@ -31,6 +31,7 @@ import {
 
 import { Link, usePathname } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/cn';
 import { useHydrated, useStore } from '@/mock/store';
@@ -155,6 +156,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           headingLevel={1}
           title={t('gateTitle')}
           body={`${t('gateBody')} ${t('gateCurrent', { role: demo(role) })}`}
+          action={
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <Link href="/admin/anmelden">{t('gateSignIn')}</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/">{t('gateHome')}</Link>
+              </Button>
+            </div>
+          }
         />
       </main>
     );
@@ -245,8 +256,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <Search className="size-5" aria-hidden />
           </Link>
-          <button
-            type="button"
+          {/*
+            The dot counts requests in `new | inReview` — which is exactly what
+            /admin/anfragen lists. It used to sit on a handler-less button, so
+            the one indicator in the panel that signals "act on this" was the
+            one control that could not be acted on.
+          */}
+          <Link
+            href="/admin/anfragen"
             aria-label={t('notifications')}
             className="relative inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] transition-colors hover:bg-sunken"
           >
@@ -257,7 +274,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 className="absolute top-2.5 right-2.5 size-2 rounded-full bg-rule"
               />
             )}
-          </button>
+          </Link>
         </header>
 
         <main id="main" className="px-gutter py-8">

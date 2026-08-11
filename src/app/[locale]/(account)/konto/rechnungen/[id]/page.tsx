@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { AlertTriangle, ArrowLeft, Download } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -143,7 +144,7 @@ export default function AccountInvoicePage({
       )}
 
       <div className="mt-8">
-        <Button variant="secondary">
+        <Button variant="secondary" onClick={() => toast.info(t('downloadToast'))}>
           <Download className="size-4" aria-hidden />
           {t('download')}
         </Button>

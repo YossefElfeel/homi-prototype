@@ -203,7 +203,14 @@ export default function AccountProfilePage() {
                * non-null assertion — a hard delete would take them down.
                * Retention law says the same thing: the invoices have to stay.
                */
-              patch({ status: 'inactive' });
+              // Written directly rather than through `patch`, which also
+              // flashes the "saved" chip — wrong feedback for closing an
+              // account, and on a screen the user is about to leave.
+              patchData({
+                customers: customers.map((c) =>
+                  c.id === customer.id ? { ...c, status: 'inactive' as const } : c,
+                ),
+              });
               setClosing(false);
               setRole('visitor');
               router.push('/');

@@ -121,7 +121,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
                 size="lg"
                 onClick={() => router.push(`/offerte/${offer.id}/termin`)}
               >
-                {f('holdLostTitle')}
+                {f('pickNewSlot')}
               </Button>
             )}
             <Button variant="secondary" size="lg" onClick={() => setState('idle')}>

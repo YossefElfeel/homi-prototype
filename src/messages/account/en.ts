@@ -13,6 +13,7 @@ export const accountEn: typeof accountDe = {
       credit: 'Hour credit',
       payment: 'Payment methods',
       photos: 'Before & after',
+      review: 'Leave a review',
       messages: 'Messages',
       profile: 'Profile',
     },
@@ -22,6 +23,7 @@ export const accountEn: typeof accountDe = {
     gateBody:
       'This view belongs to the customer account. Switch the role to “Customer” in the demo controls at the bottom right.',
     gateCurrent: 'Current role: {role}',
+    gateAction: 'Sign in',
   },
 
   signIn: {
@@ -154,6 +156,7 @@ export const accountEn: typeof accountDe = {
     reference: 'Reference',
     download: 'Download as PDF',
     downloadNote: 'Prototype: no file is generated.',
+    downloadToast: 'The prototype does not generate a PDF yet.',
     overdueTitle: 'Overdue',
     overdueBody:
       'This invoice was due on {date}. If you have already paid, please disregard this.',
@@ -166,6 +169,25 @@ export const accountEn: typeof accountDe = {
     bathrooms: '{n} bathrooms',
     area: '{n} m²',
     addAction: 'Add a property',
+    addDone: 'Property saved.',
+    newTitle: 'Add a property',
+    newLead: 'We need these details for the quote. You can change them later.',
+    newLabel: 'Name',
+    newLabelHint: 'e.g. Flat in Küsnacht',
+    newKind: 'Type',
+    newStreet: 'Street and number',
+    newPostcode: 'Postcode',
+    newCity: 'Town',
+    newArea: 'Area in m²',
+    newRooms: 'Rooms',
+    newBathrooms: 'Bathrooms',
+    newSave: 'Save the property',
+    dismiss: 'Never mind',
+    kinds: {
+      apartment: 'Flat',
+      house: 'House',
+      office: 'Office',
+    },
     emptyTitle: 'No property yet',
     emptyBody:
       'We add the property automatically with your first job. You can also enter one now.',
@@ -193,6 +215,16 @@ export const accountEn: typeof accountDe = {
       'other-person': 'Somebody else opens up',
     },
     accessEdit: 'Edit access',
+    accessMethodLabel: 'How we get in',
+    accessKeyLocationLabel: 'Where the key is',
+    accessBoxLocationLabel: 'Where the safe is',
+    accessPersonLabel: 'Who opens up',
+    accessPhoneLabel: 'Their phone number',
+    accessCodeNote:
+      'We do not take codes here — we go through those by phone and store them encrypted.',
+    accessSave: 'Save access',
+    accessSaved: 'Access saved.',
+    dismiss: 'Never mind',
     accessWhoTitle: 'Who sees this',
     accessWho:
       'The owner at any time. The person doing the work only on the day, and only for that job.',

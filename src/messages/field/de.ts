@@ -6,6 +6,9 @@ export const fieldDe = {
     gateBody:
       'Diese Ansicht ist für die ausführende Person. Wechseln Sie unten rechts die Rolle auf «Mitarbeitende:r».',
     gateCurrent: 'Aktuelle Rolle: {role}',
+    gateHome: 'Zur Startseite',
+    jobsLink: 'Zu den Einsätzen',
+    exit: 'Homivaro-Website öffnen',
     desktopNote:
       'Diese Ansicht ist für das Mobiltelefon gebaut. Am Bildschirm sehen Sie sie in Handybreite.',
   },

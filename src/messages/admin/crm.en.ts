@@ -76,8 +76,16 @@ export const adminCrmEn: typeof adminCrmDe = {
     colStatus: 'Status',
     held: 'Held',
     returned: 'Returned',
+    colAction: 'Return',
     returnAction: 'Record return',
+    returnDone: 'Return recorded.',
     addAction: 'Record a key',
+    addDone: 'Key recorded.',
+    newTitle: 'Take a key in',
+    newPropertyPlaceholder: 'Choose a property …',
+    newStorageHint: 'e.g. safe, slot 3',
+    newSave: 'Record the handover',
+    dismiss: 'Never mind',
     emptyTitle: 'No key held',
     emptyBody:
       'When you take a customer key permanently it is recorded here with the date, the person and where it is kept.',
@@ -93,6 +101,17 @@ export const adminCrmEn: typeof adminCrmDe = {
     colStatus: 'Status',
     addAction: 'Add a plan manually',
     addHint: 'For customers you agreed with outside the system.',
+    addDone: 'Plan created.',
+    newTitle: 'Add a plan',
+    newCustomerPlaceholder: 'Choose a customer …',
+    newService: 'Service',
+    newServicePlaceholder: 'Choose a service …',
+    newPropertyNote:
+      'The property is taken from the customer account. If they have several, change it on the plan afterwards.',
+    newNoCustomers:
+      'No customer has a property on file yet. A plan needs one — add it on the customer first.',
+    newSave: 'Create the plan',
+    dismiss: 'Never mind',
     emptyTitle: 'No plans yet',
     emptyBody:
       'Plans come from a request that asked for one, or are added here by hand.',
@@ -195,6 +214,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     cancelConfirmAction: 'Record the cancellation',
     cancelDone: 'Invoice cancelled.',
     cancelledNote: 'Cancelled: {reason}',
+    bookingLink: 'Go to the job',
+    subscriptionLink: 'Go to the plan',
     dismiss: 'Never mind',
   },
 };

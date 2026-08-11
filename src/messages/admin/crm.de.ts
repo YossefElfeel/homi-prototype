@@ -80,8 +80,16 @@ export const adminCrmDe = {
     colStatus: 'Status',
     held: 'In Aufbewahrung',
     returned: 'Zurückgegeben',
+    colAction: 'Rückgabe',
     returnAction: 'Rückgabe erfassen',
+    returnDone: 'Rückgabe erfasst.',
     addAction: 'Schlüssel erfassen',
+    addDone: 'Schlüssel erfasst.',
+    newTitle: 'Schlüssel übernehmen',
+    newPropertyPlaceholder: 'Objekt wählen …',
+    newStorageHint: 'z. B. Tresor, Fach 3',
+    newSave: 'Übernahme erfassen',
+    dismiss: 'Abbrechen',
     emptyTitle: 'Kein Schlüssel in Aufbewahrung',
     emptyBody:
       'Sobald Sie einen Kundenschlüssel dauerhaft übernehmen, wird er hier mit Datum, Person und Aufbewahrungsort erfasst.',
@@ -97,6 +105,17 @@ export const adminCrmDe = {
     colStatus: 'Status',
     addAction: 'Abo manuell anlegen',
     addHint: 'Für Kundschaft, mit der Sie sich ausserhalb des Systems geeinigt haben.',
+    addDone: 'Abo angelegt.',
+    newTitle: 'Abo anlegen',
+    newCustomerPlaceholder: 'Kunde wählen …',
+    newService: 'Leistung',
+    newServicePlaceholder: 'Leistung wählen …',
+    newPropertyNote:
+      'Das Objekt wird vom Kundenkonto übernommen. Hat der Kunde mehrere, ändern Sie es danach im Abo.',
+    newNoCustomers:
+      'Noch kein Kunde mit hinterlegtem Objekt. Ein Abo braucht ein Objekt — legen Sie es zuerst beim Kunden an.',
+    newSave: 'Abo anlegen',
+    dismiss: 'Abbrechen',
     emptyTitle: 'Noch keine Abos',
     emptyBody:
       'Abos entstehen aus einer Anfrage mit Abo-Wunsch oder werden hier manuell angelegt.',
@@ -199,6 +218,8 @@ export const adminCrmDe = {
     cancelConfirmAction: 'Stornierung erfassen',
     cancelDone: 'Rechnung storniert.',
     cancelledNote: 'Storniert: {reason}',
+    bookingLink: 'Zum Einsatz',
+    subscriptionLink: 'Zum Abo',
     dismiss: 'Abbrechen',
   },
 };

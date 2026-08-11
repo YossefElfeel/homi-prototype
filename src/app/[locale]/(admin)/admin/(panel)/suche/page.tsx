@@ -91,7 +91,7 @@ export default function AdminSearchPage() {
           id: o.id,
           title: o.reference,
           detail: request ? customerName(request.customerId) : '—',
-          href: `/admin/offerten/${o.id}`,
+          href: `/offerte/${o.id}`,
         });
       }
     }

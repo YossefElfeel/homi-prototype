@@ -40,6 +40,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const properties = useStore((s) => s.data.properties);
   const offers = useStore((s) => s.data.offers);
   const team = useStore((s) => s.data.team);
+  const invoices = useStore((s) => s.data.invoices);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const patchData = useStore((s) => s.patchData);
@@ -60,6 +61,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const service = services.find((s) => s.slug === booking.serviceSlug)!;
   const offer = offers.find((o) => o.id === booking.offerId);
   const assignee = team.find((m) => m.id === booking.assigneeId);
+  const invoice = invoices.find((i) => i.bookingId === booking.id);
 
   const start = new Date(booking.start);
   const access = property.access;
@@ -175,8 +177,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <section>
             <h2 className="display-type text-xl">{t('historyTitle')}</h2>
             <ol className="mt-4 space-y-3 border-l border-line-subtle pl-4">
-              {booking.history.map((entry) => (
-                <li key={entry.at} className="relative text-sm">
+              {booking.history.map((entry, index) => (
+                // Not keyed on `at` alone: two actions inside one 30s tick of
+                // `useNow` share a timestamp.
+                <li key={`${entry.at}-${index}`} className="relative text-sm">
                   <span
                     aria-hidden
                     className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full bg-line"
@@ -192,26 +196,54 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <aside className="space-y-6 lg:col-span-5">
+          {/*
+            This card used to be plain text. A job touches a customer, a
+            property, a quote and often an invoice — all four have detail
+            screens, and none of them was reachable from here.
+          */}
           <div className="surface-card p-5">
             <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
-            <p className="mt-2 font-medium">
+            <Link
+              href={`/admin/kunden/${customer.id}`}
+              className="mt-2 block font-medium underline decoration-from-font underline-offset-4"
+            >
               {customer.firstName} {customer.lastName}
-            </p>
+            </Link>
             <p data-numeric className="text-sm text-ink-secondary">
               {customer.phone}
             </p>
             <h3 className="label-type mt-5 text-ink-tertiary">{t('propertyTitle')}</h3>
-            <p className="mt-1 text-sm text-ink-secondary">
+            <Link
+              href={`/admin/objekte/${property.id}`}
+              className="mt-1 block text-sm text-ink-secondary underline decoration-from-font underline-offset-4"
+            >
               {property.street}, <span data-numeric>{property.postcode}</span>{' '}
               {property.city}
-            </p>
+            </Link>
             <p className="mt-1 text-sm text-ink-tertiary">{service.name[locale]}</p>
 
             {offer && (
-              <p className="mt-5 flex items-baseline justify-between gap-4 border-t border-line-subtle pt-4">
-                <span className="text-sm text-ink-secondary">{t('amountTitle')}</span>
-                <Money amount={offerTotal(offer)} emphasis="strong" />
-              </p>
+              <>
+                <p className="mt-5 flex items-baseline justify-between gap-4 border-t border-line-subtle pt-4">
+                  <span className="text-sm text-ink-secondary">{t('amountTitle')}</span>
+                  <Money amount={offerTotal(offer)} emphasis="strong" />
+                </p>
+                <Link
+                  href={`/offerte/${offer.id}`}
+                  className="mt-2 block text-sm underline decoration-from-font underline-offset-4"
+                >
+                  {t('offerLink')}
+                </Link>
+              </>
+            )}
+
+            {invoice && (
+              <Link
+                href={`/admin/rechnungen/${invoice.id}`}
+                className="mt-2 block text-sm underline decoration-from-font underline-offset-4"
+              >
+                {t('invoiceLink', { reference: invoice.reference })}
+              </Link>
             )}
           </div>
 

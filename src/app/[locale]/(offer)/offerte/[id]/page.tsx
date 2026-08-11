@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { ArrowRight, Check, Download, Info, ShieldCheck } from 'lucide-react';
 
@@ -267,7 +268,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                 <Button
                   variant="link"
                   title={t('downloadNote')}
-                  onClick={() => window.alert(t('downloadNote'))}
+                  onClick={() => toast.info(t('downloadNote'))}
                 >
                   <Download className="size-4" aria-hidden />
                   {t('downloadPdf')}

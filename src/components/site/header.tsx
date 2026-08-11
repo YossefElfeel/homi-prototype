@@ -74,6 +74,15 @@ export function SiteHeader() {
 
           <LocaleSwitcher />
 
+          {/* Neither the header nor the footer linked to sign-in, so /anmelden
+              and /passwort formed an island you could only reach by URL. */}
+          <Link
+            href="/anmelden"
+            className="hidden rounded-[var(--radius-sm)] px-3 py-2 text-sm text-ink-secondary transition-colors hover:text-ink sm:inline-flex"
+          >
+            {t('login')}
+          </Link>
+
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link href="/anfrage">{t('requestQuote')}</Link>
           </Button>

@@ -102,9 +102,38 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         </h1>
         <StatusBadge entity="invoice" state={invoice.status} />
       </div>
+      {/* Was plain text — an invoice detail with no route to the customer it
+          bills or the job it came from. */}
       <p className="mt-2 text-ink-secondary">
-        {customer.firstName} {customer.lastName} ·{' '}
-        <span data-numeric>{format.dateTime(new Date(invoice.issuedAt), 'full')}</span>
+        <Link
+          href={`/admin/kunden/${customer.id}`}
+          className="underline decoration-from-font underline-offset-4"
+        >
+          {customer.firstName} {customer.lastName}
+        </Link>{' '}
+        · <span data-numeric>{format.dateTime(new Date(invoice.issuedAt), 'full')}</span>
+        {invoice.bookingId && (
+          <>
+            {' · '}
+            <Link
+              href={`/admin/kalender/${invoice.bookingId}`}
+              className="underline decoration-from-font underline-offset-4"
+            >
+              {t('bookingLink')}
+            </Link>
+          </>
+        )}
+        {invoice.subscriptionId && (
+          <>
+            {' · '}
+            <Link
+              href={`/admin/abos/${invoice.subscriptionId}`}
+              className="underline decoration-from-font underline-offset-4"
+            >
+              {t('subscriptionLink')}
+            </Link>
+          </>
+        )}
       </p>
 
       {isDraft && (

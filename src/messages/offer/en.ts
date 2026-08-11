@@ -139,6 +139,7 @@ export const offerEn: typeof offerDe = {
     holdBody: '{time} left. After that we release it.',
     holdLostTitle: 'The slot has been released',
     holdLostBody: 'Pick a new one — usually the same time is still free.',
+    pickNewSlot: 'Choose a new slot',
     retry: 'Try again',
     otherMethod: 'Different payment method',
     help: 'Still not working? Call us on {phone}',
