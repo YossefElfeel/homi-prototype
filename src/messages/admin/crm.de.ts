@@ -112,6 +112,8 @@ export const adminCrmDe = {
     newServicePlaceholder: 'Leistung wählen …',
     newPropertyNote:
       'Das Objekt wird vom Kundenkonto übernommen. Hat der Kunde mehrere, ändern Sie es danach im Abo.',
+    newNoCustomers:
+      'Noch kein Kunde mit hinterlegtem Objekt. Ein Abo braucht ein Objekt — legen Sie es zuerst beim Kunden an.',
     newSave: 'Abo anlegen',
     dismiss: 'Abbrechen',
     emptyTitle: 'Noch keine Abos',

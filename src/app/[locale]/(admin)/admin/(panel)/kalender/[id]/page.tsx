@@ -175,8 +175,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <section>
             <h2 className="display-type text-xl">{t('historyTitle')}</h2>
             <ol className="mt-4 space-y-3 border-l border-line-subtle pl-4">
-              {booking.history.map((entry) => (
-                <li key={entry.at} className="relative text-sm">
+              {booking.history.map((entry, index) => (
+                // Not keyed on `at` alone: two actions inside one 30s tick of
+                // `useNow` share a timestamp.
+                <li key={`${entry.at}-${index}`} className="relative text-sm">
                   <span
                     aria-hidden
                     className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full bg-line"

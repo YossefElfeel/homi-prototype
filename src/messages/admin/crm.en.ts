@@ -108,6 +108,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     newServicePlaceholder: 'Choose a service …',
     newPropertyNote:
       'The property is taken from the customer account. If they have several, change it on the plan afterwards.',
+    newNoCustomers:
+      'No customer has a property on file yet. A plan needs one — add it on the customer first.',
     newSave: 'Create the plan',
     dismiss: 'Never mind',
     emptyTitle: 'No plans yet',

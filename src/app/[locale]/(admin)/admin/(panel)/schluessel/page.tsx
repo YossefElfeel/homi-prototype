@@ -166,7 +166,9 @@ export default function KeyLogPage() {
               keyLog: [
                 ...keyLog,
                 {
-                  id: `key_${now.getTime()}`,
+                  // Length first: `now` only ticks every 30s, so a bare
+                  // timestamp collides for two keys added in one sitting.
+                  id: `key_${keyLog.length}_${now.getTime().toString(36).slice(-4)}`,
                   propertyId,
                   receivedAt: now.toISOString(),
                   receivedBy: String(form.get('receivedBy') ?? ''),

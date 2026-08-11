@@ -43,6 +43,10 @@ export default function SubscriptionsPage() {
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
+  const eligibleCustomers = customers.filter((c) =>
+    properties.some((p) => p.customerId === c.id),
+  );
+
   const nextVisit = (sub: Subscription) => {
     for (let i = 0; i < 30; i += 1) {
       const jobs = bookingsOnDay(addDays(startOfDay(now), i), bookings).filter(
@@ -126,7 +130,9 @@ export default function SubscriptionsPage() {
             const property = properties.find((p) => p.customerId === customerId);
             if (!customerId || !property) return;
 
-            const id = `sub_${now.getTime()}`;
+            // Length first: `now` only ticks every 30s, so a bare timestamp
+            // collides for two plans added in one sitting.
+            const id = `sub_${subscriptions.length}_${now.getTime().toString(36).slice(-4)}`;
             const year = new Date(now);
             year.setFullYear(year.getFullYear() + 1);
             const nextCharge = new Date(now);
@@ -163,7 +169,12 @@ export default function SubscriptionsPage() {
                   <option value="" disabled>
                     {t('newCustomerPlaceholder')}
                   </option>
-                  {customers.map((c) => (
+                  {/*
+                    Only customers who have a property. A plan needs one, and
+                    offering a customer who has none would let the form submit
+                    into silence — the exact failure this wave exists to remove.
+                  */}
+                  {eligibleCustomers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.firstName} {c.lastName}
                     </option>
@@ -197,9 +208,13 @@ export default function SubscriptionsPage() {
               )}
             </Field>
           </div>
-          <p className="mt-4 text-sm text-ink-tertiary">{t('newPropertyNote')}</p>
+          <p className="mt-4 text-sm text-ink-tertiary">
+            {eligibleCustomers.length === 0 ? t('newNoCustomers') : t('newPropertyNote')}
+          </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button type="submit">{t('newSave')}</Button>
+            <Button type="submit" disabled={eligibleCustomers.length === 0}>
+              {t('newSave')}
+            </Button>
             <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
               {t('dismiss')}
             </Button>

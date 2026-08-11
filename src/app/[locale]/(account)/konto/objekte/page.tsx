@@ -49,7 +49,9 @@ export default function AccountPropertiesPage() {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
             const num = (key: string) => Number(form.get(key) ?? 0);
-            const id = `prp_${now.getTime()}`;
+            // Length first: `now` only ticks every 30s, so a bare timestamp
+            // collides for two properties added in one sitting.
+            const id = `prp_${allProperties.length}_${now.getTime().toString(36).slice(-4)}`;
             /*
              * Same field set the booking wizard builds in `submitDraft`, so a
              * property added by hand is indistinguishable from one that came
