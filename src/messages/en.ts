@@ -106,6 +106,7 @@ export const en: Messages = {
       completed: 'Completed',
       invoiced: 'Invoiced',
       closed: 'Closed',
+      cancelled: 'Cancelled',
     },
     subscription: {
       active: 'Active',

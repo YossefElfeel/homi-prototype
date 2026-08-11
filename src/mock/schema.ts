@@ -288,7 +288,9 @@ export type BookingStatus =
   | 'awaitingApproval'
   | 'completed'
   | 'invoiced'
-  | 'closed';
+  | 'closed'
+  /** Called off by the company. `closed` means finished, which is not this. */
+  | 'cancelled';
 
 export interface Booking {
   id: ID;

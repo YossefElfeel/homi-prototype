@@ -1,14 +1,17 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { AlertTriangle, ArrowLeft, Lock, SkipForward } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Lock, Pause, Play, SkipForward } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Textarea } from '@/components/ui/field';
+import { Field, Select, Textarea } from '@/components/ui/field';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import type { PlanTier } from '@/mock/schema';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 const FREQUENCY: Record<string, string> = {
@@ -40,6 +43,9 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
   const data = useStore((s) => s.data);
   const patchData = useStore((s) => s.patchData);
 
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [changingPlan, setChangingPlan] = useState(false);
+
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
   const sub = subscriptions.find((s) => s.id === id);
@@ -54,13 +60,25 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
   const past = visits.filter((v) => new Date(v.start) < now);
   const skipsLeft = Math.max(0, settings.monthlyFreeSkips - sub.skipsUsedThisMonth);
 
-  function setNotes(notes: string) {
+  /**
+   * There is no per-entity store action for subscriptions — `patchData` is the
+   * escape hatch the customer side already uses (konto/abo). Everything on this
+   * screen writes through here so the list, the badge and the banners all read
+   * the same record.
+   */
+  function patchSub(patch: Partial<typeof sub>) {
     patchData({
       subscriptions: data.subscriptions.map((s) =>
-        s.id === sub!.id ? { ...s, internalNotes: notes } : s,
+        s.id === sub!.id ? { ...s, ...patch } : s,
       ),
     });
   }
+
+  const setNotes = (notes: string) => patchSub({ internalNotes: notes });
+
+  const paused = sub.status === 'paused';
+  /** A cancellation already filed, or a dead plan, closes every other action. */
+  const settled = sub.status === 'cancellationPending' || sub.status === 'cancelled';
 
   return (
     <div className="max-w-5xl">
@@ -83,7 +101,7 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
           href={`/admin/kunden/${customer.id}`}
           className="underline decoration-from-font underline-offset-4"
         >
-          {t('back')}
+          {t('viewCustomer')}
         </Link>
       </p>
 
@@ -215,7 +233,16 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
             <p data-numeric className="mt-2 text-sm text-ink-secondary">
               {skipsLeft > 0 ? t('skipRemaining', { n: skipsLeft }) : t('skipNone')}
             </p>
-            <Button variant="secondary" size="sm" className="mt-4" disabled={skipsLeft === 0}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-4"
+              disabled={skipsLeft === 0 || paused || settled}
+              onClick={() => {
+                patchSub({ skipsUsedThisMonth: sub.skipsUsedThisMonth + 1 });
+                toast.success(t('skipDone'));
+              }}
+            >
               <SkipForward className="size-3.5" aria-hidden />
               {t('skipAction')}
             </Button>
@@ -224,15 +251,87 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
           <div>
             <h2 className="label-type text-ink-tertiary">{t('actionsTitle')}</h2>
             <div className="mt-3 space-y-2">
-              <Button variant="secondary" block>
-                {t('changePlan')}
+              {changingPlan ? (
+                <div className="surface-card space-y-3 p-4">
+                  <Field label={t('changePlanLabel')}>
+                    {(props) => (
+                      <Select
+                        {...props}
+                        defaultValue={sub.plan}
+                        onChange={(e) => {
+                          patchSub({ plan: e.target.value as PlanTier });
+                          setChangingPlan(false);
+                          toast.success(t('planChanged'));
+                        }}
+                      >
+                        {(['basic', 'premium', 'vip'] as PlanTier[]).map((tier) => (
+                          <option key={tier} value={tier}>
+                            {t(`plans.${tier}`)}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  <Button variant="ghost" size="sm" onClick={() => setChangingPlan(false)}>
+                    {t('dismiss')}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="secondary"
+                  block
+                  disabled={settled}
+                  onClick={() => setChangingPlan(true)}
+                >
+                  {t('changePlan')}
+                </Button>
+              )}
+
+              <Button
+                variant="secondary"
+                block
+                disabled={settled}
+                onClick={() => {
+                  patchSub({ status: paused ? 'active' : 'paused' });
+                  toast.success(paused ? t('resumeDone') : t('pauseDone'));
+                }}
+              >
+                {paused ? (
+                  <Play className="size-4" aria-hidden />
+                ) : (
+                  <Pause className="size-4" aria-hidden />
+                )}
+                {paused ? t('resume') : t('pause')}
               </Button>
-              <Button variant="secondary" block>
-                {t('pause')}
-              </Button>
-              <Button variant="danger" block>
-                {t('cancel')}
-              </Button>
+
+              {confirmingCancel ? (
+                <ConfirmPanel
+                  title={t('cancelConfirmTitle')}
+                  body={t('cancelConfirmBody', {
+                    date: format.dateTime(new Date(sub.commitmentEndsAt), 'full'),
+                  })}
+                  action={t('cancelConfirmAction')}
+                  dismiss={t('dismiss')}
+                  onConfirm={() => {
+                    patchSub({
+                      status: 'cancellationPending',
+                      cancellationRequestedAt: now.toISOString(),
+                    });
+                    setConfirmingCancel(false);
+                    toast.success(t('cancelDone'));
+                  }}
+                  onDismiss={() => setConfirmingCancel(false)}
+                />
+              ) : (
+                <Button
+                  variant="danger"
+                  block
+                  disabled={settled}
+                  onClick={() => setConfirmingCancel(true)}
+                >
+                  {t('cancel')}
+                </Button>
+              )}
             </div>
           </div>
 
