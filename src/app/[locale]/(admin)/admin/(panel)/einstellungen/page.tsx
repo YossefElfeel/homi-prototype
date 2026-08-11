@@ -85,8 +85,23 @@ export default function AdminSettingsPage({
         {tabs.map((item) => (
           <button
             key={item.id}
+            type="button"
             role="tab"
+            id={`settings-tab-${item.id}`}
             aria-selected={tab === item.id}
+            aria-controls="settings-panel"
+            // Roving tabIndex plus arrow keys — the half of the tab contract
+            // that `role="tab"` alone was promising and not delivering.
+            tabIndex={tab === item.id ? 0 : -1}
+            onKeyDown={(e) => {
+              const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+              if (delta === 0) return;
+              e.preventDefault();
+              const ids = tabs.map((x) => x.id);
+              const next = ids[(ids.indexOf(item.id) + delta + ids.length) % ids.length]!;
+              setTab(next);
+              document.getElementById(`settings-tab-${next}`)?.focus();
+            }}
             onClick={() => setTab(item.id)}
             className={cn(
               'rounded-[var(--radius-sm)] px-3 py-2 text-sm transition-colors',
@@ -100,6 +115,12 @@ export default function AdminSettingsPage({
         ))}
       </div>
 
+      <div
+        id="settings-panel"
+        role="tabpanel"
+        aria-labelledby={`settings-tab-${tab}`}
+        tabIndex={0}
+      >
       {tab === 'regions' && (
         <section className="mt-8">
           <h2 className="display-type text-xl">{t('regionsTitle')}</h2>
@@ -486,6 +507,7 @@ export default function AdminSettingsPage({
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }
