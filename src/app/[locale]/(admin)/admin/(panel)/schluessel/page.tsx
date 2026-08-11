@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { KeyRound, Plus, ShieldAlert } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useHydrated, useStore } from '@/mock/store';
+import { Field, Input, Select } from '@/components/ui/field';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { KeyLogEntry } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
@@ -32,6 +35,10 @@ export default function KeyLogPage() {
   const properties = useStore((s) => s.data.properties);
   const customers = useStore((s) => s.data.customers);
   const settings = useStore((s) => s.settings);
+  const patchData = useStore((s) => s.patchData);
+  const now = useNow();
+
+  const [adding, setAdding] = useState(false);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -102,6 +109,36 @@ export default function KeyLogPage() {
       header: t('colStorage'),
       cell: (k) => <span className="text-ink-secondary">{k.storageLocation}</span>,
     },
+    {
+      key: 'action',
+      header: t('colAction'),
+      align: 'end',
+      // Safe because this DataView passes no `onSelect` — with one, the mobile
+      // branch wraps the whole card in a <button> and this would nest controls.
+      cell: (k) =>
+        k.status === 'held' ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              patchData({
+                keyLog: keyLog.map((entry) =>
+                  entry.id === k.id
+                    ? { ...entry, status: 'returned' as const, returnedAt: now.toISOString() }
+                    : entry,
+                ),
+              });
+              toast.success(t('returnDone'));
+            }}
+          >
+            {t('returnAction')}
+          </Button>
+        ) : (
+          <span data-numeric className="text-sm text-ink-tertiary">
+            {k.returnedAt ? format.dateTime(new Date(k.returnedAt), 'short') : '—'}
+          </span>
+        ),
+    },
   ];
 
   return (
@@ -111,11 +148,68 @@ export default function KeyLogPage() {
           <h1 className="display-type text-3xl">{t('title')}</h1>
           <p className="mt-2 text-ink-secondary">{t('lead')}</p>
         </div>
-        <Button size="sm">
+        <Button size="sm" disabled={adding} onClick={() => setAdding(true)}>
           <Plus className="size-3.5" aria-hidden />
           {t('addAction')}
         </Button>
       </div>
+
+      {adding && (
+        <form
+          className="surface-card mt-8 p-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = new FormData(e.currentTarget);
+            const propertyId = String(form.get('propertyId') ?? '');
+            if (!propertyId) return;
+            patchData({
+              keyLog: [
+                ...keyLog,
+                {
+                  id: `key_${now.getTime()}`,
+                  propertyId,
+                  receivedAt: now.toISOString(),
+                  receivedBy: String(form.get('receivedBy') ?? ''),
+                  storageLocation: String(form.get('storageLocation') ?? ''),
+                  status: 'held',
+                },
+              ],
+            });
+            setAdding(false);
+            toast.success(t('addDone'));
+          }}
+        >
+          <h2 className="display-type text-xl">{t('newTitle')}</h2>
+          <div className="mt-5 grid gap-5 sm:grid-cols-3">
+            <Field label={t('colProperty')}>
+              {(props) => (
+                <Select {...props} name="propertyId" required defaultValue="">
+                  <option value="" disabled>
+                    {t('newPropertyPlaceholder')}
+                  </option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label} — {p.street}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <Field label={t('colBy')}>
+              {(props) => <Input {...props} name="receivedBy" required />}
+            </Field>
+            <Field label={t('colStorage')} hint={t('newStorageHint')}>
+              {(props) => <Input {...props} name="storageLocation" required />}
+            </Field>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button type="submit">{t('newSave')}</Button>
+            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
+              {t('dismiss')}
+            </Button>
+          </div>
+        </form>
+      )}
 
       <DataView
         className="mt-8"

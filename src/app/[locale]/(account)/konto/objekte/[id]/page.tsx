@@ -1,17 +1,26 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { ArrowLeft, Eye, KeyRound, Pencil } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
+import type { AccessMethod } from '@/mock/schema';
 import { Button } from '@/components/ui/button';
-import { Field, Textarea } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
+
+const ACCESS_METHODS: AccessMethod[] = [
+  'customer-present',
+  'key-left',
+  'key-box',
+  'other-person',
+];
 
 /**
  * Screen 42 — one property.
@@ -37,6 +46,8 @@ export default function AccountPropertyPage({
   const services = useStore((s) => s.services);
   const patchData = useStore((s) => s.patchData);
   const allProperties = useStore((s) => s.data.properties);
+
+  const [editingAccess, setEditingAccess] = useState(false);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -97,6 +108,18 @@ export default function AccountPropertyPage({
         {property.access ? (
           <p className="mt-4 text-sm">
             {t(`method.${property.access.method}` as 'method.key-box')}
+            {property.access.keyLocation && (
+              <span className="block text-ink-secondary">{property.access.keyLocation}</span>
+            )}
+            {property.access.boxLocation && (
+              <span className="block text-ink-secondary">{property.access.boxLocation}</span>
+            )}
+            {property.access.personName && (
+              <span className="block text-ink-secondary">
+                {property.access.personName}
+                {property.access.personPhone ? ` · ${property.access.personPhone}` : ''}
+              </span>
+            )}
           </p>
         ) : (
           <p className="mt-4 text-sm text-ink-tertiary">{t('accessNone')}</p>
@@ -112,10 +135,124 @@ export default function AccountPropertyPage({
           </div>
         </div>
 
-        <Button variant="secondary" size="sm" className="mt-5">
-          <Pencil className="size-3.5" aria-hidden />
-          {t('accessEdit')}
-        </Button>
+        {editingAccess ? (
+          <form
+            className="mt-5 border-t border-line-subtle pt-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const form = new FormData(e.currentTarget);
+              const method = String(form.get('method') ?? 'customer-present') as AccessMethod;
+              const text = (key: string) => {
+                const value = String(form.get(key) ?? '').trim();
+                return value === '' ? undefined : value;
+              };
+              /*
+               * Codes are deliberately absent. `canSeeAccessCodes` returns false
+               * for the customer role, and the paragraph above this block
+               * promises exactly that — offering the field here would break the
+               * promise on the screen that makes it.
+               */
+              patchData({
+                properties: allProperties.map((p) =>
+                  p.id === property.id
+                    ? {
+                        ...p,
+                        access: {
+                          ...p.access,
+                          method,
+                          keyLocation: text('keyLocation'),
+                          boxLocation: text('boxLocation'),
+                          personName: text('personName'),
+                          personPhone: text('personPhone'),
+                        },
+                      }
+                    : p,
+                ),
+              });
+              setEditingAccess(false);
+              toast.success(t('accessSaved'));
+            }}
+          >
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label={t('accessMethodLabel')} className="sm:col-span-2">
+                {(props) => (
+                  <Select
+                    {...props}
+                    name="method"
+                    defaultValue={property.access?.method ?? 'customer-present'}
+                  >
+                    {ACCESS_METHODS.map((method) => (
+                      <option key={method} value={method}>
+                        {t(`method.${method}` as 'method.key-box')}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <Field label={t('accessKeyLocationLabel')} optional>
+                {(props) => (
+                  <Input
+                    {...props}
+                    name="keyLocation"
+                    defaultValue={property.access?.keyLocation ?? ''}
+                  />
+                )}
+              </Field>
+              <Field label={t('accessBoxLocationLabel')} optional>
+                {(props) => (
+                  <Input
+                    {...props}
+                    name="boxLocation"
+                    defaultValue={property.access?.boxLocation ?? ''}
+                  />
+                )}
+              </Field>
+              <Field label={t('accessPersonLabel')} optional>
+                {(props) => (
+                  <Input
+                    {...props}
+                    name="personName"
+                    defaultValue={property.access?.personName ?? ''}
+                  />
+                )}
+              </Field>
+              <Field label={t('accessPhoneLabel')} optional>
+                {(props) => (
+                  <Input
+                    {...props}
+                    name="personPhone"
+                    type="tel"
+                    defaultValue={property.access?.personPhone ?? ''}
+                  />
+                )}
+              </Field>
+            </div>
+            <p className="mt-4 text-sm text-ink-tertiary">{t('accessCodeNote')}</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button type="submit" size="sm">
+                {t('accessSave')}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingAccess(false)}
+              >
+                {t('dismiss')}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-5"
+            onClick={() => setEditingAccess(true)}
+          >
+            <Pencil className="size-3.5" aria-hidden />
+            {t('accessEdit')}
+          </Button>
+        )}
       </section>
 
       <Field label={t('notesTitle')} hint={t('notesHint')} className="mt-10">
