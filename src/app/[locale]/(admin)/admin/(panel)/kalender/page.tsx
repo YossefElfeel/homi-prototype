@@ -135,8 +135,23 @@ export default function CalendarPage({
           {(['day', 'week', 'month', 'agenda'] as const).map((value) => (
             <button
               key={value}
+              type="button"
               role="tab"
+              id={`calendar-tab-${value}`}
               aria-selected={view === value}
+              aria-controls="calendar-panel"
+              // Roving tabIndex: one stop for the whole strip, arrows move
+              // between the views — the tab contract this was missing.
+              tabIndex={view === value ? 0 : -1}
+              onKeyDown={(e) => {
+                const views = ['day', 'week', 'month', 'agenda'] as const;
+                const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+                if (delta === 0) return;
+                e.preventDefault();
+                const next = views[(views.indexOf(value) + delta + views.length) % views.length]!;
+                setView(next);
+                document.getElementById(`calendar-tab-${next}`)?.focus();
+              }}
               onClick={() => setView(value)}
               className={cn(
                 'rounded-[var(--radius-sm)] px-3 py-2 text-sm transition-colors',
@@ -175,6 +190,12 @@ export default function CalendarPage({
         </ul>
       )}
 
+      <div
+        id="calendar-panel"
+        role="tabpanel"
+        aria-labelledby={`calendar-tab-${view}`}
+        tabIndex={0}
+      >
       {view === 'day' && (
         <section className="mt-8">
           <p data-numeric className="label-type text-ink-tertiary">
@@ -373,6 +394,7 @@ export default function CalendarPage({
           })()}
         </section>
       )}
+      </div>
     </div>
   );
 }

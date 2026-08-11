@@ -39,6 +39,7 @@ export function DataView<T>({
   onSelect,
   empty,
   caption,
+  openLabel,
   className,
 }: {
   items: T[];
@@ -47,6 +48,12 @@ export function DataView<T>({
   onSelect?: (item: T) => void;
   empty: React.ReactNode;
   caption?: string;
+  /**
+   * Header text for the open-row column, read only by screen readers. The
+   * row's own button already carries the item's name, so this is a refinement
+   * rather than the fix — omit it and the row is still reachable.
+   */
+  openLabel?: string;
   className?: string;
 }) {
   if (items.length === 0) return <>{empty}</>;
@@ -75,7 +82,11 @@ export function DataView<T>({
                 {column.header}
               </th>
             ))}
-            {onSelect && <th scope="col" className="w-10" />}
+            {onSelect && (
+              <th scope="col" className="w-10">
+                {openLabel && <span className="sr-only">{openLabel}</span>}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -85,17 +96,47 @@ export function DataView<T>({
               onClick={onSelect ? () => onSelect(item) : undefined}
               className={cn(
                 'border-b border-line-subtle',
-                onSelect && 'cursor-pointer transition-colors hover:bg-sunken',
+                onSelect &&
+                  'cursor-pointer transition-colors hover:bg-sunken has-[:focus-visible]:bg-sunken',
               )}
             >
-              {columns.map((column) => (
-                <td
-                  key={column.key}
-                  className={cn('py-3.5 pr-4', column.align === 'end' && 'text-right')}
-                >
-                  {column.cell(item)}
-                </td>
-              ))}
+              {columns.map((column) => {
+                const content = column.cell(item);
+                /*
+                 * The row keeps its click for pointer users, but the primary
+                 * cell carries a real <button> so the row is reachable by
+                 * keyboard and announced as one control by a screen reader.
+                 * At lg and up the table is the only rendering, so without
+                 * this the 14 list screens had no keyboard path into a row at
+                 * all. The mobile branch below already does exactly this.
+                 *
+                 * Not tabIndex + role="button" on the <tr>: that destroys
+                 * row/cell semantics and makes the whole row one control name.
+                 */
+                const isPrimary = onSelect && column.key === primary.key;
+
+                return (
+                  <td
+                    key={column.key}
+                    className={cn('py-3.5 pr-4', column.align === 'end' && 'text-right')}
+                  >
+                    {isPrimary ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(item);
+                        }}
+                        className="text-left rounded-[var(--radius-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                      >
+                        {content}
+                      </button>
+                    ) : (
+                      content
+                    )}
+                  </td>
+                );
+              })}
               {onSelect && (
                 <td className="py-3.5 text-right">
                   <ChevronRight className="ml-auto size-4 text-ink-tertiary" aria-hidden />

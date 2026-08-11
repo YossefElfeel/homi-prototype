@@ -152,12 +152,17 @@ export default function AdminApplicationsPage() {
         {t('lead')}
       </p>
 
-      <div role="tablist" aria-label={t('title')} className="mt-8 flex flex-wrap gap-1">
+      {/*
+        A filter, not a tab set: the markup below never changes, it just gets
+        fewer rows. role="tab" promises a tabpanel that does not exist, so a
+        screen reader announces a control that leads nowhere.
+      */}
+      <div role="group" aria-label={t('title')} className="mt-8 flex flex-wrap gap-1">
         {FILTERS.map((value) => (
           <button
             key={value}
-            role="tab"
-            aria-selected={filter === value}
+            type="button"
+            aria-pressed={filter === value}
             onClick={() => setFilter(value)}
             className={cn(
               'min-h-11 rounded-[var(--radius-sm)] px-3 text-sm transition-colors',
