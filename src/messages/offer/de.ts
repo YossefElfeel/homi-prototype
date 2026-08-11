@@ -150,6 +150,7 @@ export const offerDe = {
     holdBody: 'Noch {time}. Danach geben wir ihn wieder frei.',
     holdLostTitle: 'Der Termin wurde freigegeben',
     holdLostBody: 'Wählen Sie einen neuen Termin — meistens ist derselbe noch frei.',
+    pickNewSlot: 'Neuen Termin wählen',
     retry: 'Erneut versuchen',
     otherMethod: 'Anderes Zahlungsmittel',
     help: 'Klappt es nicht? Rufen Sie uns an: {phone}',

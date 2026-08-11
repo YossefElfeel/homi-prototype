@@ -13,6 +13,7 @@ export const accountEn: typeof accountDe = {
       credit: 'Hour credit',
       payment: 'Payment methods',
       photos: 'Before & after',
+      review: 'Leave a review',
       messages: 'Messages',
       profile: 'Profile',
     },
@@ -22,6 +23,7 @@ export const accountEn: typeof accountDe = {
     gateBody:
       'This view belongs to the customer account. Switch the role to “Customer” in the demo controls at the bottom right.',
     gateCurrent: 'Current role: {role}',
+    gateAction: 'Sign in',
   },
 
   signIn: {

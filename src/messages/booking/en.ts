@@ -33,6 +33,7 @@ export const bookingEn: typeof bookingDe = {
   service: {
     title: 'Which service do you need?',
     lead: 'One service per request. If you need two, send a second afterwards — that keeps each quote honestly costed.',
+    prefilled: 'We carried over what you picked on the previous page. You can change it here.',
     duration: 'Typically {from}–{to} hrs',
     durationUnit: 'By count',
     windowsLabel: 'How many window sashes?',
@@ -199,6 +200,8 @@ export const bookingEn: typeof bookingDe = {
     lead: 'We will come back within {hours} hours with a binding quote to {email}.',
     nextTitle: 'What happens next',
     whatsapp: 'Questions? Message us on WhatsApp',
+    activate: 'Activate your account',
+    activateHint: 'With a password you can see the quote, the appointment and the invoice any time.',
     track: 'Track this request',
     home: 'Back to the home page',
     outOfAreaTitle: 'Your postcode is outside the service area',

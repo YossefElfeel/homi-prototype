@@ -12,6 +12,7 @@ export const accountDe = {
       credit: 'Guthaben',
       payment: 'Zahlungsmittel',
       photos: 'Vorher / Nachher',
+      review: 'Bewertung abgeben',
       messages: 'Nachrichten',
       profile: 'Profil',
     },
@@ -21,6 +22,7 @@ export const accountDe = {
     gateBody:
       'Diese Ansicht gehört zum Kundenkonto. Wechseln Sie unten rechts in den Demo-Einstellungen die Rolle auf «Kundin».',
     gateCurrent: 'Aktuelle Rolle: {role}',
+    gateAction: 'Anmelden',
   },
 
   signIn: {

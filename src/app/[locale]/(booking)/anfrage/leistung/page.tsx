@@ -1,24 +1,81 @@
 'use client';
 
+import { use, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 
 import type { Locale } from '@/i18n/routing';
+import type { PlanTier } from '@/mock/schema';
 import { Money } from '@/components/ui/money';
 import { Field, Input } from '@/components/ui/field';
 import { BookingStep } from '@/components/booking/booking-step';
 import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid';
 import { durationRange } from '@/mock/engines/pricing';
-import { useStore } from '@/mock/store';
+import { useHydrated, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
+const PLANS: PlanTier[] = ['basic', 'premium', 'vip'];
+
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
-export default function ServiceStep() {
+export default function ServiceStep({
+  searchParams,
+}: {
+  searchParams: Promise<{ leistung?: string; abo?: string; plz?: string }>;
+}) {
+  const { leistung, abo, plz } = use(searchParams);
   const t = useTranslations('booking.service');
   const locale = useLocale() as Locale;
+  const hydrated = useHydrated();
   const draft = useStore((s) => s.draft);
   const services = useStore((s) => s.services);
   const updateDraft = useStore((s) => s.updateDraft);
+
+  /**
+   * Whether to announce the prefill. Derived once from the params themselves
+   * rather than set from the effect — the effect only writes, and calling
+   * setState inside one cascades renders.
+   */
+  const [prefilled] = useState(
+    () =>
+      Boolean(leistung && services.some((s) => s.slug === leistung && s.active)) ||
+      Boolean(plz && /^\d{4}$/.test(plz)) ||
+      Boolean(abo && PLANS.includes(abo as PlanTier)),
+  );
+  const applied = useRef(false);
+
+  /**
+   * Seed the draft from what the visitor clicked on the marketing site.
+   *
+   * Gated on `hydrated` because the persisted draft lands asynchronously and
+   * would overwrite an earlier write; guarded by a ref so coming back to this
+   * step later does not clobber edits made in between. Anything that does not
+   * validate is ignored rather than written — a bad link should start a blank
+   * wizard, not put junk in the draft.
+   */
+  useEffect(() => {
+    if (!hydrated || applied.current) return;
+    applied.current = true;
+
+    const patch: Parameters<typeof updateDraft>[0] = {};
+
+    const service = services.find((s) => s.slug === leistung && s.active);
+    if (service) {
+      patch.serviceSlug = service.slug;
+      // Same dependent resets the radio does — add-ons are service-scoped.
+      patch.addOnIds = [];
+      patch.windowCount = null;
+      patch.furniturePieces = null;
+    }
+    // A postcode the visitor typed beats one inferred from a region page.
+    if (plz && /^\d{4}$/.test(plz) && draft.property.postcode === '') {
+      patch.property = { ...draft.property, postcode: plz };
+    }
+    if (abo && PLANS.includes(abo as PlanTier) && draft.subscriptionIntent === null) {
+      patch.subscriptionIntent = abo as PlanTier;
+    }
+
+    if (Object.keys(patch).length > 0) updateDraft(patch);
+  }, [hydrated, leistung, abo, plz, services, draft.property, draft.subscriptionIntent, updateDraft]);
 
   const selected = services.find((s) => s.slug === draft.serviceSlug);
   const needsWindows = selected?.slug === 'fensterreinigung';
@@ -31,6 +88,14 @@ export default function ServiceStep() {
 
   return (
     <BookingStep step="leistung" title={t('title')} lead={t('lead')} canContinue={complete}>
+      {/* A silently pre-selected radio reads as a bug, so say it out loud. */}
+      {prefilled && (
+        <p className="mb-6 flex gap-2 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {t('prefilled')}
+        </p>
+      )}
+
       <fieldset>
         <legend className="sr-only">{t('title')}</legend>
         <ul className="grid gap-3 sm:grid-cols-2">

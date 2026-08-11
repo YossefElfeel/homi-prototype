@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Mail } from 'lucide-react';
 
@@ -16,7 +16,14 @@ import { Field, Input } from '@/components/ui/field';
  * whether a given person is a Homivaro customer, and in a small market where
  * neighbours know each other, that is information worth protecting.
  */
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ von?: string }>;
+}) {
+  const { von } = use(searchParams);
+  // Reached from admin sign-in as well, which has no reset screen of its own.
+  const backHref = von === 'admin' ? '/admin/anmelden' : '/anmelden';
   const t = useTranslations('account.reset');
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -24,7 +31,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="mx-auto max-w-md py-section">
       <Button asChild variant="link" className="mb-6">
-        <Link href="/anmelden">
+        <Link href={backHref}>
           <ArrowLeft className="size-4" aria-hidden />
           {t('back')}
         </Link>

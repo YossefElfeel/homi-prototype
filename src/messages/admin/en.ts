@@ -41,6 +41,8 @@ export const adminEn: typeof adminDe = {
     gateBody:
       'This view is restricted to the owner role. Switch role in the demo controls at the bottom right to see it.',
     gateCurrent: 'Current role: {role}',
+    gateSignIn: 'Sign in as the owner',
+    gateHome: 'Back to the site',
   },
 
   login: {
@@ -307,6 +309,8 @@ export const adminEn: typeof adminDe = {
       'The job counts as not delivered and {percent}% of the amount is charged. The customer receives the reason with a timestamp.',
     noAccessEvent: 'No access — {percent}% charged',
     noAccessDone: 'No access recorded.',
+    offerLink: 'View the quote',
+    invoiceLink: 'View invoice {reference}',
     historyTitle: 'History',
   },
 };

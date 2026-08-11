@@ -218,6 +218,8 @@ export const adminCrmDe = {
     cancelConfirmAction: 'Stornierung erfassen',
     cancelDone: 'Rechnung storniert.',
     cancelledNote: 'Storniert: {reason}',
+    bookingLink: 'Zum Einsatz',
+    subscriptionLink: 'Zum Abo',
     dismiss: 'Abbrechen',
   },
 };

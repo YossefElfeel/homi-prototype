@@ -38,6 +38,7 @@ export const bookingDe = {
   service: {
     title: 'Welche Leistung brauchen Sie?',
     lead: 'Eine Leistung pro Anfrage. Brauchen Sie zwei, senden Sie danach eine zweite — so bleibt jede Offerte sauber gerechnet.',
+    prefilled: 'Wir haben Ihre Auswahl von der vorherigen Seite übernommen. Sie können sie hier ändern.',
     duration: 'Typisch {from}–{to} Std.',
     durationUnit: 'Nach Anzahl',
     windowsLabel: 'Wie viele Fensterflügel?',
@@ -203,6 +204,8 @@ export const bookingDe = {
     lead: 'Wir melden uns innert {hours} Stunden mit einer verbindlichen Offerte an {email}.',
     nextTitle: 'Wie es weitergeht',
     whatsapp: 'Fragen? Schreiben Sie uns auf WhatsApp',
+    activate: 'Konto aktivieren',
+    activateHint: 'Mit einem Passwort sehen Sie Offerte, Termin und Rechnung jederzeit im Konto.',
     track: 'Anfrage verfolgen',
     home: 'Zur Startseite',
     outOfAreaTitle: 'Ihre PLZ liegt ausserhalb des Einsatzgebiets',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { use, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { AlertTriangle, ChevronLeft, ChevronRight, Map } from 'lucide-react';
@@ -34,7 +34,12 @@ type View = 'day' | 'week' | 'month' | 'agenda';
  * between them, the day says so rather than letting the owner discover it on
  * the road.
  */
-export default function CalendarPage() {
+export default function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string }>;
+}) {
+  const { tag } = use(searchParams);
   const t = useTranslations('admin.calendar');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -49,7 +54,12 @@ export default function CalendarPage() {
   const settings = useStore((s) => s.settings);
 
   const [view, setView] = useState<View>('day');
-  const [cursor, setCursor] = useState(() => startOfDay(now));
+  // `?tag` makes the calendar deep-linkable — a team member's job list links
+  // to the day it happens on. A lazy initialiser, not an effect: an effect
+  // would undo the "Today" button on every render.
+  const [cursor, setCursor] = useState(() =>
+    tag && /^\d{4}-\d{2}-\d{2}$/.test(tag) ? startOfDay(new Date(tag)) : startOfDay(now),
+  );
 
   const nameOf = (id: string) => {
     const c = customers.find((x) => x.id === id);

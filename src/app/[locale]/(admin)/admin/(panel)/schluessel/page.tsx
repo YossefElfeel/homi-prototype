@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { KeyRound, Plus, ShieldAlert } from 'lucide-react';
 
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -54,7 +55,7 @@ export default function KeyLogPage() {
           </div>
         </div>
         <Button asChild variant="secondary" className="mt-6">
-          <a href="#einstellungen">{t('lockedAction')}</a>
+          <Link href="/admin/einstellungen?tab=fees">{t('lockedAction')}</Link>
         </Button>
         <p className="mt-3 text-xs text-ink-tertiary">{t('lockedHint')}</p>
       </div>

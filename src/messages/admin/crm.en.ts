@@ -214,6 +214,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     cancelConfirmAction: 'Record the cancellation',
     cancelDone: 'Invoice cancelled.',
     cancelledNote: 'Cancelled: {reason}',
+    bookingLink: 'Go to the job',
+    subscriptionLink: 'Go to the plan',
     dismiss: 'Never mind',
   },
 };

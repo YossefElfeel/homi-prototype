@@ -31,6 +31,7 @@ import {
 
 import { Link, usePathname } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/cn';
 import { useHydrated, useStore } from '@/mock/store';
@@ -155,6 +156,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           headingLevel={1}
           title={t('gateTitle')}
           body={`${t('gateBody')} ${t('gateCurrent', { role: demo(role) })}`}
+          action={
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <Link href="/admin/anmelden">{t('gateSignIn')}</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/">{t('gateHome')}</Link>
+              </Button>
+            </div>
+          }
         />
       </main>
     );

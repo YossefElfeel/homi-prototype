@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { AlertTriangle, Info, Plus, Trash2 } from 'lucide-react';
@@ -25,7 +25,12 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
  * The values are not decoration, which is why the hints say what each one
  * controls rather than restating the label.
  */
-export default function AdminSettingsPage() {
+export default function AdminSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab: requestedTab } = use(searchParams);
   const t = useTranslations('admin.settings');
   const format = useFormatter();
   const hydrated = useHydrated();
@@ -36,7 +41,11 @@ export default function AdminSettingsPage() {
   const closures = useStore((s) => s.data.closures);
   const patchData = useStore((s) => s.patchData);
 
-  const [tab, setTab] = useState<Tab>('regions');
+  // The key register's locked state links straight to the insurance toggle,
+  // which lives in the fees tab — without this it landed on the region editor.
+  const [tab, setTab] = useState<Tab>(() =>
+    requestedTab === 'hours' || requestedTab === 'fees' ? requestedTab : 'regions',
+  );
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 

@@ -15,12 +15,17 @@ export default function NotFound() {
       </h1>
       <p className="mt-6 text-lg text-ink-secondary">{t('notFoundBody')}</p>
 
+      {/*
+        The three links used to be "Services" pointing at the homepage and two
+        internal dev boards. Someone arriving from a stale email got the wrong
+        page under the right label, and a tour of the prototype's scaffolding.
+      */}
       <ul className="mt-8 space-y-3 border-t border-line-subtle pt-6">
         {(
           [
-            ['/', nav('services')],
-            ['/foundations', 'Foundations'],
-            ['/screens', 'Screen index'],
+            ['/leistungen', nav('services')],
+            ['/preise', nav('pricing')],
+            ['/kontakt', nav('contact')],
           ] as const
         ).map(([href, label]) => (
           <li key={href}>
@@ -36,7 +41,7 @@ export default function NotFound() {
 
       <div className="mt-10">
         <Button asChild>
-          <Link href="/">{nav('requestQuote')}</Link>
+          <Link href="/anfrage">{nav('requestQuote')}</Link>
         </Button>
       </div>
     </main>

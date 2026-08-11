@@ -12,6 +12,7 @@ import {
   Menu,
   MessageSquare,
   Receipt,
+  Star,
   RefreshCw,
   Timer,
   User,
@@ -20,6 +21,7 @@ import {
 
 import { Link, usePathname } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/cn';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -34,6 +36,7 @@ type NavKey =
   | 'credit'
   | 'payment'
   | 'photos'
+  | 'review'
   | 'messages'
   | 'profile';
 
@@ -59,6 +62,7 @@ const NAV: { group: 'jobs' | 'account'; items: NavItem[] }[] = [
       { href: '/konto/rechnungen', key: 'invoices', icon: Receipt },
       { href: '/konto/nachrichten', key: 'messages', icon: MessageSquare },
       { href: '/konto/fotos', key: 'photos', icon: Images },
+      { href: '/konto/bewertung', key: 'review', icon: Star },
     ],
   },
   {
@@ -116,6 +120,11 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
           headingLevel={1}
           title={t('gateTitle')}
           body={`${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`}
+          action={
+            <Button asChild>
+              <Link href="/anmelden">{t('gateAction')}</Link>
+            </Button>
+          }
         />
       </div>
     );

@@ -46,6 +46,8 @@ export const adminDe = {
     gateBody:
       'Diese Ansicht ist der Rolle «Inhaber» vorbehalten. Wechseln Sie die Rolle in der Demo-Steuerung unten rechts, um sie zu sehen.',
     gateCurrent: 'Aktuelle Rolle: {role}',
+    gateSignIn: 'Als Inhaber anmelden',
+    gateHome: 'Zur Startseite',
   },
 
   login: {
@@ -314,6 +316,8 @@ export const adminDe = {
       'Der Einsatz gilt als nicht erbracht und es werden {percent}% des Betrags verrechnet. Der Kunde erhält die Begründung mit Zeitstempel.',
     noAccessEvent: 'Kein Zutritt — {percent}% verrechnet',
     noAccessDone: 'Kein Zutritt erfasst.',
+    offerLink: 'Offerte ansehen',
+    invoiceLink: 'Rechnung {reference} ansehen',
     historyTitle: 'Verlauf',
   },
 };

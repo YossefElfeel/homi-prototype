@@ -80,6 +80,14 @@ export default function SentPage({
       </ol>
 
       <div className="mt-10 flex flex-wrap gap-3">
+        {/*
+          The account was just created by `submitDraft`, so this is the natural
+          entry to activation — /konto-aktivieren had no inbound link at all,
+          and this screen previously offered only WhatsApp and the homepage.
+        */}
+        <Button asChild>
+          <Link href="/konto-aktivieren">{t('activate')}</Link>
+        </Button>
         <Button asChild variant="secondary">
           <a href={`https://wa.me/41${wa}`} target="_blank" rel="noopener noreferrer">
             <MessageCircle className="size-4" aria-hidden />
@@ -90,6 +98,7 @@ export default function SentPage({
           <Link href="/">{t('home')}</Link>
         </Button>
       </div>
+      <p className="mt-3 text-sm text-ink-tertiary">{t('activateHint')}</p>
     </div>
   );
 }

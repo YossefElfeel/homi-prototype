@@ -53,8 +53,10 @@ export default function AdminLoginPage() {
 
           <div className="flex items-center justify-between gap-4">
             <Checkbox label={t('remember')} defaultChecked />
+            {/* Used to link to this very page. `?von=admin` sends the reset
+                screen's back-link here rather than into customer sign-in. */}
             <Link
-              href="/admin/anmelden"
+              href="/passwort?von=admin"
               className="text-sm text-ink-secondary underline decoration-from-font underline-offset-4"
             >
               {t('forgot')}

@@ -7,6 +7,9 @@ export const fieldEn: typeof fieldDe = {
     gateBody:
       'This view is for the person doing the work. Switch the role to “Team member” at the bottom right.',
     gateCurrent: 'Current role: {role}',
+    gateHome: 'Back to the site',
+    jobsLink: 'Back to the jobs',
+    exit: 'Open the Homivaro site',
     desktopNote:
       'This view is built for a phone. On a screen you see it at phone width.',
   },
