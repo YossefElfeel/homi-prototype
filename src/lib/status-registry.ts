@@ -45,6 +45,9 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     completed: 'success',
     invoiced: 'info',
     closed: 'neutral',
+    // A job the company called off. Distinct from `closed`, which is neutral
+    // and reads as "finished" — the opposite of what happened here.
+    cancelled: 'danger',
   },
   // §4.3
   subscription: {

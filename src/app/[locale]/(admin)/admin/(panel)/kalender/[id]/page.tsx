@@ -2,6 +2,7 @@
 
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, DoorClosed, Eye, EyeOff, Lock, UserPlus } from 'lucide-react';
 
@@ -10,9 +11,12 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
+import { Field, Input, Select } from '@/components/ui/field';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
 import { offerTotal } from '@/mock/engines/offers';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -38,8 +42,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const team = useStore((s) => s.data.team);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
+  const patchData = useStore((s) => s.patchData);
+  const now = useNow();
 
   const [revealed, setRevealed] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(null);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -55,6 +64,32 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const start = new Date(booking.start);
   const access = property.access;
   const hasSecrets = Boolean(access?.boxCode || access?.alarmCode);
+
+  /**
+   * Every action on this screen writes through here. The history entry is not
+   * decoration: the timeline is the only record of who moved a job and why, and
+   * the no-access fee in particular has to be traceable back to a timestamp.
+   */
+  function patchBooking(patch: Partial<Booking>, event?: Omit<TimelineEvent, 'at'>) {
+    patchData({
+      bookings: bookings.map((b) =>
+        b.id === booking!.id
+          ? {
+              ...b,
+              ...patch,
+              history: event
+                ? [...b.history, { ...event, at: now.toISOString() }]
+                : b.history,
+            }
+          : b,
+      ),
+    });
+  }
+
+  /** A finished job is history — it can be read, not rescheduled or cancelled. */
+  const settled = (
+    ['completed', 'invoiced', 'closed', 'cancelled', 'noAccess'] as Booking['status'][]
+  ).includes(booking.status);
 
   return (
     <div className="max-w-5xl">
@@ -185,28 +220,178 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <p className="mt-2">
               {assignee ? `${assignee.firstName} ${assignee.lastName}` : t('unassigned')}
             </p>
-            <Button variant="secondary" size="sm" className="mt-4">
-              <UserPlus className="size-3.5" aria-hidden />
-              {t('assign')}
-            </Button>
+            {assigning ? (
+              <Field label={t('assignLabel')} className="mt-4">
+                {(props) => (
+                  <Select
+                    {...props}
+                    defaultValue={booking.assigneeId ?? ''}
+                    onChange={(e) => {
+                      const memberId = e.target.value;
+                      const member = team.find((m) => m.id === memberId);
+                      patchBooking(
+                        { assigneeId: memberId || undefined },
+                        {
+                          kind: 'assigned',
+                          label: member
+                            ? t('assignedTo', {
+                                name: `${member.firstName} ${member.lastName}`,
+                              })
+                            : t('unassigned'),
+                        },
+                      );
+                      setAssigning(false);
+                      toast.success(t('assignDone'));
+                    }}
+                  >
+                    <option value="">{t('unassigned')}</option>
+                    {team.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-4"
+                disabled={settled}
+                onClick={() => setAssigning(true)}
+              >
+                <UserPlus className="size-3.5" aria-hidden />
+                {t('assign')}
+              </Button>
+            )}
           </div>
 
           <div>
             <h2 className="label-type text-ink-tertiary">{t('actionsTitle')}</h2>
             <div className="mt-3 space-y-2">
-              <Button variant="secondary" block>
-                {t('reschedule')}
-              </Button>
-              <Button variant="secondary" block>
-                <DoorClosed className="size-4" aria-hidden />
-                {t('markNoAccess')}
-              </Button>
-              <p data-numeric className="px-1 text-xs text-ink-tertiary">
-                {t('noAccessHint', { percent: settings.noAccessFeePercent })}
-              </p>
-              <Button variant="danger" block>
-                {t('cancel')}
-              </Button>
+              {rescheduling ? (
+                <form
+                  className="surface-card space-y-3 p-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const value = new FormData(e.currentTarget).get('start');
+                    if (typeof value !== 'string' || !value) return;
+                    const next = new Date(value);
+                    patchBooking(
+                      { start: next.toISOString(), status: 'rescheduled' },
+                      {
+                        kind: 'rescheduled',
+                        label: t('rescheduledTo', {
+                          date: format.dateTime(next, 'full'),
+                          time: format.dateTime(next, 'time'),
+                        }),
+                      },
+                    );
+                    setRescheduling(false);
+                    toast.success(t('rescheduleDone'));
+                  }}
+                >
+                  <Field label={t('rescheduleLabel')}>
+                    {(props) => (
+                      <Input
+                        {...props}
+                        name="start"
+                        type="datetime-local"
+                        required
+                        defaultValue={booking.start.slice(0, 16)}
+                      />
+                    )}
+                  </Field>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" size="sm">
+                      {t('rescheduleSave')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRescheduling(false)}
+                    >
+                      {t('dismiss')}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <Button
+                  variant="secondary"
+                  block
+                  disabled={settled}
+                  onClick={() => setRescheduling(true)}
+                >
+                  {t('reschedule')}
+                </Button>
+              )}
+
+              {confirming === 'noAccess' ? (
+                <ConfirmPanel
+                  title={t('noAccessConfirmTitle')}
+                  body={t('noAccessConfirmBody', { percent: settings.noAccessFeePercent })}
+                  action={t('markNoAccess')}
+                  dismiss={t('dismiss')}
+                  onConfirm={() => {
+                    patchBooking(
+                      { status: 'noAccess' },
+                      {
+                        kind: 'noAccess',
+                        label: t('noAccessEvent', {
+                          percent: settings.noAccessFeePercent,
+                        }),
+                      },
+                    );
+                    setConfirming(null);
+                    toast.success(t('noAccessDone'));
+                  }}
+                  onDismiss={() => setConfirming(null)}
+                />
+              ) : (
+                <>
+                  <Button
+                    variant="secondary"
+                    block
+                    disabled={settled}
+                    onClick={() => setConfirming('noAccess')}
+                  >
+                    <DoorClosed className="size-4" aria-hidden />
+                    {t('markNoAccess')}
+                  </Button>
+                  <p data-numeric className="px-1 text-xs text-ink-tertiary">
+                    {t('noAccessHint', { percent: settings.noAccessFeePercent })}
+                  </p>
+                </>
+              )}
+
+              {confirming === 'cancel' ? (
+                <ConfirmPanel
+                  title={t('cancelConfirmTitle')}
+                  body={t('cancelConfirmBody')}
+                  action={t('cancelConfirmAction')}
+                  dismiss={t('dismiss')}
+                  onConfirm={() => {
+                    patchBooking(
+                      { status: 'cancelled' },
+                      { kind: 'cancelled', label: t('cancelEvent') },
+                    );
+                    setConfirming(null);
+                    toast.success(t('cancelDone'));
+                  }}
+                  onDismiss={() => setConfirming(null)}
+                />
+              ) : (
+                <Button
+                  variant="danger"
+                  block
+                  disabled={settled}
+                  onClick={() => setConfirming('cancel')}
+                >
+                  {t('cancel')}
+                </Button>
+              )}
             </div>
           </div>
         </aside>

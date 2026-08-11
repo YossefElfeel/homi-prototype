@@ -2,12 +2,15 @@
 
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, Check, Loader2, Send } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Field, Textarea } from '@/components/ui/field';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money, formatChf } from '@/components/ui/money';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -44,6 +47,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const patchData = useStore((s) => s.patchData);
 
   const [state, setState] = useState<'idle' | 'sending'>('idle');
+  const [cancelling, setCancelling] = useState(false);
+  const [reason, setReason] = useState('');
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -53,6 +58,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const customer = customers.find((c) => c.id === invoice.customerId)!;
   const property = properties.find((p) => p.customerId === customer.id);
   const isDraft = invoice.status === 'draft';
+  /** A paid invoice is refunded, not cancelled — and cancelling twice is not a thing. */
+  const canCancel = invoice.status !== 'paid' && invoice.status !== 'cancelled';
 
   function send() {
     setState('sending');
@@ -66,6 +73,18 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       });
       setState('idle');
     }, 900);
+  }
+
+  function cancelInvoice() {
+    patchData({
+      invoices: data.invoices.map((i) =>
+        i.id === invoice!.id
+          ? { ...i, status: 'cancelled' as const, cancelReason: reason }
+          : i,
+      ),
+    });
+    setCancelling(false);
+    toast.success(t('cancelDone'));
   }
 
   return (
@@ -159,7 +178,10 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <dt className="text-ink-tertiary">{t('qrPayableTo')}</dt>
                   <dd className="mt-0.5">
                     {brand('name')}
-                    <span className="block text-ink-tertiary">TODO:legal — Adresse</span>
+                    {/* The legal address is still an open question (/open-questions).
+                        It used to render the raw `TODO:legal` marker here, inside the
+                        payment slip a customer reads. */}
+                    <span className="block text-ink-tertiary">{t('qrAddressPending')}</span>
                   </dd>
                 </div>
                 <div>
@@ -250,8 +272,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         <p className="mt-3 text-xs text-ink-tertiary">{t('qrNote')}</p>
       </section>
 
-      {isDraft && (
-        <div className="mt-10 flex flex-wrap gap-3">
+      <div className="mt-10 space-y-4">
+        {isDraft && (
           <Button size="lg" onClick={send} disabled={state === 'sending'}>
             {state === 'sending' ? (
               <>
@@ -265,11 +287,48 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </>
             )}
           </Button>
-          <Button variant="danger" size="lg">
-            {t('cancelAction')}
-          </Button>
-        </div>
-      )}
+        )}
+
+        {/*
+          Cancelling used to sit inside the draft-only block, which meant the one
+          case where it matters commercially — an invoice already with the
+          customer — had no control at all. A paid invoice is refunded, not
+          cancelled, so that stays out.
+        */}
+        {canCancel &&
+          (cancelling ? (
+            <ConfirmPanel
+              title={t('cancelConfirmTitle')}
+              body={t('cancelConfirmBody')}
+              action={t('cancelConfirmAction')}
+              dismiss={t('dismiss')}
+              disabled={reason.trim() === ''}
+              onConfirm={cancelInvoice}
+              onDismiss={() => setCancelling(false)}
+            >
+              <Field label={t('cancelReason')}>
+                {(props) => (
+                  <Textarea
+                    {...props}
+                    className="min-h-20 bg-page"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                )}
+              </Field>
+            </ConfirmPanel>
+          ) : (
+            <Button variant="danger" size="lg" onClick={() => setCancelling(true)}>
+              {t('cancelAction')}
+            </Button>
+          ))}
+
+        {invoice.status === 'cancelled' && invoice.cancelReason && (
+          <p className="text-sm text-ink-secondary">
+            {t('cancelledNote', { reason: invoice.cancelReason })}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -337,6 +337,13 @@ export const accountEn: typeof accountDe = {
     dataExport: 'Request my data',
     dataDelete: 'Delete my account',
     dataDeleteNote: 'Open invoices and statutory retention periods are unaffected.',
+    dataExportToast:
+      'Your copy has been requested. You will receive it by email within 30 days.',
+    deleteConfirmTitle: 'Close your account?',
+    deleteConfirmBody:
+      'Your access closes immediately and you are signed out. Invoices and jobs in progress are kept for statutory reasons. To come back, get in touch with us.',
+    deleteConfirmAction: 'Close my account',
+    dismiss: 'Never mind',
     saved: 'Saved',
   },
 };

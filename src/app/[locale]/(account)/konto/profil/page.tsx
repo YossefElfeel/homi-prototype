@@ -2,11 +2,14 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Check, Download, Lock, Trash2 } from 'lucide-react';
 
+import { useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Checkbox } from '@/components/ui/field';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Customer } from '@/mock/schema';
@@ -27,7 +30,10 @@ export default function AccountProfilePage() {
   const { customer } = useAccount();
   const patchData = useStore((s) => s.patchData);
   const customers = useStore((s) => s.data.customers);
+  const setRole = useStore((s) => s.setRole);
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
   if (!customer) return <p className="text-ink-tertiary">—</p>;
@@ -182,17 +188,46 @@ export default function AccountProfilePage() {
         <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-secondary">
           {t('dataBody')}
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button variant="secondary">
-            <Download className="size-4" aria-hidden />
-            {t('dataExport')}
-          </Button>
-          <Button variant="quiet">
-            <Trash2 className="size-4" aria-hidden />
-            {t('dataDelete')}
-          </Button>
-        </div>
-        <p className="mt-3 text-sm text-ink-tertiary">{t('dataDeleteNote')}</p>
+        {closing ? (
+          <ConfirmPanel
+            className="mt-5"
+            title={t('deleteConfirmTitle')}
+            body={t('deleteConfirmBody')}
+            action={t('deleteConfirmAction')}
+            dismiss={t('dismiss')}
+            onConfirm={() => {
+              /*
+               * Deactivate, do not delete. `customerId` is referenced by
+               * properties, requests, bookings, invoices, subscriptions and
+               * messages, and three admin screens dereference it with a
+               * non-null assertion — a hard delete would take them down.
+               * Retention law says the same thing: the invoices have to stay.
+               */
+              patch({ status: 'inactive' });
+              setClosing(false);
+              setRole('visitor');
+              router.push('/');
+            }}
+            onDismiss={() => setClosing(false)}
+          />
+        ) : (
+          <>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => toast.success(t('dataExportToast'))}
+              >
+                <Download className="size-4" aria-hidden />
+                {t('dataExport')}
+              </Button>
+              <Button variant="quiet" onClick={() => setClosing(true)}>
+                <Trash2 className="size-4" aria-hidden />
+                {t('dataDelete')}
+              </Button>
+            </div>
+            <p className="mt-3 text-sm text-ink-tertiary">{t('dataDeleteNote')}</p>
+          </>
+        )}
       </section>
     </div>
   );

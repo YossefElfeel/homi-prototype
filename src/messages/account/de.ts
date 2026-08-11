@@ -340,6 +340,13 @@ export const accountDe = {
     dataDelete: 'Konto löschen',
     dataDeleteNote:
       'Offene Rechnungen und gesetzliche Aufbewahrungsfristen bleiben davon unberührt.',
+    dataExportToast:
+      'Ihre Datenkopie ist angefordert. Sie erhalten sie innert 30 Tagen per E-Mail.',
+    deleteConfirmTitle: 'Konto wirklich schliessen?',
+    deleteConfirmBody:
+      'Ihr Zugang wird sofort geschlossen und Sie werden abgemeldet. Rechnungen und laufende Einsätze bleiben aus gesetzlichen Gründen erhalten. Für eine Rückkehr melden Sie sich bei uns.',
+    deleteConfirmAction: 'Konto schliessen',
+    dismiss: 'Abbrechen',
     saved: 'Gespeichert',
   },
 };

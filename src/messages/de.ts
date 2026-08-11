@@ -107,6 +107,7 @@ export const de = {
       completed: 'Abgeschlossen',
       invoiced: 'Verrechnet',
       closed: 'Geschlossen',
+      cancelled: 'Storniert',
     },
     subscription: {
       active: 'Aktiv',
