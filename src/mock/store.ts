@@ -72,8 +72,14 @@ Marco Brunner`;
    used to share one phone number, which was invisible until the request list
    started printing it in every row. A store persisted under 7 keeps the old
    numbers, so the column would show four identical values and look like the
-   bug this bump exists to clear. */
-const SCHEMA_VERSION = 8;
+   bug this bump exists to clear.
+
+   9: `Offer` gained proposedSlots/confirmedSlot/slotConfirmedAt, `SlotHold`
+   gained `confirmed`, and the seed finally carries payments and a quote →
+   booking link. A store persisted under 8 has none of it — the quote list's
+   four new columns would render "—" down every row, which is exactly the
+   "columns are real, data is not" failure this wave exists to remove. */
+const SCHEMA_VERSION = 9;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and

@@ -27,7 +27,7 @@ import type {
 import { SERVICE_SLUGS } from './schema';
 import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
-import { buildOfferLines } from './engines/offers';
+import { buildOfferLines, offerTotal } from './engines/offers';
 
 /**
  * Demo scenarios.
@@ -115,6 +115,20 @@ const at = (d: Date, h: number, m = 0) => {
   const out = new Date(d);
   out.setHours(h, m, 0, 0);
   return out;
+};
+
+/**
+ * `days`, but never landing on a Sunday.
+ *
+ * §7.1 closes Sunday, so the live picker cannot offer one — a seeded slot on a
+ * Sunday would be a date the customer could not have chosen, which is seed
+ * data contradicting the engine that produced it. The whole seed is relative
+ * to "now" and the demo clock moves, so a hand-picked offset is only right on
+ * the day it was written.
+ */
+const openDay = (from: Date, n: number) => {
+  const out = days(from, n);
+  return out.getDay() === 0 ? days(out, 1) : out;
 };
 
 /** The owner. One person — this is the whole company at launch. */
@@ -480,13 +494,25 @@ function baseData(now: Date): DataSet {
       id: 'cr_1',
       customerId: 'cus_2',
       propertyId: 'prp_2',
-      hoursRemaining: 6.5,
+      /*
+       * 2.5, not 6.5.
+       *
+       * The quote list now derives "covered by a package" from the hours left
+       * against the hours quoted, and at 6.5 this credit silently covered
+       * `off_1` — the 4.5-hour Grundreinigung the whole walkthrough runs on.
+       * Screens 27 and 31 hang off that quote's payment step, and a covered
+       * quote has no payment step, so both went unreachable. The lower balance
+       * is also the more useful story: hours that no longer stretch to a deep
+       * clean are what the near-expiry warning on screen 43 is for.
+       */
+      hoursRemaining: 2.5,
       purchasedAt: iso(days(now, -300)),
       expiresAt: iso(days(now, 65)),
       ledger: [
         { at: iso(days(now, -300)), hours: 10, reason: 'Paket 10 Stunden gekauft' },
         { at: iso(days(now, -120)), hours: -2, reason: 'Einsatz', bookingId: 'bkg_2' },
         { at: iso(days(now, -40)), hours: -1.5, reason: 'Einsatz', bookingId: 'bkg_2' },
+        { at: iso(days(now, -12)), hours: -4, reason: 'Einsatz', bookingId: 'bkg_2' },
       ],
     },
   ];
@@ -549,13 +575,214 @@ function baseData(now: Date): DataSet {
     queueRequest(now, { id: 'req_q_cancel', ref: 'A-2499', n: 4, service: 'bueroreinigung', status: 'cancelledByCustomer', agedDays: 6, internal: 'Zurückgezogen: intern gelöst.' }),
   ];
 
+  /*
+   * The quote states, staged.
+   *
+   * Screen 57 gained four derived columns — service and rhythm, coverage,
+   * payment, and the job the quote became — and the seed answered "—" in all
+   * four for every row: `payments` was an empty array in every scenario, no
+   * booking anywhere carried an `offerId`, and no request carried an intent
+   * past the queue. The columns were real and the data was not, which is the
+   * one failure mode a prototype cannot afford — it reads as a working screen
+   * with nothing to show.
+   *
+   * Seven quotes, each staging exactly one thing the owner's list has to be
+   * able to say, hung off the shared households so the list is not the same
+   * three names repeating.
+   */
+  const quoteRequests: ServiceRequest[] = [
+    queueRequest(now, { id: 'req_q_propose', ref: 'A-2501', n: 8, service: 'fensterreinigung', status: 'offerSent', agedDays: 2, note: 'Erstauftrag — Storenkasten bitte mitnehmen.' }),
+    queueRequest(now, { id: 'req_q_confirm', ref: 'A-2502', n: 7, service: 'bueroreinigung', status: 'offerSent', agedDays: 4 }),
+    queueRequest(now, { id: 'req_q_recurring', ref: 'A-2503', n: 6, service: 'unterhaltsreinigung', status: 'offerSent', agedDays: 3, intent: 'premium' }),
+    queueRequest(now, { id: 'req_q_refund', ref: 'A-2504', n: 11, service: 'bueroreinigung', status: 'accepted', agedDays: 16, internal: 'Termin abgesagt, Betrag zurückerstattet.' }),
+    /* cus_2 rather than a household: the package that covers it is theirs. */
+    {
+      id: 'req_q_pkg',
+      reference: 'A-2505',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'fensterreinigung',
+      addOnIds: [],
+      windowCount: 8,
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Die Fenster zur Seeseite, wenn möglich vor dem Wochenende.',
+      status: 'offerSent',
+      outOfArea: false,
+      createdAt: iso(days(now, -2)),
+      openedAt: iso(days(now, -2)),
+      respondedAt: iso(days(now, -1)),
+    },
+  ];
+
+  const allProperties = [...properties, ...extraProperties()];
+  const quoteFor = (
+    id: string,
+    requestId: string,
+    opts: Parameters<typeof makeOffer>[4],
+  ) => {
+    const request = quoteRequests.concat(queue).find((r) => r.id === requestId)!;
+    return makeOffer(id, request, allProperties.find((p) => p.id === request.propertyId)!, now, opts);
+  };
+
+  const quoteOffers: Offer[] = [
+    /* Paid, and the job exists — the only place in the seed where the quote →
+       booking link is actually populated. */
+    {
+      ...quoteFor('off_paid', 'req_q_accepted', {
+        issuedDaysAgo: 11,
+        validDays: 14,
+        status: 'accepted',
+      }),
+      signedAt: iso(days(now, -10)),
+    },
+    /* §20.2 — a declined card does not book the slot and does not void the
+       quote. The row that proves the payment column shows failures. */
+    {
+      ...quoteFor('off_retry', 'req_q_offer', { issuedDaysAgo: 3, validDays: 14 }),
+      signedAt: iso(days(now, -1)),
+    },
+    /* First job, three dates in, waiting on the office. The row the "Termin
+       bestätigen" panel exists for. */
+    {
+      ...quoteFor('off_propose', 'req_q_propose', { issuedDaysAgo: 2, validDays: 14 }),
+      proposedSlots: [
+        iso(at(openDay(now, 4), 9)),
+        iso(at(openDay(now, 6), 13)),
+        iso(at(openDay(now, 9), 8)),
+      ],
+    },
+    /* Same flow one step on: the office answered, the slot is held for 48
+       hours, and the customer has not signed yet. */
+    {
+      ...quoteFor('off_confirm', 'req_q_confirm', { issuedDaysAgo: 4, validDays: 14 }),
+      proposedSlots: [iso(at(openDay(now, 3), 7, 30)), iso(at(openDay(now, 5), 16))],
+      confirmedSlot: iso(at(openDay(now, 3), 7, 30)),
+      slotConfirmedAt: iso(days(now, -1)),
+    },
+    /* Recurring. Without an intent anywhere past the queue the rhythm column
+       read "Einmalig" on every single row. */
+    quoteFor('off_recurring', 'req_q_recurring', { issuedDaysAgo: 3, validDays: 14 }),
+    /* Paid, then refunded — the fourth PaymentStatus, and the only one with no
+       other way into the UI. */
+    {
+      ...quoteFor('off_refund', 'req_q_refund', {
+        issuedDaysAgo: 15,
+        validDays: 14,
+        status: 'accepted',
+      }),
+      signedAt: iso(days(now, -14)),
+    },
+    /* Covered by the package: two billable hours against 2.5 remaining. There
+       is nothing to charge, and the payment step says so instead of asking for
+       a card. */
+    quoteFor('off_pkg', 'req_q_pkg', { issuedDaysAgo: 1, validDays: 14 }),
+  ];
+
+  const quoteBookings: Booking[] = [
+    {
+      id: 'bkg_off_paid',
+      reference: 'B-1046',
+      offerId: 'off_paid',
+      customerId: 'cus_m9',
+      propertyId: 'prp_m9',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, 4), 9)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -10)), kind: 'created', label: 'Gebucht und bezahlt' }],
+    },
+    {
+      id: 'bkg_off_refund',
+      reference: 'B-1047',
+      offerId: 'off_refund',
+      customerId: 'cus_m11',
+      propertyId: 'prp_m11',
+      serviceSlug: 'bueroreinigung',
+      start: iso(at(days(now, -2), 18)),
+      duration: 240,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'cancelled',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -14)), kind: 'created', label: 'Gebucht und bezahlt' },
+        { at: iso(days(now, -4)), kind: 'cancelled', label: 'Vom Kunden abgesagt' },
+        { at: iso(days(now, -4)), kind: 'refunded', label: 'Betrag vollständig zurückerstattet' },
+      ],
+    },
+  ];
+
+  /*
+   * All four PaymentStatus values.
+   *
+   * `payments` was `[]` in every scenario including `states`, whose whole
+   * purpose is that every declared state has a record carrying it. Nothing
+   * rendered payments, so nobody noticed — the quote list is the first screen
+   * that does.
+   */
+  const payments: Payment[] = [
+    {
+      id: 'pay_paid',
+      offerId: 'off_paid',
+      amount: offerTotal(quoteOffers[0]!),
+      method: 'twint',
+      at: iso(days(now, -10)),
+      status: 'succeeded',
+      gatewayRef: 'mock_TW71A',
+    },
+    {
+      id: 'pay_failed',
+      offerId: 'off_retry',
+      amount: offerTotal(quoteOffers[1]!),
+      method: 'card',
+      at: iso(days(now, -1)),
+      status: 'failed',
+      gatewayRef: 'mock_CD40F',
+      failureReason: 'card_declined',
+    },
+    /* TWINT opened on the phone and never finished — the state the owner needs
+       to recognise before chasing someone who has already tried to pay. */
+    {
+      id: 'pay_pending',
+      offerId: 'off_confirm',
+      amount: offerTotal(quoteOffers[3]!),
+      method: 'twint',
+      at: iso(new Date(now.getTime() - 40 * 60_000)),
+      status: 'pending',
+      gatewayRef: 'mock_TW9C2',
+    },
+    {
+      id: 'pay_refund_in',
+      offerId: 'off_refund',
+      amount: offerTotal(quoteOffers[5]!),
+      method: 'card',
+      at: iso(days(now, -14)),
+      status: 'succeeded',
+      gatewayRef: 'mock_CD118',
+    },
+    {
+      id: 'pay_refund_out',
+      offerId: 'off_refund',
+      amount: offerTotal(quoteOffers[5]!),
+      method: 'card',
+      at: iso(days(now, -4)),
+      status: 'refunded',
+      gatewayRef: 'mock_CD118R',
+    },
+  ];
+
   return {
     ...EMPTY,
     customers: [...customers, ...extraCustomers(now)],
     properties: [...properties, ...extraProperties()],
-    requests: [...queue, ...requests],
-    offers,
-    bookings,
+    requests: [...queue, ...quoteRequests, ...requests],
+    offers: [...offers, ...quoteOffers],
+    bookings: [...bookings, ...quoteBookings],
+    payments,
     subscriptions,
     invoices,
     /* Screen 45 used to fake these in component state. cus_2 is the demo

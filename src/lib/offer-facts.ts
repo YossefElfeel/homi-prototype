@@ -144,6 +144,7 @@ export function isReturningCustomer(
   customerId: ID,
   bookings: Booking[],
   subscriptions: Subscription[],
+  credits: PackageCredit[] = [],
 ): boolean {
   const served = bookings.some(
     (b) =>
@@ -155,9 +156,18 @@ export function isReturningCustomer(
   );
   if (served) return true;
 
-  return subscriptions.some(
-    (s) => s.customerId === customerId && s.status !== 'cancelled',
-  );
+  if (subscriptions.some((s) => s.customerId === customerId && s.status !== 'cancelled')) {
+    return true;
+  }
+
+  /*
+   * Someone who has paid for ten hours up front is not a stranger, whatever
+   * the booking statuses happen to say. Without this the demo account — whose
+   * package ledger records two finished jobs — was routed down the first-job
+   * path, because the bookings those ledger entries point at are seeded
+   * `scheduled` rather than `closed`.
+   */
+  return credits.some((c) => c.customerId === customerId);
 }
 
 /** How long the office's confirmed date is held before the slot is released. */
