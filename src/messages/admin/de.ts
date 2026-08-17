@@ -131,6 +131,9 @@ export const adminDe = {
     total: 'Total',
     hours: 'Geplante Zeit',
     messageTitle: 'Begleittext',
+    revisionTitle: 'Änderungswunsch',
+    revisionLead:
+      '{name} wünscht etwas anderes. Eine neue Version ist die Antwort darauf.',
     openAsCustomer: 'Kundenansicht öffnen',
     openRequest: 'Anfrage öffnen',
     reissue: 'Neue Version ausstellen',
@@ -577,6 +580,15 @@ export const adminDe = {
   offers: {
     title: 'Offerten',
     lead: 'Was offeriert wurde, wie es abgerechnet wird und wo das Geld steht.',
+    search: 'Suche nach Referenz, Name oder E-Mail',
+    filterStatus: 'Status',
+    filterPayment: 'Zahlung',
+    filterPaymentNone: 'Noch keine Zahlung',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    searchEmptyTitle: 'Keine Offerte gefunden',
+    searchEmptyBody:
+      'Mit diesen Filtern bleibt nichts übrig. Filter zurücksetzen und neu beginnen.',
     colReference: 'Referenz',
     colCustomer: 'Kunde',
     colService: 'Leistung',

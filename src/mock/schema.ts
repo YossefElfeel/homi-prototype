@@ -284,6 +284,19 @@ export interface Offer {
   discountValue?: number;
   couponCode?: string;
   message: string;
+  /**
+   * What the customer asked to have changed (§20.1) — and why it is not
+   * `message`.
+   *
+   * The two used to share one field, on the reasoning that both are "the text
+   * attached to this quote". They travel in opposite directions: `message` goes
+   * out with the quote and is the first thing the customer reads on
+   * `/offerte/[id]`; this comes back and only the office reads it. One field
+   * meant that asking a question silently deleted the note the office had
+   * written, and the panel then printed the customer's complaint under the
+   * heading "Covering note".
+   */
+  revisionNote?: string;
   status: OfferStatus;
   issuedAt?: ISODate;
   expiresAt?: ISODate;

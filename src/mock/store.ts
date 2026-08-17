@@ -38,7 +38,7 @@ import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './sce
 import { checkCoverage } from './engines/coverage';
 import { createHold, type Slot } from './engines/availability';
 import { CONFIRMED_HOLD_HOURS, offerCoverage } from '@/lib/offer-facts';
-import { buildOfferLines, offerHours, offerTotal } from './engines/offers';
+import { buildOfferLines, canReissue, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
 
 /** Used only if the "offer-sent" template has been emptied on screen 79. */
@@ -78,8 +78,14 @@ Marco Brunner`;
    gained `confirmed`, and the seed finally carries payments and a quote →
    booking link. A store persisted under 8 has none of it — the quote list's
    four new columns would render "—" down every row, which is exactly the
-   "columns are real, data is not" failure this wave exists to remove. */
-const SCHEMA_VERSION = 9;
+   "columns are real, data is not" failure this wave exists to remove.
+
+   10: `Offer` gained `revisionNote`, and a change request no longer writes over
+   `message`. A store persisted under 9 can hold the bug itself — an offer whose
+   covering note was destroyed by a customer's change request — and re-seeding
+   is the only way to get that text back. Leaving it would show the corrected
+   screen still printing a complaint under "Covering note". */
+const SCHEMA_VERSION = 10;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -280,8 +286,10 @@ interface StoreState {
     outcome: 'succeeded' | 'failed',
     now: Date,
   ) => { bookingReference?: string; failureReason?: string };
-  requestOfferChange: (offerId: ID, message: string) => void;
-  reissueOffer: (offerId: ID, now: Date) => void;
+  /** Lands in `Offer.revisionNote`, never in `message` — see the schema. */
+  requestOfferChange: (offerId: ID, note: string) => void;
+  /** `false` when the quote is not one a new version applies to (`canReissue`). */
+  reissueOffer: (offerId: ID, now: Date) => boolean;
 
   /* ---- hiring (screens C3–C6, H1–H7) ---- */
   updateApplicationDraft: (patch: Partial<ApplicationDraft>) => void;
@@ -1263,13 +1271,13 @@ export const useStore = create<StoreState>()(
       },
 
       // §20.1 — a negotiation produces a new version and voids the current one.
-      requestOfferChange: (offerId, message) =>
+      requestOfferChange: (offerId, note) =>
         set((s) => ({
           data: {
             ...s.data,
             offers: s.data.offers.map((o) =>
               o.id === offerId
-                ? { ...o, status: 'revisionRequested' as const, message }
+                ? { ...o, status: 'revisionRequested' as const, revisionNote: note }
                 : o,
             ),
             requests: s.data.requests.map((r) =>
@@ -1281,8 +1289,19 @@ export const useStore = create<StoreState>()(
           holds: s.holds.filter((h) => h.offerId !== offerId),
         })),
 
-      // §20.1 — an expired quote can be reissued in one action.
-      reissueOffer: (offerId, now) =>
+      /*
+       * §20.1 — a lapsed quote can be reissued in one action.
+       *
+       * Guarded here and not only in the button, because the action rewrites
+       * `status` and drops `signedAt`: called on an accepted quote it would
+       * strand the payment and the booking that quote already produced. The
+       * caller gets `false` rather than a silent no-op — a success toast over
+       * a state that did not move is the worse failure of the two.
+       */
+      reissueOffer: (offerId, now) => {
+        const offer = get().data.offers.find((o) => o.id === offerId);
+        if (!offer || !canReissue(offer, now)) return false;
+
         set((s) => ({
           data: {
             ...s.data,
@@ -1302,7 +1321,10 @@ export const useStore = create<StoreState>()(
                 : o,
             ),
           },
-        })),
+        }));
+
+        return true;
+      },
 
       /* ------------------------------------------------------- hiring */
 

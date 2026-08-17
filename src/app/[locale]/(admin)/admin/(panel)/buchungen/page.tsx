@@ -3,17 +3,12 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { CalendarDays, FileText, MoreHorizontal, Receipt, Repeat } from 'lucide-react';
+import { CalendarDays, FileText, Receipt, Repeat } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { DataView, type Column } from '@/components/ui/data-view';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -265,42 +260,35 @@ export default function BookingsPage() {
             />
           )
         }
+        /* Same strip as the requests and quotes lists — the quote a job came
+           from and the invoice it produced are the two things this screen is
+           asked for, and both were a menu away with no sign from the row of
+           whether either existed. */
         rowActions={(b) => {
           const offer = offers.find((o) => o.id === b.offerId);
           const invoice = invoices.find((i) => i.bookingId === b.id);
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={t('rowActions')}
-                className="rounded-[var(--radius-sm)] p-1.5 text-ink-tertiary hover:bg-sunken hover:text-ink"
-              >
-                <MoreHorizontal className="size-4" aria-hidden />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/buchungen/${b.id}`}>
-                    <CalendarDays className="size-4" aria-hidden />
-                    {t('rowOpen')}
-                  </Link>
-                </DropdownMenuItem>
-                {offer && (
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/offerten/${offer.id}`}>
-                      <FileText className="size-4" aria-hidden />
-                      {t('rowOpenOffer', { reference: offer.reference })}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {invoice && (
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/rechnungen/${invoice.id}`}>
-                      <Receipt className="size-4" aria-hidden />
-                      {t('rowOpenInvoice', { reference: invoice.reference })}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RowActions>
+              <RowAction href={`/admin/buchungen/${b.id}`} label={t('rowOpen')}>
+                <CalendarDays aria-hidden />
+              </RowAction>
+              {offer && (
+                <RowAction
+                  href={`/admin/offerten/${offer.id}`}
+                  label={t('rowOpenOffer', { reference: offer.reference })}
+                >
+                  <FileText aria-hidden />
+                </RowAction>
+              )}
+              {invoice && (
+                <RowAction
+                  href={`/admin/rechnungen/${invoice.id}`}
+                  label={t('rowOpenInvoice', { reference: invoice.reference })}
+                >
+                  <Receipt aria-hidden />
+                </RowAction>
+              )}
+            </RowActions>
           );
         }}
       />

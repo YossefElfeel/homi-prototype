@@ -162,6 +162,32 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const ALL_SECTIONS = ['service', 'property', 'preferred', 'access', 'photos'];
   const allOpen = openSections.length === ALL_SECTIONS.length;
 
+  const stages = quoteStages(
+    {
+      request,
+      offer,
+      hold: holds.find((h) => h.offerId === offer?.id),
+      payment: offer ? offerPayment(offer.id, data.payments) : undefined,
+      booking: offer ? offerBooking(offer.id, data.bookings) : undefined,
+    },
+    {
+      received: t('stageReceived'),
+      reviewed: t('stageReviewed'),
+      drafted: t('stageDrafted'),
+      sent: t('stageQuoted'),
+      revision: t('stageRevision'),
+      scheduled: t('stageScheduled'),
+      signed: t('stageSigned'),
+      paid: t('stagePaid'),
+      booked: t('stageBooked'),
+      declined: t('stageDeclined'),
+      cancelled: t('stageCancelled'),
+      expired: t('stageExpired'),
+    },
+    (iso) =>
+      `${format.dateTime(new Date(iso), 'short')}, ${format.dateTime(new Date(iso), 'time')}`,
+  );
+
   return (
     <div className="max-w-5xl">
       <Button asChild variant="link" className="mb-6">
@@ -240,7 +266,24 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
         </ConfirmPanel>
       )}
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-12">
+      {/*
+        Was first in the right-hand column, which made "where is this request?"
+        a question you answered by looking sideways — and on a narrow screen,
+        by scrolling past the whole request to reach it. It is the one fact
+        that frames everything below it, so it reads across the top, in the
+        order the process runs.
+      */}
+      <div className="surface-card mt-10 p-6">
+        <h2 className="label-type text-ink-tertiary">{t('lifecycleTitle')}</h2>
+        <Lifecycle
+          className="mt-4"
+          orientation="horizontal"
+          label={t('lifecycleTitle')}
+          stages={stages}
+        />
+      </div>
+
+      <div className="mt-app grid gap-10 lg:grid-cols-12">
         {/*
           Five stacked blocks meant scrolling past the property to find out
           whether any photos were attached at all. Folded, each header carries
@@ -432,49 +475,6 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <aside className="space-y-8 lg:col-span-5">
-          {/*
-            First in the column, above the customer.
-            Was three bare timestamps under the heading "Verlauf" — a log of
-            what had happened, with no indication of what was still owed. It
-            sat below the contact card and the internal note, which put the
-            answer to "where is this request?" at the bottom of the screen.
-          */}
-          <div className="surface-card p-6">
-            <h2 className="label-type text-ink-tertiary">{t('lifecycleTitle')}</h2>
-            <Lifecycle
-              className="mt-4"
-              label={t('lifecycleTitle')}
-              stages={quoteStages(
-                {
-                  request,
-                  offer,
-                  hold: holds.find((h) => h.offerId === offer?.id),
-                  payment: offer ? offerPayment(offer.id, data.payments) : undefined,
-                  booking: offer ? offerBooking(offer.id, data.bookings) : undefined,
-                },
-                {
-                  received: t('stageReceived'),
-                  reviewed: t('stageReviewed'),
-                  drafted: t('stageDrafted'),
-                  sent: t('stageQuoted'),
-                  revision: t('stageRevision'),
-                  scheduled: t('stageScheduled'),
-                  signed: t('stageSigned'),
-                  paid: t('stagePaid'),
-                  booked: t('stageBooked'),
-                  declined: t('stageDeclined'),
-                  cancelled: t('stageCancelled'),
-                  expired: t('stageExpired'),
-                },
-                (iso) =>
-                  `${format.dateTime(new Date(iso), 'short')}, ${format.dateTime(
-                    new Date(iso),
-                    'time',
-                  )}`,
-              )}
-            />
-          </div>
-
           <div className="surface-card p-6">
             <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
             {/* One line saying what this block is for, because the block below

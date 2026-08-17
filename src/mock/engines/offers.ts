@@ -113,6 +113,30 @@ export function daysLeft(offer: Offer, now: Date) {
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Whether a new version is the right answer for this quote.
+ *
+ * §20.1 gives reissuing exactly one job: bringing a quote that has fallen out
+ * of play back into it. Offered on an accepted quote it reads as "edit", and it
+ * is not — it resets the status to `sent` and clears `signedAt` while the
+ * payment and the booking that quote produced stay behind, so the panel ends up
+ * showing a quote waiting for a signature next to money that has already
+ * arrived and a job standing in the calendar. `off_paid` is exactly that shape,
+ * and the button sat on it.
+ *
+ * A `sent` quote past its date counts: the stored status only turns to
+ * `expired` when something writes it, and every screen already derives the
+ * lapse from `expiresAt` instead of waiting for that write.
+ */
+export function canReissue(offer: Offer, now: Date) {
+  return (
+    offer.status === 'expired' ||
+    offer.status === 'rejected' ||
+    offer.status === 'revisionRequested' ||
+    (offer.status === 'sent' && isExpired(offer, now))
+  );
+}
+
 /** Swiss QR-bill reference — 27 digits, grouped the way the bill prints them. */
 export function qrReference(seed: ID) {
   const digits = Array.from(seed)

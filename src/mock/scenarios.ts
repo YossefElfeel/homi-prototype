@@ -1973,12 +1973,19 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       validDays: 14,
       reference: 'O-2606-1',
     }),
-    makeOffer('off_s_revision', find('req_s_revision'), prop('prp_2'), now, {
-      issuedDaysAgo: 4,
-      validDays: 14,
-      status: 'revisionRequested',
-      reference: 'O-2607-1',
-    }),
+    /* The only seeded quote carrying a `revisionNote`. Without it the
+       "Änderungswunsch" card on the quote detail has no way in, and the field
+       would be one more declared state no screen can show. */
+    {
+      ...makeOffer('off_s_revision', find('req_s_revision'), prop('prp_2'), now, {
+        issuedDaysAgo: 4,
+        validDays: 14,
+        status: 'revisionRequested',
+        reference: 'O-2607-1',
+      }),
+      revisionNote:
+        'Umfang: Können Sie die Fenster rausrechnen? Der Rest passt so, wir würden gerne diese Woche noch buchen.',
+    },
     makeOffer('off_s_accepted', find('req_s_accepted'), prop('prp_1'), now, {
       issuedDaysAgo: 11,
       validDays: 14,

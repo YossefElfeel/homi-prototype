@@ -90,7 +90,10 @@ export function DataView<T>({
   className?: string;
   /** Reserves the table's shape while the persisted store rehydrates. */
   loading?: boolean;
-  /** Per-row menu. Keep it to a DropdownMenu — inline actions blow the width. */
+  /**
+   * Per-row actions. Use `RowActions` from `./row-actions` — icons in the
+   * table, icon-and-label on the card, and the same set in both.
+   */
   rowActions?: (item: T) => React.ReactNode;
   defaultSort?: SortState;
   stickyHeader?: boolean;
@@ -277,7 +280,12 @@ export function DataView<T>({
                 <th
                   scope="col"
                   className={cn(
-                    'w-14 border-b border-line-subtle bg-card',
+                    /* `w-px` is the shrink-to-content idiom: the column takes
+                       exactly what its cell needs and the data columns keep the
+                       rest. It was a fixed `w-14`, which fits one menu button
+                       and clips the moment a screen puts its row actions on
+                       screen as icons instead of hiding them behind a menu. */
+                    'w-px border-b border-line-subtle bg-card',
                     stickyHeader && 'sticky top-topbar z-10',
                     surface === 'card' && 'rounded-tr-[var(--radius-lg)]',
                   )}
@@ -352,7 +360,7 @@ export function DataView<T>({
                 })}
                 {hasTrailingCell && (
                   <td
-                    className="px-2 py-row text-right"
+                    className="px-2 py-row text-right whitespace-nowrap"
                     /* The row's own click would fire underneath an actions
                        menu and navigate away mid-choice. */
                     onClick={rowActions ? (e) => e.stopPropagation() : undefined}
@@ -401,22 +409,30 @@ export function DataView<T>({
           );
 
           return (
-            <li key={key} className="relative">
+            /*
+             * The actions get a strip of their own along the bottom.
+             *
+             * They used to be pinned `absolute top-3 right-3`, which worked
+             * only because every screen put a single menu button there. The
+             * moment a list shows its actions instead of hiding them, that
+             * corner is already occupied by the card's title row — so the
+             * surface moved out to the `li` and the actions sit below the
+             * content, in flow, where they can be as wide as they need.
+             */
+            <li key={key} className="surface-card relative overflow-hidden">
               {onSelect ? (
                 <button
                   type="button"
                   onClick={() => onSelect(item)}
                   className={cn(
-                    'surface-card w-full p-4 text-left transition-colors duration-[var(--motion-fast)] hover:bg-sunken',
+                    'block w-full p-4 text-left transition-colors duration-[var(--motion-fast)] hover:bg-sunken',
                     selection && 'pl-11',
                   )}
                 >
                   {content}
                 </button>
               ) : (
-                <div className={cn('surface-card p-4', selection && 'pl-11')}>
-                  {content}
-                </div>
+                <div className={cn('p-4', selection && 'pl-11')}>{content}</div>
               )}
               {selection && (selection.isSelectable?.(key) ?? true) && (
                 <input
@@ -428,7 +444,9 @@ export function DataView<T>({
                 />
               )}
               {rowActions && (
-                <div className="absolute top-3 right-3">{rowActions(item)}</div>
+                <div className="border-t border-line-subtle px-2 py-1.5">
+                  {rowActions(item)}
+                </div>
               )}
             </li>
           );
