@@ -17,6 +17,10 @@ export const accountEn: typeof accountDe = {
       messages: 'Messages',
       profile: 'Profile',
     },
+    groups: {
+      jobs: 'Jobs',
+      account: 'Account',
+    },
     menu: 'Menu',
     signOut: 'Sign out',
     gateTitle: 'For signed-in customers',
@@ -119,6 +123,19 @@ export const accountEn: typeof accountDe = {
     offerAction: 'Open the quote',
     waitingTitle: 'We are on it',
     waitingBody: 'You will have the quote within {hours} hours.',
+    cancelAction: 'Withdraw request',
+    cancelTitle: 'Withdraw this request?',
+    cancelBody:
+      'The request closes and any quote attached to it lapses. This cannot be undone — you can always send a new request.',
+    cancelReason: 'Reason',
+    cancelReasonHint: 'Optional. It helps us get closer next time.',
+    cancelReasonPlaceholder: 'e.g. the timing no longer works, sorted it another way …',
+    cancelConfirm: 'Withdraw',
+    cancelDismiss: 'Keep it',
+    cancelDone: 'Request {reference} withdrawn.',
+    cancelledTitle: 'Withdrawn',
+    cancelledBody: 'This request is closed. You can send a new one at any time.',
+    cancelledAction: 'New request',
   },
 
   offers: {
@@ -250,6 +267,9 @@ export const accountEn: typeof accountDe = {
     pausedTitle: 'Plan paused',
     pausedBody: 'No visits are scheduled and nothing is charged.',
     resume: 'Resume the plan',
+    resumed: 'The plan is running again.',
+    skipped: 'The next visit is skipped.',
+    cancelRequested: 'Your cancellation is with us. We will be in touch.',
     cancelTitle: 'Cancel',
     cancelBody:
       'Notice period {months} month, to the end of the minimum term. We will confirm by phone.',
@@ -298,6 +318,9 @@ export const accountEn: typeof accountDe = {
     makeDefault: 'Make default',
     remove: 'Remove',
     demoNote: 'Prototype: no real payment details are collected.',
+    added: 'Payment method saved.',
+    removed: 'Payment method removed.',
+    defaultSet: 'Set as the default.',
   },
 
   review: {
@@ -314,6 +337,9 @@ export const accountEn: typeof accountDe = {
     thanksBody: 'We read every one. Criticism gets an answer before it is published.',
     emptyTitle: 'Nothing to review yet',
     emptyBody: 'After your first finished job we will ask you here what you thought.',
+    thanksToOverview: 'Back to the overview',
+    thanksToPhotos: 'See before & after',
+    emptyAction: 'See your requests',
   },
 
   photos: {
@@ -344,6 +370,8 @@ export const accountEn: typeof accountDe = {
       'We answer within one working day. For anything urgent, call — the owner answers the phone.',
     emptyTitle: 'No messages',
     emptyBody: 'As soon as something is written about a job, it appears here.',
+    sent: 'Message sent.',
+    emptyAction: 'Go to your requests',
   },
 
   profile: {

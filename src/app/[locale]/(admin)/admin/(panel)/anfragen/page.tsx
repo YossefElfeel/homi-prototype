@@ -2,14 +2,20 @@
 
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { AlertTriangle, Search } from 'lucide-react';
+import { AlertTriangle, Plus, Search } from 'lucide-react';
 
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input, Select } from '@/components/ui/field';
+import { Select } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { Pagination, paginate } from '@/components/ui/pagination';
+import { SkeletonPage } from '@/components/ui/skeleton';
+import { Toolbar } from '@/components/ui/toolbar';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { statesOf } from '@/lib/status-registry';
 import { elapsed, hoursSince } from '@/lib/elapsed';
@@ -17,9 +23,12 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceRequest } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
+const PER_PAGE = 25;
+
 /** Screen 52 — filters by status, area and free text, per §17.2. */
 export default function RequestsPage() {
   const t = useTranslations('admin.requests');
+  const appT = useTranslations('app');
   const statusLabel = useTranslations('status.request');
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -35,6 +44,7 @@ export default function RequestsPage() {
   const [status, setStatus] = useState('all');
   const [region, setRegion] = useState('all');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   const nameOf = (id: string) => {
     const c = customers.find((x) => x.id === id);
@@ -59,24 +69,24 @@ export default function RequestsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests, customers, properties, status, region, query]);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
+
+  const view = paginate(filtered, page, PER_PAGE);
+  const filtering = Boolean(query) || status !== 'all' || region !== 'all';
 
   const columns: Column<ServiceRequest>[] = [
     {
       key: 'customer',
       header: t('colCustomer'),
       primary: true,
+      sortBy: (r) => nameOf(r.customerId),
       cell: (r) => (
         <span className="flex flex-wrap items-center gap-2">
           {nameOf(r.customerId)}
           {r.outOfArea && (
-            <span
-              title={t('outOfArea')}
-              className="inline-flex items-center gap-1 rounded-sm border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-[0.6875rem] text-status-warning-fg"
-            >
-              <AlertTriangle className="size-3" aria-hidden />
+            <Chip tone="warning" icon={AlertTriangle} title={t('outOfArea')}>
               {propertyOf(r.propertyId)?.postcode}
-            </span>
+            </Chip>
           )}
         </span>
       ),
@@ -85,11 +95,13 @@ export default function RequestsPage() {
       key: 'status',
       header: t('colStatus'),
       trailing: true,
+      sortBy: (r) => r.status,
       cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
     },
     {
       key: 'reference',
       header: t('colReference'),
+      sortBy: (r) => r.reference,
       cell: (r) => (
         <span data-numeric className="text-ink-secondary">
           {r.reference}
@@ -104,12 +116,14 @@ export default function RequestsPage() {
     {
       key: 'region',
       header: t('colRegion'),
+      sortBy: (r) => propertyOf(r.propertyId)?.city ?? '',
       cell: (r) => propertyOf(r.propertyId)?.city ?? '—',
     },
     {
       key: 'received',
       header: t('colReceived'),
       align: 'end',
+      sortBy: (r) => r.createdAt,
       cell: (r) => {
         const late =
           (r.status === 'new' || r.status === 'inReview') &&
@@ -117,7 +131,10 @@ export default function RequestsPage() {
         return (
           <span
             data-numeric
-            className={cn('text-sm', late ? 'font-medium text-status-danger-fg' : 'text-ink-tertiary')}
+            className={cn(
+              'text-sm',
+              late ? 'font-medium text-status-danger-fg' : 'text-ink-tertiary',
+            )}
           >
             {elapsed(r.createdAt, now, locale)}
           </span>
@@ -126,74 +143,122 @@ export default function RequestsPage() {
     },
   ];
 
+  const addButton = (
+    <Button asChild>
+      <Link href="/admin/anfragen/neu">
+        <Plus className="size-4" aria-hidden />
+        {t('addAction')}
+      </Link>
+    </Button>
+  );
+
   return (
-    <div className="max-w-6xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+    <div className="mx-auto max-w-[100rem]">
+      <PageHeader title={t('title')} actions={addButton} />
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <label className="relative min-w-56 flex-1">
-          <span className="sr-only">{t('search')}</span>
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-tertiary"
-            aria-hidden
-          />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('search')}
-            className="pl-10"
-          />
-        </label>
+      {/*
+        The filters used to sit bare on the page background with no result
+        count, so "did that filter do anything" was answered by counting rows.
+      */}
+      <Toolbar
+        search={{
+          value: query,
+          onChange: (value) => {
+            setQuery(value);
+            setPage(1);
+          },
+          label: t('search'),
+          clearLabel: appT('clearSearch'),
+        }}
+        count={
+          filtering
+            ? appT('results', { shown: filtered.length, total: requests.length })
+            : appT('resultsAll', { total: requests.length })
+        }
+        filters={
+          <>
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterStatus')}</span>
+              <Select
+                dense
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="all">
+                  {t('filterStatus')}: {t('filterAll')}
+                </option>
+                {/* Labels come from the status registry, not the enum — the
+                    filter and the badge it filters must read identically. */}
+                {statesOf('request').map((state) => (
+                  <option key={state} value={state}>
+                    {statusLabel(state)}
+                  </option>
+                ))}
+              </Select>
+            </label>
 
-        <label className="min-w-40">
-          <span className="sr-only">{t('filterStatus')}</span>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="all">
-              {t('filterStatus')}: {t('filterAll')}
-            </option>
-            {/* Labels come from the status registry, not the enum — the filter
-                and the badge it filters must read identically. */}
-            {statesOf('request').map((state) => (
-              <option key={state} value={state}>
-                {statusLabel(state)}
-              </option>
-            ))}
-          </Select>
-        </label>
-
-        <label className="min-w-40">
-          <span className="sr-only">{t('filterRegion')}</span>
-          <Select value={region} onChange={(e) => setRegion(e.target.value)}>
-            <option value="all">
-              {t('filterRegion')}: {t('filterAll')}
-            </option>
-            {SERVED_REGIONS.map((r) => (
-              <option key={r.postcode} value={r.postcode}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
-        </label>
-      </div>
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterRegion')}</span>
+              <Select
+                dense
+                value={region}
+                onChange={(e) => {
+                  setRegion(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="all">
+                  {t('filterRegion')}: {t('filterAll')}
+                </option>
+                {SERVED_REGIONS.map((r) => (
+                  <option key={r.postcode} value={r.postcode}>
+                    {r.name}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
+        }
+      />
 
       <DataView
-        className="mt-6"
-        items={filtered}
+        items={view.slice}
         columns={columns}
         getKey={(r) => r.id}
         onSelect={(r) => router.push(`/admin/anfragen/${r.id}`)}
         caption={t('title')}
         empty={
-          query || status !== 'all' || region !== 'all' ? (
+          filtering ? (
             <EmptyState
               icon={Search}
               title={t('searchEmptyTitle')}
               body={t('searchEmptyBody', { query: query || '—' })}
             />
           ) : (
-            <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
+            <EmptyState
+              title={t('emptyTitle')}
+              body={t('emptyBody')}
+              action={addButton}
+            />
           )
         }
+      />
+
+      <Pagination
+        page={view.page}
+        pageCount={view.pageCount}
+        onPageChange={setPage}
+        label={appT('pageLabel')}
+        previousLabel={appT('pagePrevious')}
+        nextLabel={appT('pageNext')}
+        summary={appT('pageSummary', {
+          from: view.from,
+          to: view.to,
+          total: view.total,
+        })}
       />
     </div>
   );

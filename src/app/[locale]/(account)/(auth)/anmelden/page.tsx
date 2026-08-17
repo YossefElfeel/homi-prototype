@@ -33,11 +33,18 @@ export default function SignInPage() {
   const [error, setError] = useState(false);
 
   function signIn() {
-    if (!email.trim()) {
+    /*
+     * `password` was held in state and never read: in password mode the form
+     * validated the email and let any password through, including none. The
+     * prototype still accepts any *value* — it has one customer and signing in
+     * is a role switch — but an empty required field is a real failure state,
+     * and it now reaches the error the screen already had.
+     */
+    if (!email.trim() || (mode === 'password' && !password.trim())) {
       setError(true);
       return;
     }
-    // The prototype has one customer. Signing in is a role switch.
+    setError(false);
     setRole('customer');
     router.push('/konto');
   }

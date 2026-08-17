@@ -17,6 +17,8 @@ export function useAccount() {
   const propertyIds = new Set(properties.map((p) => p.id));
   const requests = data.requests.filter((r) => r.customerId === customerId);
   const requestIds = new Set(requests.map((r) => r.id));
+  const bookings = data.bookings.filter((b) => b.customerId === customerId);
+  const bookingIds = new Set(bookings.map((b) => b.id));
 
   return {
     customerId,
@@ -24,14 +26,30 @@ export function useAccount() {
     properties,
     requests,
     offers: data.offers.filter((o) => requestIds.has(o.requestId)),
-    bookings: data.bookings.filter((b) => b.customerId === customerId),
+    bookings,
     invoices: data.invoices.filter((i) => i.customerId === customerId),
     subscriptions: data.subscriptions.filter((s) => s.customerId === customerId),
     credits: data.credits.filter((c) => c.customerId === customerId),
     messages: data.messages.filter((m) => m.customerId === customerId),
     reviews: data.reviews.filter((r) => r.customerId === customerId),
-    // §20.6 — a customer sees photos of their own property, whether or not
-    // they have been cleared for the public gallery.
-    photos: data.photos.filter((p) => p.propertyId && propertyIds.has(p.propertyId)),
+    /*
+     * §20.6 — a customer sees photos of their own property, whether or not
+     * they have been cleared for the public gallery.
+     *
+     * This used to test `p.propertyId` alone, and **no Photo anywhere in the
+     * codebase carried one**: the seeds attach `requestId` or `bookingId`,
+     * `submitDraft` attaches `requestId`, and the field app attached nothing
+     * at all. So screen 47 rendered its empty state in every scenario —
+     * including `busy`, which exists specifically to populate it.
+     *
+     * A photo belongs to this customer if it hangs off any of the three
+     * things that are already theirs.
+     */
+    photos: data.photos.filter(
+      (p) =>
+        (p.propertyId && propertyIds.has(p.propertyId)) ||
+        (p.bookingId && bookingIds.has(p.bookingId)) ||
+        (p.requestId && requestIds.has(p.requestId)),
+    ),
   };
 }

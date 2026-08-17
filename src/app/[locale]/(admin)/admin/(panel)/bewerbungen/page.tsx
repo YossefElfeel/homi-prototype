@@ -9,6 +9,7 @@ import { useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { canSeeApplicants, useHydrated, useNow, useStore } from '@/mock/store';
 import type { Application, ApplicationStatus } from '@/mock/schema';
@@ -36,8 +37,6 @@ const FILTERS: (ApplicationStatus | 'all')[] = [
 export default function AdminApplicationsPage() {
   const t = useTranslations('admin.applications');
   const statusLabel = useTranslations('status.application');
-  const shell = useTranslations('admin.shell');
-  const demoRoles = useTranslations('demo.roles');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -49,18 +48,11 @@ export default function AdminApplicationsPage() {
   const postings = useStore((s) => s.data.postings);
   const [filter, setFilter] = useState<ApplicationStatus | 'all'>('all');
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  if (!canSeeApplicants(role)) {
-    return (
-      <EmptyState
-        icon={Lock}
-          headingLevel={1}
-        title={shell('gateTitle')}
-        body={`${shell('gateBody')} ${shell('gateCurrent', { role: demoRoles(role) })}`}
-      />
-    );
-  }
+  /* See the note on the detail screen: AdminShell has already gated this, so
+     rendering a second lock screen here was dead code. */
+  if (!canSeeApplicants(role)) return null;
 
   const daysLeft = (iso: string) =>
     Math.ceil((new Date(iso).getTime() - now.getTime()) / 86_400_000);

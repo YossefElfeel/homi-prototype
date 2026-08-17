@@ -3,12 +3,14 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Customer } from '@/mock/schema';
 
@@ -75,11 +77,20 @@ export default function CustomersPage() {
     },
   ];
 
+  const addButton = (
+    <Button asChild>
+      <Link href="/admin/kunden/neu">
+        <Plus className="size-4" aria-hidden />
+        {t('addAction')}
+      </Link>
+    </Button>
+  );
+
   return (
     <div className="max-w-6xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+      <PageHeader title={t('title')} actions={addButton} />
 
-      <label className="relative mt-6 block max-w-md">
+      <label className="relative block max-w-md">
         <span className="sr-only">{t('search')}</span>
         <Search
           className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-tertiary"
@@ -108,7 +119,15 @@ export default function CustomersPage() {
               body={t('searchEmptyBody', { query })}
             />
           ) : (
-            <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
+            /* The empty state used to explain why the list was empty and then
+               leave you there. On the "Tag 1" scenario that is the first
+               screen the owner sees, so it is also the first place the create
+               path has to exist. */
+            <EmptyState
+              title={t('emptyTitle')}
+              body={t('emptyBody')}
+              action={addButton}
+            />
           )
         }
       />

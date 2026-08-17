@@ -2,14 +2,20 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 
+import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { KIND_KEY } from '@/components/careers/job-list';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { JobPosting } from '@/mock/schema';
-import { cn } from '@/lib/cn';
 
 /**
  * Screen H3 — the postings.
@@ -24,11 +30,32 @@ export default function AdminPostingsPage() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const hydrated = useHydrated();
+  const now = useNow();
 
   const postings = useStore((s) => s.data.postings);
   const applications = useStore((s) => s.data.applications);
+  const createPosting = useStore((s) => s.createPosting);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
+
+  /*
+   * The list had no create button and its empty state had no action — and the
+   * default scenario seeds zero postings, so this screen was where a reviewer
+   * stopped. `newAction` was already translated in all four locales and
+   * rendered by nothing.
+   */
+  function create() {
+    const { slug } = createPosting(now);
+    toast.success(t('newAction'));
+    router.push(`/admin/stellen/${slug}`);
+  }
+
+  const createButton = (
+    <Button onClick={create}>
+      <Plus className="size-4" aria-hidden />
+      {t('newAction')}
+    </Button>
+  );
 
   const columns: Column<JobPosting>[] = [
     {
@@ -66,33 +93,30 @@ export default function AdminPostingsPage() {
       trailing: true,
       align: 'end',
       cell: (p) => (
-        <span
-          className={cn(
-            'rounded-sm border px-1.5 py-0.5 text-xs',
-            p.published
-              ? 'border-status-success-line bg-status-success text-status-success-fg'
-              : 'border-status-neutral-line bg-status-neutral text-status-neutral-fg',
-          )}
-        >
+        <Chip tone={p.published ? 'success' : 'neutral'}>
           {p.published ? t('published') : t('draft')}
-        </span>
+        </Chip>
       ),
     },
   ];
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+    <div className="mx-auto max-w-[100rem]">
+      <PageHeader title={t('title')} lead={t('lead')} actions={createButton} />
 
       <DataView
-        className="mt-8"
         items={postings}
         columns={columns}
         getKey={(p) => p.id}
         onSelect={(p) => router.push(`/admin/stellen/${p.slug}`)}
         caption={t('title')}
-        empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
+        empty={
+          <EmptyState
+            title={t('emptyTitle')}
+            body={t('emptyBody')}
+            action={createButton}
+          />
+        }
       />
     </div>
   );

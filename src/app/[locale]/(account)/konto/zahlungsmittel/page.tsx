@@ -1,20 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { CreditCard, Info, Plus, Smartphone, Trash2 } from 'lucide-react';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useHydrated } from '@/mock/store';
+import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 import type { PaymentMethod } from '@/mock/schema';
-
-interface SavedMethod {
-  id: string;
-  kind: PaymentMethod;
-  label: string;
-  isDefault: boolean;
-}
 
 const ADDABLE = [
   { kind: 'card', key: 'card', icon: CreditCard },
@@ -34,31 +32,43 @@ const ADDABLE = [
 export default function AccountPaymentPage() {
   const t = useTranslations('account.payment');
   const hydrated = useHydrated();
+  const now = useNow();
 
-  const [methods, setMethods] = useState<SavedMethod[]>([
-    { id: 'pm_1', kind: 'card', label: 'Visa · 4242', isDefault: true },
-    { id: 'pm_2', kind: 'twint', label: 'TWINT · 079 …', isDefault: false },
-  ]);
+  /*
+   * These lived in `useState`, seeded with two hard-coded cards. Adding a
+   * method, removing one, or changing the default all worked convincingly and
+   * were discarded on the next navigation — on the one screen whose entire
+   * subject is what has been saved.
+   */
+  const customerId = useStore((s) => s.demo.currentCustomerId);
+  const allMethods = useStore((s) => s.data.paymentMethods);
+  const addPaymentMethod = useStore((s) => s.addPaymentMethod);
+  const removePaymentMethod = useStore((s) => s.removePaymentMethod);
+  const setDefaultPaymentMethod = useStore((s) => s.setDefaultPaymentMethod);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
+  const methods = allMethods.filter((m) => m.customerId === customerId);
   const forPlan = methods.find((m) => m.kind === 'card');
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+    <div className="mx-auto max-w-3xl">
+      <PageHeader title={t('title')} lead={t('lead')} />
 
-      <section className="mt-8">
-        <h2 className="label-type text-ink-tertiary">{t('savedTitle')}</h2>
+      <Card pad="none">
+        <h2 className="label-type px-card pt-card text-ink-tertiary">
+          {t('savedTitle')}
+        </h2>
         {methods.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-tertiary">{t('savedNone')}</p>
+          <p className="px-card pt-2 pb-card text-sm text-ink-tertiary">
+            {t('savedNone')}
+          </p>
         ) : (
-          <ul className="mt-3 border-t border-line-subtle">
+          <ul className="mt-3">
             {methods.map((method) => (
               <li
                 key={method.id}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-subtle py-3"
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-subtle px-card py-row"
               >
                 <span className="flex items-center gap-3">
                   {method.kind === 'card' ? (
@@ -67,22 +77,17 @@ export default function AccountPaymentPage() {
                     <Smartphone className="size-4 text-ink-tertiary" aria-hidden />
                   )}
                   <span data-numeric>{method.label}</span>
-                  {method.isDefault && (
-                    <span className="rounded-sm border border-status-neutral-line bg-status-neutral px-1.5 py-0.5 text-xs text-status-neutral-fg">
-                      {t('defaultLabel')}
-                    </span>
-                  )}
+                  {method.isDefault && <Chip>{t('defaultLabel')}</Chip>}
                 </span>
                 <span className="flex items-center gap-1">
                   {!method.isDefault && (
                     <Button
                       variant="quiet"
                       size="sm"
-                      onClick={() =>
-                        setMethods(
-                          methods.map((m) => ({ ...m, isDefault: m.id === method.id })),
-                        )
-                      }
+                      onClick={() => {
+                        setDefaultPaymentMethod(method.id);
+                        toast.success(t('defaultSet'));
+                      }}
                     >
                       {t('makeDefault')}
                     </Button>
@@ -90,7 +95,10 @@ export default function AccountPaymentPage() {
                   <Button
                     variant="quiet"
                     size="sm"
-                    onClick={() => setMethods(methods.filter((m) => m.id !== method.id))}
+                    onClick={() => {
+                      removePaymentMethod(method.id);
+                      toast.success(t('removed'));
+                    }}
                   >
                     <Trash2 className="size-4" aria-hidden />
                     <span className="sr-only">{t('remove')}</span>
@@ -100,28 +108,21 @@ export default function AccountPaymentPage() {
             ))}
           </ul>
         )}
-      </section>
+      </Card>
 
-      <section className="mt-10">
+      <section className="mt-app-section">
         <h2 className="label-type text-ink-tertiary">{t('addTitle')}</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="gap-app mt-3 grid sm:grid-cols-2">
           {ADDABLE.map(({ kind, key, icon: Icon }) => (
             <button
               key={kind}
               type="button"
-              onClick={() =>
-                setMethods([
-                  ...methods,
-                  {
-                    id: `pm_${methods.length + 1}`,
-                    kind,
-                    label: t(key),
-                    isDefault: methods.length === 0,
-                  },
-                ])
-              }
+              onClick={() => {
+                addPaymentMethod({ customerId, kind, label: t(key) }, now);
+                toast.success(t('added'));
+              }}
               className={cn(
-                'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] border border-line px-4 py-3 text-start transition-colors hover:bg-sunken',
+                'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] border border-line bg-card px-4 py-3 text-start transition-[box-shadow,border-color] hover:border-line-focus hover:shadow-[var(--shadow-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
               )}
             >
               <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
@@ -132,21 +133,15 @@ export default function AccountPaymentPage() {
         </div>
       </section>
 
-      <section className="mt-10 border-t border-line-subtle pt-8">
+      <section className="mt-app-section border-t border-line-subtle pt-8">
         <h2 className="display-type text-xl">{t('recurringTitle')}</h2>
         <p className="mt-3 flex items-center gap-3">
           <CreditCard className="size-4 text-ink-tertiary" aria-hidden />
           <span data-numeric>{forPlan ? forPlan.label : '—'}</span>
         </p>
-        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken p-5">
-          <Info className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-          <div>
-            <h3 className="font-medium">{t('twintBlockedTitle')}</h3>
-            <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-              {t('twintBlockedBody')}
-            </p>
-          </div>
-        </div>
+        <Alert tone="neutral" icon={Info} className="mt-5" title={t('twintBlockedTitle')}>
+          {t('twintBlockedBody')}
+        </Alert>
       </section>
 
       <p className="mt-8 text-sm text-ink-tertiary">{t('demoNote')}</p>

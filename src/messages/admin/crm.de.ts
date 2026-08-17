@@ -16,10 +16,54 @@ export const adminCrmDe = {
     active: 'Aktiv',
     inactive: 'Inaktiv',
     emptyTitle: 'Noch keine Kunden',
+    /* Stand vorher: «Ein Konto entsteht automatisch …» — und daneben kein
+       Knopf. Das stimmte, solange der Assistent der einzige Weg herein war;
+       seit es «Kunde erfassen» gibt, wäre es eine Ausrede für eine Liste, in
+       die man nichts eintragen kann. */
     emptyBody:
-      'Ein Konto entsteht automatisch, sobald Sie die erste Offerte versenden. Bis dahin bleibt diese Liste leer.',
+      'Ein Konto entsteht automatisch, sobald jemand über die Website anfragt. Wer angerufen hat, wird hier von Hand erfasst.',
     searchEmptyTitle: 'Keine Treffer',
     searchEmptyBody: 'Für «{query}» wurde nichts gefunden.',
+    addAction: 'Kunde erfassen',
+  },
+
+  /** Screen 64a — der Kunde, der angerufen hat. */
+  customerNew: {
+    back: 'Alle Kunden',
+    title: 'Kunde erfassen',
+    lead: 'Für Anrufe und Empfehlungen. Wer über die Website anfragt, wird automatisch angelegt — hier tippen Sie nur, was am Telefon gesagt wurde.',
+    contactTitle: 'Kontakt',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    email: 'E-Mail',
+    emailHint: 'Offerten und Rechnungen gehen an diese Adresse.',
+    phone: 'Telefon',
+    language: 'Sprache',
+    languageHint: 'Bestimmt die Sprache jeder E-Mail an diese Person.',
+    notesTitle: 'Interne Notiz',
+    notesHint: 'Nur für Sie. Der Kunde sieht das nie.',
+    notesPlaceholder: 'z. B. empfohlen von Frau Berger, ruft am liebsten vormittags an …',
+    save: 'Kunde anlegen',
+    cancel: 'Abbrechen',
+    done: '{name} angelegt.',
+    errorRequired: 'Bitte ausfüllen.',
+    errorEmail: 'Das sieht nicht nach einer E-Mail-Adresse aus.',
+    errorPhone: 'Bitte eine Telefonnummer angeben — der Rückruf läuft darüber.',
+    /* Der Assistent erkennt einen bestehenden Kunden an E-Mail *oder*
+       Telefon und legt keinen zweiten an. Von Hand ginge das sonst: zwei
+       Datensätze für dieselbe Person, und die Historie steht auf beiden
+       halb. Darum dieselbe Prüfung, bevor gespeichert wird. */
+    duplicateTitle: 'Diese Person ist schon erfasst',
+    duplicateBody: '{name} hat dieselbe {field}. Sie können den bestehenden Datensatz öffnen statt einen zweiten anzulegen.',
+    duplicateFieldEmail: 'E-Mail-Adresse',
+    duplicateFieldPhone: 'Telefonnummer',
+    duplicateOpen: 'Bestehenden Kunden öffnen',
+    duplicateIgnore: 'Trotzdem neu anlegen',
+    noPropertyTitle: 'Ohne Objekt geht es nicht weiter',
+    noPropertyBody:
+      'Ein Kunde allein kann nichts buchen — Preis und Termin hängen an einer Adresse. Das Objekt entsteht bei der ersten Anfrage.',
+    nextRequest: 'Anfrage erfassen',
+    nextProperty: 'Objekt hinterlegen',
   },
 
   customer: {
@@ -49,7 +93,31 @@ export const adminCrmDe = {
     colSpecs: 'Eckdaten',
     colAccess: 'Zutritt',
     emptyTitle: 'Noch keine Objekte',
-    emptyBody: 'Objekte entstehen aus Anfragen und erscheinen dann hier.',
+    emptyBody:
+      'Objekte entstehen aus Anfragen und erscheinen dann hier. Ein bekanntes Objekt lässt sich auch direkt erfassen.',
+    addAction: 'Objekt erfassen',
+    newTitle: 'Neues Objekt',
+    newCustomer: 'Kunde',
+    newCustomerPlaceholder: 'Kunde wählen …',
+    newLabel: 'Bezeichnung',
+    newLabelHint: 'Wie Sie das Objekt intern nennen — leer lassen übernimmt die Strasse.',
+    newStreet: 'Strasse und Nummer',
+    newPostcode: 'PLZ',
+    newCity: 'Ort',
+    newKind: 'Objektart',
+    newArea: 'Fläche m²',
+    newRooms: 'Zimmer',
+    newBathrooms: 'Bäder',
+    newFloor: 'Stockwerk',
+    newSave: 'Objekt anlegen',
+    newDone: 'Objekt angelegt.',
+    /* Ein Objekt ohne Kunden gehört niemandem — es wäre in keiner Anfrage, in
+       keinem Abo und in keiner Rechnung auffindbar. */
+    newNoCustomers:
+      'Objekte gehören immer zu einem Kunden. Erfassen Sie zuerst einen Kunden.',
+    newAccessNote:
+      'Zutrittsangaben werden auf dem Objekt selbst erfasst — direkt nach dem Anlegen.',
+    dismiss: 'Abbrechen',
   },
 
   property: {
@@ -221,5 +289,23 @@ export const adminCrmDe = {
     bookingLink: 'Zum Einsatz',
     subscriptionLink: 'Zum Abo',
     dismiss: 'Abbrechen',
+    /* Screen 72 is called "Rechnung bearbeiten" and had nothing editable, no
+       way to create an invoice, and no path to «bezahlt». */
+    editHint: 'Solange die Rechnung Entwurf ist, sind alle Positionen änderbar.',
+    lockedHint: 'Versendete Rechnungen sind nicht mehr änderbar.',
+    linePlaceholder: 'Beschreibung',
+    removeLine: 'Position entfernen',
+    sentDone: 'Rechnung versendet.',
+    markPaid: 'Als bezahlt markieren',
+    markPaidDone: 'Rechnung als bezahlt erfasst.',
+    paidOn: 'Bezahlt am {date}',
+    createTitle: 'Rechnung erstellen',
+    createLead: 'Für einen abgeschlossenen Einsatz — Positionen kommen aus der Offerte.',
+    createAction: 'Rechnung erstellen',
+    createDone: 'Entwurf {reference} erstellt.',
+    createPick: 'Einsatz',
+    createEmptyTitle: 'Kein Einsatz zum Verrechnen',
+    createEmptyBody:
+      'Rechnungen entstehen aus abgeschlossenen Einsätzen. Sobald ein Einsatz abgeschlossen ist, erscheint er hier.',
   },
 };

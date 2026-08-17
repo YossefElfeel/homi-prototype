@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   HelpCircle,
+  Palette,
   X,
 } from 'lucide-react';
 
@@ -70,6 +71,8 @@ export function DemoBar({
   const settings = useStore((s) => s.settings);
   const setRole = useStore((s) => s.setRole);
   const setScenario = useStore((s) => s.setScenario);
+  const setCurrentCustomer = useStore((s) => s.setCurrentCustomer);
+  const customers = useStore((s) => s.data.customers);
   const setDateOverride = useStore((s) => s.setDateOverride);
   const updateSettings = useStore((s) => s.updateSettings);
   const reset = useStore((s) => s.reset);
@@ -227,6 +230,28 @@ export function DemoBar({
           </select>
         </Field>
 
+        {/*
+          `setCurrentCustomer` was exported from the store and called by
+          nothing, and demo.currentCustomerId was pinned to 'cus_2' — so ten
+          account screens listed an `empty` state in the delivery contract that
+          could only be reached by switching the whole scenario. Switching the
+          customer is the honest way to see them.
+        */}
+        <Field label={t('customer')}>
+          <select
+            aria-label={t('customer')}
+            value={demo.currentCustomerId}
+            onChange={(e) => setCurrentCustomer(e.target.value)}
+            className="w-full rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id} className="bg-[#111318]">
+                {customer.firstName} {customer.lastName}
+              </option>
+            ))}
+          </select>
+        </Field>
+
         <Field label={t('today')}>
           <div className="flex gap-2">
             <input
@@ -278,6 +303,15 @@ export function DemoBar({
             icon={<HelpCircle className="size-3.5" aria-hidden />}
           >
             {t('openQuestions')}
+          </ToolLink>
+          {/* /foundations is the token proof sheet and had zero inbound links
+              anywhere in the codebase — the one page that demonstrates the
+              design system was reachable only by typing the URL. */}
+          <ToolLink
+            href="/foundations"
+            icon={<Palette className="size-3.5" aria-hidden />}
+          >
+            {t('foundations')}
           </ToolLink>
         </div>
 

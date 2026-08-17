@@ -4,11 +4,13 @@ import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Camera, Check, Trash2 } from 'lucide-react';
 
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
+import { BottomActionBar, BottomActionBarSpacer } from '@/components/ui/bottom-action-bar';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 /** §4.2 — the report is only useful if it is comparable. */
@@ -33,18 +35,18 @@ export default function FieldCheckPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
   const t = useTranslations('field.check');
   const format = useFormatter();
-  const router = useRouter();
   const hydrated = useHydrated();
   const now = useNow();
 
   const bookings = useStore((s) => s.data.bookings);
-  const patchData = useStore((s) => s.patchData);
+  const recordCheck = useStore((s) => s.recordCheck);
 
   const [photos, setPhotos] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [extraHours, setExtraHours] = useState('');
+  const [done, setDone] = useState<'in' | 'out' | null>(null);
 
-  if (!hydrated) return <p className="py-10 text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('inTitle')} />;
 
   const booking = bookings.find((b) => b.id === id);
   if (!booking) return <p className="py-10 text-ink-tertiary">—</p>;
@@ -56,16 +58,54 @@ export default function FieldCheckPage({ params }: { params: Promise<{ id: strin
 
   function confirm() {
     if (!booking) return;
-    patchData({
-      bookings: bookings.map((b) =>
-        b.id === booking.id
-          ? checkingOut
-            ? { ...b, checkOutAt: now.toISOString(), status: 'awaitingApproval' as const }
-            : { ...b, checkInAt: now.toISOString(), status: 'inProgress' as const }
-          : b,
-      ),
-    });
-    router.push(`/einsatz/${booking.id}`);
+    const kind = checkingOut ? ('out' as const) : ('in' as const);
+
+    /*
+     * This used to write only the timestamp and the status: the three photos
+     * the screen had just insisted on, the note and the reported extra hours
+     * were all dropped on navigate.
+     */
+    recordCheck(
+      booking.id,
+      {
+        kind,
+        photos,
+        note,
+        extraHours: extraHours.trim() ? Number(extraHours) : null,
+      },
+      now,
+    );
+    /* The confirmation copy (doneInTitle / doneOutTitle / doneOutBody) was
+       written and translated in every locale, and no screen rendered it —
+       check-out bounced straight back to the job with no acknowledgement that
+       anything had been recorded. */
+    setDone(kind);
+  }
+
+  if (done) {
+    return (
+      <div className="py-10">
+        <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
+          <Check className="size-6" aria-hidden />
+        </span>
+        <h1 className="display-type mt-6 text-2xl">
+          {done === 'in'
+            ? t('doneInTitle', { time: format.dateTime(now, 'time') })
+            : t('doneOutTitle', { time: format.dateTime(now, 'time') })}
+        </h1>
+        <p className="mt-3 text-ink-secondary">
+          {done === 'out' ? t('doneOutBody') : t('doneInBody')}
+        </p>
+        <div className="mt-8 space-y-3">
+          <Button asChild block>
+            <Link href={`/einsatz/${booking.id}`}>{t('backToJob')}</Link>
+          </Button>
+          <Button asChild block variant="secondary">
+            <Link href="/einsatz">{t('backToDay')}</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -159,12 +199,16 @@ export default function FieldCheckPage({ params }: { params: Promise<{ id: strin
         )}
       </Field>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[26rem] border-t border-line-subtle bg-page/95 px-5 py-4 backdrop-blur-sm">
-        <Button className="w-full" disabled={blocked} onClick={confirm}>
+      {/* Reserves the height the fixed bar covers — the note field used to sit
+          permanently underneath it on a short screen. */}
+      <BottomActionBarSpacer />
+
+      <BottomActionBar visibility="always" className="mx-auto max-w-[26rem]">
+        <Button block size="lg" disabled={blocked} onClick={confirm}>
           <Check className="size-4" aria-hidden />
           {checkingOut ? t('confirmOut') : t('confirmIn')}
         </Button>
-      </div>
+      </BottomActionBar>
     </div>
   );
 }

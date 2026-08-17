@@ -85,6 +85,8 @@ export const fieldDe = {
     doneInTitle: 'Eingecheckt um {time}',
     doneOutTitle: 'Abgeschlossen um {time}',
     doneOutBody: 'Der Bericht ist beim Büro. Fahren Sie sicher.',
+    doneInBody: 'Startzeit ist erfasst. Die Fotos liegen beim Einsatz.',
+    backToDay: 'Zum Tag',
   },
 
   noAccess: {

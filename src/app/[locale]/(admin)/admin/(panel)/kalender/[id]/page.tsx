@@ -4,7 +4,7 @@ import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, DoorClosed, Eye, EyeOff, Lock, UserPlus } from 'lucide-react';
+import { ArrowLeft, Check, DoorClosed, Eye, EyeOff, Lock, UserPlus } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -108,6 +108,35 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </h1>
         <StatusBadge entity="booking" state={booking.status} />
       </div>
+
+      {/*
+        §5.3 splits the job in two: the contractor reports extra hours, the
+        office prices them. Only the reporting half was built — check-out set
+        `awaitingApproval` and nothing could ever move a booking out of it, so
+        `completed` was a state no screen could reach and the reported hours
+        sat in the timeline with nobody able to accept them.
+      */}
+      {booking.status === 'awaitingApproval' && (
+        <div className="mt-6 border-l-2 border-status-warning-line bg-status-warning p-5">
+          <h2 className="font-medium">{t('approveTitle')}</h2>
+          <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
+            {t('approveBody')}
+          </p>
+          <Button
+            className="mt-4"
+            onClick={() => {
+              patchBooking(
+                { status: 'completed' },
+                { kind: 'approved', label: t('approveEvent') },
+              );
+              toast.success(t('approveDone'));
+            }}
+          >
+            <Check className="size-4" aria-hidden />
+            {t('approveAction')}
+          </Button>
+        </div>
+      )}
 
       <div className="mt-8 grid gap-10 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">

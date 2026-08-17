@@ -17,6 +17,8 @@ export const bookingEn: typeof bookingDe = {
     estimatePending: 'Not enough detail yet',
     hoursLabel: 'Estimated duration',
     draftSaved: 'Saved — you can pick this up any time.',
+    startOver: 'Start over',
+    draftCleared: 'Your answers have been cleared.',
     exitConfirm: 'Your answers stay saved.',
     steps: {
       leistung: 'Service',

@@ -86,6 +86,8 @@ export const fieldEn: typeof fieldDe = {
     doneInTitle: 'Checked in at {time}',
     doneOutTitle: 'Finished at {time}',
     doneOutBody: 'The report is with the office. Drive safely.',
+    doneInBody: 'The start time is recorded. The photos are on the job.',
+    backToDay: 'Back to the day',
   },
 
   noAccess: {

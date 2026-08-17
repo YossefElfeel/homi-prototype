@@ -14,6 +14,7 @@ import { nextSlots, startOfDay } from '@/mock/engines/availability';
 import { offerHours, offerSubtotal, offerTotal, offerDiscount } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { CalcMethod, OfferLine } from '@/mock/schema';
+import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
 
 /**
@@ -123,13 +124,8 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
     (s) => s.customerId === customer.id && s.status === 'active',
   )?.plan;
 
-  function labelFor(line: OfferLine) {
-    const svc = services.find((s) => s.slug === line.label);
-    if (svc) return svc.name[locale];
-    const add = addOns.find((a) => a.slug === line.label);
-    if (add) return add.name[locale];
-    return line.label;
-  }
+  const labelFor = (line: OfferLine) =>
+    offerLineLabel(line, services, addOns, locale);
 
   return (
     <div className="max-w-6xl pb-28 lg:pb-0">
@@ -182,9 +178,15 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                   {offer.lines.map((line) => (
                     <tr key={line.id} className="border-b border-line-subtle">
                       <td className="py-1.5 pr-3">
+                        {/* Writes displayLabel, never label. `label` is the
+                            catalogue slug; overwriting it with the resolved
+                            German name broke the line's link to the service it
+                            came from, permanently, on the first keystroke. */}
                         <CellInput
                           value={labelFor(line)}
-                          onChange={(v) => updateOfferLine(offer.id, line.id, { label: v })}
+                          onChange={(v) =>
+                            updateOfferLine(offer.id, line.id, { displayLabel: v })
+                          }
                           aria-label={t('colDescription')}
                         />
                       </td>

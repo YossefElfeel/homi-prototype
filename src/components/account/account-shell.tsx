@@ -1,29 +1,25 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   CreditCard,
   FileText,
   Home,
   Images,
   LayoutDashboard,
-  Lock,
-  Menu,
   MessageSquare,
   Receipt,
-  Star,
   RefreshCw,
+  Star,
   Timer,
   User,
-  X,
 } from 'lucide-react';
 
-import { Link, usePathname } from '@/i18n/navigation';
-import { Logo } from '@/components/site/logo';
+import { Link, useRouter } from '@/i18n/navigation';
+import { AccessGate } from '@/components/app/access-gate';
+import { AppShell, type AppNavGroup } from '@/components/app/app-shell';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { cn } from '@/lib/cn';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 type NavKey =
@@ -40,19 +36,15 @@ type NavKey =
   | 'messages'
   | 'profile';
 
-interface NavItem {
-  href: string;
-  key: NavKey;
-  icon: typeof LayoutDashboard;
-  exact?: boolean;
-}
-
 /**
  * Ordered by how often a customer actually opens each one, not by the
  * specification's chapter order. Appointments and money sit at the top; the
  * plan, credit and payment details are visited a handful of times a year.
  */
-const NAV: { group: 'jobs' | 'account'; items: NavItem[] }[] = [
+const NAV: {
+  group: 'jobs' | 'account';
+  items: { href: string; key: NavKey; icon: typeof LayoutDashboard; exact?: boolean }[];
+}[] = [
   {
     group: 'jobs',
     items: [
@@ -80,152 +72,116 @@ const NAV: { group: 'jobs' | 'account'; items: NavItem[] }[] = [
 /**
  * Customer account chrome.
  *
- * Gated on the customer role, and — unlike the admin shell — it keeps the
- * public header above it. A customer who lands here from a booking email is
- * still browsing the same site, and hiding the way back to the services is how
- * an account area turns into a dead end.
+ * This used to render inside the marketing header and footer, with an
+ * invisible sidebar — no background, no border, no group labels — floating in
+ * the page. It was the single biggest reason the customer area never read as
+ * an application: every screen was framed as a page on a website.
+ *
+ * It now uses the same AppShell as the admin console. The way back to the
+ * public site is explicit instead of ambient: a link in the sidebar footer and
+ * one in the account menu, so nothing is lost by dropping the site header.
  */
 export function AccountShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('account.shell');
+  const appT = useTranslations('app');
   const demoRoles = useTranslations('demo.roles');
-  const pathname = usePathname();
+  const router = useRouter();
   const hydrated = useHydrated();
   const now = useNow();
 
   const role = useStore((s) => s.demo.role);
+  const setRole = useStore((s) => s.setRole);
   const customerId = useStore((s) => s.demo.currentCustomerId);
+  const customers = useStore((s) => s.data.customers);
   const messages = useStore((s) => s.data.messages);
   const invoices = useStore((s) => s.data.invoices);
-  const [open, setOpen] = useState(false);
 
-  const unread = hydrated
+  if (hydrated && role !== 'customer') {
+    return (
+      <AccessGate
+        title={t('gateTitle')}
+        body={`${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`}
+        action={
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild>
+              <Link href="/anmelden">{t('gateAction')}</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/">{appT('backToSite')}</Link>
+            </Button>
+          </div>
+        }
+      />
+    );
+  }
+
+  const unreadMessages = hydrated
     ? messages.filter(
         (m) => m.customerId === customerId && m.from === 'homivaro' && !m.readByCustomer,
-      ).length
-    : 0;
+      )
+    : [];
 
   const dueInvoices = hydrated
     ? invoices.filter(
         (i) =>
           i.customerId === customerId &&
           (i.status === 'overdue' || (i.status === 'sent' && new Date(i.dueAt) < now)),
-      ).length
-    : 0;
-
-  if (hydrated && role !== 'customer') {
-    return (
-      <div className="py-section">
-        <EmptyState
-          icon={Lock}
-          headingLevel={1}
-          title={t('gateTitle')}
-          body={`${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`}
-          action={
-            <Button asChild>
-              <Link href="/anmelden">{t('gateAction')}</Link>
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname.startsWith(href);
+      )
+    : [];
 
   const badgeFor = (key: NavKey) =>
-    key === 'messages' ? unread : key === 'invoices' ? dueInvoices : 0;
+    key === 'messages'
+      ? unreadMessages.length
+      : key === 'invoices'
+        ? dueInvoices.length
+        : undefined;
 
-  const navList = (onNavigate?: () => void) => (
-    <div className="space-y-6">
-      {NAV.map((section, index) => (
-        <div key={section.group}>
-          {index > 0 && <hr className="mb-4 border-line-subtle" />}
-          <ul className="space-y-1">
-            {section.items.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href, item.exact);
-              const badge = badgeFor(item.key);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm transition-colors',
-                      active
-                        ? 'bg-accent-subtle font-medium text-ink'
-                        : 'text-ink-secondary hover:bg-sunken hover:text-ink',
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0" aria-hidden />
-                    <span className="flex-1">{t(`nav.${item.key}`)}</span>
-                    {badge > 0 && (
-                      <span
-                        data-numeric
-                        className="rounded-full bg-accent px-1.5 py-0.5 text-[0.6875rem] font-medium text-on-accent"
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
+  const nav: AppNavGroup[] = NAV.map((section, index) => ({
+    key: section.group,
+    /* The account sidebar had no group labels at all — two blocks split by an
+       <hr>, which says "these are different" without saying how. */
+    label: index === 0 ? undefined : t(`groups.${section.group}`),
+    items: section.items.map((item) => ({
+      href: item.href,
+      label: t(`nav.${item.key}`),
+      icon: item.icon,
+      exact: item.exact,
+      badge: badgeFor(item.key),
+    })),
+  }));
+
+  const customer = customers.find((c) => c.id === customerId);
+  const userName = customer ? `${customer.firstName} ${customer.lastName}` : t('title');
+
+  function signOut() {
+    setRole('visitor');
+    toast.success(appT('signOutConfirm'));
+    router.push('/');
+  }
 
   return (
-    <div className="py-10 lg:grid lg:grid-cols-[15rem_1fr] lg:gap-12">
-      <aside className="hidden lg:block">
-        <nav aria-label={t('title')} className="sticky top-24">
-          {navList()}
-        </nav>
-      </aside>
-
-      <div className="min-w-0">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 text-sm transition-colors hover:bg-sunken lg:hidden"
-        >
-          <Menu className="size-4" aria-hidden />
-          {t('title')}
-          {unread + dueInvoices > 0 && (
-            <span
-              data-numeric
-              className="rounded-full bg-accent px-1.5 py-0.5 text-[0.6875rem] font-medium text-on-accent"
-            >
-              {unread + dueInvoices}
-            </span>
-          )}
-        </button>
-
-        {children}
-      </div>
-
-      {open && (
-        <div className="fixed inset-0 z-50 bg-page lg:hidden">
-          <div className="flex h-16 items-center justify-between border-b border-line-subtle px-gutter">
-            <Logo />
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label={t('menu')}
-              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] transition-colors hover:bg-sunken"
-            >
-              <X className="size-5" aria-hidden />
-            </button>
-          </div>
-          <nav aria-label={t('title')} className="px-gutter py-5">
-            {navList(() => setOpen(false))}
-          </nav>
-        </div>
-      )}
-    </div>
+    <AppShell
+      nav={nav}
+      navLabel={t('title')}
+      homeHref="/konto"
+      user={{ name: userName, role: demoRoles('customer') }}
+      onSignOut={signOut}
+      notifications={[
+        ...unreadMessages.slice(0, 3).map((m) => ({
+          id: m.id,
+          title: m.subject,
+          detail: m.body.slice(0, 60),
+          href: '/konto/nachrichten',
+        })),
+        ...dueInvoices.slice(0, 3).map((i) => ({
+          id: i.id,
+          title: i.reference,
+          href: `/konto/rechnungen/${i.id}`,
+        })),
+      ]}
+      notificationsHref="/konto"
+    >
+      {children}
+    </AppShell>
   );
 }

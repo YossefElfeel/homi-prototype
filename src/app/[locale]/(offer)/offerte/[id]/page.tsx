@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
@@ -9,6 +9,8 @@ import { ArrowRight, Check, Download, Info, ShieldCheck } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { Field, Textarea } from '@/components/ui/field';
 import { Money } from '@/components/ui/money';
 import { EmptyState } from '@/components/ui/empty-state';
 import { OfferShell } from '@/components/offer/offer-shell';
@@ -23,6 +25,8 @@ import {
 } from '@/mock/engines/offers';
 import { arrivalWindowMinutes } from '@/mock/engines/pricing';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { OfferLine } from '@/mock/schema';
+import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
 
 /**
@@ -35,6 +39,7 @@ import { cn } from '@/lib/cn';
 export default function OfferPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('offer.detail');
+  const brand = useTranslations('brand');
   const e = useTranslations('offer.expired');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -45,20 +50,36 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
   const data = useOffer(id);
   const toggleOfferLine = useStore((s) => s.toggleOfferLine);
   const reissueOffer = useStore((s) => s.reissueOffer);
+  const declineOffer = useStore((s) => s.declineOffer);
   const services = useStore((s) => s.services);
   const addOns = useStore((s) => s.addOns);
+
+  const [declining, setDeclining] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
 
   if (!hydrated) return <div className="p-gutter text-ink-tertiary">…</div>;
   if (!data) {
     return (
+      /* Was three hardcoded German strings on a page that ships in four
+         languages — and one link, to the marketing home page, from a screen a
+         customer reached by following a quote link that no longer resolves.
+         Calling us is the actual next step. */
       <main className="mx-auto max-w-2xl px-gutter py-section">
         <EmptyState
-          title="Offerte nicht gefunden"
-          body="Der Link ist möglicherweise veraltet. Melden Sie sich bei uns, wir senden ihn neu."
+          headingLevel={1}
+          title={t('notFoundTitle')}
+          body={t('notFoundBody')}
           action={
-            <Button asChild>
-              <Link href="/">Zur Startseite</Link>
-            </Button>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <a href={`tel:${brand('phone').replace(/\s/g, '')}`}>
+                  {t('notFoundCall')}
+                </a>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/kontakt">{t('notFoundContact')}</Link>
+              </Button>
+            </div>
           }
         />
       </main>
@@ -72,14 +93,28 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
   const fixed = offer.lines.filter((line) => !line.optional);
   const hours = offerHours(offer);
 
-  // Line labels are engine keys ("service:grundreinigung", "addon:backofen",
-  // "surcharge:saturday") — resolve them to the customer's language.
-  function labelFor(label: string) {
-    const svc = services.find((s) => s.slug === label);
-    if (svc) return svc.name[locale];
-    const add = addOns.find((a) => a.slug === label);
-    if (add) return add.name[locale];
-    return label;
+  /* Line labels are catalogue slugs, resolved to the reader's language —
+     unless the owner reworded the line for this quote, which offerLineLabel
+     honours. Shared with the builder so both ends read the same text. */
+  const labelFor = (line: OfferLine) => offerLineLabel(line, services, addOns, locale);
+
+  /* A declined quote is not an expired one and must not read as a mistake —
+     the customer chose this, so the screen confirms the choice rather than
+     offering to renew what they just turned down. */
+  if (offer.status === 'rejected') {
+    return (
+      <OfferShell offer={offer}>
+        <div className="max-w-2xl">
+          <h1 className="display-type text-[clamp(1.875rem,4vw,3rem)]">
+            {t('declinedTitle')}
+          </h1>
+          <p className="mt-5 text-lg text-ink-secondary">{t('declinedBody')}</p>
+          <Button asChild size="lg" variant="secondary" className="mt-8">
+            <Link href="/anfrage">{t('declinedAction')}</Link>
+          </Button>
+        </div>
+      </OfferShell>
+    );
   }
 
   if (expired) {
@@ -152,7 +187,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                   {fixed.map((line) => (
                     <tr key={line.id} className="border-b border-line-subtle">
                       <th scope="row" className="py-3.5 pr-4 font-normal">
-                        {labelFor(line.label)}
+                        {labelFor(line)}
                       </th>
                       <td data-numeric className="py-3.5 pr-4 text-right text-ink-secondary">
                         {line.calc === 'hourly'
@@ -199,7 +234,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                         onChange={() => toggleOfferLine(offer.id, line.id)}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="font-medium">{labelFor(line.label)}</span>
+                        <span className="font-medium">{labelFor(line)}</span>
                         <span className="label-type ml-2 text-ink-tertiary">
                           {t('optionalBadge')}
                         </span>
@@ -273,6 +308,55 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                   <Download className="size-4" aria-hidden />
                   {t('downloadPdf')}
                 </Button>
+              </div>
+
+              {/*
+                Third, and deliberately quietest. A no belongs on the screen —
+                without it the only way to refuse is silence, which the system
+                reads three weeks later as "expired" and learns nothing from.
+                It sits below the change request because asking for a different
+                price is the better outcome for both sides.
+              */}
+              <div className="mt-4 border-t border-line-subtle pt-4">
+                {declining ? (
+                  <ConfirmPanel
+                    title={t('declineTitle')}
+                    body={t('declineBody')}
+                    action={t('declineConfirm')}
+                    dismiss={t('declineDismiss')}
+                    onDismiss={() => setDeclining(false)}
+                    onConfirm={() => {
+                      declineOffer(offer.id, declineReason, now);
+                      setDeclining(false);
+                      toast.success(t('declineDone'));
+                    }}
+                  >
+                    <Field
+                      label={t('declineReason')}
+                      hint={t('declineReasonHint')}
+                      optional
+                    >
+                      {(props) => (
+                        <Textarea
+                          {...props}
+                          className="min-h-20 bg-card"
+                          value={declineReason}
+                          placeholder={t('declineReasonPlaceholder')}
+                          onChange={(e) => setDeclineReason(e.target.value)}
+                        />
+                      )}
+                    </Field>
+                  </ConfirmPanel>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    block
+                    onClick={() => setDeclining(true)}
+                  >
+                    {t('decline')}
+                  </Button>
+                )}
               </div>
             </div>
 

@@ -7,6 +7,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { StepRail } from '@/components/ui/step-rail';
 import { cn } from '@/lib/cn';
 import { daysLeft } from '@/mock/engines/offers';
 import { useNow } from '@/mock/store';
@@ -81,22 +82,13 @@ export function OfferShell({
           )}
 
           {index >= 0 && (
-            <nav aria-label={t('steps.offer')} className="mt-4">
-              <ol className="flex gap-1.5">
-                {STEPS.map((name, i) => (
-                  <li
-                    key={name}
-                    aria-current={i === index ? 'step' : undefined}
-                    className={cn(
-                      'h-1 flex-1 rounded-full transition-colors',
-                      i <= index ? 'bg-accent' : 'bg-sunken',
-                    )}
-                  >
-                    <span className="sr-only">{t(`steps.${name}`)}</span>
-                  </li>
-                ))}
-              </ol>
-            </nav>
+            <StepRail
+              className="mt-4"
+              label={t('steps.offer')}
+              current={index}
+              steps={STEPS.map((name) => ({ name, label: t(`steps.${name}`) }))}
+              caption={t(`steps.${STEPS[index]!}`)}
+            />
           )}
         </div>
       </header>

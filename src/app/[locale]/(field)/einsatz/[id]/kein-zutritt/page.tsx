@@ -8,6 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
+import { BottomActionBar, BottomActionBarSpacer } from '@/components/ui/bottom-action-bar';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
@@ -49,7 +50,7 @@ export default function FieldNoAccessPage({
   const customers = useStore((s) => s.data.customers);
   const settings = useStore((s) => s.settings);
   const brand = useTranslations('brand');
-  const patchData = useStore((s) => s.patchData);
+  const recordNoAccess = useStore((s) => s.recordNoAccess);
 
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -66,24 +67,13 @@ export default function FieldNoAccessPage({
 
   function submit() {
     if (!booking || !reason) return;
-    patchData({
-      bookings: bookings.map((b) =>
-        b.id === booking.id
-          ? {
-              ...b,
-              status: 'noAccess' as const,
-              history: [
-                ...b.history,
-                {
-                  at: now.toISOString(),
-                  kind: 'no-access',
-                  label: `${reason}${note ? ` — ${note}` : ''}`,
-                },
-              ],
-            }
-          : b,
-      ),
-    });
+    /*
+     * The photo was tracked in local state and never written anywhere. This
+     * screen's own copy says the fee "only stands if the wait actually
+     * happened" — so the single piece of evidence behind a charge to a
+     * customer was being discarded on submit.
+     */
+    recordNoAccess(booking.id, { reason, note, photo }, now);
     setSent(true);
   }
 
@@ -198,11 +188,13 @@ export default function FieldNoAccessPage({
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[26rem] border-t border-line-subtle bg-page/95 px-5 py-4 backdrop-blur-sm">
-        <Button className="w-full" disabled={!reason} onClick={submit}>
+      <BottomActionBarSpacer />
+
+      <BottomActionBar visibility="always" className="mx-auto max-w-[26rem]">
+        <Button block size="lg" disabled={!reason} onClick={submit}>
           {t('submit')}
         </Button>
-      </div>
+      </BottomActionBar>
     </div>
   );
 }

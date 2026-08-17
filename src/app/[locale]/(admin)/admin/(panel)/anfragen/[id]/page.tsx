@@ -15,14 +15,17 @@ import {
   X,
 } from 'lucide-react';
 
+import { toast } from 'sonner';
+
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Textarea } from '@/components/ui/field';
+import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { estimateHours } from '@/mock/engines/pricing';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -61,7 +64,12 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const patchData = useStore((s) => s.patchData);
   const data = useStore((s) => s.data);
 
+  const cancelRequest = useStore((s) => s.cancelRequest);
+  const now = useNow();
+
   const [revealed, setRevealed] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -101,6 +109,15 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
 
   const answered = request.status !== 'new' && request.status !== 'inReview';
 
+  /*
+   * Declining and cancelling are not the same act, and only one of them
+   * existed. "Ablehnen" answers an open request with a no; once the quote is
+   * out, the honest word is cancel — and it has to take the live offer down
+   * with it, which /ablehnen never did.
+   */
+  const cancellable =
+    request.status === 'offerSent' || request.status === 'revisionRequested';
+
   return (
     <div className="max-w-5xl">
       <Button asChild variant="link" className="mb-6">
@@ -131,14 +148,53 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
               {t('replyWithQuote')}
             </Link>
           </Button>
-          <Button asChild variant="danger">
-            <Link href={`/admin/anfragen/${request.id}/ablehnen`}>
+          {cancellable ? (
+            <Button variant="danger" onClick={() => setCancelling(true)}>
               <X className="size-4" aria-hidden />
-              {t('reject')}
-            </Link>
-          </Button>
+              {t('cancelAction')}
+            </Button>
+          ) : (
+            <Button asChild variant="danger">
+              <Link href={`/admin/anfragen/${request.id}/ablehnen`}>
+                <X className="size-4" aria-hidden />
+                {t('reject')}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
+
+      {cancelling && (
+        <ConfirmPanel
+          className="mt-6"
+          title={t('cancelTitle')}
+          body={t('cancelBody')}
+          action={t('cancelConfirm')}
+          dismiss={t('cancelDismiss')}
+          disabled={!cancelReason.trim()}
+          onDismiss={() => setCancelling(false)}
+          onConfirm={() => {
+            cancelRequest(request.id, 'company', cancelReason, now);
+            setCancelling(false);
+            toast.success(t('cancelDone', { reference: request.reference }));
+          }}
+        >
+          {/* Required here, unlike the customer's own withdrawal: this one is
+              the company acting on somebody else's job, and a month later the
+              only account of why is whatever was typed in this box. */}
+          <Field label={t('cancelReason')}>
+            {(props) => (
+              <Textarea
+                {...props}
+                className="min-h-20 bg-card"
+                value={cancelReason}
+                placeholder={t('cancelReasonPlaceholder')}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            )}
+          </Field>
+        </ConfirmPanel>
+      )}
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
         <div className="space-y-10 lg:col-span-7">

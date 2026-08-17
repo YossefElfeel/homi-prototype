@@ -6,6 +6,9 @@ import { Info, Mail, MessageSquare } from 'lucide-react';
 
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Field, Textarea } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { SaveIndicator } from '@/components/ui/save-indicator';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useStore } from '@/mock/store';
 import type { MessageTemplateKey } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -37,13 +40,14 @@ const EVENTS: { key: MessageTemplateKey; channels: Channel[] }[] = [
  */
 export default function AdminTemplatesPage() {
   const t = useTranslations('admin.templates');
+  const appT = useTranslations('app');
   const hydrated = useHydrated();
 
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
   const [selected, setSelected] = useState<MessageTemplateKey>('offer-sent');
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const templates = settings.messageTemplates;
   const filled = (key: MessageTemplateKey) =>
@@ -59,11 +63,21 @@ export default function AdminTemplatesPage() {
   }
 
   return (
-    <div className="max-w-6xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+    <div className="mx-auto max-w-[90rem]">
+      {/* Four languages × nine events, all autosaving in silence. */}
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        actions={
+          <SaveIndicator
+            signal={templates}
+            savingLabel={appT('saving')}
+            savedLabel={appT('saved')}
+          />
+        }
+      />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div className="gap-app grid lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <nav aria-label={t('title')}>
           <ul className="border-t border-line-subtle">
             {EVENTS.map(({ key, channels }) => {

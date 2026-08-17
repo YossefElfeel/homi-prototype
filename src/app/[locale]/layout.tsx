@@ -8,7 +8,15 @@ import { Toaster } from 'sonner';
 
 import { routing } from '@/i18n/routing';
 import { fontVariables } from '@/app/fonts';
-import { DEFAULT_THEME, STRESS_COOKIE, THEME_COOKIE, isTheme } from '@/lib/theme';
+import {
+  DEFAULT_DENSITY,
+  DEFAULT_THEME,
+  DENSITY_COOKIE,
+  STRESS_COOKIE,
+  THEME_COOKIE,
+  isDensity,
+  isTheme,
+} from '@/lib/theme';
 import { DemoBar } from '@/components/demo/demo-bar';
 import '@/app/globals.css';
 
@@ -51,12 +59,15 @@ export default async function LocaleLayout({
   const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
   const theme = isTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
   const stress = cookieStore.get(STRESS_COOKIE)?.value === 'on' ? 'on' : 'off';
+  const densityCookie = cookieStore.get(DENSITY_COOKIE)?.value;
+  const density = isDensity(densityCookie) ? densityCookie : DEFAULT_DENSITY;
 
   return (
     <html
       lang={locale}
       data-theme={theme}
       data-stress={stress}
+      data-density={density}
       className={fontVariables}
       suppressHydrationWarning
     >
@@ -64,7 +75,21 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           {children}
           <DemoBar initialTheme={theme} initialStress={stress === 'on'} />
-          <Toaster position="top-center" />
+          {/* Sonner ships its own greys. Bind it to the token system instead,
+              so a toast in Zuhause is not a Raster toast on a warm page. */}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: 'var(--surface-card)',
+                color: 'var(--content-primary)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-lg)',
+                fontFamily: 'var(--font-body)',
+              },
+            }}
+          />
         </NextIntlClientProvider>
       </body>
     </html>

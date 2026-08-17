@@ -39,15 +39,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center border border-dashed border-line text-center',
+        'flex flex-col items-center rounded-[var(--radius-lg)] border border-dashed border-line text-center',
         compact ? 'px-6 py-10' : 'px-6 py-16',
         className,
       )}
     >
-      <Icon className="size-7 text-ink-tertiary" aria-hidden />
-      <Heading className="mt-5 text-lg font-medium">{title}</Heading>
+      {/* The bare glyph read as a rendering artefact at this size. Seating it
+          in a tinted well makes it read as an illustration. */}
+      <span className="flex size-12 items-center justify-center rounded-full bg-sunken">
+        <Icon className="size-5 text-ink-tertiary" aria-hidden />
+      </span>
+      <Heading className="mt-4 text-lg font-medium">{title}</Heading>
       <p className="mt-2 max-w-[46ch] text-ink-secondary">{body}</p>
-      {action && <div className="mt-7">{action}</div>}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
 }

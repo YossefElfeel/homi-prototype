@@ -2,12 +2,13 @@
 
 import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, ArrowLeft, Check } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, TRANSLATED_LOCALES } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { Field, Input, Select, Checkbox } from '@/components/ui/field';
+import { SaveIndicator } from '@/components/ui/save-indicator';
+import { Field, Input, NumberField, Select, Checkbox } from '@/components/ui/field';
 import { useHydrated, useStore } from '@/mock/store';
 import type { DurationProfile, Service } from '@/mock/schema';
 
@@ -24,11 +25,14 @@ const PROFILES: DurationProfile[] = ['standard', 'deep', 'moveout', 'office', 'n
 export default function EditServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const t = useTranslations('admin.service');
+  const appT = useTranslations('app');
   const hydrated = useHydrated();
 
   const services = useStore((s) => s.services);
   const setServices = useStore((s) => s.setServices);
-  const [saved, setSaved] = useState(false);
+  /* A counter, not a boolean: two edits in quick succession have to read as
+     two saves, and a boolean that is already true cannot say so. */
+  const [saveTick, setSaveTick] = useState(0);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -37,8 +41,7 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
 
   function patch(next: Partial<Service>) {
     setServices(services.map((s) => (s.slug === slug ? { ...s, ...next } : s)));
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1600);
+    setSaveTick((n) => n + 1);
   }
 
   const missing = routing.locales.filter((l) => !TRANSLATED_LOCALES.includes(l));
@@ -54,12 +57,12 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="display-type text-3xl">{service.name.de}</h1>
-        {saved && (
-          <span className="inline-flex items-center gap-1.5 rounded-sm bg-status-success px-2 py-1 text-xs text-status-success-fg">
-            <Check className="size-3.5" aria-hidden />
-            {t('saved')}
-          </span>
-        )}
+        {/* One shared save status instead of three hand-rolled chips. */}
+          <SaveIndicator
+            signal={saveTick}
+            savingLabel={appT("saving")}
+            savedLabel={appT("saved")}
+          />
       </div>
 
       {missing.length > 0 && (
@@ -99,23 +102,19 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <Field label={t('basePrice')}>
             {(props) => (
-              <Input
-                type="number"
-                inputMode="decimal"
+              <NumberField
                 value={service.basePrice}
-                onChange={(e) => patch({ basePrice: Number(e.target.value) || 0 })}
+                onCommit={(v) => patch({ basePrice: v })}
                 {...props}
               />
             )}
           </Field>
           <Field label={t('minDuration')}>
             {(props) => (
-              <Input
-                type="number"
+              <NumberField
                 step={0.5}
-                inputMode="decimal"
                 value={service.minDuration}
-                onChange={(e) => patch({ minDuration: Number(e.target.value) || 0 })}
+                onCommit={(v) => patch({ minDuration: v })}
                 {...props}
               />
             )}

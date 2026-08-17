@@ -8,6 +8,9 @@ import { DataView, type Column } from '@/components/ui/data-view';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
+import { Chip } from '@/components/ui/chip';
 import { daysLeft, isExpired, offerTotal } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Offer } from '@/mock/schema';
@@ -25,7 +28,7 @@ export default function OffersPage() {
   const requests = useStore((s) => s.data.requests);
   const customers = useStore((s) => s.data.customers);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const visible = offers
     .filter((o) => o.status !== 'draft')
@@ -70,9 +73,9 @@ export default function OffersPage() {
         <span data-numeric className="text-ink-secondary">
           {o.reference}
           {o.version > 1 && (
-            <span className="ml-2 rounded-sm bg-sunken px-1.5 py-0.5 text-xs">
+            <Chip tone="neutral" className="ml-2">
               {t('version', { n: o.version })}
-            </span>
+            </Chip>
           )}
         </span>
       ),
@@ -112,14 +115,16 @@ export default function OffersPage() {
   ];
 
   return (
-    <div className="max-w-6xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+    <div className="mx-auto max-w-[100rem]">
+      <PageHeader title={t('title')} />
       <DataView
-        className="mt-8"
         items={visible}
         columns={columns}
         getKey={(o) => o.id}
-        onSelect={(o) => router.push(`/offerte/${o.id}`)}
+        /* Was `/offerte/${o.id}` — the customer-facing page, whose only exit
+           is a hardcoded link to the marketing home page. Screen 57 now has a
+           detail view inside the panel. */
+        onSelect={(o) => router.push(`/admin/offerten/${o.id}`)}
         caption={t('title')}
         empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
       />

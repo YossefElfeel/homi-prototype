@@ -18,6 +18,7 @@ import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { BottomActionBar, BottomActionBarSpacer } from '@/components/ui/bottom-action-bar';
 import { canSeeAccessCodes, useHydrated, useNow, useStore } from '@/mock/store';
 
 function sameDay(a: Date, b: Date) {
@@ -235,16 +236,26 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
       ) : (
-        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[26rem] border-t border-line-subtle bg-page/95 px-5 py-4 backdrop-blur-sm">
-          <Button asChild className="w-full">
-            <Link href={`/einsatz/${booking.id}/check`}>
-              {checkedIn ? t('checkOutAction') : t('checkInAction')}
-            </Link>
-          </Button>
-          <Button asChild variant="quiet" className="mt-2 w-full">
-            <Link href={`/einsatz/${booking.id}/kein-zutritt`}>{t('noAccessAction')}</Link>
-          </Button>
-        </div>
+        <>
+          <BottomActionBarSpacer className="h-[calc(8rem+env(safe-area-inset-bottom))]" />
+          <BottomActionBar
+            visibility="always"
+            className="mx-auto max-w-[26rem]"
+          >
+            <div className="w-full space-y-2">
+              <Button asChild block size="lg">
+                <Link href={`/einsatz/${booking.id}/check`}>
+                  {checkedIn ? t('checkOutAction') : t('checkInAction')}
+                </Link>
+              </Button>
+              <Button asChild block variant="quiet">
+                <Link href={`/einsatz/${booking.id}/kein-zutritt`}>
+                  {t('noAccessAction')}
+                </Link>
+              </Button>
+            </div>
+          </BottomActionBar>
+        </>
       )}
     </div>
   );

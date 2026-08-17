@@ -3,11 +3,16 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { AlertTriangle, Star } from 'lucide-react';
+import { toast } from 'sonner';
+import { AlertTriangle, RotateCcw, Star } from 'lucide-react';
 
+import { Link } from '@/i18n/navigation';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Review, ReviewStatus } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -45,20 +50,27 @@ export default function AdminReviewsPage() {
 
   const reviews = useStore((s) => s.data.reviews);
   const customers = useStore((s) => s.data.customers);
-  const patchData = useStore((s) => s.patchData);
+  const setReviewStatus = useStore((s) => s.setReviewStatus);
+  const replyToReview = useStore((s) => s.replyToReview);
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const setStatus = (review: Review, status: ReviewStatus) =>
-    patchData({
-      reviews: reviews.map((r) =>
-        r.id === review.id
-          ? { ...r, status, ownerReply: drafts[review.id] ?? r.ownerReply }
-          : r,
-      ),
-    });
+  /* Was silent: the card re-rendered in a different group and that was the
+     only feedback that anything had happened. */
+  const setStatus = (review: Review, status: ReviewStatus) => {
+    const reply = drafts[review.id];
+    if (reply?.trim()) replyToReview(review.id, reply);
+    setReviewStatus(review.id, status);
+    toast.success(
+      status === 'published'
+        ? t('published')
+        : status === 'rejected'
+          ? t('rejected')
+          : t('restored'),
+    );
+  };
 
   const customerName = (id: string) => {
     const c = customers.find((x) => x.id === id);
@@ -73,11 +85,18 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+      <PageHeader title={t('title')} lead={t('lead')} />
 
       {reviews.length === 0 ? (
-        <EmptyState className="mt-10" title={t('emptyTitle')} body={t('emptyBody')} />
+        <EmptyState
+          title={t('emptyTitle')}
+          body={t('emptyBody')}
+          action={
+            <Button asChild variant="secondary">
+              <Link href="/admin/kalender">{t('emptyAction')}</Link>
+            </Button>
+          }
+        />
       ) : (
         groups.map((group) => {
           const items = reviews.filter((r) => r.status === group.status);
@@ -139,6 +158,51 @@ export default function AdminReviewsPage() {
                         </div>
                       ) : null}
 
+                      {/*
+                        Neither of these groups had a single control. A review
+                        rejected by mistake could not be restored, and a
+                        published one could not be taken down or its reply
+                        corrected — on the one screen whose whole job is
+                        deciding what the public sees.
+                      */}
+                      {review.status === 'rejected' && (
+                        <div className="mt-4">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setStatus(review, 'pending')}
+                          >
+                            <RotateCcw className="size-4" aria-hidden />
+                            {t('restore')}
+                          </Button>
+                        </div>
+                      )}
+
+                      {review.status === 'published' && (
+                        <div className="mt-4">
+                          <Button
+                            variant="quiet"
+                            size="sm"
+                            onClick={() => {
+                              setReviewStatus(review.id, 'pending');
+                              toast.success(t('unpublished'));
+                            }}
+                          >
+                            {t('unpublish')}
+                          </Button>
+                        </div>
+                      )}
+
+                      {review.status === 'pending' && !review.publishConsent && (
+                        <Alert
+                          tone="danger"
+                          className="mt-4"
+                          title={t('noConsentTitle')}
+                        >
+                          {t('noConsentBody')}
+                        </Alert>
+                      )}
+
                       {review.status === 'pending' && (
                         <>
                           <Field
@@ -160,8 +224,14 @@ export default function AdminReviewsPage() {
                           <div className="mt-4 flex flex-wrap gap-3">
                             <Button
                               onClick={() => setStatus(review, 'published')}
+                              /* Two gates, and they are different in kind: a
+                                 critical review needs a reply first (owner's
+                                 judgement), a review with no recorded consent
+                                 cannot be published at all (§20.6). */
                               disabled={
-                                critical && !(drafts[review.id] ?? review.ownerReply)?.trim()
+                                !review.publishConsent ||
+                                (critical &&
+                                  !(drafts[review.id] ?? review.ownerReply)?.trim())
                               }
                             >
                               {t('publish')}

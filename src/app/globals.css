@@ -345,6 +345,121 @@
   --label-transform: uppercase;
 }
 
+/* ====================================================== SCOPE: APP (console)
+   The four themes above are marketing directions. A dense operations console
+   is a different job: it needs a ground for cards to sit on, real elevation,
+   quick motion and UI type — not editorial type set on white paper.
+
+   So the console re-binds the axes that decide how *product* UI reads, and
+   leaves everything that carries brand alone: the accent, the status colours
+   and the ink stay whatever the active theme says. Applied by AppShell as
+   data-scope="app", which means /foundations and the marketing site are
+   untouched by anything in this block.
+
+   Display type collapses to Geist here on purpose. Bebas caps and Instrument
+   Serif are headline faces; a page title above a table is interface, not a
+   headline. Themes still read differently in the console through accent,
+   surface warmth and border colour. */
+[data-scope='app'] {
+  /* The single most important change: page and card stop being the same
+     colour. The card floats on a ground instead of being drawn on paper. */
+  --surface-page: #f6f7f9;
+  --surface-card: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eceef2;
+
+  --border-subtle: #e7e9ee;
+  --border-default: #d5d9e0;
+
+  /* axis 1 — radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-action: 8px;
+
+  /* axis 2 — elevation. Two layers each: a tight contact shadow to seat the
+     edge, a wider one to lift it. One layer alone reads as a smudge. */
+  --shadow-sm:
+    0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06);
+  --shadow-md:
+    0 2px 4px -2px rgb(16 24 40 / 0.06), 0 4px 12px -2px rgb(16 24 40 / 0.08);
+  --shadow-lg:
+    0 8px 16px -6px rgb(16 24 40 / 0.08), 0 20px 40px -12px rgb(16 24 40 / 0.14);
+  --card-border-width: 1px;
+
+  /* axis 3 — typography */
+  --font-display: var(--font-geist), system-ui, sans-serif;
+  --font-body: var(--font-geist), system-ui, sans-serif;
+  --font-label: var(--font-geist), system-ui, sans-serif;
+  --display-tracking: -0.015em;
+  --display-leading: 1.15;
+  --display-weight: 600;
+  --display-transform: none;
+  /* Uppercase at 0.1em tracking is a poster device. A column header is read
+     hundreds of times a day, so it goes back to sentence case. */
+  --label-tracking: 0;
+  --label-transform: none;
+
+  /* axis 4 — rhythm. The marketing 7rem section gap is a landing-page number. */
+  --space-section: 2.5rem;
+  --space-block: 1.5rem;
+  --space-gutter: 1.5rem;
+  --measure: 72ch;
+
+  /* axis 6 — motion. Kante's 520ms base is deliberate on a landing page and
+     unusable on a screen you click through forty times an hour. */
+  --motion-fast: 90ms;
+  --motion-base: 140ms;
+  --motion-slow: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* axis 7 — density. Comfortable is the default; the topbar switch flips
+     data-density on <html>. Everything measured off these, so one toggle
+     moves the whole console rather than 58 hand-tuned screens. */
+  --app-row-py: 0.75rem;
+  --app-row-h: 3rem;
+  --app-card-pad: 1.25rem;
+  --app-gap: 1rem;
+  --app-section-gap: 2rem;
+  --app-control-h: 2.25rem;
+  --app-sidebar-w: 16.5rem;
+  --app-topbar-h: 3.5rem;
+}
+
+[data-density='compact'] [data-scope='app'] {
+  --app-row-py: 0.4375rem;
+  --app-row-h: 2.25rem;
+  --app-card-pad: 1rem;
+  --app-gap: 0.75rem;
+  --app-section-gap: 1.5rem;
+  --app-control-h: 2rem;
+}
+
+/* Per-theme warmth. Only the neutrals move — a warm theme keeps a warm ground
+   so the console does not feel bolted onto a different product. */
+[data-theme='zuhause'] [data-scope='app'] {
+  --surface-page: #f7f4ef;
+  --surface-sunken: #efe9e0;
+  --border-subtle: #eae3d8;
+  --border-default: #dbd2c4;
+}
+
+[data-theme='goldkueste'] [data-scope='app'] {
+  --surface-page: #f6f6f3;
+  --surface-sunken: #eceae4;
+  --border-subtle: #e6e4de;
+  --border-default: #d5d2c9;
+}
+
+[data-theme='kante'] [data-scope='app'] {
+  --surface-page: #f6f6f7;
+  --surface-sunken: #eaeaec;
+  --border-subtle: #e6e6e7;
+  --border-default: #d6d6d8;
+}
+
 /* ------------------------------------------- 3. TAILWIND UTILITY BINDINGS */
 @theme inline {
   --color-page: var(--surface-page);
@@ -410,6 +525,24 @@
   --spacing-section: var(--space-section);
   --spacing-block: var(--space-block);
   --spacing-gutter: var(--space-gutter);
+
+  /* Console density, exposed as utilities so components measure off the
+     density switch instead of hard-coding a padding. Only meaningful inside
+     data-scope="app"; outside it they fall back to the comfortable values. */
+  --spacing-row: var(--app-row-py, 0.75rem);
+  --spacing-card: var(--app-card-pad, 1.25rem);
+  --spacing-app: var(--app-gap, 1rem);
+  --spacing-app-section: var(--app-section-gap, 2rem);
+  --spacing-control: var(--app-control-h, 2.25rem);
+  --spacing-row-h: var(--app-row-h, 3rem);
+  --spacing-sidebar: var(--app-sidebar-w, 16.5rem);
+  --spacing-topbar: var(--app-topbar-h, 3.5rem);
+
+  /* The one size the kit needed and Tailwind does not ship: 11px, used by
+     label-type, badges and table headers. It was written as an arbitrary
+     value in six places before this. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.45;
 }
 
 /* ------------------------------------------------------------- 4. BASE */
@@ -497,7 +630,7 @@
 
 @utility label-type {
   font-family: var(--font-label);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--label-tracking);
   text-transform: var(--label-transform);
@@ -521,6 +654,112 @@
   border: var(--card-border-width) solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------- 5b. OVERLAY MOTION
+   Radix keeps a dialog mounted for the length of its exit animation, so both
+   directions are driven off data-state rather than a mount transition. These
+   are the only @keyframes in the codebase; everything else is a transition.
+   The prefers-reduced-motion block above already collapses them. */
+@keyframes hv-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes hv-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes hv-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+@keyframes hv-dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+@keyframes hv-sheet-in-inline {
+  from {
+    transform: translateX(var(--hv-sheet-from));
+  }
+}
+
+@keyframes hv-sheet-out-inline {
+  to {
+    transform: translateX(var(--hv-sheet-from));
+  }
+}
+
+@keyframes hv-sheet-in-block {
+  from {
+    transform: translateY(var(--hv-sheet-from));
+  }
+}
+
+@keyframes hv-sheet-out-block {
+  to {
+    transform: translateY(var(--hv-sheet-from));
+  }
+}
+
+@keyframes hv-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes hv-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+[data-hv='overlay'][data-state='open'] {
+  animation: hv-overlay-in var(--motion-base) var(--ease-standard);
+}
+[data-hv='overlay'][data-state='closed'] {
+  animation: hv-overlay-out var(--motion-fast) var(--ease-standard);
+}
+
+[data-hv='dialog'][data-state='open'] {
+  animation: hv-dialog-in var(--motion-base) var(--ease-standard);
+}
+[data-hv='dialog'][data-state='closed'] {
+  animation: hv-dialog-out var(--motion-fast) var(--ease-standard);
+}
+
+[data-hv='sheet'][data-hv-axis='inline'][data-state='open'] {
+  animation: hv-sheet-in-inline var(--motion-base) var(--ease-standard);
+}
+[data-hv='sheet'][data-hv-axis='inline'][data-state='closed'] {
+  animation: hv-sheet-out-inline var(--motion-fast) var(--ease-standard);
+}
+[data-hv='sheet'][data-hv-axis='block'][data-state='open'] {
+  animation: hv-sheet-in-block var(--motion-base) var(--ease-standard);
+}
+[data-hv='sheet'][data-hv-axis='block'][data-state='closed'] {
+  animation: hv-sheet-out-block var(--motion-fast) var(--ease-standard);
+}
+
+/* Menus, popovers and tooltips: scale from the side they are anchored to. */
+[data-hv='pop'][data-state='open'] {
+  animation: hv-pop-in var(--motion-fast) var(--ease-standard);
+  transform-origin: var(--radix-popper-transform-origin, center);
+}
+[data-hv='pop'][data-state='closed'] {
+  animation: hv-pop-out var(--motion-fast) var(--ease-standard);
+  transform-origin: var(--radix-popper-transform-origin, center);
 }
 
 /* German-expansion stress mode. Toggled by cookie so server and client

@@ -1,7 +1,9 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { SkeletonRows } from './skeleton';
 
 /**
  * One column definition, two renderings.
@@ -30,6 +32,31 @@ export interface Column<T> {
   tableOnly?: boolean;
   align?: 'start' | 'end';
   width?: string;
+  /**
+   * Makes the column sortable. Return the value to compare — a timestamp, an
+   * amount, a name. Sorting applies to both renderings, so the phone shows the
+   * same order as the desk.
+   */
+  sortBy?: (item: T) => string | number | null | undefined;
+}
+
+export type SortState = { key: string; dir: 'asc' | 'desc' };
+
+/**
+ * Bulk selection. Deliberately opt-in: a checkbox column on a list with no
+ * bulk action is a control that does nothing, which is the whole class of
+ * problem this refactor exists to remove. Only pass it with a `bar`.
+ */
+export interface Selection {
+  selected: string[];
+  onChange: (ids: string[]) => void;
+  /** Accessible name for a row's checkbox, e.g. "Select invoice". */
+  rowLabel: string;
+  allLabel: string;
+  /** The action bar shown while anything is selected. */
+  bar: (ids: string[]) => React.ReactNode;
+  /** Rows that cannot be acted on in bulk — a sent invoice, a published review. */
+  isSelectable?: (key: string) => boolean;
 }
 
 export function DataView<T>({
@@ -41,6 +68,12 @@ export function DataView<T>({
   caption,
   openLabel,
   className,
+  loading = false,
+  rowActions,
+  defaultSort,
+  stickyHeader = true,
+  surface = 'card',
+  selection,
 }: {
   items: T[];
   columns: Column<T>[];
@@ -55,101 +88,295 @@ export function DataView<T>({
    */
   openLabel?: string;
   className?: string;
+  /** Reserves the table's shape while the persisted store rehydrates. */
+  loading?: boolean;
+  /** Per-row menu. Keep it to a DropdownMenu — inline actions blow the width. */
+  rowActions?: (item: T) => React.ReactNode;
+  defaultSort?: SortState;
+  stickyHeader?: boolean;
+  /** `plain` for tables already inside a Card that owns the surface. */
+  surface?: 'card' | 'plain';
+  selection?: Selection;
 }) {
+  const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
+
+  const sorted = useMemo(() => {
+    if (!sort) return items;
+    const column = columns.find((c) => c.key === sort.key);
+    if (!column?.sortBy) return items;
+    const read = column.sortBy;
+
+    /* Slice first — Array.sort mutates, and `items` is a store-derived array
+       that other renders are still holding. */
+    return [...items].sort((a, b) => {
+      const av = read(a);
+      const bv = read(b);
+      /* Missing values sink to the bottom in both directions. An empty cell is
+         not "smallest", it is "not applicable". */
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      const cmp =
+        typeof av === 'number' && typeof bv === 'number'
+          ? av - bv
+          : String(av).localeCompare(String(bv));
+      return sort.dir === 'asc' ? cmp : -cmp;
+    });
+  }, [items, columns, sort]);
+
+  if (loading) {
+    return <SkeletonRows rows={5} className={className} />;
+  }
+
   if (items.length === 0) return <>{empty}</>;
 
   const primary = columns.find((c) => c.primary) ?? columns[0]!;
   const trailing = columns.filter((c) => c.trailing);
   const rest = columns.filter((c) => !c.primary && !c.trailing && !c.tableOnly);
+  const hasTrailingCell = Boolean(onSelect || rowActions);
+
+  const selectableKeys = selection
+    ? sorted
+        .map(getKey)
+        .filter((key) => selection.isSelectable?.(key) ?? true)
+    : [];
+  const selectedSet = new Set(selection?.selected ?? []);
+  const selectedHere = selectableKeys.filter((key) => selectedSet.has(key));
+  const allSelected =
+    selectableKeys.length > 0 && selectedHere.length === selectableKeys.length;
+
+  function toggleRow(key: string) {
+    if (!selection) return;
+    selection.onChange(
+      selectedSet.has(key)
+        ? selection.selected.filter((id) => id !== key)
+        : [...selection.selected, key],
+    );
+  }
+
+  function toggleAll() {
+    if (!selection) return;
+    /* Only ever touches the rows currently on screen — a filter is a promise
+       that you are acting on what you can see. */
+    selection.onChange(allSelected ? [] : selectableKeys);
+  }
+
+  function toggleSort(key: string) {
+    setSort((current) => {
+      if (current?.key !== key) return { key, dir: 'asc' };
+      if (current.dir === 'asc') return { key, dir: 'desc' };
+      /* Third click clears rather than cycling back to ascending, so the
+         list's own meaningful default order (oldest first, newest first) is
+         always one click away. */
+      return null;
+    });
+  }
 
   return (
     <div className={className}>
+      {selection && selectedHere.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-line-subtle bg-accent-subtle px-4 py-2.5">
+          <p data-numeric className="text-sm font-medium">
+            {selectedHere.length}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {selection.bar(selectedHere)}
+          </div>
+        </div>
+      )}
+
       {/* lg and up: a table. */}
-      <table className="hidden w-full border-collapse text-left lg:table">
-        {caption && <caption className="sr-only">{caption}</caption>}
-        <thead>
-          <tr className="border-b border-line">
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                scope="col"
-                style={column.width ? { width: column.width } : undefined}
-                className={cn(
-                  'label-type py-3 pr-4 text-ink-tertiary',
-                  column.align === 'end' && 'text-right',
-                )}
-              >
-                {column.header}
-              </th>
-            ))}
-            {onSelect && (
-              <th scope="col" className="w-10">
-                {openLabel && <span className="sr-only">{openLabel}</span>}
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr
-              key={getKey(item)}
-              onClick={onSelect ? () => onSelect(item) : undefined}
-              className={cn(
-                'border-b border-line-subtle',
-                onSelect &&
-                  'cursor-pointer transition-colors hover:bg-sunken has-[:focus-visible]:bg-sunken',
+      <div
+        className={cn(
+          'hidden lg:block',
+          surface === 'card' &&
+            'rounded-[var(--radius-lg)] border border-line-subtle bg-card shadow-[var(--shadow-sm)]',
+        )}
+      >
+        <table className="w-full border-collapse text-left">
+          {caption && <caption className="sr-only">{caption}</caption>}
+          <thead>
+            <tr>
+              {selection && (
+                <th
+                  scope="col"
+                  className={cn(
+                    'w-12 border-b border-line-subtle bg-card px-4',
+                    stickyHeader && 'sticky top-topbar z-10',
+                    surface === 'card' && 'rounded-tl-[var(--radius-lg)]',
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => {
+                      /* Some but not all: the header box is neither on nor
+                         off, and only the DOM property can say so. */
+                      if (el)
+                        el.indeterminate =
+                          selectedHere.length > 0 && !allSelected;
+                    }}
+                    onChange={toggleAll}
+                    aria-label={selection.allLabel}
+                    className="size-4 accent-[var(--accent-solid)]"
+                  />
+                </th>
               )}
-            >
               {columns.map((column) => {
-                const content = column.cell(item);
-                /*
-                 * The row keeps its click for pointer users, but the primary
-                 * cell carries a real <button> so the row is reachable by
-                 * keyboard and announced as one control by a screen reader.
-                 * At lg and up the table is the only rendering, so without
-                 * this the 14 list screens had no keyboard path into a row at
-                 * all. The mobile branch below already does exactly this.
-                 *
-                 * Not tabIndex + role="button" on the <tr>: that destroys
-                 * row/cell semantics and makes the whole row one control name.
-                 */
-                const isPrimary = onSelect && column.key === primary.key;
+                const active = sort?.key === column.key;
+                const SortIcon = !active
+                  ? ArrowUpDown
+                  : sort.dir === 'asc'
+                    ? ArrowUp
+                    : ArrowDown;
 
                 return (
-                  <td
+                  <th
                     key={column.key}
-                    className={cn('py-3.5 pr-4', column.align === 'end' && 'text-right')}
+                    scope="col"
+                    style={column.width ? { width: column.width } : undefined}
+                    aria-sort={
+                      active
+                        ? sort.dir === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : column.sortBy
+                          ? 'none'
+                          : undefined
+                    }
+                    className={cn(
+                      'label-type border-b border-line-subtle bg-card px-4 py-2.5 font-medium text-ink-tertiary',
+                      stickyHeader && 'sticky top-topbar z-10',
+                      column.align === 'end' && 'text-right',
+                      /* Round with the card so the header does not square off
+                         the corners it sits in. */
+                      surface === 'card' &&
+                        'first:rounded-tl-[var(--radius-lg)] last:rounded-tr-[var(--radius-lg)]',
+                    )}
                   >
-                    {isPrimary ? (
+                    {column.sortBy ? (
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelect(item);
-                        }}
-                        className="text-left rounded-[var(--radius-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                        onClick={() => toggleSort(column.key)}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+                          active && 'text-ink',
+                          column.align === 'end' && 'flex-row-reverse',
+                        )}
                       >
-                        {content}
+                        {column.header}
+                        <SortIcon className="size-3" aria-hidden />
                       </button>
                     ) : (
-                      content
+                      column.header
                     )}
-                  </td>
+                  </th>
                 );
               })}
-              {onSelect && (
-                <td className="py-3.5 text-right">
-                  <ChevronRight className="ml-auto size-4 text-ink-tertiary" aria-hidden />
-                </td>
+              {hasTrailingCell && (
+                <th
+                  scope="col"
+                  className={cn(
+                    'w-14 border-b border-line-subtle bg-card',
+                    stickyHeader && 'sticky top-topbar z-10',
+                    surface === 'card' && 'rounded-tr-[var(--radius-lg)]',
+                  )}
+                >
+                  {openLabel && <span className="sr-only">{openLabel}</span>}
+                </th>
               )}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sorted.map((item) => (
+              <tr
+                key={getKey(item)}
+                onClick={onSelect ? () => onSelect(item) : undefined}
+                className={cn(
+                  'border-b border-line-subtle last:border-0',
+                  onSelect &&
+                    'cursor-pointer transition-colors duration-[var(--motion-fast)] hover:bg-sunken has-[:focus-visible]:bg-sunken',
+                )}
+              >
+                {selection && (
+                  <td className="px-4 py-row" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSet.has(getKey(item))}
+                      disabled={selection.isSelectable?.(getKey(item)) === false}
+                      onChange={() => toggleRow(getKey(item))}
+                      aria-label={selection.rowLabel}
+                      className="size-4 accent-[var(--accent-solid)] disabled:opacity-40"
+                    />
+                  </td>
+                )}
+                {columns.map((column) => {
+                  const content = column.cell(item);
+                  /*
+                   * The row keeps its click for pointer users, but the primary
+                   * cell carries a real <button> so the row is reachable by
+                   * keyboard and announced as one control by a screen reader.
+                   * At lg and up the table is the only rendering, so without
+                   * this the 14 list screens had no keyboard path into a row at
+                   * all. The mobile branch below already does exactly this.
+                   *
+                   * Not tabIndex + role="button" on the <tr>: that destroys
+                   * row/cell semantics and makes the whole row one control name.
+                   */
+                  const isPrimary = onSelect && column.key === primary.key;
+
+                  return (
+                    <td
+                      key={column.key}
+                      className={cn(
+                        'px-4 py-row align-middle',
+                        column.align === 'end' && 'text-right',
+                      )}
+                    >
+                      {isPrimary ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect(item);
+                          }}
+                          className="rounded-[var(--radius-xs)] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                        >
+                          {content}
+                        </button>
+                      ) : (
+                        content
+                      )}
+                    </td>
+                  );
+                })}
+                {hasTrailingCell && (
+                  <td
+                    className="px-2 py-row text-right"
+                    /* The row's own click would fire underneath an actions
+                       menu and navigate away mid-choice. */
+                    onClick={rowActions ? (e) => e.stopPropagation() : undefined}
+                  >
+                    {rowActions ? (
+                      rowActions(item)
+                    ) : (
+                      <ChevronRight
+                        className="ml-auto size-4 text-ink-tertiary"
+                        aria-hidden
+                      />
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Below lg: cards. Same columns, different shape — not a squeezed table. */}
       <ul className="space-y-3 lg:hidden">
-        {items.map((item) => {
+        {sorted.map((item) => {
+          const key = getKey(item);
           const content = (
             <>
               <div className="flex items-start justify-between gap-3">
@@ -174,17 +401,34 @@ export function DataView<T>({
           );
 
           return (
-            <li key={getKey(item)}>
+            <li key={key} className="relative">
               {onSelect ? (
                 <button
                   type="button"
                   onClick={() => onSelect(item)}
-                  className="surface-card w-full p-4 text-left transition-colors hover:bg-sunken"
+                  className={cn(
+                    'surface-card w-full p-4 text-left transition-colors duration-[var(--motion-fast)] hover:bg-sunken',
+                    selection && 'pl-11',
+                  )}
                 >
                   {content}
                 </button>
               ) : (
-                <div className="surface-card p-4">{content}</div>
+                <div className={cn('surface-card p-4', selection && 'pl-11')}>
+                  {content}
+                </div>
+              )}
+              {selection && (selection.isSelectable?.(key) ?? true) && (
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(key)}
+                  onChange={() => toggleRow(key)}
+                  aria-label={selection.rowLabel}
+                  className="absolute top-4.5 left-4 size-4 accent-[var(--accent-solid)]"
+                />
+              )}
+              {rowActions && (
+                <div className="absolute top-3 right-3">{rowActions(item)}</div>
               )}
             </li>
           );

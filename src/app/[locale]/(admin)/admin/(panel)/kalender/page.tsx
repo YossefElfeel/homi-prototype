@@ -41,6 +41,7 @@ export default function CalendarPage({
 }) {
   const { tag } = use(searchParams);
   const t = useTranslations('admin.calendar');
+  const mapT = useTranslations('admin.map');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const now = useNow();
@@ -100,7 +101,7 @@ export default function CalendarPage({
         <Button asChild variant="secondary" size="sm">
           <Link href="/admin/kalender/karte">
             <Map className="size-3.5" aria-hidden />
-            Route
+            {mapT('routeAction')}
           </Link>
         </Button>
       </div>

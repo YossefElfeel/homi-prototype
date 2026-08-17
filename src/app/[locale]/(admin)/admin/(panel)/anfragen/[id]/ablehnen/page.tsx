@@ -56,16 +56,25 @@ export default function RejectRequestPage({ params }: { params: Promise<{ id: st
   }
 
   if (state === 'sent') {
+    /*
+     * This used to reuse the *form's* title and lead — so the confirmation
+     * read "Decline the request / the customer gets a short message", present
+     * tense, as though nothing had happened yet — and its only forward action
+     * was labelled "Cancel".
+     */
     return (
-      <div className="max-w-2xl">
+      <div className="mx-auto max-w-2xl">
         <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
           <Check className="size-6" aria-hidden />
         </span>
-        <h1 className="display-type mt-7 text-3xl">{t('title')}</h1>
-        <p className="mt-4 text-ink-secondary">{t('lead')}</p>
+        <h1 className="display-type mt-7 text-3xl">{t('sentTitle')}</h1>
+        <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{t('sentBody')}</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/admin/anfragen">{t('cancel')}</Link>
+            <Link href="/admin/anfragen">{t('sentToList')}</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href={`/admin/anfragen/${id}`}>{t('sentToRequest')}</Link>
           </Button>
         </div>
       </div>

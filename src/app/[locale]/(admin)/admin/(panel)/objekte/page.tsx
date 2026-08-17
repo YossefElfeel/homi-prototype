@@ -1,13 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { DoorOpen, KeyRound, Lock, UserCheck } from 'lucide-react';
+import { toast } from 'sonner';
+import { DoorOpen, KeyRound, Lock, Plus, UserCheck } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
+import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useHydrated, useStore } from '@/mock/store';
-import type { AccessMethod, Property } from '@/mock/schema';
+import { Field, Input, Select } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { AccessMethod, Property, PropertyKind } from '@/mock/schema';
 
 const ACCESS_ICONS: Record<AccessMethod, typeof DoorOpen> = {
   'customer-present': DoorOpen,
@@ -31,6 +36,10 @@ export default function PropertiesPage() {
 
   const properties = useStore((s) => s.data.properties);
   const customers = useStore((s) => s.data.customers);
+  const createProperty = useStore((s) => s.createProperty);
+  const now = useNow();
+
+  const [adding, setAdding] = useState(false);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -80,17 +89,142 @@ export default function PropertiesPage() {
     },
   ];
 
+  /* A property with no customer belongs to nobody: it could never surface in a
+     request, a plan or an invoice. So the button is honest about being unusable
+     until there is somebody to attach one to. */
+  const addButton = (
+    <Button disabled={adding || customers.length === 0} onClick={() => setAdding(true)}>
+      <Plus className="size-4" aria-hidden />
+      {t('addAction')}
+    </Button>
+  );
+
   return (
     <div className="max-w-6xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+      <PageHeader title={t('title')} actions={addButton} />
+
+      {adding && (
+        <form
+          className="surface-card mb-app-section p-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = new FormData(e.currentTarget);
+            const customerId = String(form.get('customerId') ?? '');
+            const street = String(form.get('street') ?? '');
+            if (!customerId || !street) return;
+
+            const id = createProperty(
+              {
+                customerId,
+                label: String(form.get('label') ?? '').trim() || street,
+                street,
+                postcode: String(form.get('postcode') ?? ''),
+                city: String(form.get('city') ?? ''),
+                kind: String(form.get('kind') ?? 'apartment') as PropertyKind,
+                area: Number(form.get('area')) || 0,
+                rooms: Number(form.get('rooms')) || 0,
+                bathrooms: Number(form.get('bathrooms')) || 1,
+                floor: Number(form.get('floor')) || 0,
+                hasElevator: false,
+                hasPets: false,
+                needsExtraEffort: false,
+              },
+              now,
+            );
+            setAdding(false);
+            toast.success(t('newDone'));
+            /* Straight to the detail screen, which is where access details,
+               keys and permanent notes live — the things a property is
+               actually for. */
+            router.push(`/admin/objekte/${id}`);
+          }}
+        >
+          <h2 className="display-type text-xl">{t('newTitle')}</h2>
+
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <Field label={t('newCustomer')}>
+              {(props) => (
+                <Select {...props} name="customerId" required defaultValue="">
+                  <option value="" disabled>
+                    {t('newCustomerPlaceholder')}
+                  </option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.lastName}, {c.firstName}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <Field label={t('newLabel')} hint={t('newLabelHint')} optional>
+              {(props) => <Input {...props} name="label" />}
+            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_8rem_1fr]">
+            <Field label={t('newStreet')}>
+              {(props) => <Input {...props} name="street" required />}
+            </Field>
+            <Field label={t('newPostcode')}>
+              {(props) => (
+                <Input {...props} name="postcode" inputMode="numeric" maxLength={4} required />
+              )}
+            </Field>
+            <Field label={t('newCity')}>
+              {(props) => <Input {...props} name="city" required />}
+            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-5 sm:grid-cols-5">
+            <Field label={t('newKind')}>
+              {(props) => (
+                <Select {...props} name="kind" defaultValue="apartment">
+                  <option value="apartment">Wohnung</option>
+                  <option value="house">Haus</option>
+                  <option value="office">Büro</option>
+                </Select>
+              )}
+            </Field>
+            <Field label={t('newArea')}>
+              {(props) => <Input {...props} name="area" type="number" min={1} required />}
+            </Field>
+            <Field label={t('newRooms')}>
+              {(props) => (
+                <Input {...props} name="rooms" type="number" min={1} step={0.5} required />
+              )}
+            </Field>
+            <Field label={t('newBathrooms')}>
+              {(props) => <Input {...props} name="bathrooms" type="number" min={1} required />}
+            </Field>
+            <Field label={t('newFloor')} optional>
+              {(props) => <Input {...props} name="floor" type="number" defaultValue={0} />}
+            </Field>
+          </div>
+
+          <p className="mt-4 text-sm text-ink-tertiary">{t('newAccessNote')}</p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button type="submit">{t('newSave')}</Button>
+            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
+              {t('dismiss')}
+            </Button>
+          </div>
+        </form>
+      )}
+
       <DataView
-        className="mt-8"
         items={properties}
         columns={columns}
         getKey={(p) => p.id}
         onSelect={(p) => router.push(`/admin/objekte/${p.id}`)}
         caption={t('title')}
-        empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
+        empty={
+          <EmptyState
+            title={t('emptyTitle')}
+            body={customers.length === 0 ? t('newNoCustomers') : t('emptyBody')}
+            action={customers.length > 0 ? addButton : undefined}
+          />
+        }
       />
     </div>
   );

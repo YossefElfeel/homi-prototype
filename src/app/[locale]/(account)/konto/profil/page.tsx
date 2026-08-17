@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Check, Download, Lock, Trash2 } from 'lucide-react';
+import { Download, Lock, Trash2 } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { SaveIndicator } from '@/components/ui/save-indicator';
 import { Field, Input, Select, Checkbox } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { useAccount } from '@/lib/use-account';
@@ -25,6 +26,7 @@ import type { Customer } from '@/mock/schema';
  */
 export default function AccountProfilePage() {
   const t = useTranslations('account.profile');
+  const appT = useTranslations('app');
   const hydrated = useHydrated();
 
   const { customer } = useAccount();
@@ -32,7 +34,9 @@ export default function AccountProfilePage() {
   const customers = useStore((s) => s.data.customers);
   const setRole = useStore((s) => s.setRole);
   const router = useRouter();
-  const [saved, setSaved] = useState(false);
+  /* A counter, not a boolean: two edits in quick succession have to read as
+     two saves, and a boolean that is already true cannot say so. */
+  const [saveTick, setSaveTick] = useState(0);
   const [closing, setClosing] = useState(false);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
@@ -42,20 +46,19 @@ export default function AccountProfilePage() {
     patchData({
       customers: customers.map((c) => (c.id === customer!.id ? { ...c, ...next } : c)),
     });
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1600);
+    setSaveTick((n) => n + 1);
   }
 
   return (
     <div className="max-w-2xl">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="display-type text-3xl">{t('title')}</h1>
-        {saved && (
-          <span className="inline-flex items-center gap-1.5 rounded-sm bg-status-success px-2 py-1 text-xs text-status-success-fg">
-            <Check className="size-3.5" aria-hidden />
-            {t('saved')}
-          </span>
-        )}
+        {/* One shared save status instead of three hand-rolled chips. */}
+          <SaveIndicator
+            signal={saveTick}
+            savingLabel={appT("saving")}
+            savedLabel={appT("saved")}
+          />
       </div>
 
       <section className="mt-10">
