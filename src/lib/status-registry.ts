@@ -19,7 +19,8 @@ export type StatusEntity =
   | 'subscription'
   | 'invoice'
   | 'review'
-  | 'application';
+  | 'application'
+  | 'payment';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   // §4.1
@@ -77,6 +78,21 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     inReview: 'progress',
     accepted: 'success',
     rejected: 'neutral',
+  },
+  /*
+   * §10. `Payment` was the one status union in the schema with no entry here,
+   * because until the quote list showed payment state nothing rendered it —
+   * and the first screen to need it would have hand-typed its own colours.
+   *
+   * `refunded` is neutral, not danger: money going back is an outcome, not a
+   * fault, and colouring it red puts a warning on the screen for a case that
+   * is usually the company keeping its word.
+   */
+  payment: {
+    pending: 'progress',
+    succeeded: 'success',
+    failed: 'danger',
+    refunded: 'neutral',
   },
 };
 

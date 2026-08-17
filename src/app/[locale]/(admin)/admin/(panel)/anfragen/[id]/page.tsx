@@ -5,13 +5,18 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import {
   ArrowLeft,
+  Building2,
+  CalendarClock,
   Eye,
   EyeOff,
   FileText,
+  Image as ImageIcon,
+  KeyRound,
   Lock,
   Mail,
   MessageCircle,
   Phone,
+  Sparkles,
   X,
 } from 'lucide-react';
 
@@ -21,8 +26,10 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { Lifecycle } from '@/components/ui/lifecycle';
-import { requestStages } from '@/lib/request-lifecycle';
+import { quoteStages } from '@/lib/quote-lifecycle';
+import { offerBooking, offerPayment } from '@/lib/offer-facts';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
@@ -68,11 +75,24 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const data = useStore((s) => s.data);
 
   const cancelRequest = useStore((s) => s.cancelRequest);
+  const holds = useStore((s) => s.holds);
   const now = useNow();
 
   const [revealed, setRevealed] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  /*
+   * Access starts folded — the codes are the most sensitive thing on the
+   * screen (§13.1) and the owner opens that section only when they need it, so
+   * arriving here does not put a key code on the display. Everything else is
+   * what you came to read, so it is open.
+   */
+  const [openSections, setOpenSections] = useState<string[]>([
+    'service',
+    'property',
+    'preferred',
+    'photos',
+  ]);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -84,9 +104,14 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const service = services.find((s) => s.slug === request.serviceSlug)!;
   const chosen = addOns.filter((a) => request.addOnIds.includes(a.id));
   const requestPhotos = photos.filter((p) => p.requestId === request.id);
-  /* The issued quote, not a draft one — an unsent draft has not reached the
-     customer, so the lifecycle must not claim the stage is passed. */
-  const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
+  /* The rail now has a stage of its own for a quote still being written, so it
+     wants the draft as well — that is how "Offerte erstellt, noch nicht
+     versendet" becomes visible instead of the request looking untouched since
+     it was read. Issued wins where both exist: a reissue leaves the old draft
+     behind and the live one is the one that answers for the request. */
+  const offer =
+    offers.find((o) => o.requestId === request.id && o.status !== 'draft') ??
+    offers.find((o) => o.requestId === request.id);
 
   const duration = estimateHours(
     {
@@ -123,6 +148,19 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
    */
   const cancellable =
     request.status === 'offerSent' || request.status === 'revisionRequested';
+
+  /* Read twice — once as the closed header's summary, once as the row inside.
+     Deriving it once keeps the two from ever disagreeing. */
+  const preferredSummary = request.preferred.flexible
+    ? t('flexible')
+    : request.preferred.date
+      ? `${format.dateTime(new Date(request.preferred.date), 'dayMonth')}${
+          request.preferred.band ? ` · ${request.preferred.band}` : ''
+        }`
+      : '—';
+
+  const ALL_SECTIONS = ['service', 'property', 'preferred', 'access', 'photos'];
+  const allOpen = openSections.length === ALL_SECTIONS.length;
 
   return (
     <div className="max-w-5xl">
@@ -203,61 +241,109 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
       )}
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
-        <div className="space-y-10 lg:col-span-7">
-          <Section title={t('serviceTitle')}>
-            <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
-            <Row label={t('addOns')}>
-              {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddOns')}
-            </Row>
-            <Row label={t('estimated')}>
-              <span data-numeric>{duration.scheduledHours} Std.</span>
-            </Row>
-            <p className="pt-2 text-xs text-ink-tertiary">{t('estimatedNote')}</p>
-          </Section>
+        {/*
+          Five stacked blocks meant scrolling past the property to find out
+          whether any photos were attached at all. Folded, each header carries
+          its own summary, so the whole request is readable without opening
+          anything — and only what is actually needed gets opened.
+        */}
+        <div className="lg:col-span-7">
+          <div className="mb-app flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOpenSections(allOpen ? [] : ALL_SECTIONS)}
+            >
+              {allOpen ? t('collapseAll') : t('expandAll')}
+            </Button>
+          </div>
 
-          <Section title={t('propertyTitle')}>
-            <Row label="Adresse">
-              {property.street}, <span data-numeric>{property.postcode}</span> {property.city}
-            </Row>
-            <Row label={t('kind')}>{property.kind}</Row>
-            <Row label={t('area')}>
-              <span data-numeric>{property.area} m²</span>
-            </Row>
-            <Row label={t('rooms')}>
-              <span data-numeric>{property.rooms}</span>
-            </Row>
-            <Row label={t('bathrooms')}>
-              <span data-numeric>{property.bathrooms}</span>
-            </Row>
-            <Row label={t('floor')}>
-              <span data-numeric>{property.floor}</span>
-            </Row>
-            <Row label={t('elevator')}>{property.hasElevator ? 'Ja' : 'Nein'}</Row>
-            <Row label={t('pets')}>{property.hasPets ? 'Ja' : 'Nein'}</Row>
-            <Row label={t('effort')}>{property.needsExtraEffort ? 'Ja' : 'Nein'}</Row>
-          </Section>
+          <SectionGroup value={openSections} onValueChange={setOpenSections}>
+            <CollapsibleSection
+              value="service"
+              icon={Sparkles}
+              title={t('serviceTitle')}
+              summary={service.name[locale]}
+            >
+              <dl className="divide-y divide-line-subtle border-y border-line-subtle">
+                <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
+                <Row label={t('addOns')}>
+                  {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddOns')}
+                </Row>
+                <Row label={t('estimated')}>
+                  <span data-numeric>{duration.scheduledHours} Std.</span>
+                </Row>
+              </dl>
+              <p className="pt-3 text-xs text-ink-tertiary">{t('estimatedNote')}</p>
+            </CollapsibleSection>
 
-          <Section title={t('preferredTitle')}>
-            <Row label={t('preferredTitle')}>
-              {request.preferred.flexible
-                ? t('flexible')
-                : request.preferred.date
-                  ? `${format.dateTime(new Date(request.preferred.date), 'dayMonth')}${request.preferred.band ? ` · ${request.preferred.band}` : ''}`
-                  : '—'}
-            </Row>
-          </Section>
+            <CollapsibleSection
+              value="property"
+              icon={Building2}
+              title={t('propertyTitle')}
+              summary={`${property.street}, ${property.postcode} ${property.city}`}
+            >
+              <dl className="divide-y divide-line-subtle border-y border-line-subtle">
+                <Row label="Adresse">
+                  {property.street}, <span data-numeric>{property.postcode}</span>{' '}
+                  {property.city}
+                </Row>
+                <Row label={t('kind')}>{property.kind}</Row>
+                <Row label={t('area')}>
+                  <span data-numeric>{property.area} m²</span>
+                </Row>
+                <Row label={t('rooms')}>
+                  <span data-numeric>{property.rooms}</span>
+                </Row>
+                <Row label={t('bathrooms')}>
+                  <span data-numeric>{property.bathrooms}</span>
+                </Row>
+                <Row label={t('floor')}>
+                  <span data-numeric>{property.floor}</span>
+                </Row>
+                <Row label={t('elevator')}>{property.hasElevator ? 'Ja' : 'Nein'}</Row>
+                <Row label={t('pets')}>{property.hasPets ? 'Ja' : 'Nein'}</Row>
+                <Row label={t('effort')}>{property.needsExtraEffort ? 'Ja' : 'Nein'}</Row>
+              </dl>
+            </CollapsibleSection>
 
-          {/* §13.1 — masked by default, and the rule stated next to the reveal. */}
-          <section>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="display-type text-xl">{t('accessTitle')}</h2>
-                <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-                  {t('accessLead')}
-                </p>
-              </div>
+            <CollapsibleSection
+              value="preferred"
+              icon={CalendarClock}
+              title={t('preferredTitle')}
+              summary={preferredSummary}
+            >
+              <dl className="divide-y divide-line-subtle border-y border-line-subtle">
+                <Row label={t('preferredTitle')}>{preferredSummary}</Row>
+              </dl>
+            </CollapsibleSection>
+
+            {/*
+              §13.1 — masked by default, and now folded by default too. The
+              codes are the most sensitive thing on the screen and the owner
+              opens this section only when they need it, so leaving it shut is
+              one fewer surface with a key code sitting on it. The closed
+              summary states the *method* and never the code.
+            */}
+            <CollapsibleSection
+              value="access"
+              icon={KeyRound}
+              title={t('accessTitle')}
+              summary={
+                access ? ACCESS_LABELS[access.method] : t('accessSummaryNone')
+              }
+            >
+              <p className="max-w-[var(--measure)] text-sm text-ink-secondary">
+                {t('accessLead')}
+              </p>
+
               {hasSecrets && (
-                <Button variant="secondary" size="sm" onClick={() => setRevealed((v) => !v)}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setRevealed((v) => !v)}
+                >
                   {revealed ? (
                     <>
                       <EyeOff className="size-3.5" aria-hidden />
@@ -271,77 +357,124 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </Button>
               )}
-            </div>
 
-            <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
-              <Row label="Methode">{access ? ACCESS_LABELS[access.method] : '—'}</Row>
-              {access?.keyLocation && <Row label="Ort">{access.keyLocation}</Row>}
-              {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
-              {access?.boxCode && (
-                <Row label="Code">
-                  <Secret value={access.boxCode} revealed={revealed} />
-                </Row>
-              )}
-              {access?.alarmCode && (
-                <Row label="Alarmcode">
-                  <Secret value={access.alarmCode} revealed={revealed} />
-                </Row>
-              )}
-              {access?.personName && (
-                <Row label="Person">
-                  {access.personName} · <span data-numeric>{access.personPhone}</span>
-                </Row>
-              )}
-              {access?.emergencyName && (
-                <Row label="Notfall">
-                  {access.emergencyName} · <span data-numeric>{access.emergencyPhone}</span>
-                </Row>
-              )}
-            </dl>
+              <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+                <Row label="Methode">{access ? ACCESS_LABELS[access.method] : '—'}</Row>
+                {access?.keyLocation && <Row label="Ort">{access.keyLocation}</Row>}
+                {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
+                {access?.boxCode && (
+                  <Row label="Code">
+                    <Secret value={access.boxCode} revealed={revealed} />
+                  </Row>
+                )}
+                {access?.alarmCode && (
+                  <Row label="Alarmcode">
+                    <Secret value={access.alarmCode} revealed={revealed} />
+                  </Row>
+                )}
+                {access?.personName && (
+                  <Row label="Person">
+                    {access.personName} · <span data-numeric>{access.personPhone}</span>
+                  </Row>
+                )}
+                {access?.emergencyName && (
+                  <Row label="Notfall">
+                    {access.emergencyName} · <span data-numeric>{access.emergencyPhone}</span>
+                  </Row>
+                )}
+              </dl>
 
-            <p className="mt-3 flex gap-2 text-xs text-ink-tertiary">
-              <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              {t('accessGuard')}
-            </p>
+              <p className="mt-3 flex gap-2 text-xs text-ink-tertiary">
+                <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {t('accessGuard')}
+              </p>
 
-            {/* Where these details are actually edited. Saying they belong to
-                the property and then not linking to it leaves the reader to
-                find it, which is how they get edited on the wrong screen. */}
-            <Button asChild variant="link" className="mt-3">
-              <Link href={`/admin/objekte/${property.id}`}>{t('accessOpenProperty')}</Link>
-            </Button>
-          </section>
+              {/* Where these details are actually edited. Saying they belong to
+                  the property and then not linking to it leaves the reader to
+                  find it, which is how they get edited on the wrong screen. */}
+              <Button asChild variant="link" className="mt-3">
+                <Link href={`/admin/objekte/${property.id}`}>{t('accessOpenProperty')}</Link>
+              </Button>
+            </CollapsibleSection>
 
-          <section>
-            <h2 className="display-type text-xl">{t('photosTitle')}</h2>
-            {requestPhotos.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-tertiary">{t('photosEmpty')}</p>
-            ) : (
-              <ul className="mt-4 grid gap-4 sm:grid-cols-3">
-                {requestPhotos.map((photo) => (
-                  <li key={photo.id}>
-                    <ImagePlaceholder
-                      seed={photo.id}
-                      alt={photo.note ?? ''}
-                      className="aspect-4/3 rounded-[var(--radius-md)]"
-                    />
-                    {photo.note && (
-                      <p className="mt-2 text-sm text-ink-secondary">{photo.note}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {request.customerNote && (
-              <div className="mt-6">
-                <h3 className="label-type text-ink-tertiary">{t('customerNote')}</h3>
-                <p className="mt-2 text-ink-secondary">{request.customerNote}</p>
-              </div>
-            )}
-          </section>
+            <CollapsibleSection
+              value="photos"
+              icon={ImageIcon}
+              title={t('photosTitle')}
+              summary={t('photosCount', { n: requestPhotos.length })}
+            >
+              {requestPhotos.length === 0 ? (
+                <p className="text-sm text-ink-tertiary">{t('photosEmpty')}</p>
+              ) : (
+                <ul className="grid gap-4 sm:grid-cols-3">
+                  {requestPhotos.map((photo) => (
+                    <li key={photo.id}>
+                      <ImagePlaceholder
+                        seed={photo.id}
+                        alt={photo.note ?? ''}
+                        className="aspect-4/3 rounded-[var(--radius-md)]"
+                      />
+                      {photo.note && (
+                        <p className="mt-2 text-sm text-ink-secondary">{photo.note}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {request.customerNote && (
+                <div className="mt-6">
+                  <h3 className="label-type text-ink-tertiary">{t('customerNote')}</h3>
+                  <p className="mt-2 text-ink-secondary">{request.customerNote}</p>
+                </div>
+              )}
+            </CollapsibleSection>
+          </SectionGroup>
         </div>
 
         <aside className="space-y-8 lg:col-span-5">
+          {/*
+            First in the column, above the customer.
+            Was three bare timestamps under the heading "Verlauf" — a log of
+            what had happened, with no indication of what was still owed. It
+            sat below the contact card and the internal note, which put the
+            answer to "where is this request?" at the bottom of the screen.
+          */}
+          <div className="surface-card p-6">
+            <h2 className="label-type text-ink-tertiary">{t('lifecycleTitle')}</h2>
+            <Lifecycle
+              className="mt-4"
+              label={t('lifecycleTitle')}
+              stages={quoteStages(
+                {
+                  request,
+                  offer,
+                  hold: holds.find((h) => h.offerId === offer?.id),
+                  payment: offer ? offerPayment(offer.id, data.payments) : undefined,
+                  booking: offer ? offerBooking(offer.id, data.bookings) : undefined,
+                },
+                {
+                  received: t('stageReceived'),
+                  reviewed: t('stageReviewed'),
+                  drafted: t('stageDrafted'),
+                  sent: t('stageQuoted'),
+                  revision: t('stageRevision'),
+                  scheduled: t('stageScheduled'),
+                  signed: t('stageSigned'),
+                  paid: t('stagePaid'),
+                  booked: t('stageBooked'),
+                  declined: t('stageDeclined'),
+                  cancelled: t('stageCancelled'),
+                  expired: t('stageExpired'),
+                },
+                (iso) =>
+                  `${format.dateTime(new Date(iso), 'short')}, ${format.dateTime(
+                    new Date(iso),
+                    'time',
+                  )}`,
+              )}
+            />
+          </div>
+
           <div className="surface-card p-6">
             <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
             {/* One line saying what this block is for, because the block below
@@ -403,54 +536,15 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
             />
           </div>
 
-          {/*
-            Was three bare timestamps under the heading "Verlauf" — a log of
-            what had happened, with no indication of what was still owed. The
-            rail carries the same facts plus the two the log could not: where
-            the request is now, and what comes next.
-          */}
-          <div>
-            <h2 className="label-type text-ink-tertiary">{t('lifecycleTitle')}</h2>
-            <Lifecycle
-              className="mt-4"
-              label={t('lifecycleTitle')}
-              stages={requestStages(
-                request,
-                offer,
-                {
-                  received: t('stageReceived'),
-                  reviewed: t('stageReviewed'),
-                  quoted: t('stageQuoted'),
-                  accepted: t('stageAccepted'),
-                  declined: t('stageDeclined'),
-                  cancelled: t('stageCancelled'),
-                  settled: t('stageSettled'),
-                },
-                (iso) =>
-                  `${format.dateTime(new Date(iso), 'short')}, ${format.dateTime(
-                    new Date(iso),
-                    'time',
-                  )}`,
-              )}
-            />
-          </div>
         </aside>
       </div>
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="display-type text-xl">{title}</h2>
-      <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
-        {children}
-      </dl>
-    </section>
-  );
-}
-
+/* `Section` is gone — every block on this screen is a CollapsibleSection now,
+   and a second heading idiom sitting unused beside it is how the next person
+   ends up with half the page in each. */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-2.5">

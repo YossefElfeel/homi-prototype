@@ -20,6 +20,7 @@ import type {
   Review,
   ServiceRequest,
   ServiceSlug,
+  SlotHold,
   Subscription,
   TeamMember,
 } from './schema';
@@ -2123,6 +2124,30 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     keyLog,
     messages,
   };
+}
+
+/**
+ * The holds a freshly built scenario starts with.
+ *
+ * `holds` lives on the store rather than in the DataSet because a checkout
+ * hold is transient by nature — fifteen minutes, gone. A date the office has
+ * *confirmed* is not transient, and wiping it on every scenario switch and
+ * every move of the demo clock would have made the whole propose-and-confirm
+ * flow unreachable from seed data. So it is rebuilt from the offer, which is
+ * where the decision is actually recorded.
+ */
+export function seedHolds(data: DataSet, now: Date): SlotHold[] {
+  return data.offers
+    .filter((o) => o.confirmedSlot && o.status === 'sent')
+    .filter((o) => !data.bookings.some((b) => b.offerId === o.id))
+    .map((o) => ({
+      id: `hold_${o.id}_${o.confirmedSlot}`,
+      offerId: o.id,
+      start: o.confirmedSlot!,
+      duration: Math.round(o.estimatedHours * 60),
+      expiresAt: iso(new Date(now.getTime() + 48 * 3_600_000)),
+      confirmed: true,
+    }));
 }
 
 export function buildScenario(name: ScenarioName, now: Date): DataSet {

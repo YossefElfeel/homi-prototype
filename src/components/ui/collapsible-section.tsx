@@ -1,7 +1,7 @@
 'use client';
 
 import * as Primitive from '@radix-ui/react-accordion';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 /**
@@ -47,6 +47,7 @@ export function SectionGroup({
 export function CollapsibleSection({
   value,
   step,
+  icon: Icon,
   title,
   summary,
   complete = false,
@@ -55,8 +56,20 @@ export function CollapsibleSection({
   children,
 }: {
   value: string;
-  /** The position in the sequence, kept visible so the page still reads as an order. */
-  step: number;
+  /**
+   * Position in a sequence. Only for forms being filled in — it is what makes
+   * the intake page still read as an order once every step is on one page.
+   */
+  step?: number;
+  /**
+   * Used instead of `step` on screens that are read rather than filled in.
+   *
+   * A detail screen's sections are not a sequence: numbering "1 Service,
+   * 2 Property, 3 Access" claims an order that does not exist, and a tick for
+   * "complete" claims the reader did something. A glyph carries the same
+   * scanning weight and asserts neither.
+   */
+  icon?: LucideIcon;
   title: string;
   /** What the section holds, shown while it is closed. */
   summary?: React.ReactNode;
@@ -81,12 +94,18 @@ export function CollapsibleSection({
             data-numeric
             className={cn(
               'flex size-8 shrink-0 items-center justify-center rounded-full text-sm transition-colors',
-              complete
+              complete && step != null
                 ? 'bg-status-success text-status-success-fg'
                 : 'bg-sunken text-ink-tertiary',
             )}
           >
-            {complete ? <Check className="size-4" aria-hidden /> : step}
+            {Icon ? (
+              <Icon className="size-4" aria-hidden />
+            ) : complete ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              step
+            )}
           </span>
 
           <span className="min-w-0 flex-1">

@@ -102,6 +102,20 @@ export const offerEn: typeof offerDe = {
       'The slot has been released. Pick a new one — usually the same time is still free.',
     holdExpiredAction: 'Pick a slot again',
     continue: 'Continue to signature',
+    titleProposal: 'When would suit you?',
+    leadProposal:
+      'Pick up to {max} times that work for you. We confirm one of them — that way you know we can actually make it.',
+    pickedCount: '{n} of {max} picked',
+    sendProposals: 'Propose these times',
+    proposalHint: 'Nothing is committed yet. The reservation starts when we confirm.',
+    proposalN: 'Option {n}',
+    waitingTitle: 'Your times are with us',
+    waitingBody:
+      'We come back with a confirmation within {hours} hours. You sign and pay after that — not before.',
+    waitingChange: 'Pick different times',
+    confirmedTitle: 'Date confirmed',
+    confirmedBody:
+      '{date} is reserved for you. The reservation holds for {hours} hours — sign and pay within that.',
   },
 
   sign: {
@@ -147,6 +161,12 @@ export const offerEn: typeof offerDe = {
       'Prototype: no money moves. Choose below which outcome you want to see.',
     mockSucceed: 'Successful payment',
     mockFail: 'Failed payment',
+    coveredTitle: 'There is nothing to pay for this job',
+    coveredPackage:
+      '{hours} h come off your package. That leaves {remaining} h before this job is deducted.',
+    coveredSubscription:
+      'This job belongs to your plan. It is billed monthly as usual.',
+    coveredConfirm: 'Book this date',
     secure: 'Encrypted connection',
   },
 

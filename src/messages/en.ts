@@ -133,6 +133,12 @@ export const en: Messages = {
       accepted: 'Accepted',
       rejected: 'Not selected',
     },
+    payment: {
+      pending: 'Pending',
+      succeeded: 'Paid',
+      failed: 'Failed',
+      refunded: 'Refunded',
+    },
   },
 
   form: {

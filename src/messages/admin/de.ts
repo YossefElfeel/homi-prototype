@@ -14,6 +14,7 @@ export const adminDe = {
       dashboard: 'Start',
       requests: 'Anfragen',
       offers: 'Offerten',
+      bookings: 'Buchungen',
       calendar: 'Kalender',
       customers: 'Kunden',
       messages: 'Nachrichten',
@@ -134,6 +135,26 @@ export const adminDe = {
     openRequest: 'Anfrage öffnen',
     reissue: 'Neue Version ausstellen',
     reissued: 'Neue Version erstellt.',
+    service: 'Leistung',
+    rhythm: 'Rhythmus',
+    /* Nur zum Lesen. Hier gibt es keine Karte einzugeben und nichts
+       zurückzuerstatten — die eine Auskunft, die diese Seite schuldet, ist ob
+       das Geld da ist, und die kostete bisher den Umweg über die Rechnungen. */
+    payment: 'Zahlung',
+    paymentNone: 'Noch nicht bezahlt',
+    paymentFailed: 'Fehlgeschlagen: {reason}',
+    coverage: 'Abgedeckt durch',
+    bookingTitle: 'Daraus wurde',
+    bookingOpen: 'Buchung öffnen',
+    /* Ein Erstkunde schlägt drei Termine vor und wartet dann. Ohne dieses Feld
+       sieht die Offerte aus, als läge sie beim Kunden — dabei liegt sie bei
+       uns. */
+    slotTitle: 'Termin bestätigen',
+    slotLead: '{name} hat drei Termine vorgeschlagen. Einer davon wird reserviert.',
+    slotChoice: 'Vorschlag {n}',
+    slotHint:
+      'Der bestätigte Termin ist 48 Stunden reserviert. Der Kunde unterschreibt und bezahlt danach.',
+    slotConfirmed: 'Termin auf {date} bestätigt.',
   },
 
   /**
@@ -404,13 +425,30 @@ export const adminDe = {
     /* Der Status stand als Etikett oben und sonst nirgends: woher die Anfrage
        kam und was als Nächstes ansteht, musste man aus dem Wort erraten. */
     lifecycleTitle: 'Ablauf',
+    /* Die Detailseite war eine Rolle von fünf Blöcken — auf 1280px hiess das
+       scrollen, um zu sehen, ob überhaupt Fotos dabei sind. Eingeklappt steht
+       die Zusammenfassung in der Kopfzeile, und man öffnet nur das, was man
+       wirklich lesen will. */
+    expandAll: 'Alle öffnen',
+    collapseAll: 'Alle schliessen',
+    photosCount: '{n, plural, =0 {Keine Fotos} one {# Foto} other {# Fotos}}',
+    accessSummaryNone: 'Nichts hinterlegt',
+    noNote: 'Keine Notiz',
+    /* Der Ablauf endete bei «Antwort des Kunden» — Termin, Unterschrift,
+       Zahlung und Buchung steckten alle in diesem einen Wort. Wer wissen
+       wollte, ob das Geld da ist, musste zwei andere Bildschirme öffnen. */
     stageReceived: 'Eingegangen',
     stageReviewed: 'In Prüfung',
+    stageDrafted: 'Offerte erstellt',
     stageQuoted: 'Offerte versendet',
-    stageSettled: 'Antwort des Kunden',
-    stageAccepted: 'Angenommen',
+    stageRevision: 'Änderung angefragt',
+    stageScheduled: 'Termin bestätigt',
+    stageSigned: 'Unterschrieben',
+    stagePaid: 'Bezahlt',
+    stageBooked: 'Gebucht',
     stageDeclined: 'Abgelehnt',
     stageCancelled: 'Storniert',
+    stageExpired: 'Abgelaufen',
     /* «Ablehnen» heisst: wir machen das nicht — das gilt für eine offene
        Anfrage. Ist die Offerte schon draussen, ist Ablehnen das falsche Wort
        und war zugleich das einzige, was es gab. Stornieren schliesst die
@@ -526,19 +564,93 @@ export const adminDe = {
     sentToRequest: 'Anfrage ansehen',
   },
 
+  /*
+   * Die Liste beantwortete vier Fragen — wer, wie viel, wann raus, wann
+   * abgelaufen. Was offeriert wurde, ob es sich wiederholt, ob das Geld da ist
+   * und ob der Einsatz überhaupt verrechnet wird: alles vier war ableitbar,
+   * keines stand da, und jedes kostete den Weg auf eine andere Liste.
+   */
   offers: {
     title: 'Offerten',
+    lead: 'Was offeriert wurde, wie es abgerechnet wird und wo das Geld steht.',
     colReference: 'Referenz',
     colCustomer: 'Kunde',
+    colService: 'Leistung',
+    colCoverage: 'Abgedeckt',
     colTotal: 'Betrag',
-    colIssued: 'Versendet',
-    colExpires: 'Läuft ab',
+    colPayment: 'Zahlung',
+    colValidity: 'Versendet / Gültig',
     colStatus: 'Status',
     version: 'V{n}',
     expiresIn: 'in {days} T.',
     expired: 'abgelaufen',
+    coveragePackage: 'Paket · {hours} Std. übrig',
+    coverageSubscription: 'Im Abo',
+    paymentNotDue: 'Nichts offen',
+    method: {
+      twint: 'TWINT',
+      card: 'Karte',
+      'apple-pay': 'Apple Pay',
+      'google-pay': 'Google Pay',
+    },
+    rowActions: 'Aktionen',
+    rowOpen: 'Details ansehen',
+    rowConfirmSlot: 'Termin bestätigen',
+    rowOpenBooking: 'Buchung {reference} öffnen',
+    rowOpenRequest: 'Anfrage öffnen',
+    rowOpenAsCustomer: 'Kundenansicht öffnen',
     emptyTitle: 'Noch keine Offerten',
     emptyBody: 'Sobald Sie auf eine Anfrage mit einer Offerte antworten, steht sie hier.',
+  },
+
+  /**
+   * §11 — der Plan *ist* der Rhythmus. Ein zweites Intervallfeld neben dem Abo
+   * hätte irgendwann etwas anderes behauptet als die Rechnung.
+   */
+  rhythm: {
+    oneTime: 'Einmalig',
+    biweekly: 'Alle zwei Wochen',
+    weekly: 'Wöchentlich',
+    twiceWeekly: 'Zweimal wöchentlich',
+  },
+
+  /**
+   * Buchungen — neu.
+   *
+   * Die Buchung war die einzige grosse Entität ohne eigene Liste. Sie stand im
+   * Kalender, und der beantwortet «was ist am Dienstag» — nicht «welche
+   * Einsätze kommen aus Offerten», nicht «was wartet auf Freigabe», nicht
+   * «welcher fertige Einsatz hat noch keine Rechnung».
+   */
+  bookings: {
+    title: 'Buchungen',
+    lead: 'Jeder Einsatz als Zeile — woher er kommt, was er wert ist, wo die Rechnung steht.',
+    search: 'Nach Referenz oder Name suchen',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Keine Buchung passt',
+    filterEmptyBody: 'Mit diesen Filtern bleibt nichts übrig. Setzen Sie sie zurück.',
+    colReference: 'Referenz',
+    colCustomer: 'Kunde',
+    colService: 'Leistung',
+    colSource: 'Herkunft',
+    colWhen: 'Termin',
+    colAmount: 'Betrag',
+    colInvoice: 'Rechnung',
+    colStatus: 'Status',
+    sourceSubscription: 'Abo',
+    sourceManual: 'Manuell',
+    hours: '{hours} Std.',
+    openCalendar: 'Im Kalender',
+    rowActions: 'Aktionen',
+    rowOpen: 'Buchung öffnen',
+    rowOpenOffer: 'Offerte {reference} öffnen',
+    rowOpenInvoice: 'Rechnung {reference} öffnen',
+    emptyTitle: 'Noch keine Buchungen',
+    emptyBody:
+      'Eine Buchung entsteht, sobald eine Offerte bezahlt ist oder ein Abo-Einsatz ansteht. Bis dahin bleibt diese Liste leer.',
+    emptyAction: 'Offerten ansehen',
   },
 
   calendar: {

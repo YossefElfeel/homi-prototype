@@ -31,11 +31,13 @@ import type {
   ServiceSlug,
   Settings,
   SlotHold,
+  ISODate,
 } from './schema';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
-import { buildScenario, type DataSet, type ScenarioName } from './scenarios';
+import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import { createHold, type Slot } from './engines/availability';
+import { CONFIRMED_HOLD_HOURS, offerCoverage } from '@/lib/offer-facts';
 import { buildOfferLines, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
 
@@ -257,6 +259,13 @@ interface StoreState {
   /* ---- offer acceptance (screens 23–31) ---- */
   toggleOfferLine: (offerId: ID, lineId: ID) => void;
   holdOfferSlot: (offerId: ID, slot: Slot, now: Date) => void;
+  /**
+   * A first-time customer's up-to-three preferred dates. Nothing is blocked in
+   * the calendar — see `Offer.proposedSlots`.
+   */
+  proposeOfferSlots: (offerId: ID, starts: ISODate[]) => void;
+  /** The office picks one of them, which is what turns it into a real hold. */
+  confirmOfferSlot: (offerId: ID, start: ISODate, now: Date) => void;
   signOffer: (offerId: ID, now: Date) => void;
   /** Mock gateway. `outcome` decides which of the two states we land in. */
   payOffer: (
@@ -443,14 +452,21 @@ function initialDemo(): DemoState {
   };
 }
 
+/**
+ * Built once so the initial `data` and the initial `holds` describe the same
+ * world. Calling `buildScenario` twice would produce two datasets whose ids
+ * happen to match and whose timestamps do not.
+ */
+const INITIAL_DATA = buildScenario('demo', new Date());
+
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      data: buildScenario('demo', new Date()),
+      data: INITIAL_DATA,
       settings: SEED_SETTINGS,
       services: SEED_SERVICES,
       addOns: SEED_ADDONS,
-      holds: [],
+      holds: seedHolds(INITIAL_DATA, new Date()),
       demo: initialDemo(),
       draft: emptyDraft(),
       applicationDraft: emptyApplicationDraft(),
@@ -1045,6 +1061,65 @@ export const useStore = create<StoreState>()(
           holds: [...s.holds.filter((h) => h.offerId !== offerId), createHold(offerId, slot, now)],
         })),
 
+      /*
+       * Preferences, not holds.
+       *
+       * Three dates blocked in a one-person calendar for as long as it takes
+       * somebody to read their mail is two thirds of a week thrown away on a
+       * job that may never happen. So nothing is reserved here; the race the
+       * hold exists to prevent is fought once, at `confirmOfferSlot`, where
+       * the office is looking at the calendar anyway.
+       */
+      proposeOfferSlots: (offerId, starts) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            offers: s.data.offers.map((o) =>
+              o.id === offerId
+                ? {
+                    ...o,
+                    proposedSlots: starts.slice(0, 3),
+                    confirmedSlot: undefined,
+                    slotConfirmedAt: undefined,
+                  }
+                : o,
+            ),
+          },
+          holds: s.holds.filter((h) => h.offerId !== offerId),
+        })),
+
+      confirmOfferSlot: (offerId, start, now) =>
+        set((s) => {
+          const offer = s.data.offers.find((o) => o.id === offerId);
+          if (!offer) return {};
+
+          const duration = Math.round(offerHours(offer) * 60);
+          const slot: Slot = {
+            start,
+            end: new Date(new Date(start).getTime() + duration * 60_000).toISOString(),
+            durationMinutes: duration,
+            routeCost: 0,
+          };
+
+          return {
+            data: {
+              ...s.data,
+              offers: s.data.offers.map((o) =>
+                o.id === offerId
+                  ? { ...o, confirmedSlot: start, slotConfirmedAt: now.toISOString() }
+                  : o,
+              ),
+            },
+            holds: [
+              ...s.holds.filter((h) => h.offerId !== offerId),
+              createHold(offerId, slot, now, {
+                minutes: CONFIRMED_HOLD_HOURS * 60,
+                confirmed: true,
+              }),
+            ],
+          };
+        }),
+
       signOffer: (offerId, now) =>
         set((s) => ({
           data: {
@@ -1070,6 +1145,28 @@ export const useStore = create<StoreState>()(
 
         const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
         const amount = offerTotal(offer);
+        const request = s.data.requests.find((r) => r.id === offer.requestId)!;
+        const hours = offerHours(offer);
+
+        /*
+         * §11.3 — hours already bought are not charged again.
+         *
+         * The quote list gained a column saying whether a job is covered by a
+         * package or a plan, and a column that says "covered" over a gateway
+         * that then takes the full amount is worse than no column at all. So
+         * coverage is decided here, by the same function the column reads, and
+         * a covered job books without a Payment record: the package loses
+         * hours, the plan loses nothing, and neither produces a second charge
+         * for work the customer has already paid for.
+         */
+        const coverage = offerCoverage(
+          offer,
+          request,
+          s.data.subscriptions,
+          s.data.credits,
+          now,
+        );
+        const covered = coverage.kind !== 'payable';
 
         const payment: Payment = {
           id: `pay_${stamp}`,
@@ -1082,13 +1179,11 @@ export const useStore = create<StoreState>()(
           failureReason: outcome === 'failed' ? 'card_declined' : undefined,
         };
 
-        if (outcome === 'failed') {
+        if (!covered && outcome === 'failed') {
           set({ data: { ...s.data, payments: [...s.data.payments, payment] } });
           return { failureReason: 'card_declined' };
         }
 
-        const request = s.data.requests.find((r) => r.id === offer.requestId)!;
-        const hours = offerHours(offer);
         const duration = Math.round(hours * 60);
         const reference = `B-${1050 + s.data.bookings.length}`;
 
@@ -1096,6 +1191,7 @@ export const useStore = create<StoreState>()(
           id: `bkg_${stamp}`,
           reference,
           offerId,
+          subscriptionId: coverage.kind === 'subscription' ? coverage.sourceId : undefined,
           customerId: request.customerId,
           propertyId: request.propertyId,
           serviceSlug: request.serviceSlug,
@@ -1105,14 +1201,46 @@ export const useStore = create<StoreState>()(
           status: 'scheduled',
           photoIds: [],
           history: [
-            { at: now.toISOString(), kind: 'created', label: 'Gebucht und bezahlt' },
+            {
+              at: now.toISOString(),
+              kind: 'created',
+              label:
+                coverage.kind === 'package'
+                  ? `Gebucht — ${hours} Std. ab Paket`
+                  : coverage.kind === 'subscription'
+                    ? 'Gebucht — im Abo enthalten'
+                    : 'Gebucht und bezahlt',
+            },
           ],
         };
 
         set({
           data: {
             ...s.data,
-            payments: [...s.data.payments, payment],
+            payments: covered ? s.data.payments : [...s.data.payments, payment],
+            /* The ledger is the customer's own account of where their hours
+               went (screen 43). A silent decrement of `hoursRemaining` would
+               leave them a balance that dropped for no stated reason. */
+            credits:
+              coverage.kind === 'package'
+                ? s.data.credits.map((c) =>
+                    c.id === coverage.sourceId
+                      ? {
+                          ...c,
+                          hoursRemaining: Math.round((c.hoursRemaining - hours) * 100) / 100,
+                          ledger: [
+                            ...c.ledger,
+                            {
+                              at: now.toISOString(),
+                              hours: -hours,
+                              reason: `Einsatz ${reference}`,
+                              bookingId: booking.id,
+                            },
+                          ],
+                        }
+                      : c,
+                  )
+                : s.data.credits,
             bookings: [booking, ...s.data.bookings],
             offers: s.data.offers.map((o) =>
               o.id === offerId ? { ...o, status: 'accepted' as const } : o,
@@ -1950,19 +2078,23 @@ export const useStore = create<StoreState>()(
 
       setScenario: (scenario) =>
         set((s) => {
-          const data = buildScenario(scenario, effectiveNow(s.demo.dateOverride));
-          return { demo: repoint(s.demo, data), data, holds: [] };
+          const at = effectiveNow(s.demo.dateOverride);
+          const data = buildScenario(scenario, at);
+          /* Was `holds: []`, which wiped a confirmed date on every switch and
+             made the propose-and-confirm flow unreachable from seed data. */
+          return { demo: repoint(s.demo, data), data, holds: seedHolds(data, at) };
         }),
 
       setDateOverride: (dateOverride) =>
         set((s) => {
           // Seed data is written relative to "now", so moving the clock has to
           // rebuild it — otherwise today's jobs would sit in the past.
-          const data = buildScenario(s.demo.scenario, effectiveNow(dateOverride));
+          const at = effectiveNow(dateOverride);
+          const data = buildScenario(s.demo.scenario, at);
           return {
             demo: { ...repoint(s.demo, data), dateOverride },
             data,
-            holds: [],
+            holds: seedHolds(data, at),
           };
         }),
 
@@ -2012,17 +2144,20 @@ export const useStore = create<StoreState>()(
 
       releaseHold: (id) => set((s) => ({ holds: s.holds.filter((h) => h.id !== id) })),
 
-      reset: () =>
+      reset: () => {
+        const at = new Date();
+        const data = buildScenario('demo', at);
         set({
-          data: buildScenario('demo', new Date()),
+          data,
           settings: SEED_SETTINGS,
           services: SEED_SERVICES,
           addOns: SEED_ADDONS,
-          holds: [],
+          holds: seedHolds(data, at),
           demo: initialDemo(),
           draft: emptyDraft(),
           applicationDraft: emptyApplicationDraft(),
-        }),
+        });
+      },
     }),
     {
       name: 'homivaro-prototype',

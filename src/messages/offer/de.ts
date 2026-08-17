@@ -116,6 +116,27 @@ export const offerDe = {
       'Der Termin ist wieder freigegeben. Wählen Sie einen neuen — meistens ist derselbe noch frei.',
     holdExpiredAction: 'Termin neu wählen',
     continue: 'Weiter zur Unterschrift',
+    /*
+     * Erstauftrag: vorschlagen statt buchen.
+     *
+     * Beim Stammkunden kennen wir Objekt, Zutritt und Verlauf — da wäre eine
+     * Bestätigungsschlaufe reines Theater. Beim ersten Einsatz will das Büro
+     * einmal draufschauen, bevor der Kalender vergeben ist.
+     */
+    titleProposal: 'Wann würde es Ihnen passen?',
+    leadProposal:
+      'Wählen Sie bis zu {max} Termine, die Ihnen passen. Wir bestätigen einen davon — so ist sicher, dass wir es auch schaffen.',
+    pickedCount: '{n} von {max} gewählt',
+    sendProposals: 'Termine vorschlagen',
+    proposalHint: 'Nichts ist bisher verbindlich. Erst die Bestätigung reserviert den Termin.',
+    proposalN: 'Vorschlag {n}',
+    waitingTitle: 'Ihre Termine sind bei uns',
+    waitingBody:
+      'Wir melden uns innerhalb von {hours} Stunden mit einer Bestätigung. Danach unterschreiben und bezahlen Sie — nicht vorher.',
+    waitingChange: 'Andere Termine wählen',
+    confirmedTitle: 'Termin bestätigt',
+    confirmedBody:
+      '{date} ist für Sie reserviert. Die Reservation hält {hours} Stunden — danach unterschreiben und bezahlen Sie.',
   },
 
   sign: {
@@ -165,6 +186,15 @@ export const offerDe = {
       'Prototyp: es wird kein Geld belastet. Wählen Sie unten, welchen Ausgang Sie sehen möchten.',
     mockSucceed: 'Erfolgreiche Zahlung',
     mockFail: 'Fehlgeschlagene Zahlung',
+    /* §11.3 — bereits gekaufte Stunden werden nicht zweimal verrechnet. Ohne
+       das hier verlangte der Ablauf eine Karte, belastete den vollen Betrag,
+       und die Stunden blieben unangetastet im Konto liegen. */
+    coveredTitle: 'Für diesen Einsatz ist nichts zu bezahlen',
+    coveredPackage:
+      '{hours} Std. werden von Ihrem Stundenpaket abgezogen. Danach bleiben {remaining} Std. — abzüglich dieses Einsatzes.',
+    coveredSubscription:
+      'Dieser Einsatz gehört zu Ihrem Abo. Abgerechnet wird wie gewohnt monatlich.',
+    coveredConfirm: 'Termin verbindlich buchen',
     secure: 'Verschlüsselte Verbindung',
   },
 

@@ -134,6 +134,12 @@ export const de = {
       accepted: 'Angenommen',
       rejected: 'Abgesagt',
     },
+    payment: {
+      pending: 'Ausstehend',
+      succeeded: 'Bezahlt',
+      failed: 'Fehlgeschlagen',
+      refunded: 'Rückerstattet',
+    },
   },
 
   form: {

@@ -124,11 +124,19 @@ export const accountDe = {
        schlimmer als gar keine. */
     stageReceived: 'Eingegangen',
     stageReviewed: 'Wird geprüft',
+    /* Der Entwurf ist Sache des Büros und erreicht den Kunden nie — die Stufe
+       steht trotzdem hier, weil «Offerte wird erstellt» eine ehrlichere
+       Auskunft ist als ein zweiter Tag Stillstand auf «wird geprüft». */
+    stageDrafted: 'Offerte wird erstellt',
     stageQuoted: 'Offerte erhalten',
-    stageSettled: 'Ihre Antwort',
-    stageAccepted: 'Angenommen',
+    stageRevision: 'Änderung angefragt',
+    stageScheduled: 'Termin steht',
+    stageSigned: 'Unterschrieben',
+    stagePaid: 'Bezahlt',
+    stageBooked: 'Gebucht',
     stageDeclined: 'Abgelehnt',
     stageCancelled: 'Zurückgezogen',
+    stageExpired: 'Abgelaufen',
     offerTitle: 'Ihre Offerte',
     offerBody: 'Die Offerte zu dieser Anfrage liegt bereit.',
     offerAction: 'Offerte öffnen',

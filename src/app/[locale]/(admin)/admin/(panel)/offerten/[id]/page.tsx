@@ -4,7 +4,15 @@ import { use } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
-import { ExternalLink, FileText, RefreshCw } from 'lucide-react';
+import {
+  CalendarCheck,
+  CalendarClock,
+  ExternalLink,
+  FileText,
+  Package,
+  RefreshCw,
+  Repeat,
+} from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/alert';
@@ -24,6 +32,12 @@ import {
   offerSubtotal,
   offerTotal,
 } from '@/mock/engines/offers';
+import {
+  offerBooking,
+  offerCoverage,
+  offerPayment,
+  offerRhythm,
+} from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { offerLineLabel } from '@/lib/offer-label';
 import type { Locale } from '@/i18n/routing';
@@ -47,6 +61,7 @@ export default function AdminOfferDetailPage({
   const { id } = use(params);
   const t = useTranslations('admin.offerDetail');
   const listT = useTranslations('admin.offers');
+  const rhythmT = useTranslations('admin.rhythm');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -56,9 +71,14 @@ export default function AdminOfferDetailPage({
   const offers = useStore((s) => s.data.offers);
   const requests = useStore((s) => s.data.requests);
   const customers = useStore((s) => s.data.customers);
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const credits = useStore((s) => s.data.credits);
+  const payments = useStore((s) => s.data.payments);
+  const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
   const addOns = useStore((s) => s.addOns);
   const reissueOffer = useStore((s) => s.reissueOffer);
+  const confirmOfferSlot = useStore((s) => s.confirmOfferSlot);
 
   if (!hydrated) return <SkeletonPage label={listT('title')} />;
 
@@ -84,9 +104,19 @@ export default function AdminOfferDetailPage({
 
   const request = requests.find((r) => r.id === offer.requestId);
   const customer = customers.find((c) => c.id === request?.customerId);
+  const service = services.find((s) => s.slug === request?.serviceSlug);
   const expired = isExpired(offer, now);
   const left = daysLeft(offer, now);
   const discount = offerDiscount(offer);
+
+  const coverage = offerCoverage(offer, request, subscriptions, credits, now);
+  const payment = offerPayment(offer.id, payments);
+  const booking = offerBooking(offer.id, bookings);
+  const rhythm = offerRhythm(request);
+  /* Three dates in, none chosen — see `Offer.proposedSlots`. This is the only
+     state on the whole screen that is waiting on the *owner* rather than on
+     the customer, so it is the one thing that gets a panel rather than a row. */
+  const awaitingSlot = Boolean(offer.proposedSlots?.length && !offer.slotConfirmedAt);
 
   const state = expired && offer.status === 'sent' ? 'expired' : offer.status;
 
@@ -94,6 +124,15 @@ export default function AdminOfferDetailPage({
     reissueOffer(offer!.id, now);
     toast.success(t('reissued'));
     router.push(`/admin/anfragen/${offer!.requestId}/offerte`);
+  }
+
+  function confirmSlot(start: string) {
+    confirmOfferSlot(offer!.id, start, now);
+    toast.success(
+      t('slotConfirmed', {
+        date: `${format.dateTime(new Date(start), 'dayMonth')}, ${format.dateTime(new Date(start), 'time')}`,
+      }),
+    );
   }
 
   return (
@@ -145,6 +184,36 @@ export default function AdminOfferDetailPage({
 
       <div className="gap-app grid lg:grid-cols-12">
         <div className="lg:col-span-8">
+          {/*
+            The one action on this screen that belongs to the owner.
+            A first-time customer sends three dates and then waits — with no
+            panel here that wait is invisible, and the quote looks like it is
+            sitting with the customer when in fact it is sitting with us.
+          */}
+          {awaitingSlot && (
+            <Card id="termin" className="mb-app border-status-warning-line">
+              <CardHeader
+                title={t('slotTitle')}
+                description={t('slotLead', { name: customer?.firstName ?? '' })}
+              />
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {offer.proposedSlots!.map((start, i) => (
+                  <li key={start}>
+                    <Button variant="secondary" onClick={() => confirmSlot(start)}>
+                      <CalendarClock className="size-4" aria-hidden />
+                      <span data-numeric>
+                        {t('slotChoice', { n: i + 1 })} ·{' '}
+                        {format.dateTime(new Date(start), 'dayMonth')},{' '}
+                        {format.dateTime(new Date(start), 'time')}
+                      </span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-sm text-ink-tertiary">{t('slotHint')}</p>
+            </Card>
+          )}
+
           <Card pad="none">
             <CardHeader className="p-card" title={t('linesTitle')} />
             <div className="overflow-x-auto border-t border-line-subtle">
@@ -266,6 +335,15 @@ export default function AdminOfferDetailPage({
                 <Row label={t('hours')}>
                   <span data-numeric>{offerHours(offer).toFixed(1)}</span>
                 </Row>
+                {/* What was quoted and how often it repeats — the two facts the
+                    reference number alone never carried. */}
+                <Row label={t('service')}>{service?.name[locale] ?? '—'}</Row>
+                <Row label={t('rhythm')}>
+                  <span className="inline-flex items-center gap-1">
+                    {rhythm !== 'oneTime' && <Repeat className="size-3.5" aria-hidden />}
+                    {rhythmT(rhythm)}
+                  </span>
+                </Row>
               </dl>
             </Card>
 
@@ -285,8 +363,78 @@ export default function AdminOfferDetailPage({
                     <Money amount={offerTotal(offer)} emphasis="strong" />
                   </dd>
                 </div>
+
+                {/*
+                  Read-only, and deliberately so. The owner is not a party to
+                  the transaction here — there is no card to enter and no
+                  refund to press; the one thing this screen owes them is
+                  whether the money arrived, which used to require opening the
+                  invoices list and matching by name and date.
+                */}
+                <div className="space-y-2 border-t border-line-subtle pt-3">
+                  {coverage.kind !== 'payable' && (
+                    <Row label={t('coverage')}>
+                      <Chip
+                        tone="accent"
+                        icon={coverage.kind === 'package' ? Package : Repeat}
+                      >
+                        {coverage.kind === 'package'
+                          ? listT('coveragePackage', { hours: coverage.hoursRemaining ?? 0 })
+                          : listT('coverageSubscription')}
+                      </Chip>
+                    </Row>
+                  )}
+                  <Row label={t('payment')}>
+                    {payment ? (
+                      <span className="inline-flex items-center gap-2">
+                        <StatusBadge entity="payment" state={payment.status} size="sm" />
+                        <span className="text-ink-tertiary">
+                          {listT(`method.${payment.method}`)}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-ink-tertiary">
+                        {coverage.kind === 'payable'
+                          ? t('paymentNone')
+                          : listT('paymentNotDue')}
+                      </span>
+                    )}
+                  </Row>
+                  {payment?.status === 'failed' && payment.failureReason && (
+                    <p className="text-xs text-status-danger-fg">
+                      {t('paymentFailed', { reason: payment.failureReason })}
+                    </p>
+                  )}
+                </div>
               </dl>
             </Card>
+
+            {/*
+              A paid quote becomes a job, and until now the panel never said
+              which one — the link existed in the data and nowhere on screen,
+              so "did this actually get done?" started from the calendar.
+            */}
+            {booking && (
+              <Card>
+                <CardHeader title={t('bookingTitle')} />
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span data-numeric className="text-ink-secondary">
+                    {booking.reference}
+                  </span>
+                  <StatusBadge entity="booking" state={booking.status} size="sm" />
+                </div>
+                <p data-numeric className="mt-1 text-sm text-ink-tertiary">
+                  {format.dateTime(new Date(booking.start), 'full')},{' '}
+                  {format.dateTime(new Date(booking.start), 'time')}
+                </p>
+                <Button asChild block variant="secondary" className="mt-4">
+                  <Link href={`/admin/kalender/${booking.id}`}>
+                    <CalendarCheck className="size-4" aria-hidden />
+                    {t('bookingOpen')}
+                  </Link>
+                </Button>
+              </Card>
+            )}
 
             <Button asChild block variant="secondary">
               <Link href={`/admin/anfragen/${offer.requestId}`}>
