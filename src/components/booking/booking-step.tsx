@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, ArrowRight, Check, ChevronUp } from 'lucide-react';
+import { toast } from 'sonner';
+import { ArrowLeft, ArrowRight, Check, ChevronUp, RotateCcw } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { MoneyRange } from '@/components/ui/money';
+import { StepRail } from '@/components/ui/step-rail';
 import { cn } from '@/lib/cn';
 import { useHydrated, useStore } from '@/mock/store';
 import { BookingSummary } from './summary';
@@ -41,6 +43,7 @@ export function BookingStep({
   const router = useRouter();
   const hydrated = useHydrated();
   const draft = useStore((s) => s.draft);
+  const resetDraft = useStore((s) => s.resetDraft);
   const estimate = useEstimate();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -55,27 +58,21 @@ export function BookingStep({
 
   return (
     <div className="mx-auto max-w-6xl px-gutter pb-40 sm:pb-16">
-      <nav aria-label={t('progressLabel')} className="pt-6">
-        <ol className="flex gap-1.5">
-          {BOOKING_STEPS.map((name, i) => (
-            <li
-              key={name}
-              className={cn(
-                'h-1 flex-1 rounded-full transition-colors',
-                i < index && 'bg-accent',
-                i === index && 'bg-accent',
-                i > index && 'bg-sunken',
-              )}
-              aria-current={i === index ? 'step' : undefined}
-            >
-              <span className="sr-only">{t(`steps.${name}`)}</span>
-            </li>
-          ))}
-        </ol>
-        <p data-numeric className="label-type mt-3 text-ink-tertiary">
-          {t('step', { current: index + 1, total: TOTAL_STEPS })} · {t(`steps.${step}`)}
-        </p>
-      </nav>
+      {/*
+        Was eight bare 1px bars with the step names in an sr-only span: a
+        sighted visitor could see that there were bars, but not which stage
+        they were at or what came next. The names were already translated —
+        they simply never reached the screen.
+      */}
+      <StepRail
+        className="pt-6"
+        label={t('progressLabel')}
+        current={index}
+        steps={BOOKING_STEPS.map((name) => ({ name, label: t(`steps.${name}`) }))}
+        caption={`${t('step', { current: index + 1, total: TOTAL_STEPS })} · ${t(
+          `steps.${step}`,
+        )}`}
+      />
 
       <div className="grid gap-10 pt-8 lg:grid-cols-12 lg:gap-14">
         <div className="lg:col-span-7">
@@ -108,10 +105,30 @@ export function BookingStep({
           </div>
 
           {hydrated && draft.updatedAt && (
-            <p className="mt-5 flex items-center gap-2 text-sm text-ink-tertiary">
-              <Check className="size-3.5 text-eco" aria-hidden />
-              {t('draftSaved')}
-            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <p className="flex items-center gap-2 text-sm text-ink-tertiary">
+                <Check className="size-3.5 text-eco" aria-hidden />
+                {t('draftSaved')}
+              </p>
+              {/*
+                `resetDraft` was exported from the store and called by nothing,
+                so a half-finished request sat in localStorage indefinitely with
+                no way to clear it — the visitor's only option was to keep
+                editing whatever was already there.
+              */}
+              <Button
+                variant="link"
+                className="text-sm"
+                onClick={() => {
+                  resetDraft();
+                  toast.success(t('draftCleared'));
+                  router.push('/anfrage/leistung');
+                }}
+              >
+                <RotateCcw className="size-3.5" aria-hidden />
+                {t('startOver')}
+              </Button>
+            </div>
           )}
         </div>
 

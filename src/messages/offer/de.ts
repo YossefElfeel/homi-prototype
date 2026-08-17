@@ -26,6 +26,13 @@ export const offerDe = {
   },
 
   detail: {
+    /* Die Nicht-gefunden-Ansicht war fest auf Deutsch im Code — auf einer
+       Seite, die in vier Sprachen ausgeliefert wird. */
+    notFoundTitle: 'Offerte nicht gefunden',
+    notFoundBody:
+      'Der Link ist möglicherweise veraltet oder die Offerte wurde ersetzt. Melden Sie sich kurz bei uns — wir senden sie sofort neu.',
+    notFoundCall: 'Anrufen',
+    notFoundContact: 'Kontakt aufnehmen',
     title: 'Ihre Offerte',
     for: 'Für',
     intro: 'Nachricht',
@@ -48,6 +55,25 @@ export const offerDe = {
     accept: 'Offerte annehmen',
     requestChange: 'Änderung anfragen',
     downloadPdf: 'Als PDF herunterladen',
+    /* Annehmen und «Änderung anfragen» waren die einzigen zwei Ausgänge. Wer
+       die Offerte schlicht nicht wollte, hatte keinen — der Status «rejected»
+       existierte im Modell und war von hier aus nie erreichbar. Ein Nein ohne
+       Knopf wird zum unbeantworteten Angebot, das drei Wochen später als
+       «abgelaufen» in der Statistik steht und niemandem sagt, warum. */
+    decline: 'Offerte ablehnen',
+    declineTitle: 'Offerte ablehnen?',
+    declineBody:
+      'Die Offerte wird geschlossen und ein reservierter Termin wird sofort wieder freigegeben. Rückgängig machen können Sie das nicht — eine neue Anfrage ist jederzeit möglich.',
+    declineReason: 'Warum nicht?',
+    declineReasonHint: 'Freiwillig, und wir lesen es wirklich.',
+    declineReasonPlaceholder: 'z. B. zu teuer, Termin passt nicht, anders gelöst …',
+    declineConfirm: 'Ablehnen',
+    declineDismiss: 'Zurück',
+    declineDone: 'Offerte abgelehnt. Danke für die Rückmeldung.',
+    declinedTitle: 'Offerte abgelehnt',
+    declinedBody:
+      'Diese Offerte ist geschlossen. Wenn sich etwas ändert, stellen Sie jederzeit eine neue Anfrage.',
+    declinedAction: 'Neue Anfrage',
     downloadNote: 'Prototyp: das PDF wird nicht erzeugt.',
     guaranteeTitle: 'Abnahmegarantie inbegriffen',
     guaranteeBody:

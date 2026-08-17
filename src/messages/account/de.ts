@@ -16,6 +16,10 @@ export const accountDe = {
       messages: 'Nachrichten',
       profile: 'Profil',
     },
+    groups: {
+      jobs: 'Aufträge',
+      account: 'Konto',
+    },
     menu: 'Menü',
     signOut: 'Abmelden',
     gateTitle: 'Nur für angemeldete Kundschaft',
@@ -119,6 +123,22 @@ export const accountDe = {
     offerAction: 'Offerte öffnen',
     waitingTitle: 'Wir sind dran',
     waitingBody: 'Sie erhalten die Offerte innerhalb von {hours} Stunden.',
+    /* «Vom Kunden storniert» war als Status deklariert, übersetzt und
+       eingefärbt — und von keinem Bildschirm aus erreichbar. Wer es sich
+       anders überlegt hatte, musste anrufen. */
+    cancelAction: 'Anfrage zurückziehen',
+    cancelTitle: 'Anfrage zurückziehen?',
+    cancelBody:
+      'Die Anfrage wird geschlossen und eine allfällige Offerte dazu verfällt. Rückgängig machen können Sie das nicht — eine neue Anfrage ist jederzeit möglich.',
+    cancelReason: 'Grund',
+    cancelReasonHint: 'Freiwillig. Hilft uns, das nächste Mal besser zu treffen.',
+    cancelReasonPlaceholder: 'z. B. Termin passt nicht mehr, anders gelöst …',
+    cancelConfirm: 'Zurückziehen',
+    cancelDismiss: 'Behalten',
+    cancelDone: 'Anfrage {reference} zurückgezogen.',
+    cancelledTitle: 'Zurückgezogen',
+    cancelledBody: 'Diese Anfrage ist geschlossen. Eine neue können Sie jederzeit stellen.',
+    cancelledAction: 'Neue Anfrage',
   },
 
   offers: {
@@ -250,6 +270,10 @@ export const accountDe = {
     pausedTitle: 'Abo pausiert',
     pausedBody: 'Es werden keine Termine geplant und nichts abgebucht.',
     resume: 'Abo fortsetzen',
+    /* Alle drei Aktionen liefen vorher lautlos. */
+    resumed: 'Abo läuft wieder.',
+    skipped: 'Nächster Einsatz übersprungen.',
+    cancelRequested: 'Kündigung ist eingegangen. Wir melden uns.',
     cancelTitle: 'Kündigen',
     cancelBody:
       'Kündigungsfrist {months} Monat auf Ende der Mindestlaufzeit. Wir melden uns zur Bestätigung.',
@@ -298,6 +322,9 @@ export const accountDe = {
     makeDefault: 'Als Standard',
     remove: 'Entfernen',
     demoNote: 'Prototyp: es werden keine echten Zahlungsdaten erfasst.',
+    added: 'Zahlungsmittel hinterlegt.',
+    removed: 'Zahlungsmittel entfernt.',
+    defaultSet: 'Als Standard gesetzt.',
   },
 
   review: {
@@ -315,6 +342,10 @@ export const accountDe = {
       'Wir lesen jede Rückmeldung. Kritik beantworten wir, bevor sie veröffentlicht wird.',
     emptyTitle: 'Noch nichts zu bewerten',
     emptyBody: 'Nach dem ersten abgeschlossenen Einsatz fragen wir Sie hier nach Ihrer Meinung.',
+    /* Die Dankesseite war eine Sackgasse: Häkchen, Titel, Text — kein Link. */
+    thanksToOverview: 'Zur Übersicht',
+    thanksToPhotos: 'Vorher / Nachher ansehen',
+    emptyAction: 'Anfragen ansehen',
   },
 
   photos: {
@@ -345,6 +376,10 @@ export const accountDe = {
       'Wir antworten innerhalb eines Arbeitstags. Dringendes bitte telefonisch — die Geschäftsleitung geht selbst ans Telefon.',
     emptyTitle: 'Keine Nachrichten',
     emptyBody: 'Sobald zu einem Auftrag etwas geschrieben wird, erscheint es hier.',
+    sent: 'Nachricht gesendet.',
+    /* Die leere Liste war eine Sackgasse: es gab keine Möglichkeit, ein
+       Gespräch zu beginnen — nur auf ein bestehendes zu antworten. */
+    emptyAction: 'Zu Ihren Anfragen',
   },
 
   profile: {

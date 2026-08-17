@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Info, Send } from 'lucide-react';
 
+import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -32,7 +35,13 @@ export default function AccountMessagesPage() {
   const { messages, customerId } = useAccount();
   const patchData = useStore((s) => s.patchData);
   const allMessages = useStore((s) => s.data.messages);
-  const [reply, setReply] = useState('');
+  const sendMessage = useStore((s) => s.sendMessage);
+  /*
+   * Keyed by thread. This was a single `reply` string shared by every thread
+   * on the screen: with two conversations open, typing into one wrote the same
+   * characters into the other in real time, and sending cleared both.
+   */
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   // Opening the screen is what marks them read — the badge in the sidebar
   // reads the same flag, so it clears here rather than needing its own action.
@@ -48,27 +57,18 @@ export default function AccountMessagesPage() {
     });
   }, [allMessages, customerId, patchData]);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const subjects = [...new Set(messages.map((m) => m.subject))];
 
   function send(subject: string) {
-    if (!reply.trim()) return;
-    patchData({
-      messages: [
-        ...allMessages,
-        {
-          id: `msg_${allMessages.length + 1}`,
-          customerId,
-          subject,
-          from: 'customer' as const,
-          body: reply.trim(),
-          at: now.toISOString(),
-          readByCustomer: true,
-        },
-      ],
-    });
-    setReply('');
+    const body = (drafts[subject] ?? '').trim();
+    if (!body) return;
+    sendMessage({ customerId, subject, body, from: 'customer' }, now);
+    setDrafts((d) => ({ ...d, [subject]: '' }));
+    /* Was silent. Sending a message with no acknowledgement is the one case
+       where the reader genuinely cannot tell whether it worked. */
+    toast.success(t('sent'));
   }
 
   return (
@@ -77,7 +77,20 @@ export default function AccountMessagesPage() {
       <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
 
       {subjects.length === 0 ? (
-        <EmptyState className="mt-8" title={t('emptyTitle')} body={t('emptyBody')} />
+        <EmptyState
+          className="mt-8"
+          title={t('emptyTitle')}
+          body={t('emptyBody')}
+          /* There is no way to start a thread here — a message hangs off a
+             reference — so the escape is the screen where those references
+             live, rather than a compose box that would have nothing to attach
+             itself to. */
+          action={
+            <Button asChild variant="secondary">
+              <Link href="/konto/anfragen">{t('emptyAction')}</Link>
+            </Button>
+          }
+        />
       ) : (
         subjects.map((subject) => {
           const thread = messages
@@ -116,14 +129,20 @@ export default function AccountMessagesPage() {
                 {(props) => (
                   <Textarea
                     rows={3}
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
+                    value={drafts[subject] ?? ''}
+                    onChange={(e) =>
+                      setDrafts((d) => ({ ...d, [subject]: e.target.value }))
+                    }
                     placeholder={t('replyPlaceholder')}
                     {...props}
                   />
                 )}
               </Field>
-              <Button className="mt-3" disabled={!reply.trim()} onClick={() => send(subject)}>
+              <Button
+                className="mt-3"
+                disabled={!(drafts[subject] ?? '').trim()}
+                onClick={() => send(subject)}
+              >
                 <Send className="size-4" aria-hidden />
                 {t('send')}
               </Button>

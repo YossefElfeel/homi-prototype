@@ -4,13 +4,18 @@ import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, Check, Loader2, Send } from 'lucide-react';
+import { BadgeCheck, Plus, Receipt, Send, Trash2 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Field, Textarea } from '@/components/ui/field';
+import { Card, CardHeader } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Field, Input, Textarea } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money, formatChf } from '@/components/ui/money';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -43,68 +48,96 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const invoices = useStore((s) => s.data.invoices);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
-  const data = useStore((s) => s.data);
-  const patchData = useStore((s) => s.patchData);
+  const sendInvoice = useStore((s) => s.sendInvoice);
+  const markInvoicePaid = useStore((s) => s.markInvoicePaid);
+  const cancelInvoiceInStore = useStore((s) => s.cancelInvoice);
+  const updateInvoiceLine = useStore((s) => s.updateInvoiceLine);
+  const addInvoiceLine = useStore((s) => s.addInvoiceLine);
+  const removeInvoiceLine = useStore((s) => s.removeInvoiceLine);
 
   const [state, setState] = useState<'idle' | 'sending'>('idle');
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('back')} />;
 
   const invoice = invoices.find((i) => i.id === id);
-  if (!invoice) return <p className="text-ink-tertiary">—</p>;
+  if (!invoice) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <EmptyState
+          icon={Receipt}
+          headingLevel={1}
+          title={t('back')}
+          body={t('lockedHint')}
+          action={
+            <Button asChild>
+              <Link href="/admin/rechnungen">{t('back')}</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   const customer = customers.find((c) => c.id === invoice.customerId)!;
   const property = properties.find((p) => p.customerId === customer.id);
   const isDraft = invoice.status === 'draft';
   /** A paid invoice is refunded, not cancelled — and cancelling twice is not a thing. */
   const canCancel = invoice.status !== 'paid' && invoice.status !== 'cancelled';
+  const canMarkPaid = invoice.status === 'sent' || invoice.status === 'overdue';
 
   function send() {
     setState('sending');
+    /* The fake latency is the point: approving and sending an invoice should
+       not feel like flipping a switch. */
     window.setTimeout(() => {
-      patchData({
-        invoices: data.invoices.map((i) =>
-          i.id === invoice!.id
-            ? { ...i, status: 'sent' as const, issuedAt: now.toISOString() }
-            : i,
-        ),
-      });
+      sendInvoice(invoice!.id, now);
       setState('idle');
+      /* Was silent — the badge changed and nothing else. Sending an invoice to
+         a customer is the least ambiguous thing on this screen. */
+      toast.success(t('sentDone'));
     }, 900);
   }
 
+  function markPaid() {
+    markInvoicePaid(invoice!.id, now);
+    toast.success(t('markPaidDone'));
+  }
+
   function cancelInvoice() {
-    patchData({
-      invoices: data.invoices.map((i) =>
-        i.id === invoice!.id
-          ? { ...i, status: 'cancelled' as const, cancelReason: reason }
-          : i,
-      ),
-    });
+    cancelInvoiceInStore(invoice!.id, reason);
     setCancelling(false);
     toast.success(t('cancelDone'));
   }
 
   return (
-    <div className="max-w-4xl">
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/rechnungen">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHeader
+        back={{ href: '/admin/rechnungen', label: t('back') }}
+        title={<span data-numeric>{invoice.reference}</span>}
+        meta={<StatusBadge entity="invoice" state={invoice.status} />}
+        actions={
+          <>
+            {isDraft && (
+              <Button onClick={send} loading={state === 'sending'}>
+                {t('sendAction')}
+                <Send className="size-4" aria-hidden />
+              </Button>
+            )}
+            {canMarkPaid && (
+              <Button onClick={markPaid}>
+                <BadgeCheck className="size-4" aria-hidden />
+                {t('markPaid')}
+              </Button>
+            )}
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 data-numeric className="display-type text-3xl">
-          {invoice.reference}
-        </h1>
-        <StatusBadge entity="invoice" state={invoice.status} />
-      </div>
       {/* Was plain text — an invoice detail with no route to the customer it
           bills or the job it came from. */}
-      <p className="mt-2 text-ink-secondary">
+      <p className="-mt-4 mb-app text-ink-secondary">
         <Link
           href={`/admin/kunden/${customer.id}`}
           className="underline decoration-from-font underline-offset-4"
@@ -137,61 +170,141 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       </p>
 
       {isDraft && (
-        <p className="mt-4 inline-flex items-center gap-2 rounded-sm border border-status-progress-line bg-status-progress px-2.5 py-1.5 text-sm text-status-progress-fg">
-          <Check className="size-3.5" aria-hidden />
-          {t('draftBadge')}
-        </p>
+        <Alert tone="warning" className="mb-app" title={t('draftBadge')}>
+          {t('editHint')}
+        </Alert>
+      )}
+      {invoice.status === 'paid' && invoice.paidAt && (
+        <Alert tone="success" className="mb-app">
+          {t('paidOn', {
+            date: format.dateTime(new Date(invoice.paidAt), 'full'),
+          })}
+        </Alert>
       )}
 
-      <section className="mt-10">
-        <h2 className="display-type text-xl">{t('linesTitle')}</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-lg border-collapse text-left">
+      {/*
+        Screen 72 is titled "Rechnung bearbeiten" and its own doc comment says
+        "editable while it is still a draft" — but every line rendered as a
+        read-only <th scope="row">. Nothing on the page could change an amount,
+        which is precisely the case the approval step exists for.
+      */}
+      <Card pad="none">
+        <CardHeader
+          className="p-card"
+          title={t('linesTitle')}
+          description={isDraft ? undefined : t('lockedHint')}
+          actions={
+            isDraft ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => addInvoiceLine(invoice.id)}
+              >
+                <Plus className="size-4" aria-hidden />
+                {t('addLine')}
+              </Button>
+            ) : undefined
+          }
+        />
+        <div className="overflow-x-auto border-t border-line-subtle">
+          <table className="w-full min-w-xl border-collapse text-left">
             <thead>
-              <tr className="border-b border-line">
-                <th scope="col" className="label-type py-3 pr-4 text-ink-tertiary">
+              <tr className="border-b border-line-subtle">
+                <th scope="col" className="label-type px-card py-2.5 font-medium text-ink-tertiary">
                   {t('colDescription')}
                 </th>
-                <th scope="col" className="label-type py-3 pr-4 text-right text-ink-tertiary">
+                <th scope="col" className="label-type px-3 py-2.5 text-right font-medium text-ink-tertiary">
                   {t('colQuantity')}
                 </th>
-                <th scope="col" className="label-type py-3 pr-4 text-right text-ink-tertiary">
+                <th scope="col" className="label-type px-3 py-2.5 text-right font-medium text-ink-tertiary">
                   {t('colUnit')}
                 </th>
-                <th scope="col" className="label-type py-3 text-right text-ink-tertiary">
+                <th scope="col" className="label-type px-card py-2.5 text-right font-medium text-ink-tertiary">
                   {t('colTotal')}
                 </th>
+                {isDraft && <th scope="col" className="w-12" />}
               </tr>
             </thead>
             <tbody>
-              {invoice.lines.map((line) => (
-                <tr key={line.label} className="border-b border-line-subtle">
-                  <th scope="row" className="py-3.5 pr-4 font-normal">
-                    {line.label}
-                  </th>
-                  <td data-numeric className="py-3.5 pr-4 text-right text-ink-secondary">
-                    {line.quantity}
+              {invoice.lines.map((line, index) => (
+                <tr
+                  key={`${line.label}-${index}`}
+                  className="border-b border-line-subtle last:border-0"
+                >
+                  <td className="px-card py-row">
+                    {isDraft ? (
+                      <Input
+                        dense
+                        value={line.label}
+                        placeholder={t('linePlaceholder')}
+                        aria-label={t('colDescription')}
+                        onChange={(e) =>
+                          updateInvoiceLine(invoice.id, index, { label: e.target.value })
+                        }
+                      />
+                    ) : (
+                      line.label
+                    )}
                   </td>
-                  <td className="py-3.5 pr-4 text-right text-ink-secondary">
-                    <Money amount={line.unitPrice} />
+                  <td className="px-3 py-row text-right">
+                    {isDraft ? (
+                      <NumberCell
+                        value={line.quantity}
+                        label={t('colQuantity')}
+                        onChange={(quantity) =>
+                          updateInvoiceLine(invoice.id, index, { quantity })
+                        }
+                      />
+                    ) : (
+                      <span data-numeric className="text-ink-secondary">
+                        {line.quantity}
+                      </span>
+                    )}
                   </td>
-                  <td className="py-3.5 text-right">
+                  <td className="px-3 py-row text-right">
+                    {isDraft ? (
+                      <NumberCell
+                        value={line.unitPrice}
+                        label={t('colUnit')}
+                        onChange={(unitPrice) =>
+                          updateInvoiceLine(invoice.id, index, { unitPrice })
+                        }
+                      />
+                    ) : (
+                      <Money amount={line.unitPrice} emphasis="quiet" />
+                    )}
+                  </td>
+                  <td className="px-card py-row text-right">
                     <Money amount={line.quantity * line.unitPrice} />
                   </td>
+                  {isDraft && (
+                    <td className="pr-3 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('removeLine')}
+                        onClick={() => removeInvoiceLine(invoice.id, index)}
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </Button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <p className="mt-5 flex items-baseline justify-between gap-4 border-t border-line pt-4">
-          <span className="font-medium">{t('total')}</span>
-          <Money amount={total(invoice)} emphasis="strong" className="text-2xl" />
-        </p>
-        <p className="mt-1 text-right text-xs text-ink-tertiary">{t('noVat')}</p>
-      </section>
+        <div className="border-t border-line-subtle p-card">
+          <p className="flex items-baseline justify-between gap-4">
+            <span className="font-medium">{t('total')}</span>
+            <Money amount={total(invoice)} emphasis="strong" className="text-2xl" />
+          </p>
+          <p className="mt-1 text-right text-xs text-ink-tertiary">{t('noVat')}</p>
+        </div>
+      </Card>
 
-      <section className="mt-10">
+      <section className="mt-app-section">
         <h2 className="display-type text-xl">{t('qrTitle')}</h2>
         <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">{t('qrLead')}</p>
 
@@ -301,23 +414,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         <p className="mt-3 text-xs text-ink-tertiary">{t('qrNote')}</p>
       </section>
 
-      <div className="mt-10 space-y-4">
-        {isDraft && (
-          <Button size="lg" onClick={send} disabled={state === 'sending'}>
-            {state === 'sending' ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                {t('sending')}
-              </>
-            ) : (
-              <>
-                {t('sendAction')}
-                <Send className="size-4" aria-hidden />
-              </>
-            )}
-          </Button>
-        )}
-
+      <div className="mt-app-section space-y-4">
         {/*
           Cancelling used to sit inside the draft-only block, which meant the one
           case where it matters commercially — an invoice already with the
@@ -359,5 +456,42 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A number cell that survives being cleared.
+ *
+ * `Number(e.target.value) || 0` is used across the admin forms, and it means
+ * selecting a price and pressing backspace to retype it writes 0 to the live
+ * record between keystrokes. On a settings screen that silently zeroes the
+ * Saturday surcharge; here it zeroes a line on a real invoice. Empty is held
+ * as empty and only committed as a number once it parses.
+ */
+function NumberCell({
+  value,
+  label,
+  onChange,
+}: {
+  value: number;
+  label: string;
+  onChange: (value: number) => void;
+}) {
+  const [text, setText] = useState<string | null>(null);
+
+  return (
+    <Input
+      dense
+      inputMode="decimal"
+      aria-label={label}
+      className="text-right"
+      value={text ?? String(value)}
+      onChange={(e) => {
+        setText(e.target.value);
+        const parsed = Number(e.target.value);
+        if (e.target.value.trim() !== '' && Number.isFinite(parsed)) onChange(parsed);
+      }}
+      onBlur={() => setText(null)}
+    />
   );
 }

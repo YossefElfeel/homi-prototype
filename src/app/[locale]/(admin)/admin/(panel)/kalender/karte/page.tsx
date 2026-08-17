@@ -59,7 +59,7 @@ export default function RouteMapPage() {
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/kalender">
           <ArrowLeft className="size-4" aria-hidden />
-          Kalender
+          {t('back')}
         </Link>
       </Button>
 
@@ -69,18 +69,18 @@ export default function RouteMapPage() {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="−1"
+          aria-label={t('previousDay')}
           onClick={() => setCursor(addDays(cursor, -1))}
         >
           <ChevronLeft className="size-4" aria-hidden />
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setCursor(startOfDay(now))}>
-          Heute
+          {t('today')}
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          aria-label="+1"
+          aria-label={t('nextDay')}
           onClick={() => setCursor(addDays(cursor, 1))}
         >
           <ChevronRight className="size-4" aria-hidden />
@@ -152,7 +152,7 @@ export default function RouteMapPage() {
             className="mt-6 flex items-center justify-between border-t border-line-subtle pt-4"
           >
             <span className="text-ink-secondary">{t('totalDrive')}</span>
-            <span className="text-lg font-medium">{totalDrive} Min.</span>
+            <span className="text-lg font-medium">{t('minutes', { n: totalDrive })}</span>
           </p>
         </>
       )}

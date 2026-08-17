@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { AlertTriangle, Pause, SkipForward } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -9,6 +9,7 @@ import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -35,11 +36,11 @@ export default function AccountSubscriptionPage() {
   const { subscriptions } = useAccount();
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
-  const patchData = useStore((s) => s.patchData);
-  const allSubscriptions = useStore((s) => s.data.subscriptions);
-  const [skipped, setSkipped] = useState(false);
+  const resumeSubscription = useStore((s) => s.resumeSubscription);
+  const skipNextVisit = useStore((s) => s.skipNextVisit);
+  const requestCancellation = useStore((s) => s.requestCancellation);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const subscription = subscriptions.find((s) => s.status !== 'cancelled');
 
@@ -106,13 +107,10 @@ export default function AccountSubscriptionPage() {
             </div>
           </div>
           <Button
-            onClick={() =>
-              patchData({
-                subscriptions: allSubscriptions.map((s) =>
-                  s.id === subscription.id ? { ...s, status: 'active' as const } : s,
-                ),
-              })
-            }
+            onClick={() => {
+              resumeSubscription(subscription.id);
+              toast.success(t('resumed'));
+            }}
           >
             {t('resume')}
           </Button>
@@ -147,16 +145,16 @@ export default function AccountSubscriptionPage() {
         ) : (
           <Button
             className="mt-5"
-            disabled={paused || skipped}
+            /*
+             * The `skipped` local flag used to disable this after one use
+             * regardless of how many free skips were left, so a plan with two
+             * a month behaved as though it had one. The remaining count is the
+             * only thing that should gate it — and it already does, above.
+             */
+            disabled={paused}
             onClick={() => {
-              patchData({
-                subscriptions: allSubscriptions.map((s) =>
-                  s.id === subscription.id
-                    ? { ...s, skipsUsedThisMonth: s.skipsUsedThisMonth + 1 }
-                    : s,
-                ),
-              });
-              setSkipped(true);
+              skipNextVisit(subscription.id, now);
+              toast.success(t('skipped'));
             }}
           >
             <SkipForward className="size-4" aria-hidden />
@@ -184,15 +182,10 @@ export default function AccountSubscriptionPage() {
             <Button
               variant="quiet"
               className="mt-4"
-              onClick={() =>
-                patchData({
-                  subscriptions: allSubscriptions.map((s) =>
-                    s.id === subscription.id
-                      ? { ...s, cancellationRequestedAt: now.toISOString() }
-                      : s,
-                  ),
-                })
-              }
+              onClick={() => {
+                requestCancellation(subscription.id, now);
+                toast.success(t('cancelRequested'));
+              }}
             >
               {t('cancelAction')}
             </Button>

@@ -2,9 +2,11 @@
 
 import {
   COOKIE_MAX_AGE,
+  DENSITY_COOKIE,
   INSURANCE_COOKIE,
   STRESS_COOKIE,
   THEME_COOKIE,
+  type Density,
   type Theme,
 } from './theme';
 
@@ -29,6 +31,11 @@ export function applyTheme(theme: Theme) {
 export function applyStress(on: boolean) {
   writeCookie(STRESS_COOKIE, on ? 'on' : 'off');
   document.documentElement.dataset.stress = on ? 'on' : 'off';
+}
+
+export function applyDensity(density: Density) {
+  writeCookie(DENSITY_COOKIE, density);
+  document.documentElement.dataset.density = density;
 }
 
 export function applyInsurance(on: boolean) {

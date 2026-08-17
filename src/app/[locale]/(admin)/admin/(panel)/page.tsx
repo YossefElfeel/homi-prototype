@@ -2,13 +2,27 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { AlertTriangle, ArrowRight, Clock, KeyRound, MapPin } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarDays,
+  Clock,
+  Inbox,
+  KeyRound,
+  MapPin,
+  RefreshCw,
+  Sun,
+} from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader } from '@/components/ui/card';
+import { StatGrid, StatTile } from '@/components/ui/stat';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { addDays, addMinutes, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
 import { elapsed, hoursSince } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -31,6 +45,10 @@ const ACCESS_SHORT: Record<string, string> = {
  *
  * Every block has its own empty state. On day one all four are empty at once,
  * and the screen still has to read as a working tool rather than a failure.
+ *
+ * The four numbers used to be a `gap-px` grid of bare counts with nowhere to
+ * go from them. Each one now carries the sentence that makes it actionable and
+ * links to the screen it is answered on.
  */
 export default function AdminDashboard() {
   const t = useTranslations('admin.dashboard');
@@ -44,14 +62,20 @@ export default function AdminDashboard() {
   const properties = useStore((s) => s.data.properties);
   const bookings = useStore((s) => s.data.bookings);
   const subscriptions = useStore((s) => s.data.subscriptions);
+  const team = useStore((s) => s.data.team);
+  const memberId = useStore((s) => s.demo.currentMemberId);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title', { name: '' })} />;
 
   const waiting = requests
     .filter((r) => r.status === 'new' || r.status === 'inReview')
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  const late = waiting.filter(
+    (r) => hoursSince(r.createdAt, now) > settings.responseTimeHours,
+  );
 
   const today = bookingsOnDay(now, bookings);
   const tomorrow = bookingsOnDay(addDays(startOfDay(now), 1), bookings);
@@ -73,75 +97,111 @@ export default function AdminDashboard() {
   const serviceName = (slug: string) =>
     services.find((s) => s.slug === slug)?.name[locale] ?? slug;
 
+  /* Was the literal string "Marco". The scenario owns who the owner is. */
+  const member = team.find((m) => m.id === memberId);
+  const firstStart = (jobs: typeof bookings) =>
+    jobs.length > 0 ? format.dateTime(new Date(jobs[0]!.start), 'time') : null;
+
+  const todayStart = firstStart(today);
+  const tomorrowStart = firstStart(tomorrow);
+
   return (
-    <div className="max-w-5xl">
-      <h1 className="display-type text-3xl">
-        {t('title', { name: 'Marco' })}
-      </h1>
-      <p className="mt-2 text-ink-secondary">{t('lead')}</p>
+    <div className="mx-auto max-w-[100rem]">
+      <PageHeader
+        title={t('title', { name: member?.firstName ?? '' })}
+        lead={t('lead')}
+      />
 
-      <dl className="mt-8 grid grid-cols-2 gap-px border border-line-subtle bg-line-subtle lg:grid-cols-4">
-        {[
-          { label: t('statWaiting'), value: waiting.length, alert: waiting.some((r) => hoursSince(r.createdAt, now) > settings.responseTimeHours) },
-          { label: t('statToday'), value: today.length },
-          { label: t('statTomorrow'), value: tomorrow.length },
-          { label: t('statRenewals'), value: renewals.length },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-page p-5">
-            <dt className="label-type text-ink-tertiary">{stat.label}</dt>
-            <dd
-              data-numeric
-              className={cn('mt-2 text-3xl', stat.alert && 'text-status-danger-fg')}
-            >
-              {stat.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <StatGrid>
+        <StatTile
+          label={t('statWaiting')}
+          value={waiting.length}
+          icon={Inbox}
+          tone={late.length > 0 ? 'danger' : 'default'}
+          hint={
+            late.length > 0
+              ? t('statWaitingHintLate', { n: late.length })
+              : t('statWaitingHintOk')
+          }
+          href="/admin/anfragen"
+          linkLabel={t('statWaitingLink')}
+        />
+        <StatTile
+          label={t('statToday')}
+          value={today.length}
+          icon={Sun}
+          hint={
+            todayStart
+              ? t('statTodayHint', { time: todayStart })
+              : t('statTodayHintEmpty')
+          }
+          href="/admin/kalender"
+          linkLabel={t('statTodayLink')}
+        />
+        <StatTile
+          label={t('statTomorrow')}
+          value={tomorrow.length}
+          icon={CalendarDays}
+          hint={
+            tomorrowStart
+              ? t('statTomorrowHint', { time: tomorrowStart })
+              : t('statTodayHintEmpty')
+          }
+          href="/admin/kalender"
+          linkLabel={t('statTomorrowLink')}
+        />
+        <StatTile
+          label={t('statRenewals')}
+          value={renewals.length}
+          icon={RefreshCw}
+          hint={t('statRenewalsHint')}
+          href="/admin/abos"
+          linkLabel={t('statRenewalsLink')}
+        />
+      </StatGrid>
 
-      <section className="mt-12">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="display-type text-xl">{t('waitingTitle')}</h2>
-            <p className="mt-1 text-sm text-ink-secondary">
-              {t('waitingLead', { hours: settings.responseTimeHours })}
-            </p>
-          </div>
-          <Button asChild variant="link">
-            <Link href="/admin/anfragen">
-              {t('viewAll')}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
+      <Card className="mt-app-section" pad="none">
+        <CardHeader
+          className="p-card"
+          title={t('waitingTitle')}
+          description={t('waitingLead', { hours: settings.responseTimeHours })}
+          actions={
+            <Button asChild variant="link">
+              <Link href="/admin/anfragen">
+                {t('viewAll')}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </Button>
+          }
+        />
 
         {waiting.length === 0 ? (
-          <EmptyState
-            compact
-            className="mt-5"
-            title={t('waitingEmptyTitle')}
-            body={t('waitingEmptyBody')}
-          />
+          <div className="px-card pb-card">
+            <EmptyState
+              compact
+              title={t('waitingEmptyTitle')}
+              body={t('waitingEmptyBody')}
+            />
+          </div>
         ) : (
-          <ul className="mt-5 divide-y divide-line-subtle border-y border-line-subtle">
+          <ul className="border-t border-line-subtle">
             {waiting.map((request) => {
-              const late = hoursSince(request.createdAt, now) > settings.responseTimeHours;
+              const overdue =
+                hoursSince(request.createdAt, now) > settings.responseTimeHours;
               const property = propertyOf(request.propertyId);
               return (
                 <li
                   key={request.id}
-                  className="flex flex-wrap items-center justify-between gap-4 py-4"
+                  className="flex flex-wrap items-center justify-between gap-4 border-b border-line-subtle px-card py-row last:border-0"
                 >
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{nameOf(request.customerId)}</span>
-                      <span data-numeric className="label-type text-ink-tertiary">
+                      <span data-numeric className="text-2xs text-ink-tertiary">
                         {request.reference}
                       </span>
                       {request.outOfArea && (
-                        <span className="rounded-sm border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-[0.6875rem] text-status-warning-fg">
-                          {property?.postcode}
-                        </span>
+                        <StatusChip>{property?.postcode}</StatusChip>
                       )}
                     </p>
                     <p className="mt-1 text-sm text-ink-secondary">
@@ -154,10 +214,12 @@ export default function AdminDashboard() {
                     <span
                       className={cn(
                         'flex items-center gap-1.5 text-sm',
-                        late ? 'font-medium text-status-danger-fg' : 'text-ink-tertiary',
+                        overdue
+                          ? 'font-medium text-status-danger-fg'
+                          : 'text-ink-tertiary',
                       )}
                     >
-                      {late && <AlertTriangle className="size-3.5" aria-hidden />}
+                      {overdue && <AlertTriangle className="size-3.5" aria-hidden />}
                       <span data-numeric>
                         {t('elapsed', { time: elapsed(request.createdAt, now, locale) })}
                       </span>
@@ -171,32 +233,33 @@ export default function AdminDashboard() {
             })}
           </ul>
         )}
-      </section>
+      </Card>
 
-      <div className="mt-12 grid gap-10 lg:grid-cols-2">
+      <div className="mt-app-section gap-app grid lg:grid-cols-2">
         {[
-          { title: t('todayTitle'), jobs: today },
-          { title: t('tomorrowTitle'), jobs: tomorrow },
+          { key: 'today', title: t('todayTitle'), jobs: today },
+          { key: 'tomorrow', title: t('tomorrowTitle'), jobs: tomorrow },
         ].map((block) => (
-          <section key={block.title}>
-            <h2 className="display-type text-xl">{block.title}</h2>
+          <Card key={block.key} pad="none">
+            <CardHeader className="p-card" title={block.title} />
             {block.jobs.length === 0 ? (
-              <EmptyState
-                compact
-                className="mt-4"
-                title={t('dayEmptyTitle')}
-                body={t('dayEmptyBody')}
-              />
+              <div className="px-card pb-card">
+                <EmptyState
+                  compact
+                  title={t('dayEmptyTitle')}
+                  body={t('dayEmptyBody')}
+                />
+              </div>
             ) : (
-              <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+              <ul className="border-t border-line-subtle">
                 {block.jobs.map((job) => {
                   const property = propertyOf(job.propertyId);
                   const start = new Date(job.start);
                   return (
-                    <li key={job.id}>
+                    <li key={job.id} className="border-b border-line-subtle last:border-0">
                       <Link
                         href={`/admin/kalender/${job.id}`}
-                        className="flex gap-4 py-3.5 transition-colors hover:bg-sunken"
+                        className="flex gap-4 px-card py-row transition-colors hover:bg-sunken"
                       >
                         <span data-numeric className="w-24 shrink-0 text-sm">
                           {format.dateTime(start, 'time')}–
@@ -227,28 +290,35 @@ export default function AdminDashboard() {
                 })}
               </ul>
             )}
-          </section>
+          </Card>
         ))}
       </div>
 
-      <section className="mt-12">
-        <h2 className="display-type text-xl">{t('renewalsTitle')}</h2>
+      <Card className="mt-app-section" pad="none">
+        <CardHeader className="p-card" title={t('renewalsTitle')} />
         {renewals.length === 0 ? (
-          <EmptyState
-            compact
-            className="mt-4"
-            title={t('renewalsEmptyTitle')}
-            body={t('renewalsEmptyBody')}
-          />
+          <div className="px-card pb-card">
+            <EmptyState
+              compact
+              title={t('renewalsEmptyTitle')}
+              body={t('renewalsEmptyBody')}
+            />
+          </div>
         ) : (
-          <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+          <ul className="border-t border-line-subtle">
             {renewals.map((sub) => (
-              <li key={sub.id} className="flex items-center justify-between gap-4 py-3.5">
+              <li
+                key={sub.id}
+                className="flex items-center justify-between gap-4 border-b border-line-subtle px-card py-row last:border-0"
+              >
                 <div>
                   <p className="font-medium">{nameOf(sub.customerId)}</p>
                   <p className="mt-0.5 text-sm text-ink-secondary capitalize">{sub.plan}</p>
                 </div>
-                <span data-numeric className="flex items-center gap-1.5 text-sm text-ink-tertiary">
+                <span
+                  data-numeric
+                  className="flex items-center gap-1.5 text-sm text-ink-tertiary"
+                >
                   <Clock className="size-3.5" aria-hidden />
                   {t('nextCharge', {
                     date: sub.nextChargeAt
@@ -260,7 +330,19 @@ export default function AdminDashboard() {
             ))}
           </ul>
         )}
-      </section>
+      </Card>
     </div>
+  );
+}
+
+/**
+ * The out-of-area marker. Was a hand-typed class string here and, verbatim
+ * again, on the requests list — the two had already been edited apart once.
+ */
+function StatusChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-[var(--radius-xs)] border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-2xs text-status-warning-fg">
+      {children}
+    </span>
   );
 }

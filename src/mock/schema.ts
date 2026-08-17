@@ -235,7 +235,21 @@ export interface RequestDraft {
 
 export interface OfferLine {
   id: ID;
+  /**
+   * The catalogue slug for a line that came from a service or add-on, and free
+   * text for a line the owner typed. It is the *identity* of the line — what
+   * links it back to the catalogue — so it is never what an editable field
+   * writes to.
+   */
   label: string;
+  /**
+   * What the customer reads, when the owner has reworded it for this quote.
+   *
+   * Without this, typing in the quote builder's description cell wrote the
+   * resolved German name straight over the slug, and the line's link to the
+   * catalogue was gone for good after a single keystroke.
+   */
+  displayLabel?: string;
   calc: CalcMethod;
   /** Hours for hourly lines, pieces for per-unit lines. */
   quantity: number;
@@ -426,6 +440,24 @@ export interface Invoice {
 
 export type PaymentMethod = 'twint' | 'card' | 'apple-pay' | 'google-pay';
 
+/**
+ * A method the customer has kept on file (screen 45).
+ *
+ * The screen managed these entirely in local component state: adding,
+ * removing and setting a default all worked on screen and were gone the moment
+ * you navigated away — on the one screen whose whole subject is "what we have
+ * saved for you".
+ */
+export interface SavedPaymentMethod {
+  id: ID;
+  customerId: ID;
+  kind: PaymentMethod;
+  /** "Visa · 4242", "+41 79 ··· 66" — never the full number. */
+  label: string;
+  isDefault: boolean;
+  addedAt: ISODate;
+}
+
 export interface Payment {
   id: ID;
   invoiceId?: ID;
@@ -465,6 +497,15 @@ export interface Review {
   status: ReviewStatus;
   submittedAt: ISODate;
   ownerReply?: string;
+  /**
+   * §20.6 — publishing needs recorded consent.
+   *
+   * The customer's review form had this checkbox, bound to local state, and
+   * never read it: the review was written with no consent field at all, and
+   * the moderation screen could publish anything. Of every dead control in
+   * this prototype it was the only one carrying legal weight.
+   */
+  publishConsent: boolean;
 }
 
 export type PhotoSource = 'customer' | 'owner' | 'field';

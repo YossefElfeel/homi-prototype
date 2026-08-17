@@ -12,6 +12,7 @@ import type {
   PackageCredit,
   Offer,
   Payment,
+  SavedPaymentMethod,
   Photo,
   Property,
   Review,
@@ -51,6 +52,7 @@ export interface DataSet {
   subscriptions: Subscription[];
   invoices: Invoice[];
   payments: Payment[];
+  paymentMethods: SavedPaymentMethod[];
   keyLog: KeyLogEntry[];
   credits: PackageCredit[];
   messages: CustomerMessage[];
@@ -73,6 +75,7 @@ const EMPTY: DataSet = {
   subscriptions: [],
   invoices: [],
   payments: [],
+  paymentMethods: [],
   keyLog: [],
   credits: [],
   messages: [],
@@ -501,6 +504,28 @@ function baseData(now: Date): DataSet {
     bookings,
     subscriptions,
     invoices,
+    /* Screen 45 used to fake these in component state. cus_2 is the demo
+       account, so it carries the card the plan charges plus a TWINT for
+       one-off jobs — which is exactly the pair the screen's TWINT-blocked
+       explanation needs in order to make sense. */
+    paymentMethods: [
+      {
+        id: 'pm_card_2',
+        customerId: 'cus_2',
+        kind: 'card' as const,
+        label: 'Visa · 4242',
+        isDefault: true,
+        addedAt: iso(days(now, -120)),
+      },
+      {
+        id: 'pm_twint_2',
+        customerId: 'cus_2',
+        kind: 'twint' as const,
+        label: 'TWINT · 079 ··· 66',
+        isDefault: false,
+        addedAt: iso(days(now, -60)),
+      },
+    ],
     keyLog,
     credits,
     messages,
@@ -942,6 +967,7 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           text: 'Pünktlich, gründlich, und man merkt, dass mitgedacht wird. Sehr empfehlenswert.',
           status: 'published',
           submittedAt: iso(days(now, -20)),
+          publishConsent: true,
         },
         {
           id: 'rev_2',
@@ -951,6 +977,7 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           text: 'Endreinigung hat die Abnahme auf Anhieb bestanden. Genau das, was versprochen war.',
           status: 'published',
           submittedAt: iso(days(now, -6)),
+          publishConsent: true,
         },
         {
           id: 'rev_3',
@@ -960,6 +987,7 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           text: 'Sehr saubere Arbeit. Die Ankunft war etwas später als angekündigt, wurde aber vorher gemeldet.',
           status: 'pending',
           submittedAt: iso(days(now, -2)),
+          publishConsent: true,
         },
         {
           // The one the moderation screen exists for. §17.2 leaves publishing
@@ -972,6 +1000,9 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           text: 'Zwei Fenster wurden ausgelassen und die Küche war nur oberflächlich gemacht. Auf meine Nachricht kam erst am nächsten Tag eine Antwort.',
           status: 'pending',
           submittedAt: iso(days(now, -1)),
+          // Deliberately withheld: the moderation screen has to show the case
+          // where publishing is not the owner's to decide (§20.6).
+          publishConsent: false,
         },
       ];
       // §20.6 — only photos with recorded written consent reach the public

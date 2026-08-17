@@ -50,7 +50,11 @@ export function FieldShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh bg-sunken">
+    /* The field app keeps its phone frame — a four-screen tool used one-handed
+       on a doorstep does not want a sidebar — but it takes the same console
+       token set as the other two areas, so its cards get real elevation
+       instead of hairlines. */
+    <div data-scope="app" className="min-h-dvh bg-sunken text-ink">
       <div className="mx-auto min-h-dvh w-full max-w-[26rem] bg-page">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line-subtle bg-page/95 px-5 backdrop-blur-sm">
           {/* The logo is the way back to the job list — this shell has no nav,

@@ -24,8 +24,12 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-sm border font-medium whitespace-nowrap',
-        size === 'sm' ? 'px-1.5 py-0.5 text-[0.6875rem]' : 'px-2 py-1 text-xs',
+        /* Was `rounded-sm` — Tailwind's own 2px, not the theme axis. So the
+           badge stayed square in Zuhause, which rounds everything else to
+           10px, and it was the one element in the kit that ignored the token
+           system entirely. */
+        'inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border font-medium whitespace-nowrap',
+        size === 'sm' ? 'px-2 py-0.5 text-2xs' : 'px-2.5 py-1 text-xs',
         TONE_CLASSES[tone],
         className,
       )}

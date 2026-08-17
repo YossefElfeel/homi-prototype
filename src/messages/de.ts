@@ -183,6 +183,50 @@ export const de = {
     careersCta: 'Wir suchen Verstärkung',
   },
 
+  /**
+   * Chrome shared by every signed-in area — the sidebar, the topbar, the
+   * command palette, pagination. Lives here rather than under `admin` or
+   * `account` because one shell renders all of them.
+   */
+  app: {
+    menu: 'Menü',
+    backToSite: 'Zurück zu homivaro.ch',
+    signOut: 'Abmelden',
+    signOutConfirm: 'Abmelden? Die Demo-Daten bleiben erhalten.',
+    userMenu: 'Konto-Menü',
+    notifications: 'Benachrichtigungen',
+    notificationsEmpty: 'Nichts Offenes.',
+    notificationsAll: 'Alle ansehen',
+    density: 'Dichte',
+    densityComfortable: 'Komfortabel',
+    densityCompact: 'Kompakt',
+    collapseGroup: 'Gruppe einklappen',
+    search: 'Suchen',
+    searchPlaceholder: 'Name, Referenz, Strasse, Rechnungsnummer …',
+    searchEmpty: 'Keine Treffer. Tippen Sie weiter oder anders.',
+    searchIdle: 'Tippen Sie, um zu suchen — oder springen Sie direkt zu einer Seite.',
+    searchOpenHint: 'Öffnen',
+    searchGroupPages: 'Seiten',
+    searchGroupCustomers: 'Kunden',
+    searchGroupRequests: 'Anfragen',
+    searchGroupOffers: 'Offerten',
+    searchGroupInvoices: 'Rechnungen',
+    searchGroupProperties: 'Objekte',
+    results: '{shown} von {total}',
+    resultsAll: '{total, plural, one {# Eintrag} other {# Einträge}}',
+    clearSearch: 'Suche leeren',
+    selected: '{n} ausgewählt',
+    loading: 'Wird geladen',
+    pagePrevious: 'Zurück',
+    pageNext: 'Weiter',
+    pageLabel: 'Seitennavigation',
+    pageSummary: '{from}–{to} von {total}',
+    /* Für Bildschirme, die beim Tippen speichern. Ein Toast pro Tastendruck
+       wäre Lärm; Stille war das Problem. */
+    saving: 'Wird gespeichert …',
+    saved: 'Gespeichert',
+  },
+
   /** Prototype-only control surface. Never part of the product. */
   demo: {
     title: 'Demo-Steuerung',
@@ -191,6 +235,7 @@ export const de = {
     theme: 'Richtung',
     locale: 'Sprache',
     role: 'Rolle',
+    customer: 'Kundenkonto',
     scenario: 'Szenario',
     today: 'Heute ist',
     todayReset: 'Heute',
@@ -202,6 +247,7 @@ export const de = {
     resetConfirm: 'Alle Demo-Daten auf den Ausgangszustand zurücksetzen?',
     screens: 'Screen-Index',
     openQuestions: 'Offene Fragen',
+    foundations: 'Design-Tokens',
     roles: {
       visitor: 'Besucher',
       customer: 'Kunde',

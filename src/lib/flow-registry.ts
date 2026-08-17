@@ -1,0 +1,254 @@
+/**
+ * The flows, as data — the companion to `screen-registry.ts`.
+ *
+ * /screens answers "does this screen exist". That turned out to be the easier
+ * question: all 101 existed and every one of them typechecked, and the app
+ * still had places you could walk into and not walk out of. A screen can be
+ * built and its flow still be broken — a list with no way to add to it, a state
+ * declared in the schema that no button can reach, an entity that only one
+ * actor can ever create.
+ *
+ * So this board asks the other question: for each flow, who starts it, what can
+ * be done inside it, and how does it end. `exits` is the load-bearing column —
+ * a flow with fewer exits than the real world has outcomes is a flow that will
+ * be worked around by phone.
+ */
+
+export type ActorId = 'visitor' | 'customer' | 'owner' | 'contractor' | 'applicant';
+
+export type ActionState = 'ok' | 'added' | 'open';
+
+export interface FlowAction {
+  label: string;
+  /** Where it lives. */
+  href?: string;
+  state: ActionState;
+  note?: string;
+}
+
+export interface Flow {
+  id: string;
+  de: string;
+  en: string;
+  actors: ActorId[];
+  /** How the flow is entered at all. */
+  entries: FlowAction[];
+  /** What can be done once inside. */
+  actions: FlowAction[];
+  /** How it ends — including the unhappy ways. */
+  exits: FlowAction[];
+}
+
+export const ACTOR_LABEL: Record<ActorId, string> = {
+  visitor: 'Besucher',
+  customer: 'Kunde',
+  owner: 'Inhaber',
+  contractor: 'Mitarbeitende',
+  applicant: 'Bewerber',
+};
+
+const ok = (label: string, href?: string, note?: string): FlowAction => ({
+  label,
+  href,
+  state: 'ok',
+  note,
+});
+
+/** Closed in this pass. Kept marked so the board records what moved and why. */
+const added = (label: string, href?: string, note?: string): FlowAction => ({
+  label,
+  href,
+  state: 'added',
+  note,
+});
+
+/** Known and deliberately not built. The note has to say why. */
+const open = (label: string, note: string): FlowAction => ({
+  label,
+  state: 'open',
+  note,
+});
+
+export const FLOWS: Flow[] = [
+  {
+    id: 'intake',
+    de: 'Anfrage stellen',
+    en: 'Making a request',
+    actors: ['visitor', 'customer', 'owner'],
+    entries: [
+      ok('Assistent, 8 Schritte', '/anfrage', 'Öffentlich, ohne Konto — §8.3'),
+      added(
+        'Telefonisch erfassen',
+        '/admin/anfragen/neu',
+        'Eine Seite, jeder Schritt als Abschnitt. Vorher konnte eine Anfrage nur über die Website entstehen — in einem Betrieb, dessen Arbeit per Telefon hereinkommt',
+      ),
+    ],
+    actions: [
+      ok('Gebietsprüfung', '/anfrage/objekt', '8700 innerhalb, 8001 ausserhalb, 80 ungültig'),
+      ok('Preisrahmen live', '/anfrage/leistung', 'Rechnet ab Leistung + Fläche mit'),
+      ok('Zutritt hinterlegen', '/anfrage/zutritt', 'Vier Methoden, Codes maskiert'),
+      ok('Entwurf überlebt Neuladen', '/anfrage', '30 Tage, §20.1'),
+    ],
+    exits: [
+      ok('Gesendet', '/anfrage/gesendet'),
+      ok('Ausserhalb Gebiet — trotzdem gesendet', '/anfrage/pruefen', '§20.1: markiert, nicht blockiert'),
+      added(
+        'Zurückziehen',
+        '/konto/anfragen/req_3',
+        'cancelledByCustomer war deklariert, übersetzt und eingefärbt — und von keinem Bildschirm erreichbar',
+      ),
+      added(
+        'Stornieren durch uns',
+        '/admin/anfragen/req_1',
+        'Ab «Offerte versendet» ist «Ablehnen» das falsche Wort. Schliesst die Offerte gleich mit',
+      ),
+      ok('Ablehnen mit Begründung', '/admin/anfragen/req_1/ablehnen', '§4.1'),
+    ],
+  },
+  {
+    id: 'quote',
+    de: 'Offerte & Zahlung',
+    en: 'Quote & payment',
+    actors: ['owner', 'customer'],
+    entries: [
+      ok('Offerte schreiben', '/admin/anfragen/req_1/offerte', 'Zeilen vorbefüllt aus der Anfrage'),
+      added(
+        'Direkt aus der Telefonerfassung',
+        '/admin/anfragen/neu',
+        '«Erfassen und Offerte schreiben» — der Anruf endet oft mit beidem',
+      ),
+    ],
+    actions: [
+      ok('Positionen bearbeiten', '/admin/anfragen/req_1/offerte'),
+      ok('Optionale Positionen an/aus', '/offerte/off_1', 'Preis und Dauer bewegen sich zusammen'),
+      ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
+      ok('Unterschreiben', '/offerte/off_1/unterschrift'),
+      ok('Änderung anfragen', '/offerte/off_1/aenderung'),
+    ],
+    exits: [
+      ok('Bezahlt und gebucht', '/offerte/off_1/bestaetigt'),
+      ok('Zahlung fehlgeschlagen', '/offerte/off_1/zahlung', 'Reservierung läuft weiter oder ab'),
+      ok('Abgelaufen, neu ausstellen', '/offerte/off_2'),
+      added(
+        'Offerte ablehnen',
+        '/offerte/off_1',
+        'Es gab nur annehmen oder ändern. Ein Nein wurde zu Schweigen und drei Wochen später zu «abgelaufen» — ohne Grund im System. Gibt die reservierte Zeit sofort frei',
+      ),
+    ],
+  },
+  {
+    id: 'crm',
+    de: 'Kunden & Objekte',
+    en: 'Customers & properties',
+    actors: ['owner'],
+    entries: [
+      added(
+        'Kunde erfassen',
+        '/admin/kunden/neu',
+        'Ein Kunde entstand ausschliesslich als Nebenwirkung des Assistenten. Am ersten Tag war /admin/kunden eine Liste ohne Weg, etwas hineinzutun',
+      ),
+      added('Objekt erfassen', '/admin/objekte', 'Ausserhalb einer Anfrage — für bekannte Adressen'),
+      ok('Automatisch aus einer Anfrage', '/anfrage/kontakt'),
+    ],
+    actions: [
+      added('Doppelprüfung auf E-Mail und Telefon', '/admin/kunden/neu', 'Dieselbe Regel wie im Assistenten'),
+      ok('Interne Notizen', '/admin/kunden/cus_1'),
+      ok('Zutritt und Schlüssel am Objekt', '/admin/objekte/prp_1', 'Codes rollen- und datumsgebunden, §13.1'),
+      ok('Verlauf als eine Zeitachse', '/admin/kunden/cus_1'),
+    ],
+    exits: [
+      ok('Konto schliessen', '/konto/profil', 'Durch den Kunden selbst'),
+      open(
+        'Kunde löschen (revDSG)',
+        'Nur der Bewerber-Datensatz kennt eine echte Löschung. Für einen Kunden mit Rechnungen kollidiert das mit der Aufbewahrungspflicht — die Regel gehört geklärt, bevor der Knopf gebaut wird',
+      ),
+    ],
+  },
+  {
+    id: 'job',
+    de: 'Einsatz',
+    en: 'The job itself',
+    actors: ['owner', 'contractor'],
+    entries: [
+      ok('Aus bezahlter Offerte', '/admin/kalender'),
+      ok('Heutige Einsätze', '/einsatz', 'Rolle «Mitarbeitende»'),
+    ],
+    actions: [
+      ok('Zuweisen und verschieben', '/admin/kalender/bkg_1'),
+      ok('Ein- und Auschecken mit Fotos', '/einsatz/bkg_1/check'),
+      ok('Zugangscodes nur am Einsatztag', '/einsatz/bkg_1', 'Demo-Uhr verschieben — der Block leert sich wirklich'),
+      added(
+        'Mehraufwand freigeben',
+        '/admin/kalender/bkg_1',
+        '§5.3 teilt den Vorgang: melden darf die ausführende Person, bewerten das Büro. Nur die erste Hälfte war gebaut — «wartet auf Freigabe» hatte keinen Ausgang und «abgeschlossen» war unerreichbar',
+      ),
+    ],
+    exits: [
+      added('Freigegeben und verrechenbar', '/admin/kalender/bkg_1'),
+      ok('Kein Zutritt, mit Wartezeit und Foto', '/einsatz/bkg_1/kein-zutritt'),
+      ok('Storniert', '/admin/kalender/bkg_1'),
+      ok('Verrechnet', '/admin/rechnungen'),
+    ],
+  },
+  {
+    id: 'money',
+    de: 'Rechnungen & Abos',
+    en: 'Invoices & plans',
+    actors: ['owner', 'customer'],
+    entries: [
+      ok('Rechnung aus Einsatz', '/admin/rechnungen'),
+      ok('Abo anlegen', '/admin/abos'),
+    ],
+    actions: [
+      ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
+      ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
+      ok('Besuch überspringen, pausieren, kündigen', '/konto/abo'),
+    ],
+    exits: [
+      ok('Bezahlt', '/konto/rechnungen/inv_paid'),
+      ok('Storniert mit Grund', '/admin/rechnungen/inv_draft'),
+      ok(
+        'Überfällig',
+        '/konto/rechnungen/inv_paid',
+        'Wird beim Lesen aus dem Fälligkeitsdatum abgeleitet, nicht gespeichert — richtig so, sonst bräuchte es einen nächtlichen Lauf',
+      ),
+      open(
+        'Zahlung im Abo fehlgeschlagen (pastDue)',
+        'Nur in den Demodaten vorhanden. Es gibt keinen Abrechnungslauf, der einen fehlgeschlagenen Einzug erzeugen könnte — den zu erfinden, hiesse Verhalten zu behaupten, das der Prototyp nicht hat',
+      ),
+    ],
+  },
+  {
+    id: 'hiring',
+    de: 'Bewerbung & Team',
+    en: 'Hiring & team',
+    actors: ['applicant', 'owner'],
+    entries: [
+      ok('Bewerbung', '/jobs/bewerbung', 'Arbeitsbewilligung ist die erste Frage'),
+      ok('Spontanbewerbung', '/jobs', 'Wenn keine Stelle offen ist'),
+      ok('Stelle anlegen', '/admin/stellen'),
+    ],
+    actions: [
+      ok('Status abfragen', '/jobs/status'),
+      ok('Prüfen, ablehnen, löschen', '/admin/bewerbungen/app_1', 'Löschen ist echt, nicht archiviert — revDSG'),
+      ok('In Mitarbeiterkonto umwandeln', '/admin/bewerbungen/app_1/konto'),
+    ],
+    exits: [
+      ok('Abgelehnt mit Grund', '/admin/bewerbungen/app_1'),
+      ok('Angestellt', '/admin/team'),
+      open(
+        'Teammitglied von Hand anlegen',
+        'Der einzige Weg ins Team führt über eine Bewerbung. Das ist vertretbar — es hält Berechtigungen an einen geprüften Datensatz gebunden — aber am ersten Tag ist /admin/team damit leer und nur über eine erfundene Bewerbung füllbar',
+      ),
+    ],
+  },
+];
+
+export function flowCounts() {
+  const all = FLOWS.flatMap((f) => [...f.entries, ...f.actions, ...f.exits]);
+  return {
+    total: all.length,
+    added: all.filter((a) => a.state === 'added').length,
+    open: all.filter((a) => a.state === 'open').length,
+  };
+}

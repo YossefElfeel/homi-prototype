@@ -1,16 +1,19 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { Field, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 
 /**
  * Screen 37 — one request, from the customer's side.
@@ -32,9 +35,14 @@ export default function AccountRequestPage({
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
 
+  const now = useNow();
   const { requests, offers, properties } = useAccount();
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
+  const cancelRequest = useStore((s) => s.cancelRequest);
+
+  const [cancelling, setCancelling] = useState(false);
+  const [reason, setReason] = useState('');
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -44,6 +52,20 @@ export default function AccountRequestPage({
   const property = properties.find((p) => p.id === request.propertyId);
   const service = services.find((s) => s.slug === request.serviceSlug);
   const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
+
+  /*
+   * Open means "still ours to call off". Once a quote has been signed the job
+   * is booked and cancelling belongs to the booking, under its own notice
+   * period (§11) — offering "withdraw" here would quietly bypass that.
+   */
+  const cancellable =
+    request.status === 'new' ||
+    request.status === 'inReview' ||
+    request.status === 'offerSent' ||
+    request.status === 'revisionRequested';
+
+  const cancelled =
+    request.status === 'cancelledByCustomer' || request.status === 'cancelledByCompany';
 
   return (
     <div className="max-w-3xl">
@@ -65,7 +87,15 @@ export default function AccountRequestPage({
         <span data-numeric>{format.dateTime(new Date(request.createdAt), 'full')}</span>
       </p>
 
-      {offer ? (
+      {cancelled ? (
+        <div className="mt-8 border-l-2 border-line bg-sunken p-6">
+          <h2 className="font-medium">{t('cancelledTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-secondary">{t('cancelledBody')}</p>
+          <Button asChild variant="secondary" className="mt-4">
+            <Link href="/anfrage">{t('cancelledAction')}</Link>
+          </Button>
+        </div>
+      ) : offer ? (
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken p-6">
           <div>
             <h2 className="font-medium">{t('offerTitle')}</h2>
@@ -136,6 +166,48 @@ export default function AccountRequestPage({
           <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
             {request.customerNote}
           </p>
+        </section>
+      )}
+
+      {cancellable && (
+        <section className="mt-10 border-t border-line-subtle pt-6">
+          {cancelling ? (
+            <ConfirmPanel
+              title={t('cancelTitle')}
+              body={t('cancelBody')}
+              action={t('cancelConfirm')}
+              dismiss={t('cancelDismiss')}
+              onDismiss={() => setCancelling(false)}
+              onConfirm={() => {
+                cancelRequest(request.id, 'customer', reason, now);
+                setCancelling(false);
+                toast.success(t('cancelDone', { reference: request.reference }));
+              }}
+            >
+              {/* Optional on purpose. Requiring a reason to leave is a dark
+                  pattern with a form field on it — and an empty box is more
+                  honest than a mandatory dropdown nobody means. */}
+              <Field
+                label={t('cancelReason')}
+                hint={t('cancelReasonHint')}
+                optional
+              >
+                {(props) => (
+                  <Textarea
+                    {...props}
+                    className="min-h-20 bg-card"
+                    value={reason}
+                    placeholder={t('cancelReasonPlaceholder')}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                )}
+              </Field>
+            </ConfirmPanel>
+          ) : (
+            <Button variant="ghost" onClick={() => setCancelling(true)}>
+              {t('cancelAction')}
+            </Button>
+          )}
         </section>
       )}
     </div>

@@ -22,6 +22,8 @@ export const bookingDe = {
     estimatePending: 'Noch nicht genug Angaben',
     hoursLabel: 'Geschätzte Dauer',
     draftSaved: 'Gespeichert — Sie können jederzeit weitermachen.',
+    startOver: 'Neu beginnen',
+    draftCleared: 'Angaben zurückgesetzt.',
     exitConfirm: 'Ihre Angaben bleiben gespeichert.',
     steps: {
       leistung: 'Leistung',

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Checkbox } from '@/components/ui/field';
 import { Logo } from '@/components/site/logo';
@@ -16,10 +16,32 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const setRole = useStore((s) => s.setRole);
 
+  /*
+   * The form used to be entirely uncontrolled — `defaultValue` on both fields,
+   * no onChange, and submit() ignored them. The `remember` checkbox was never
+   * read either, and `admin.login.error` was defined in every locale with
+   * nothing to render it. So the screen had an error state on paper and no
+   * way to reach it, which is worse than having none.
+   *
+   * The prototype still accepts any credentials — that is the demo hint under
+   * the form — but "any" is not "none": empty fields are the failure case that
+   * a real person will actually hit, and it now behaves like one.
+   */
+  const [email, setEmail] = useState('marco@homivaro.ch');
+  const [password, setPassword] = useState('demo');
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<'idle' | 'checking'>('idle');
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      setError(t('error'));
+      return;
+    }
+
+    setError(null);
     setState('checking');
     window.setTimeout(() => {
       // Signing in *is* switching role in the prototype, so the panel behind
@@ -39,20 +61,42 @@ export default function AdminLoginPage() {
         <h1 className="display-type mt-8 text-3xl">{t('title')}</h1>
         <p className="mt-2 text-ink-secondary">{t('lead')}</p>
 
-        <form onSubmit={submit} className="mt-8 space-y-5">
+        <form onSubmit={submit} noValidate className="mt-8 space-y-5">
+          {/* Alert already carries role="alert" for the danger tone. */}
+          {error && <Alert tone="danger">{error}</Alert>}
+
           <Field label={t('email')}>
             {(props) => (
-              <Input type="email" autoComplete="email" defaultValue="marco@homivaro.ch" {...props} />
+              <Input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                {...props}
+              />
             )}
           </Field>
           <Field label={t('password')}>
             {(props) => (
-              <Input type="password" autoComplete="current-password" defaultValue="demo" {...props} />
+              <Input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                {...props}
+              />
             )}
           </Field>
 
           <div className="flex items-center justify-between gap-4">
-            <Checkbox label={t('remember')} defaultChecked />
+            {/* Controlled, but honest: the prototype's session is the persisted
+                store, so it is always kept. Said in the hint rather than
+                pretended at. */}
+            <Checkbox
+              label={t('remember')}
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
             {/* Used to link to this very page. `?von=admin` sends the reset
                 screen's back-link here rather than into customer sign-in. */}
             <Link
@@ -63,15 +107,8 @@ export default function AdminLoginPage() {
             </Link>
           </div>
 
-          <Button type="submit" size="lg" block disabled={state === 'checking'}>
-            {state === 'checking' ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                {t('submitting')}
-              </>
-            ) : (
-              t('submit')
-            )}
+          <Button type="submit" size="lg" block loading={state === 'checking'}>
+            {state === 'checking' ? t('submitting') : t('submit')}
           </Button>
         </form>
 

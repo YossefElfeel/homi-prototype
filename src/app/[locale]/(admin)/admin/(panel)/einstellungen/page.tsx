@@ -6,7 +6,10 @@ import { useFormatter } from '@/i18n/format';
 import { AlertTriangle, Info, Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Field, Input, Checkbox } from '@/components/ui/field';
+import { Field, Input, Checkbox, NumberField } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { SaveIndicator } from '@/components/ui/save-indicator';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ClosurePeriod } from '@/mock/schema';
@@ -32,6 +35,7 @@ export default function AdminSettingsPage({
 }) {
   const { tab: requestedTab } = use(searchParams);
   const t = useTranslations('admin.settings');
+  const appT = useTranslations('app');
   const format = useFormatter();
   const hydrated = useHydrated();
   const now = useNow();
@@ -47,7 +51,7 @@ export default function AdminSettingsPage({
     requestedTab === 'hours' || requestedTab === 'fees' ? requestedTab : 'regions',
   );
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'regions', label: t('tabRegions') },
@@ -78,10 +82,25 @@ export default function AdminSettingsPage({
     patchData({ closures: closures.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+    <div className="mx-auto max-w-3xl">
+      {/*
+        Every field on this screen writes to the live store on each keystroke,
+        and did so in complete silence — ~25 inputs that changed pricing and
+        scheduling rules with no acknowledgement of any kind, and no entry in
+        the change log the panel keeps for exactly this.
+      */}
+      <PageHeader
+        title={t('title')}
+        actions={
+          <SaveIndicator
+            signal={settings}
+            savingLabel={appT('saving')}
+            savedLabel={appT('saved')}
+          />
+        }
+      />
 
-      <div role="tablist" aria-label={t('title')} className="mt-6 flex flex-wrap gap-1">
+      <div role="tablist" aria-label={t('title')} className="flex flex-wrap gap-1">
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -228,27 +247,19 @@ export default function AdminSettingsPage({
             </Field>
             <Field label={t('hoursCapacity')} hint={t('hoursCapacityHint')}>
               {(props) => (
-                <Input
-                  type="number"
-                  inputMode="numeric"
+                <NumberField
                   min={1}
                   value={settings.maxJobsPerDay}
-                  onChange={(e) =>
-                    updateSettings({ maxJobsPerDay: Math.max(1, Number(e.target.value) || 1) })
-                  }
+                  onCommit={(v) => updateSettings({ maxJobsPerDay: v })}
                   {...props}
                 />
               )}
             </Field>
             <Field label={t('hoursLead')} hint={t('hoursLeadHint')}>
               {(props) => (
-                <Input
-                  type="number"
-                  inputMode="numeric"
+                <NumberField
                   value={settings.minLeadHours}
-                  onChange={(e) =>
-                    updateSettings({ minLeadHours: Number(e.target.value) || 0 })
-                  }
+                  onCommit={(v) => updateSettings({ minLeadHours: v })}
                   {...props}
                 />
               )}
@@ -338,30 +349,18 @@ export default function AdminSettingsPage({
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <Field label={`${t('feeSaturday')} (%)`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.saturdaySurchargePercent}
-                    onChange={(e) =>
-                      updateSettings({
-                        saturdaySurchargePercent: Number(e.target.value) || 0,
-                      })
-                    }
+                    onCommit={(v) => updateSettings({ saturdaySurchargePercent: v })}
                     {...props}
                   />
                 )}
               </Field>
               <Field label={`${t('feeEvening')} (%)`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.eveningSurchargePercent}
-                    onChange={(e) =>
-                      updateSettings({
-                        eveningSurchargePercent: Number(e.target.value) || 0,
-                      })
-                    }
+                    onCommit={(v) => updateSettings({ eveningSurchargePercent: v })}
                     {...props}
                   />
                 )}
@@ -380,13 +379,9 @@ export default function AdminSettingsPage({
               </Field>
               <Field label={`${t('feeTravel')} (km)`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.freeTravelKm}
-                    onChange={(e) =>
-                      updateSettings({ freeTravelKm: Number(e.target.value) || 0 })
-                    }
+                    onCommit={(v) => updateSettings({ freeTravelKm: v })}
                     {...props}
                   />
                 )}
@@ -399,39 +394,27 @@ export default function AdminSettingsPage({
             <div className="mt-5 grid gap-5 sm:grid-cols-3">
               <Field label={`${t('ruleFreeUntil')} (${t('hours')})`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.cancellationFreeHours}
-                    onChange={(e) =>
-                      updateSettings({ cancellationFreeHours: Number(e.target.value) || 0 })
-                    }
+                    onCommit={(v) => updateSettings({ cancellationFreeHours: v })}
                     {...props}
                   />
                 )}
               </Field>
               <Field label={`${t('ruleLate')} (%)`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.lateCancellationPercent}
-                    onChange={(e) =>
-                      updateSettings({ lateCancellationPercent: Number(e.target.value) || 0 })
-                    }
+                    onCommit={(v) => updateSettings({ lateCancellationPercent: v })}
                     {...props}
                   />
                 )}
               </Field>
               <Field label={`${t('ruleNoAccess')} (%)`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.noAccessFeePercent}
-                    onChange={(e) =>
-                      updateSettings({ noAccessFeePercent: Number(e.target.value) || 0 })
-                    }
+                    onCommit={(v) => updateSettings({ noAccessFeePercent: v })}
                     {...props}
                   />
                 )}
@@ -444,43 +427,27 @@ export default function AdminSettingsPage({
             <div className="mt-5 grid gap-5 sm:grid-cols-3">
               <Field label={`${t('ruleCommitment')} (${t('months')})`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.subscriptionCommitmentMonths}
-                    onChange={(e) =>
-                      updateSettings({
-                        subscriptionCommitmentMonths: Number(e.target.value) || 0,
-                      })
-                    }
+                    onCommit={(v) => updateSettings({ subscriptionCommitmentMonths: v })}
                     {...props}
                   />
                 )}
               </Field>
               <Field label={`${t('ruleNotice')} (${t('months')})`}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.subscriptionNoticeMonths}
-                    onChange={(e) =>
-                      updateSettings({
-                        subscriptionNoticeMonths: Number(e.target.value) || 0,
-                      })
-                    }
+                    onCommit={(v) => updateSettings({ subscriptionNoticeMonths: v })}
                     {...props}
                   />
                 )}
               </Field>
               <Field label={t('ruleSkips')}>
                 {(props) => (
-                  <Input
-                    type="number"
-                    inputMode="numeric"
+                  <NumberField
                     value={settings.monthlyFreeSkips}
-                    onChange={(e) =>
-                      updateSettings({ monthlyFreeSkips: Number(e.target.value) || 0 })
-                    }
+                    onCommit={(v) => updateSettings({ monthlyFreeSkips: v })}
                     {...props}
                   />
                 )}

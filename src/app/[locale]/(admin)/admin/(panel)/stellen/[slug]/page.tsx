@@ -2,11 +2,12 @@
 
 import { use, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { LOCALE_LABELS, TRANSLATED_LOCALES, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { SaveIndicator } from '@/components/ui/save-indicator';
 import { Field, Input, Select, Textarea, Checkbox } from '@/components/ui/field';
 import { KIND_KEY } from '@/components/careers/job-list';
 import { regionByPostcode } from '@/mock/engines/coverage';
@@ -32,13 +33,16 @@ const LISTS = ['responsibilities', 'requirements', 'offer'] as const;
 export default function EditPostingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const t = useTranslations('admin.posting');
+  const appT = useTranslations('app');
   const careers = useTranslations('careers.index');
   const hydrated = useHydrated();
 
   const postings = useStore((s) => s.data.postings);
   const settings = useStore((s) => s.settings);
   const updatePosting = useStore((s) => s.updatePosting);
-  const [saved, setSaved] = useState(false);
+  /* A counter, not a boolean: two edits in quick succession have to read as
+     two saves, and a boolean that is already true cannot say so. */
+  const [saveTick, setSaveTick] = useState(0);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -47,8 +51,7 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
 
   function patch(next: Partial<JobPosting>) {
     updatePosting(posting!.id, next);
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1600);
+    setSaveTick((n) => n + 1);
   }
 
   return (
@@ -63,12 +66,12 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="display-type text-3xl">{posting.title.de}</h1>
         <div className="flex items-center gap-3">
-          {saved && (
-            <span className="inline-flex items-center gap-1.5 rounded-sm bg-status-success px-2 py-1 text-xs text-status-success-fg">
-              <Check className="size-3.5" aria-hidden />
-              {t('saved')}
-            </span>
-          )}
+          {/* One shared save status instead of three hand-rolled chips. */}
+          <SaveIndicator
+            signal={saveTick}
+            savingLabel={appT("saving")}
+            savedLabel={appT("saved")}
+          />
           <Button asChild variant="secondary" size="sm">
             <Link href={`/jobs/${posting.slug}`}>
               {t('preview')}
@@ -185,15 +188,12 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
                 hint={t('listHint')}
               >
                 {(props) => (
-                  <Textarea
+                  <ListTextarea
                     rows={4}
-                    value={posting[key][l as Locale].join('\n')}
-                    onChange={(e) =>
+                    lines={posting[key][l as Locale]}
+                    onCommit={(lines) =>
                       patch({
-                        [key]: {
-                          ...posting[key],
-                          [l]: e.target.value.split('\n').filter((line) => line.trim()),
-                        },
+                        [key]: { ...posting[key], [l]: lines },
                       } as Partial<JobPosting>)
                     }
                     {...props}
@@ -213,5 +213,39 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * A one-line-per-item textarea that can actually take a new line.
+ *
+ * The previous version derived its value from `lines.join('\n')` while its
+ * onChange split on '\n' and dropped every empty entry. Pressing Enter created
+ * a trailing empty line, the filter removed it, the join collapsed it, and the
+ * caret jumped back — so none of the six list fields could gain a bullet.
+ *
+ * The fix is to stop deriving the value while the field has focus: the raw
+ * text is local state, and only the parsed list is committed to the store.
+ */
+function ListTextarea({
+  lines,
+  onCommit,
+  ...props
+}: Omit<React.ComponentProps<typeof Textarea>, 'value' | 'onChange'> & {
+  lines: string[];
+  onCommit: (lines: string[]) => void;
+}) {
+  const [text, setText] = useState<string | null>(null);
+
+  return (
+    <Textarea
+      {...props}
+      value={text ?? lines.join('\n')}
+      onChange={(e) => {
+        setText(e.target.value);
+        onCommit(e.target.value.split('\n').filter((line) => line.trim()));
+      }}
+      onBlur={() => setText(null)}
+    />
   );
 }

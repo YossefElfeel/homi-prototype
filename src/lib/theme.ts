@@ -34,9 +34,24 @@ export function isTheme(value: unknown): value is Theme {
   return typeof value === 'string' && (THEMES as readonly string[]).includes(value);
 }
 
+/**
+ * Console density. Comfortable is what you show a client; compact is what an
+ * owner running twenty jobs a day actually wants. It only changes the --app-*
+ * variables under data-scope="app", so the marketing site never sees it.
+ */
+export const DENSITIES = ['comfortable', 'compact'] as const;
+export type Density = (typeof DENSITIES)[number];
+
+export const DEFAULT_DENSITY: Density = 'comfortable';
+
+export function isDensity(value: unknown): value is Density {
+  return typeof value === 'string' && (DENSITIES as readonly string[]).includes(value);
+}
+
 /** Cookies, so the server renders the right theme with no flash. */
 export const THEME_COOKIE = 'hv-theme';
 export const STRESS_COOKIE = 'hv-stress';
+export const DENSITY_COOKIE = 'hv-density';
 /**
  * §21 item 12 — in production this is a server-held setting, so the prototype
  * models it as one too rather than as client state. That keeps the About page

@@ -16,6 +16,7 @@ export const adminDe = {
       offers: 'Offerten',
       calendar: 'Kalender',
       customers: 'Kunden',
+      messages: 'Nachrichten',
       properties: 'Objekte',
       keys: 'Schlüssel',
       subscriptions: 'Abos',
@@ -87,6 +88,79 @@ export const adminDe = {
     renewalsEmptyBody: 'In den nächsten sieben Tagen steht kein Abo-Einsatz an.',
     nextCharge: 'Abbuchung {date}',
     viewAll: 'Alle ansehen',
+    /* Each number now says what it means and where it is acted on. A bare
+       count leaves the owner to work out both. */
+    statWaitingHintOk: 'Alles innerhalb der Frist',
+    statWaitingHintLate:
+      '{n, plural, one {# über der Frist} other {# über der Frist}}',
+    statWaitingLink: 'Anfragen öffnen',
+    statTodayHint: 'Erster Einsatz {time}',
+    statTodayHintEmpty: 'Nichts eingetragen',
+    statTodayLink: 'Tag ansehen',
+    statTomorrowHint: 'Erster Einsatz {time}',
+    statTomorrowLink: 'Morgen ansehen',
+    statRenewalsHint: 'Nächste sieben Tage',
+    statRenewalsLink: 'Abos öffnen',
+    outOfArea: 'Ausserhalb Gebiet',
+  },
+
+  /**
+   * Screen 57 had a list and no detail, so every row left the panel for the
+   * customer-facing quote page — whose only exit is the public home page.
+   */
+  offerDetail: {
+    back: 'Zu den Offerten',
+    notFoundTitle: 'Offerte nicht gefunden',
+    notFoundBody: 'Diese Offerte gibt es nicht mehr oder der Link ist veraltet.',
+    customer: 'Kunde',
+    request: 'Anfrage',
+    issued: 'Versendet',
+    expires: 'Gültig bis',
+    expiredNote: 'Diese Offerte ist abgelaufen.',
+    version: 'Version {n}',
+    linesTitle: 'Positionen',
+    colLine: 'Position',
+    colQuantity: 'Menge',
+    colUnitPrice: 'Ansatz',
+    colSum: 'Summe',
+    optional: 'Optional',
+    notSelected: 'Nicht gewählt',
+    subtotal: 'Zwischentotal',
+    discount: 'Rabatt',
+    total: 'Total',
+    hours: 'Geplante Zeit',
+    messageTitle: 'Begleittext',
+    openAsCustomer: 'Kundenansicht öffnen',
+    openRequest: 'Anfrage öffnen',
+    reissue: 'Neue Version ausstellen',
+    reissued: 'Neue Version erstellt.',
+  },
+
+  /**
+   * The other half of screen 48. The customer could already write; nothing in
+   * the panel could read it, so every reply was unanswerable.
+   */
+  messages: {
+    title: 'Nachrichten',
+    lead: 'Nach Referenz gebündelt, nicht nach Datum — ein Auftrag ist ein Gespräch.',
+    threads: 'Gespräche',
+    unread: 'Ungelesen',
+    search: 'Nach Name oder Referenz suchen',
+    emptyTitle: 'Keine Nachrichten',
+    emptyBody:
+      'Sobald jemand aus dem Kundenkonto schreibt, erscheint das Gespräch hier.',
+    searchEmptyTitle: 'Kein Gespräch gefunden',
+    searchEmptyBody: 'Für «{query}» gibt es kein Gespräch.',
+    pickTitle: 'Gespräch auswählen',
+    pickBody: 'Wählen Sie links ein Gespräch aus, um es zu lesen und zu antworten.',
+    fromCustomer: 'Kunde',
+    fromUs: 'Homivaro',
+    replyLabel: 'Antwort',
+    replyPlaceholder: 'Antwort schreiben …',
+    send: 'Antworten',
+    sent: 'Antwort gesendet.',
+    openCustomer: 'Kundenakte öffnen',
+    lastMessage: 'Zuletzt {time}',
   },
 
   requests: {
@@ -104,9 +178,116 @@ export const adminDe = {
     outOfArea: 'Ausserhalb Gebiet',
     emptyTitle: 'Noch keine Anfragen',
     emptyBody:
-      'Sobald über die Website eine Anfrage eintrifft, erscheint sie hier — mit der Zeit, die seit dem Eingang vergangen ist.',
+      'Sobald über die Website eine Anfrage eintrifft, erscheint sie hier — mit der Zeit, die seit dem Eingang vergangen ist. Wer anruft, wird von Hand erfasst.',
     searchEmptyTitle: 'Keine Treffer',
     searchEmptyBody: 'Für «{query}» wurde nichts gefunden.',
+    addAction: 'Anfrage erfassen',
+  },
+
+  /**
+   * Screen 52a — die telefonische Anfrage.
+   *
+   * Eine Seite statt acht Schritte: der Assistent führt jemanden, der das
+   * Formular nie gesehen hat. Am Telefon ist genau das im Weg.
+   */
+  requestNew: {
+    back: 'Alle Anfragen',
+    title: 'Anfrage erfassen',
+    lead: 'Für Anrufe. Es entsteht dieselbe Anfrage wie über die Website — gleiche Prüfung, gleicher Preisrahmen, gleicher Weg zur Offerte.',
+    openAll: 'Alle öffnen',
+    closeAll: 'Alle schliessen',
+    optional: 'optional',
+
+    customerTitle: 'Kunde',
+    customerPick: 'Kunde',
+    customerPlaceholder: 'Kunde suchen …',
+    customerNone: 'Noch kein Kunde gewählt',
+    customerNew: 'Neuen Kunden erfassen',
+    customerEmptyTitle: 'Noch keine Kunden',
+    customerEmptyBody:
+      'Eine Anfrage gehört immer zu einer Person. Erfassen Sie zuerst den Kunden — danach kommen Sie hierher zurück.',
+
+    propertyTitle: 'Objekt',
+    propertyNone: 'Noch kein Objekt gewählt',
+    propertySaved: 'Hinterlegte Objekte',
+    propertyNew: 'Neues Objekt erfassen',
+    propertyNewShort: 'Neues Objekt',
+    propertyPickFirst: 'Bitte zuerst den Kunden wählen.',
+    street: 'Strasse und Nummer',
+    postcode: 'PLZ',
+    city: 'Ort',
+    postcodeInvalid: 'Vierstellige PLZ',
+    kind: 'Objektart',
+    kindApartment: 'Wohnung',
+    kindHouse: 'Haus',
+    kindOffice: 'Büro',
+    area: 'Fläche m²',
+    rooms: 'Zimmer',
+    bathrooms: 'Bäder',
+    floor: 'Stockwerk',
+    elevator: 'Lift vorhanden',
+    pets: 'Haustiere im Haushalt',
+    effort: 'Stark verschmutzt',
+    coverageInside: 'Im Einsatzgebiet — {region}.',
+    coverageOutsideTitle: 'Ausserhalb des Einsatzgebiets',
+    coverageOutsideBody:
+      '{postcode} liegt nicht in den acht Gemeinden. Die Anfrage lässt sich trotzdem erfassen — sie wird markiert, und die Anfahrt gehört in die Offerte.',
+    accessTitle: 'Zutritt',
+    accessOnFile: 'Hinterlegt: {method}',
+    accessNone: 'Nichts hinterlegt',
+    accessEditHint:
+      'Zutrittsangaben gehören zum Objekt und werden dort geändert — nicht an einer einzelnen Anfrage.',
+    accessOpenProperty: 'Objekt öffnen',
+
+    serviceTitle: 'Leistung',
+    serviceNone: 'Noch keine Leistung gewählt',
+    windowCount: 'Anzahl Fenster',
+    furniturePieces: 'Anzahl Möbelstücke',
+    countHint: 'Ohne Anzahl lässt sich kein Preis rechnen.',
+
+    extrasTitle: 'Zusatzleistungen',
+    extrasNone: 'Keine',
+    extrasCount: '{n, plural, one {# Zusatz} other {# Zusätze}}',
+    extrasEmpty: 'Für diese Leistung gibt es keine Zusätze.',
+    extrasPickService: 'Bitte zuerst die Leistung wählen.',
+
+    timeTitle: 'Wunschtermin',
+    timeNone: 'Noch kein Wunsch erfasst',
+    timeFlexible: 'Kunde ist flexibel',
+    timeLead: 'Ein Wunsch, keine Buchung — der verbindliche Termin kommt mit der Offerte.',
+    timeLeadHint: 'Frühestens in {hours} Stunden.',
+    timeDate: 'Wunschdatum',
+    timeBand: 'Tageszeit',
+    bandMorning: 'Vormittag',
+    bandMidday: 'Mittag',
+    bandAfternoon: 'Nachmittag',
+    timeBlockedClosed: 'Dieser Tag ist geschlossen — bitte einen anderen wählen.',
+    timeBlockedSoon: 'Zu kurzfristig — die Vorlaufzeit beträgt {hours} Stunden.',
+
+    notesTitle: 'Notizen',
+    notesNone: 'Keine Notiz',
+    customerNote: 'Was der Kunde gesagt hat',
+    customerNoteHint: 'Erscheint auf der Anfrage wie ein Text aus dem Formular.',
+    customerNotePlaceholder: 'z. B. Backofen ist das Hauptthema, letzte Reinigung im Frühling …',
+    internalNote: 'Interne Notiz',
+    internalNoteHint: 'Nur für Sie. Weder Kunde noch Mitarbeitende sehen das.',
+    internalNotePlaceholder: 'z. B. klang eilig, Rückruf bis Freitag zugesagt …',
+
+    estimateTitle: 'Preisrahmen',
+    estimateWaiting: 'Leistung und Fläche fehlen noch — sobald beides steht, rechnet der Rahmen mit.',
+    estimateHint: 'Richtwert wie auf der Website. Verbindlich wird erst die Offerte.',
+    estimateHours: 'Geplante Dauer',
+    hoursValue: '{hours} Std.',
+
+    missingTitle: 'Es fehlt noch etwas',
+    missingCustomer: 'Kunde',
+    missingProperty: 'Objekt',
+    missingService: 'Leistung',
+    save: 'Anfrage erfassen',
+    saveAndQuote: 'Erfassen und Offerte schreiben',
+    cancel: 'Abbrechen',
+    done: 'Anfrage {reference} erfasst.',
+    doneOutOfArea: 'Anfrage {reference} erfasst — ausserhalb des Gebiets, bitte Anfahrt prüfen.',
   },
 
   request: {
@@ -150,6 +331,20 @@ export const adminDe = {
     historyCreated: 'Eingegangen',
     historyOpened: 'Geöffnet',
     historyReplied: 'Beantwortet',
+    /* «Ablehnen» heisst: wir machen das nicht — das gilt für eine offene
+       Anfrage. Ist die Offerte schon draussen, ist Ablehnen das falsche Wort
+       und war zugleich das einzige, was es gab. Stornieren schliesst die
+       Anfrage *und* die Offerte, die sonst versendet und unterschreibbar
+       stehen bliebe. */
+    cancelAction: 'Anfrage stornieren',
+    cancelTitle: 'Anfrage stornieren?',
+    cancelBody:
+      'Die Anfrage wird geschlossen und die versendete Offerte verfällt — der Kunde kann sie danach nicht mehr unterschreiben. Der Grund bleibt intern am Datensatz.',
+    cancelReason: 'Grund',
+    cancelReasonPlaceholder: 'z. B. Kunde telefonisch abgesagt, Objekt verkauft …',
+    cancelConfirm: 'Stornieren',
+    cancelDismiss: 'Abbrechen',
+    cancelDone: 'Anfrage {reference} storniert.',
   },
 
   builder: {
@@ -228,6 +423,13 @@ export const adminDe = {
     submit: 'Ablehnen und senden',
     submitting: 'Wird gesendet …',
     cancel: 'Abbrechen',
+    /* Die Erfolgsseite hat vorher Titel und Lead des Formulars wiederverwendet
+       und ihre einzige Weiter-Aktion «Abbrechen» genannt. */
+    sentTitle: 'Absage ist unterwegs',
+    sentBody:
+      'Der Kunde hat Ihre Nachricht erhalten. Die Anfrage ist als abgelehnt erfasst.',
+    sentToList: 'Zurück zu den Anfragen',
+    sentToRequest: 'Anfrage ansehen',
   },
 
   offers: {
@@ -277,6 +479,14 @@ export const adminDe = {
     emptyTitle: 'Keine Einsätze an diesem Tag',
     emptyBody: 'Die Route erscheint, sobald für diesen Tag etwas gebucht ist.',
     mapNote: 'Prototyp: schematische Darstellung, keine echte Karte.',
+    /* Die Pfeile hiessen «−1» und «+1» — ein Screenreader las «minus eins,
+       Schaltfläche». Zurück, Heute und Min. standen fest im Code. */
+    back: 'Kalender',
+    previousDay: 'Vorheriger Tag',
+    nextDay: 'Nächster Tag',
+    today: 'Heute',
+    minutes: '{n} Min.',
+    routeAction: 'Route',
   },
 
   booking: {
@@ -319,5 +529,15 @@ export const adminDe = {
     offerLink: 'Offerte ansehen',
     invoiceLink: 'Rechnung {reference} ansehen',
     historyTitle: 'Verlauf',
+    /* §5.3: die ausführende Person meldet Mehraufwand, das Büro bewertet ihn.
+       Der Meldeteil war gebaut, der Bewertungsteil nicht — «wartet auf Freigabe»
+       war ein Endzustand ohne Ausgang, und «abgeschlossen» war von keinem
+       Bildschirm aus erreichbar. */
+    approveTitle: 'Wartet auf Freigabe',
+    approveBody:
+      'Der Einsatz ist ausgecheckt. Prüfen Sie den Verlauf — gemeldeter Mehraufwand steht dort mit Zeitstempel — und geben Sie ihn frei. Danach ist er verrechenbar.',
+    approveAction: 'Einsatz freigeben',
+    approveEvent: 'Freigegeben',
+    approveDone: 'Einsatz freigegeben.',
   },
 };

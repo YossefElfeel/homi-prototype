@@ -114,6 +114,18 @@ export const adminContentEn: typeof adminContentDe = {
     emptyTitle: 'No reviews yet',
     emptyBody:
       'Customers are asked for a review once payment completes. Until then the website shows the promise instead of stars.',
+    restore: 'Send back for review',
+    restored: 'The review is awaiting release again.',
+    unpublish: 'Take down',
+    unpublished: 'The review is no longer public.',
+    editReply: 'Edit the reply',
+    published: 'Review published.',
+    rejected: 'Review not published.',
+    replySaved: 'Reply saved.',
+    noConsentTitle: 'No consent given',
+    noConsentBody:
+      'This customer did not agree to publication. The review stays internal — that is not a judgement call (§20.6).',
+    emptyAction: 'Go to jobs',
   },
 
   templates: {

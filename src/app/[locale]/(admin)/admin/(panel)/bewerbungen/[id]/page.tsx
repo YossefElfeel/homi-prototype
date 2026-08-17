@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Car,
   FileText,
-  Lock,
   Mail,
   Phone,
   Trash2,
@@ -19,7 +18,8 @@ import {
 import { Link, useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Alert } from '@/components/ui/alert';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { canSeeApplicants, useHydrated, useStore } from '@/mock/store';
@@ -73,8 +73,6 @@ export default function ApplicationDetailPage({
 }) {
   const { id } = use(params);
   const t = useTranslations('admin.application');
-  const shell = useTranslations('admin.shell');
-  const demoRoles = useTranslations('demo.roles');
   const form = useTranslations('careers.form');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -94,18 +92,16 @@ export default function ApplicationDetailPage({
   const [reason, setReason] = useState<string>('experience');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('back')} />;
 
-  if (!canSeeApplicants(role)) {
-    return (
-      <EmptyState
-        icon={Lock}
-          headingLevel={1}
-        title={shell('gateTitle')}
-        body={`${shell('gateBody')} ${shell('gateCurrent', { role: demoRoles(role) })}`}
-      />
-    );
-  }
+  /*
+   * Unreachable: AdminShell already returns its own gate for any role other
+   * than owner, and canSeeApplicants is `role === 'owner'`. Kept as a
+   * belt-and-braces check on the revDSG-sensitive screens rather than deleted,
+   * but it can no longer render a second, differently-worded lock screen — it
+   * returns nothing, which is what "already handled upstream" looks like.
+   */
+  if (!canSeeApplicants(role)) return null;
 
   const application = applications.find((a) => a.id === id);
   if (!application) return <p className="text-ink-tertiary">—</p>;
@@ -191,10 +187,9 @@ export default function ApplicationDetailPage({
         <h2 className="label-type text-ink-tertiary">{t('permitTitle')}</h2>
         <p className="mt-2 text-lg">{form(PERMIT_KEY[application.permit])}</p>
         {application.permit === 'none' && (
-          <p className="mt-3 flex gap-2 border-l-2 border-status-danger-line bg-status-danger p-4 text-sm text-status-danger-fg">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <Alert tone="danger" icon={AlertTriangle} className="mt-3">
             {t('permitNoneWarning')}
-          </p>
+          </Alert>
         )}
       </section>
 
@@ -328,7 +323,17 @@ export default function ApplicationDetailPage({
                   {t('startReview')}
                 </Button>
               )}
-              <Button onClick={() => router.push(`/admin/bewerbungen/${application.id}/konto`)}>
+              {/*
+                The doc comment above this screen calls the missing-permit
+                banner "a hard stop, not a soft warning" — and Accept was
+                completely ungated, as was the account-creation screen behind
+                it. Someone with no right to work in Switzerland could be
+                converted into a team account in two clicks, past a red banner.
+              */}
+              <Button
+                disabled={application.permit === 'none'}
+                onClick={() => router.push(`/admin/bewerbungen/${application.id}/konto`)}
+              >
                 <UserCheck className="size-4" aria-hidden />
                 {t('accept')}
               </Button>

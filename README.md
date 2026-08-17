@@ -14,7 +14,14 @@ adds 13 more, for **101 screens**. This prototype replaces the usual Figma
 click-through: the design brief calls for the interactive model to be built in
 code directly, so design ships as working screens and states.
 
-Progress board: **`/screens`** · Open assumptions: **`/open-questions`**
+Progress board: **`/screens`** · Flow board: **`/flows`** · Open assumptions:
+**`/open-questions`**
+
+`/screens` counts screens; `/flows` counts *ways through them*. The second board
+exists because the first one stopped being enough: all 101 screens were built
+and typechecked while the customer list still had no way to add a customer,
+three declared request states were unreachable from any button, and a
+checked-out job had no exit.
 
 ## Getting started
 
@@ -81,7 +88,10 @@ src/
 - **One colour per state.** `lib/status-registry.ts` is the single source for
   all 34 states across every screen.
 - **Every list has a real empty state.** `<EmptyState>` requires a body
-  explaining *why* it is empty.
+  explaining *why* it is empty — and, where one exists, the action that fills it.
+- **Every declared state is reachable.** A status in `schema.ts` that no screen
+  can write is a lie the type system will not catch; `/flows` lists the two that
+  remain and why each is deliberate.
 - **Access codes are gated by role and date.** The owner always; the assigned
   contractor only on the day of the job; the customer never.
 

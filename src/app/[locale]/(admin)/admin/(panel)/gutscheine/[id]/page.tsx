@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { Field, Input, Select, Checkbox } from '@/components/ui/field';
+import { Field, Input, NumberField, Select, Checkbox } from '@/components/ui/field';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Coupon, ServiceSlug } from '@/mock/schema';
 
@@ -105,11 +105,9 @@ export default function EditCouponPage({ params }: { params: Promise<{ id: strin
           </Field>
           <Field label={coupon.kind === 'percent' ? '%' : 'CHF'}>
             {(props) => (
-              <Input
-                type="number"
-                inputMode="decimal"
+              <NumberField
                 value={coupon.value}
-                onChange={(e) => patch({ value: Number(e.target.value) || 0 })}
+                onCommit={(v) => patch({ value: v })}
                 {...props}
               />
             )}

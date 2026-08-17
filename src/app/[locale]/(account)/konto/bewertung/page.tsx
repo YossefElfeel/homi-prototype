@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Check, Star } from 'lucide-react';
 
+import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea, Checkbox } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -33,15 +37,14 @@ export default function AccountReviewPage() {
 
   const { bookings, reviews, customerId } = useAccount();
   const services = useStore((s) => s.services);
-  const patchData = useStore((s) => s.patchData);
-  const allReviews = useStore((s) => s.data.reviews);
+  const submitReview = useStore((s) => s.submitReview);
 
   const [rating, setRating] = useState(0);
   const [text, setText] = useState('');
   const [publish, setPublish] = useState(false);
   const [sent, setSent] = useState(false);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const reviewed = new Set(reviews.map((r) => r.bookingId));
   const booking = bookings
@@ -61,6 +64,17 @@ export default function AccountReviewPage() {
         </span>
         <h1 className="display-type mt-6 text-3xl">{t('thanksTitle')}</h1>
         <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">{t('thanksBody')}</p>
+        {/* This screen had a checkmark, a title, a body — and no link and no
+            button. The only escape was the shell nav, which does not exist on
+            a phone until you open the menu. */}
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild>
+            <Link href="/konto">{t('thanksToOverview')}</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/konto/fotos">{t('thanksToPhotos')}</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -68,12 +82,18 @@ export default function AccountReviewPage() {
   if (!booking) {
     return (
       <>
-        <h1 className="display-type text-3xl">{t('title')}</h1>
+        <PageHeader title={t('title')} />
         <EmptyState
-          className="mt-8"
           icon={Star}
           title={t('emptyTitle')}
           body={t('emptyBody')}
+          /* Was an empty state with no action, on a screen whose registry
+             entry lists `nothing to review` as a required state. */
+          action={
+            <Button asChild variant="secondary">
+              <Link href="/konto/anfragen">{t('emptyAction')}</Link>
+            </Button>
+          }
         />
       </>
     );
@@ -81,20 +101,17 @@ export default function AccountReviewPage() {
 
   function send() {
     if (!booking) return;
-    patchData({
-      reviews: [
-        ...allReviews,
-        {
-          id: `rev_${allReviews.length + 1}`,
-          bookingId: booking.id,
-          customerId,
-          rating,
-          text,
-          status: 'pending' as const,
-          submittedAt: now.toISOString(),
-        },
-      ],
-    });
+    /*
+     * `publish` was bound to the checkbox and then never read again — the
+     * review went to moderation with no record of whether the customer had
+     * agreed to it being published. It travels with the review now, and the
+     * moderation screen refuses to publish without it.
+     */
+    submitReview(
+      { bookingId: booking.id, customerId, rating, text, publishConsent: publish },
+      now,
+    );
+    toast.success(t('thanksTitle'));
     setSent(true);
   }
 

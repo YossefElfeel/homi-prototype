@@ -20,6 +20,11 @@ export const offerEn: typeof offerDe = {
   },
 
   detail: {
+    notFoundTitle: 'Quote not found',
+    notFoundBody:
+      'The link may be out of date, or the quote has been replaced. Get in touch and we will send it again straight away.',
+    notFoundCall: 'Call us',
+    notFoundContact: 'Contact us',
     title: 'Your quote',
     for: 'For',
     intro: 'Message',
@@ -42,6 +47,20 @@ export const offerEn: typeof offerDe = {
     accept: 'Accept quote',
     requestChange: 'Request a change',
     downloadPdf: 'Download as PDF',
+    decline: 'Decline quote',
+    declineTitle: 'Decline this quote?',
+    declineBody:
+      'The quote closes and any slot you were holding is released straight away. This cannot be undone — you can send a new request at any time.',
+    declineReason: 'Why not?',
+    declineReasonHint: 'Optional, and we do read it.',
+    declineReasonPlaceholder: 'e.g. too expensive, the date does not work, sorted it another way …',
+    declineConfirm: 'Decline',
+    declineDismiss: 'Back',
+    declineDone: 'Quote declined. Thank you for telling us.',
+    declinedTitle: 'Quote declined',
+    declinedBody:
+      'This quote is closed. If anything changes, you can send a new request at any time.',
+    declinedAction: 'New request',
     downloadNote: 'Prototype: the PDF is not generated.',
     guaranteeTitle: 'Handover guarantee included',
     guaranteeBody:

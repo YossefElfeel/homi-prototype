@@ -115,6 +115,20 @@ export const adminContentDe = {
     emptyTitle: 'Noch keine Bewertungen',
     emptyBody:
       'Nach abgeschlossener Zahlung wird die Kundschaft um eine Bewertung gebeten. Bis dahin zeigt die Website das Versprechen statt Sterne.',
+    /* Abgelehnte Bewertungen waren eine Sackgasse — ein Fehlklick war
+       endgültig. Und ohne Einwilligung darf gar nicht veröffentlicht werden. */
+    restore: 'Zurück zur Prüfung',
+    restored: 'Bewertung wartet wieder auf Freigabe.',
+    unpublish: 'Zurückziehen',
+    unpublished: 'Bewertung ist nicht mehr öffentlich.',
+    editReply: 'Antwort bearbeiten',
+    published: 'Bewertung veröffentlicht.',
+    rejected: 'Bewertung nicht veröffentlicht.',
+    replySaved: 'Antwort gespeichert.',
+    noConsentTitle: 'Keine Einwilligung',
+    noConsentBody:
+      'Diese Kundin oder dieser Kunde hat der Veröffentlichung nicht zugestimmt. Die Bewertung bleibt intern — das ist keine Ermessensfrage (§20.6).',
+    emptyAction: 'Zu den Einsätzen',
   },
 
   templates: {
