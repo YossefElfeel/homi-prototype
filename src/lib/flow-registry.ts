@@ -82,12 +82,37 @@ export const FLOWS: Flow[] = [
         '/admin/anfragen/neu',
         'Eine Seite, jeder Schritt als Abschnitt. Vorher konnte eine Anfrage nur über die Website entstehen — in einem Betrieb, dessen Arbeit per Telefon hereinkommt',
       ),
+      added(
+        'Als Entwurf speichern',
+        '/admin/anfragen/neu',
+        'Für den Anruf, der endet, bevor die Antworten fertig sind. Braucht nur einen Kunden; steht in keiner Warteschlange und beim Kunden nicht im Konto',
+      ),
     ],
     actions: [
       ok('Gebietsprüfung', '/anfrage/objekt', '8700 innerhalb, 8001 ausserhalb, 80 ungültig'),
       ok('Preisrahmen live', '/anfrage/leistung', 'Rechnet ab Leistung + Fläche mit'),
       ok('Zutritt hinterlegen', '/anfrage/zutritt', 'Vier Methoden, Codes maskiert'),
       ok('Entwurf überlebt Neuladen', '/anfrage', '30 Tage, §20.1'),
+      added(
+        'Nach Frist priorisieren',
+        '/admin/anfragen',
+        'Jede offene Anfrage hat eine Frist aus §4.1 und einen Verzug in Tagen. Überfällige stehen oben — vorher war die Liste nach Eingang sortiert und damit ein Protokoll, keine Warteschlange',
+      ),
+      added(
+        'Filtern nach Status, Leistung, Gebiet, Zeitraum',
+        '/admin/anfragen',
+        'Plus «nur überfällig». Vorher nur Status und Gebiet',
+      ),
+      added(
+        'Zeilenaktionen',
+        '/admin/anfragen',
+        'Details, Offerte schreiben, ablehnen, Entwurf weiterbearbeiten oder verwerfen — je nach Status. Vorher führte jede Zeile an genau einen Ort',
+      ),
+      added(
+        'Ablauf sichtbar',
+        '/admin/anfragen/req_1',
+        'Eingegangen → In Prüfung → Offerte versendet → Antwort, mit Zeitstempeln. Dieselbe Ableitung auf der Kundenseite, damit beide nicht verschieden antworten',
+      ),
     ],
     exits: [
       ok('Gesendet', '/anfrage/gesendet'),
@@ -124,6 +149,16 @@ export const FLOWS: Flow[] = [
       ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
       ok('Unterschreiben', '/offerte/off_1/unterschrift'),
       ok('Änderung anfragen', '/offerte/off_1/aenderung'),
+      added(
+        'Freie Zeiten: die fünf Regeln',
+        '/admin/anfragen/req_1/offerte',
+        'Der Block zeigte Zeiten ohne zu sagen, woher sie kommen — «sucht das System oder der Mensch?» hatte auf dem Bildschirm keine Antwort. Öffnungszeiten und Vorlaufzeit lesen ihre Werte aus den Einstellungen, damit der Text nicht von der Engine abdriften kann',
+      ),
+      added(
+        'Vorlage einsetzen',
+        '/admin/nachrichten',
+        'Elf Vorlagen lagen in den Einstellungen, genau eine wurde je gelesen. Setzt in der Sprache des Kunden ein und lässt Platzhalter stehen',
+      ),
     ],
     exits: [
       ok('Bezahlt und gebucht', '/offerte/off_1/bestaetigt'),

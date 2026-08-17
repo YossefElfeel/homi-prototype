@@ -201,6 +201,10 @@ export const de = {
     densityComfortable: 'Komfortabel',
     densityCompact: 'Kompakt',
     collapseGroup: 'Gruppe einklappen',
+    /* Neunzehn Ziele sind viel ständiges Mobiliar neben einer Anfrage, die
+       jemand lesen will. Eingeklappt bleiben alle Symbole. */
+    sidebarCollapse: 'Menü einklappen',
+    sidebarExpand: 'Menü ausklappen',
     search: 'Suchen',
     searchPlaceholder: 'Name, Referenz, Strasse, Rechnungsnummer …',
     searchEmpty: 'Keine Treffer. Tippen Sie weiter oder anders.',

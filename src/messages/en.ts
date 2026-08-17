@@ -195,6 +195,8 @@ export const en: Messages = {
     densityComfortable: 'Comfortable',
     densityCompact: 'Compact',
     collapseGroup: 'Collapse group',
+    sidebarCollapse: 'Collapse menu',
+    sidebarExpand: 'Expand menu',
     search: 'Search',
     searchPlaceholder: 'Name, reference, street, invoice number …',
     searchEmpty: 'No matches. Keep typing, or try another term.',

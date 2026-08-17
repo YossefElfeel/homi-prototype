@@ -412,27 +412,63 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                 {t('availabilityTitle')}
               </h2>
               <p className="mt-1 text-xs text-ink-tertiary">{t('availabilityLead')}</p>
+
+              {/*
+                The rules, stated. The panel used to show a list of times with
+                nothing to say where they came from — so "did the system find
+                these or did somebody choose them" had no answer on screen, and
+                a slot missing from the list looked like a bug rather than a
+                constraint. These five are the actual conditions in
+                `slotsForDay`, with the two configurable ones reading their
+                values from settings so the text cannot drift from the engine.
+              */}
+              <details className="group mt-3">
+                <summary className="cursor-pointer list-none text-xs text-ink-secondary underline decoration-dotted underline-offset-4 hover:text-ink">
+                  {t('availabilityCriteria')}
+                </summary>
+                <ul className="mt-2 space-y-1 text-xs text-ink-tertiary">
+                  <li>
+                    ·{' '}
+                    {t('availabilityRuleHours', {
+                      from: settings.dayStart,
+                      to: settings.dayEnd,
+                    })}
+                  </li>
+                  <li>· {t('availabilityRuleLead', { hours: settings.minLeadHours })}</li>
+                  <li>· {t('availabilityRuleClosed')}</li>
+                  <li>· {t('availabilityRuleDuration')}</li>
+                  <li>· {t('availabilityRuleTravel')}</li>
+                </ul>
+              </details>
+
               {slots.length === 0 ? (
                 <p className="mt-3 text-sm text-ink-secondary">{t('availabilityNone')}</p>
               ) : (
-                <ul className="mt-3 space-y-1.5">
-                  {slots.map((slot) => (
-                    <li
-                      key={slot.start}
-                      className="flex items-baseline justify-between gap-3 text-sm"
-                    >
-                      <span data-numeric>
-                        {format.dateTime(new Date(slot.start), 'dayMonth')},{' '}
-                        {format.dateTime(new Date(slot.start), 'time')}
-                      </span>
-                      {slot.routeCost > 0 && (
-                        <span data-numeric className="text-xs text-ink-tertiary">
-                          {t('routeCost', { minutes: slot.routeCost })}
+                <>
+                  <ul className="mt-3 space-y-1.5">
+                    {slots.map((slot) => (
+                      <li
+                        key={slot.start}
+                        className="flex items-baseline justify-between gap-3 text-sm"
+                      >
+                        <span data-numeric>
+                          {format.dateTime(new Date(slot.start), 'dayMonth')},{' '}
+                          {format.dateTime(new Date(slot.start), 'time')}
                         </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                        {slot.routeCost > 0 && (
+                          <span data-numeric className="text-xs text-ink-tertiary">
+                            {t('routeCost', { minutes: slot.routeCost })}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {slots.some((s) => s.routeCost > 0) && (
+                    <p className="mt-3 text-xs text-ink-tertiary">
+                      {t('availabilityRouteHint')}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

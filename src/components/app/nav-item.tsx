@@ -40,10 +40,13 @@ export function NavItem({
   item,
   active,
   onNavigate,
+  collapsed = false,
 }: {
   item: AppNavItem;
   active: boolean;
   onNavigate?: () => void;
+  /** Icon-only rail. The label survives as the accessible name. */
+  collapsed?: boolean;
 }) {
   const Icon = item.icon;
 
@@ -53,33 +56,56 @@ export function NavItem({
         href={item.href}
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
+        /* Collapsed hides the text but must not hide the name: `title` gives
+           the pointer a tooltip and aria-label gives the screen reader the
+           same words the expanded rail shows. A row of unlabelled glyphs is
+           the usual way a collapsible sidebar becomes unusable. */
+        title={collapsed ? item.label : undefined}
+        aria-label={collapsed ? item.label : undefined}
         className={cn(
-          'relative flex min-h-10 items-center gap-3 rounded-[var(--radius-sm)] py-2 pr-2 pl-3 text-sm',
+          'relative flex min-h-10 items-center rounded-[var(--radius-sm)] text-sm',
           'transition-colors duration-[var(--motion-fast)]',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+          collapsed ? 'justify-center px-2' : 'gap-3 py-2 pr-2 pl-3',
           active
             ? 'bg-accent-subtle font-medium text-ink'
             : 'text-ink-secondary hover:bg-sunken hover:text-ink',
         )}
       >
-        {active && (
+        {active && !collapsed && (
           <span
             aria-hidden
             className="absolute inset-y-1.5 -left-3 w-0.5 rounded-full bg-accent"
           />
         )}
-        <Icon
-          className={cn('size-4 shrink-0', active ? 'text-ink-accent' : 'text-ink-tertiary')}
-          aria-hidden
-        />
-        <span className="min-w-0 flex-1 truncate">{item.label}</span>
-        {item.badge != null && item.badge > 0 && (
-          <span
-            data-numeric
-            className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-2xs font-medium text-on-accent"
-          >
-            {item.badge}
-          </span>
+        <span className="relative shrink-0">
+          <Icon
+            className={cn('size-4', active ? 'text-ink-accent' : 'text-ink-tertiary')}
+            aria-hidden
+          />
+          {/* Collapsed, the count has nowhere to sit inline — but "three
+              requests are waiting" is exactly what must survive the collapse,
+              so it becomes a dot on the glyph. */}
+          {collapsed && item.badge != null && item.badge > 0 && (
+            <span
+              aria-hidden
+              className="absolute -top-1 -right-1 size-2 rounded-full bg-accent ring-2 ring-card"
+            />
+          )}
+        </span>
+
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            {item.badge != null && item.badge > 0 && (
+              <span
+                data-numeric
+                className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-2xs font-medium text-on-accent"
+              >
+                {item.badge}
+              </span>
+            )}
+          </>
         )}
       </Link>
     </li>
@@ -92,17 +118,42 @@ export function NavGroup({
   isActive,
   onNavigate,
   collapseLabel,
+  rail = false,
 }: {
   group: AppNavGroup;
   isActive: (item: AppNavItem) => boolean;
   onNavigate?: () => void;
   collapseLabel: string;
+  /** The whole sidebar is collapsed to icons. */
+  rail?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(Boolean(group.defaultCollapsed));
   const badgeTotal = group.items.reduce((sum, item) => sum + (item.badge ?? 0), 0);
   /* Never fold away the group you are standing in. */
   const holdsActive = group.items.some(isActive);
   const open = !collapsed || holdsActive;
+
+  /*
+   * On the rail there is no room for a group heading, and a per-group fold
+   * inside an already-folded sidebar is two collapses fighting over one list.
+   * So the rail shows every item, separated by a hairline where the heading
+   * would have been.
+   */
+  if (rail) {
+    return (
+      <ul className="space-y-0.5 border-t border-line-subtle pt-2 first:border-0 first:pt-0">
+        {group.items.map((item) => (
+          <NavItem
+            key={item.href}
+            item={item}
+            active={isActive(item)}
+            onNavigate={onNavigate}
+            collapsed
+          />
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <div className="pl-3">

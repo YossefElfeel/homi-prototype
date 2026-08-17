@@ -8,6 +8,8 @@ import {
   Check,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Rows2,
   Rows3,
   Search,
@@ -32,8 +34,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/cn';
-import { applyDensity } from '@/lib/preferences';
-import { DENSITIES, type Density } from '@/lib/theme';
+import { applyDensity, applySidebar } from '@/lib/preferences';
+import { DENSITIES, type Density, type SidebarState } from '@/lib/theme';
 import { NavGroup, type AppNavGroup, type AppNavItem } from './nav-item';
 
 export type { AppNavGroup, AppNavItem };
@@ -93,6 +95,23 @@ export function AppShell({
   const [query, setQuery] = useState('');
   const palette = useCommandPalette();
 
+  /* Read from the DOM, like the density switch: the server already stamped
+     data-sidebar on <html> from the cookie, so this starts correct and the
+     rail never renders wide and then snaps narrow. */
+  const [sidebar, setSidebar] = useState<SidebarState>(() => {
+    if (typeof document === 'undefined') return 'expanded';
+    return document.documentElement.dataset.sidebar === 'collapsed'
+      ? 'collapsed'
+      : 'expanded';
+  });
+  const railed = sidebar === 'collapsed';
+
+  function toggleSidebar() {
+    const next: SidebarState = railed ? 'expanded' : 'collapsed';
+    setSidebar(next);
+    applySidebar(next);
+  }
+
   const isActive = (item: AppNavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
@@ -119,8 +138,11 @@ export function AppShell({
     ];
   }, [flatNav, query, search, t]);
 
-  const navTree = (onNavigate?: () => void) => (
-    <div className="space-y-5">
+  /* `rail` is never passed by the mobile drawer: the drawer is already a
+     full-width overlay, so collapsing it to icons there would shrink the one
+     surface that has room. */
+  const navTree = (onNavigate?: () => void, rail = false) => (
+    <div className={cn(rail ? 'space-y-2' : 'space-y-5')}>
       {nav.map((group) => (
         <NavGroup
           key={group.key}
@@ -128,6 +150,7 @@ export function AppShell({
           isActive={isActive}
           onNavigate={onNavigate}
           collapseLabel={t('collapseGroup')}
+          rail={rail}
         />
       ))}
     </div>
@@ -143,26 +166,61 @@ export function AppShell({
     >
       <aside className="hidden border-r border-line-subtle bg-card lg:block">
         <div className="sticky top-0 flex h-dvh flex-col">
-          <div className="flex h-topbar shrink-0 items-center px-5">
+          <div
+            className={cn(
+              'flex h-topbar shrink-0 items-center',
+              railed ? 'justify-center px-2' : 'px-5',
+            )}
+          >
             <Link
               href={homeHref}
               className="rounded-[var(--radius-xs)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              aria-label={railed ? navLabel : undefined}
             >
-              <Logo />
+              {/* The wordmark does not fit a 4rem rail; the mark alone does,
+                  and it is the same component the mobile header already uses
+                  without it. */}
+              <Logo showMark showWordmark={!railed} />
             </Link>
           </div>
 
-          <nav aria-label={navLabel} className="flex-1 overflow-y-auto px-2 py-2">
-            {navTree()}
+          <nav
+            aria-label={navLabel}
+            className={cn('flex-1 overflow-y-auto py-2', railed ? 'px-2' : 'px-2')}
+          >
+            {navTree(undefined, railed)}
           </nav>
 
-          <div className="shrink-0 border-t border-line-subtle p-2">
+          <div className="shrink-0 space-y-0.5 border-t border-line-subtle p-2">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={railed ? t('sidebarExpand') : t('sidebarCollapse')}
+              title={railed ? t('sidebarExpand') : t('sidebarCollapse')}
+              className={cn(
+                'flex min-h-10 w-full items-center rounded-[var(--radius-sm)] text-sm text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+                railed ? 'justify-center px-2' : 'gap-2.5 px-3',
+              )}
+            >
+              {railed ? (
+                <PanelLeftOpen className="size-4 shrink-0" aria-hidden />
+              ) : (
+                <PanelLeftClose className="size-4 shrink-0" aria-hidden />
+              )}
+              {!railed && t('sidebarCollapse')}
+            </button>
+
             <Link
               href="/"
-              className="flex min-h-10 items-center gap-2.5 rounded-[var(--radius-sm)] px-3 text-sm text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              aria-label={railed ? t('backToSite') : undefined}
+              title={railed ? t('backToSite') : undefined}
+              className={cn(
+                'flex min-h-10 items-center rounded-[var(--radius-sm)] text-sm text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+                railed ? 'justify-center px-2' : 'gap-2.5 px-3',
+              )}
             >
               <ArrowLeft className="size-4 shrink-0" aria-hidden />
-              {t('backToSite')}
+              {!railed && t('backToSite')}
             </Link>
           </div>
         </div>

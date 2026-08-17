@@ -155,6 +155,15 @@ export const adminDe = {
     pickBody: 'Wählen Sie links ein Gespräch aus, um es zu lesen und zu antworten.',
     fromCustomer: 'Kunde',
     fromUs: 'Homivaro',
+    /* Elf Vorlagen liegen in den Einstellungen, und genau eine wurde je
+       benutzt — die Offerte. Wer hier antwortete, tippte jedes Mal neu, was
+       auf Screen 79 längst steht. */
+    templateLabel: 'Vorlage einsetzen',
+    templatePlaceholder: 'Vorlage wählen …',
+    templateHint:
+      'Setzt den Text in der Sprache des Kunden ein. Platzhalter in {"{"}geschweiften Klammern{"}"} bleiben stehen — bitte vor dem Senden ersetzen.',
+    templateOverwrite: 'Der angefangene Text wird ersetzt. Fortfahren?',
+    templateInserted: 'Vorlage eingesetzt.',
     replyLabel: 'Antwort',
     replyPlaceholder: 'Antwort schreiben …',
     send: 'Antworten',
@@ -176,6 +185,38 @@ export const adminDe = {
     colReceived: 'Eingegangen',
     colStatus: 'Status',
     outOfArea: 'Ausserhalb Gebiet',
+    colContact: 'Kontakt',
+    colKind: 'Art',
+    colDeadline: 'Frist',
+    /* Die Liste zeigte nur, wie lange etwas wartet. «3 Tage» ist eine Tatsache,
+       keine Priorität — die Frist macht eine daraus, und der Verzug macht sie
+       sortierbar. */
+    kindOneOff: 'Einmalig',
+    kindRecurring: 'Abo gewünscht',
+    kindSubscriber: 'Abo-Kunde',
+    kindDraft: 'Entwurf',
+    overdueBy: '{days, plural, one {# Tag} other {# Tage}} über Frist',
+    dueToday: 'Heute fällig',
+    dueIn: 'Frist {date}',
+    noDeadline: '—',
+    filterService: 'Leistung',
+    filterFrom: 'Von',
+    filterTo: 'Bis',
+    filterOverdue: 'Nur überfällig',
+    filterReset: 'Filter zurücksetzen',
+    overdueCount: '{n} überfällig',
+    /* Zeilenaktionen: vorher führte jede Zeile an genau einen Ort, und alles
+       andere — Offerte schreiben, ablehnen, einen Entwurf wegwerfen — kostete
+       den Umweg über die Detailseite. */
+    rowActions: 'Aktionen',
+    rowOpen: 'Details ansehen',
+    rowQuote: 'Offerte schreiben',
+    rowReject: 'Ablehnen',
+    rowContinue: 'Entwurf weiterbearbeiten',
+    rowDiscard: 'Entwurf verwerfen',
+    rowDiscardConfirm: 'Entwurf verwerfen? Das lässt sich nicht rückgängig machen.',
+    rowDiscardDone: 'Entwurf verworfen.',
+    rowOffer: 'Offerte ansehen',
     emptyTitle: 'Noch keine Anfragen',
     emptyBody:
       'Sobald über die Website eine Anfrage eintrifft, erscheint sie hier — mit der Zeit, die seit dem Eingang vergangen ist. Wer anruft, wird von Hand erfasst.',
@@ -288,6 +329,22 @@ export const adminDe = {
     cancel: 'Abbrechen',
     done: 'Anfrage {reference} erfasst.',
     doneOutOfArea: 'Anfrage {reference} erfasst — ausserhalb des Gebiets, bitte Anfahrt prüfen.',
+    /* Ein Anruf endet nicht immer dort, wo das Formular fertig ist: «Ich frage
+       meinen Mann und melde mich.» Ohne Entwurf blieb nur, den Rest zu
+       erfinden oder das Getippte wegzuwerfen. */
+    saveDraft: 'Als Entwurf speichern',
+    saveDraftHint: 'Auch unvollständig. Erscheint in der Liste als Entwurf.',
+    draftSaved: 'Entwurf {reference} gespeichert.',
+    draftUpdated: 'Entwurf gespeichert.',
+    draftTitle: 'Entwurf weiterbearbeiten',
+    draftBadge: 'Entwurf',
+    draftLead:
+      'Dieser Entwurf steht in keiner Warteschlange und der Kunde sieht ihn nicht. Erst «Anfrage erfassen» macht daraus eine echte Anfrage — und startet die Antwortfrist.',
+    draftDiscard: 'Entwurf verwerfen',
+    draftDiscardConfirm: 'Entwurf verwerfen? Das lässt sich nicht rückgängig machen.',
+    draftDiscardDone: 'Entwurf verworfen.',
+    draftNotFound: 'Diesen Entwurf gibt es nicht mehr.',
+    draftPromote: 'Anfrage erfassen',
   },
 
   request: {
@@ -316,7 +373,20 @@ export const adminDe = {
     estimatedNote: 'Vom System aus Fläche, Bädern und Zustand berechnet.',
     preferredTitle: 'Wunschtermin',
     flexible: 'Flexibel',
-    accessTitle: 'Zutritt',
+    /*
+     * «Kunde» und «Zutritt» standen beide unbeschriftet nebeneinander, und
+     * beide handeln von einer Person — die eine davon, wen man erreicht, die
+     * andere davon, wie man hineinkommt. Ohne einen Satz dazu liest sich das
+     * als zweimal dasselbe, und die Zugangsdaten wirken wie Kundendaten, die
+     * sie ausdrücklich nicht sind: sie gehören zum Objekt und unterliegen
+     * §13.1.
+     */
+    customerLead: 'Wen Sie zu dieser Anfrage erreichen. Gehört zum Kundenkonto.',
+    customerOpen: 'Kundenakte öffnen',
+    accessTitle: 'Zutritt zum Objekt',
+    accessLead:
+      'Wie die ausführende Person hineinkommt. Gehört zum Objekt, nicht zum Kunden — geändert wird das am Objekt.',
+    accessOpenProperty: 'Objekt öffnen',
     accessReveal: 'Zugangsdaten anzeigen',
     accessHide: 'Verbergen',
     accessGuard:
@@ -331,6 +401,16 @@ export const adminDe = {
     historyCreated: 'Eingegangen',
     historyOpened: 'Geöffnet',
     historyReplied: 'Beantwortet',
+    /* Der Status stand als Etikett oben und sonst nirgends: woher die Anfrage
+       kam und was als Nächstes ansteht, musste man aus dem Wort erraten. */
+    lifecycleTitle: 'Ablauf',
+    stageReceived: 'Eingegangen',
+    stageReviewed: 'In Prüfung',
+    stageQuoted: 'Offerte versendet',
+    stageSettled: 'Antwort des Kunden',
+    stageAccepted: 'Angenommen',
+    stageDeclined: 'Abgelehnt',
+    stageCancelled: 'Storniert',
     /* «Ablehnen» heisst: wir machen das nicht — das gilt für eine offene
        Anfrage. Ist die Offerte schon draussen, ist Ablehnen das falsche Wort
        und war zugleich das einzige, was es gab. Stornieren schliesst die
@@ -374,8 +454,22 @@ export const adminDe = {
     total: 'Gesamtbetrag',
     hoursTotal: 'Geplante Dauer',
     availabilityTitle: 'Freie Zeiten',
+    /*
+     * Stand vorher nur: «Der Kunde wählt selbst.» Das beantwortet, *wer*
+     * wählt, aber nicht, woher die Liste kommt — und genau das war die Frage:
+     * sucht das System die Zeiten oder tut es der Mensch? Es sucht sie, nach
+     * fünf Regeln, und keine davon ist erfunden: alle stehen in §5.3/§20.5.
+     */
     availabilityLead:
-      'Nur zur Orientierung — der Kunde wählt selbst aus den freien Zeiten.',
+      'Vom System berechnet, nicht von Hand gewählt — und nur zur Orientierung: buchen tut der Kunde selbst aus derselben Liste.',
+    availabilityCriteria: 'Ein Termin erscheint, wenn alle fünf zutreffen:',
+    availabilityRuleHours: 'Innerhalb der Öffnungszeiten ({from}–{to})',
+    availabilityRuleLead: 'Frühestens in {hours} Stunden (Vorlaufzeit)',
+    availabilityRuleClosed: 'Kein Sonntag und keine Betriebsferien',
+    availabilityRuleDuration: 'Die geschätzte Dauer passt am Stück hinein',
+    availabilityRuleTravel: 'Die Fahrzeit zum Nachbarauftrag geht auf (§20.5)',
+    availabilityRouteHint:
+      '«+Min. Fahrt» zeigt, was ein Termin die Tagesroute kostet — nicht, was er den Kunden kostet.',
     availabilityNone: 'Für diese Dauer ist in den nächsten Wochen nichts frei.',
     routeCost: '+{minutes} Min. Fahrt',
     messageTitle: 'Nachricht',

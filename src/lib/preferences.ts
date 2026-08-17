@@ -4,9 +4,11 @@ import {
   COOKIE_MAX_AGE,
   DENSITY_COOKIE,
   INSURANCE_COOKIE,
+  SIDEBAR_COOKIE,
   STRESS_COOKIE,
   THEME_COOKIE,
   type Density,
+  type SidebarState,
   type Theme,
 } from './theme';
 
@@ -36,6 +38,11 @@ export function applyStress(on: boolean) {
 export function applyDensity(density: Density) {
   writeCookie(DENSITY_COOKIE, density);
   document.documentElement.dataset.density = density;
+}
+
+export function applySidebar(state: SidebarState) {
+  writeCookie(SIDEBAR_COOKIE, state);
+  document.documentElement.dataset.sidebar = state;
 }
 
 export function applyInsurance(on: boolean) {

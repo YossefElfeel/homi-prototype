@@ -437,6 +437,15 @@
   --app-control-h: 2rem;
 }
 
+/* axis 8 — the rail. Nineteen destinations is a lot of permanent furniture
+   beside a request somebody is trying to read; collapsed keeps every icon and
+   hands 12.5rem back to the content. Width only: the grid, the sticky header
+   and the mobile drawer all measure off --app-sidebar-w already, so nothing
+   else has to know this exists. */
+[data-sidebar='collapsed'] [data-scope='app'] {
+  --app-sidebar-w: 4rem;
+}
+
 /* Per-theme warmth. Only the neutrals move — a warm theme keeps a warm ground
    so the console does not feel bolted onto a different product. */
 [data-theme='zuhause'] [data-scope='app'] {

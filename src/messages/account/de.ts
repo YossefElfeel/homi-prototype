@@ -118,6 +118,17 @@ export const accountDe = {
     detailsTitle: 'Ihre Angaben',
     noteTitle: 'Ihre Nachricht',
     timelineTitle: 'Verlauf',
+    /* `timelineTitle` war definiert und wurde von nichts gerendert — der Kunde
+       sah nur ein Etikett und «Wir sind dran». Dieselben Stufen wie im Panel,
+       aus derselben Ableitung: zwei Antworten auf «wo steht das?» wären
+       schlimmer als gar keine. */
+    stageReceived: 'Eingegangen',
+    stageReviewed: 'Wird geprüft',
+    stageQuoted: 'Offerte erhalten',
+    stageSettled: 'Ihre Antwort',
+    stageAccepted: 'Angenommen',
+    stageDeclined: 'Abgelehnt',
+    stageCancelled: 'Zurückgezogen',
     offerTitle: 'Ihre Offerte',
     offerBody: 'Die Offerte zu dieser Anfrage liegt bereit.',
     offerAction: 'Offerte öffnen',

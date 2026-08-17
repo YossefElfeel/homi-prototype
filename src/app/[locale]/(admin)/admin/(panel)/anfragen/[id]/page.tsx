@@ -21,6 +21,8 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { Lifecycle } from '@/components/ui/lifecycle';
+import { requestStages } from '@/lib/request-lifecycle';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
@@ -55,6 +57,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const hydrated = useHydrated();
 
   const requests = useStore((s) => s.data.requests);
+  const offers = useStore((s) => s.data.offers);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const photos = useStore((s) => s.data.photos);
@@ -81,6 +84,9 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const service = services.find((s) => s.slug === request.serviceSlug)!;
   const chosen = addOns.filter((a) => request.addOnIds.includes(a.id));
   const requestPhotos = photos.filter((p) => p.requestId === request.id);
+  /* The issued quote, not a draft one — an unsent draft has not reached the
+     customer, so the lifecycle must not claim the stage is passed. */
+  const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
 
   const duration = estimateHours(
     {
@@ -244,7 +250,12 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
           {/* §13.1 — masked by default, and the rule stated next to the reveal. */}
           <section>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="display-type text-xl">{t('accessTitle')}</h2>
+              <div>
+                <h2 className="display-type text-xl">{t('accessTitle')}</h2>
+                <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+                  {t('accessLead')}
+                </p>
+              </div>
               {hasSecrets && (
                 <Button variant="secondary" size="sm" onClick={() => setRevealed((v) => !v)}>
                   {revealed ? (
@@ -292,6 +303,13 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
               <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               {t('accessGuard')}
             </p>
+
+            {/* Where these details are actually edited. Saying they belong to
+                the property and then not linking to it leaves the reader to
+                find it, which is how they get edited on the wrong screen. */}
+            <Button asChild variant="link" className="mt-3">
+              <Link href={`/admin/objekte/${property.id}`}>{t('accessOpenProperty')}</Link>
+            </Button>
           </section>
 
           <section>
@@ -326,6 +344,9 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
         <aside className="space-y-8 lg:col-span-5">
           <div className="surface-card p-6">
             <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
+            {/* One line saying what this block is for, because the block below
+                it is also about a person and the two were indistinguishable. */}
+            <p className="mt-1 text-xs text-ink-tertiary">{t('customerLead')}</p>
             <p className="mt-3 text-lg font-medium">
               {customer.firstName} {customer.lastName}
             </p>
@@ -357,6 +378,13 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
                 </a>
               </Button>
             </div>
+
+            {/* The block said whose request this was and gave no way to reach
+                the record — history, plan, invoices, everything else about
+                them was two searches away. */}
+            <Button asChild variant="link" className="mt-4">
+              <Link href={`/admin/kunden/${customer.id}`}>{t('customerOpen')}</Link>
+            </Button>
           </div>
 
           {/* Deliberately not a card: dashed, tinted, and labelled, so it can
@@ -375,32 +403,36 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
             />
           </div>
 
+          {/*
+            Was three bare timestamps under the heading "Verlauf" — a log of
+            what had happened, with no indication of what was still owed. The
+            rail carries the same facts plus the two the log could not: where
+            the request is now, and what comes next.
+          */}
           <div>
-            <h2 className="label-type text-ink-tertiary">{t('historyTitle')}</h2>
-            <ol className="mt-3 space-y-3 border-l border-line-subtle pl-4">
-              {[
-                { at: request.createdAt, label: t('historyCreated') },
-                request.openedAt && { at: request.openedAt, label: t('historyOpened') },
-                request.respondedAt && { at: request.respondedAt, label: t('historyReplied') },
-              ]
-                .filter(Boolean)
-                .map((entry) => {
-                  const e = entry as { at: string; label: string };
-                  return (
-                    <li key={e.label} className="relative text-sm">
-                      <span
-                        aria-hidden
-                        className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full bg-line"
-                      />
-                      <span className="block">{e.label}</span>
-                      <span data-numeric className="text-ink-tertiary">
-                        {format.dateTime(new Date(e.at), 'short')},{' '}
-                        {format.dateTime(new Date(e.at), 'time')}
-                      </span>
-                    </li>
-                  );
-                })}
-            </ol>
+            <h2 className="label-type text-ink-tertiary">{t('lifecycleTitle')}</h2>
+            <Lifecycle
+              className="mt-4"
+              label={t('lifecycleTitle')}
+              stages={requestStages(
+                request,
+                offer,
+                {
+                  received: t('stageReceived'),
+                  reviewed: t('stageReviewed'),
+                  quoted: t('stageQuoted'),
+                  accepted: t('stageAccepted'),
+                  declined: t('stageDeclined'),
+                  cancelled: t('stageCancelled'),
+                  settled: t('stageSettled'),
+                },
+                (iso) =>
+                  `${format.dateTime(new Date(iso), 'short')}, ${format.dateTime(
+                    new Date(iso),
+                    'time',
+                  )}`,
+              )}
+            />
           </div>
         </aside>
       </div>

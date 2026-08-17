@@ -48,10 +48,29 @@ export function isDensity(value: unknown): value is Density {
   return typeof value === 'string' && (DENSITIES as readonly string[]).includes(value);
 }
 
+/**
+ * Sidebar rail. Nineteen destinations is a lot of permanent furniture next to a
+ * request the owner is trying to read; collapsed keeps the icons and gives the
+ * content 12.5rem back.
+ *
+ * A cookie for the same reason density is one: the width is applied by the
+ * server on the first paint, so the rail does not render wide and snap narrow
+ * once the client catches up.
+ */
+export const SIDEBARS = ['expanded', 'collapsed'] as const;
+export type SidebarState = (typeof SIDEBARS)[number];
+
+export const DEFAULT_SIDEBAR: SidebarState = 'expanded';
+
+export function isSidebar(value: unknown): value is SidebarState {
+  return typeof value === 'string' && (SIDEBARS as readonly string[]).includes(value);
+}
+
 /** Cookies, so the server renders the right theme with no flash. */
 export const THEME_COOKIE = 'hv-theme';
 export const STRESS_COOKIE = 'hv-stress';
 export const DENSITY_COOKIE = 'hv-density';
+export const SIDEBAR_COOKIE = 'hv-sidebar';
 /**
  * §21 item 12 — in production this is a server-held setting, so the prototype
  * models it as one too rather than as client state. That keeps the About page
