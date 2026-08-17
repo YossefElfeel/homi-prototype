@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   Briefcase,
+  CalendarCheck,
   CalendarDays,
   FileText,
   History,
@@ -37,6 +38,7 @@ type NavKey =
   | 'dashboard'
   | 'requests'
   | 'offers'
+  | 'bookings'
   | 'calendar'
   | 'customers'
   | 'properties'
@@ -74,6 +76,9 @@ const NAV: {
       { href: '/admin', key: 'dashboard', icon: LayoutDashboard, exact: true },
       { href: '/admin/anfragen', key: 'requests', icon: Inbox },
       { href: '/admin/offerten', key: 'offers', icon: FileText },
+      /* What a paid quote turns into. The calendar answers "what is on
+         Tuesday" and cannot answer anything else, so bookings had no list. */
+      { href: '/admin/buchungen', key: 'bookings', icon: CalendarCheck },
       { href: '/admin/kalender', key: 'calendar', icon: CalendarDays },
     ],
   },

@@ -58,9 +58,25 @@ const ENTRIES: Entry[] = [
     ref: '§21.5',
     question: 'Three proposed slots, or live availability?',
     decision:
-      'OVERRIDDEN: the customer picks from live availability in both the one-off and the subscription flow. The quote builder shows a read-only availability panel instead of proposing three slots, and a 15-minute hold protects the §20.2 double-booking race.',
-    screens: '25, 31, 54',
+      'OVERRIDDEN, then split by customer. A returning customer picks from live availability and books outright — we know the property, the access and the history, so a confirmation loop would be theatre; a 15-minute hold protects the §20.2 race. A first-time customer proposes up to three dates and the office confirms one, which is then held for 48 hours. Nothing is blocked in the calendar while the proposals sit unanswered.',
+    screens: '25, 25a, 31, 54, 57a',
     state: 'overridden',
+  },
+  {
+    ref: '§9.2a',
+    question: 'Does the quote need a contract document and a countersignature?',
+    decision:
+      'OPEN, and deliberately not built. Today the customer signs a pad above three facts — service, date, amount — and the owner never signs anything. Whether Swiss practice here wants a full terms document on the same page, and whether the owner’s signature is a stored image applied automatically or a per-quote act, changes both the screen and when the booking becomes firm. Deferred by the client rather than decided.',
+    screens: '26',
+    state: 'open',
+  },
+  {
+    ref: '§9.3a',
+    question: 'Should the owner see the customer’s payment step at all?',
+    decision:
+      'Payment state, yes; the payment form, no. The quote list and detail show whether the money arrived, by which method, and why it failed — the owner had to open the invoices list and match by name and date for that. The gateway itself stays in the customer flow; the owner reaches it only through “open the customer view”, which is a preview and is labelled as one.',
+    screens: '27, 57, 57a',
+    state: 'decided',
   },
   {
     ref: '§11.2',

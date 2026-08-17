@@ -4,6 +4,7 @@ import { use, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, CalendarClock, Plus, Send, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -40,6 +41,10 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const t = useTranslations('admin.builder');
   const rt = useTranslations('admin.request');
+  /* Reusing screen 48's picker labels and screen 79's event names rather than
+     a third copy that would drift the first time either is reworded. */
+  const msgT = useTranslations('admin.messages');
+  const templateEvent = useTranslations('admin.templates.events');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -314,6 +319,39 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
           <section className="mt-10">
             <h2 className="display-type text-xl">{t('messageTitle')}</h2>
             <p className="mt-1 text-sm text-ink-secondary">{t('messageHint')}</p>
+            {/*
+              Screen 48 got a template picker in wave 12 and this box did not,
+              which is the wrong way round: the covering note goes out with
+              every single quote, and rewriting it by hand is where a promise
+              the business does not make gets typed by accident. Same three
+              rules as the messages screen — customer's language, German
+              fallback (§20.6), and placeholders left visible so a half-filled
+              `{'{'}name{'}'}` cannot slip out.
+            */}
+            <label className="mt-3 block max-w-sm">
+              <span className="label-type mb-1.5 block text-ink-tertiary">
+                {msgT('templateLabel')}
+              </span>
+              <Select
+                dense
+                value=""
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  if (offer.message.trim() && !window.confirm(msgT('templateOverwrite'))) {
+                    return;
+                  }
+                  const body =
+                    settings.messageTemplates['offer-sent'][customer.language] ??
+                    settings.messageTemplates['offer-sent'].de ??
+                    '';
+                  updateOffer(offer.id, { message: body });
+                  toast.success(msgT('templateInserted'));
+                }}
+              >
+                <option value="">{msgT('templatePlaceholder')}</option>
+                <option value="offer-sent">{templateEvent('offer-sent')}</option>
+              </Select>
+            </label>
             <Textarea
               className="mt-3 min-h-44"
               value={offer.message}

@@ -240,13 +240,24 @@ export function nextSlots(q: SlotQuery, limit = 6): Slot[] {
 
 export const HOLD_MINUTES = 15;
 
-export function createHold(offerId: string, slot: Slot, now: Date): SlotHold {
+export function createHold(
+  offerId: string,
+  slot: Slot,
+  now: Date,
+  /**
+   * Overridden by the office confirming a proposed date. Fifteen minutes is
+   * the right pressure on someone standing at a checkout and the wrong one on
+   * someone who has to read a mail first — see `SlotHold.confirmed`.
+   */
+  options: { minutes?: number; confirmed?: boolean } = {},
+): SlotHold {
   return {
     id: `hold_${offerId}_${slot.start}`,
     offerId,
     start: slot.start,
     duration: slot.durationMinutes,
-    expiresAt: addMinutes(now, HOLD_MINUTES).toISOString(),
+    expiresAt: addMinutes(now, options.minutes ?? HOLD_MINUTES).toISOString(),
+    confirmed: options.confirmed,
   };
 }
 

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:seed": "npx --yes tsx@4 scripts/seed-test.mts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

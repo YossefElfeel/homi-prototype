@@ -134,6 +134,12 @@ export const de = {
       accepted: 'Angenommen',
       rejected: 'Abgesagt',
     },
+    payment: {
+      pending: 'Ausstehend',
+      succeeded: 'Bezahlt',
+      failed: 'Fehlgeschlagen',
+      refunded: 'Rückerstattet',
+    },
   },
 
   form: {
@@ -266,6 +272,7 @@ export const de = {
       away: 'Inhaber abwesend',
       conflict: 'Termin-Kollision',
       hiring: 'Bewerbungen',
+      states: 'Alle Zustände',
     },
   },
 };

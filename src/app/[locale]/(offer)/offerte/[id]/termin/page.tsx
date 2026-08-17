@@ -3,7 +3,7 @@
 import { use, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { ArrowRight, CalendarX } from 'lucide-react';
+import { ArrowRight, CalendarClock, CalendarX, Send } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,14 @@ import {
 } from '@/mock/engines/availability';
 import { offerHours } from '@/mock/engines/offers';
 import { arrivalWindowMinutes } from '@/mock/engines/pricing';
+import { isReturningCustomer } from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
 const DAYS_SHOWN = 28;
+/** §—: a first job is proposed, not taken. Three is enough to be useful and
+ *  few enough that the office can decide in one look. */
+const MAX_PROPOSALS = 3;
 
 /**
  * Screen 25 — the live availability picker.
@@ -37,6 +41,14 @@ const DAYS_SHOWN = 28;
  *
  * Blocked days are shown disabled with a reason rather than hidden. "Why can I
  * not pick Sunday" should never be a mystery.
+ *
+ * The screen now has two modes, decided by whether we have served this person
+ * before. A returning customer books outright: we know the place, the access
+ * and the history, so there is nothing left to check and making them wait for
+ * a confirmation mail would be theatre. A first-time customer proposes up to
+ * three dates and the office picks one — the first job is the one worth a look
+ * before the calendar is spent, and a single take-it-or-leave-it slot offered
+ * to somebody with no relationship yet is how a quote quietly dies.
  */
 export default function SlotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -50,11 +62,15 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   const settings = useStore((s) => s.settings);
   const bookings = useStore((s) => s.data.bookings);
   const properties = useStore((s) => s.data.properties);
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const credits = useStore((s) => s.data.credits);
   const closures = useStore((s) => s.data.closures);
   const holds = useStore((s) => s.holds);
   const holdOfferSlot = useStore((s) => s.holdOfferSlot);
+  const proposeOfferSlots = useStore((s) => s.proposeOfferSlots);
 
   const [openDay, setOpenDay] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
 
   const hours = data ? offerHours(data.offer) : 0;
   const duration = Math.round(hours * 60);
@@ -79,13 +95,34 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   if (!hydrated) return <div className="p-gutter text-ink-tertiary">…</div>;
   if (!data) return null;
 
-  const { offer, hold } = data;
+  const { offer, hold, customer } = data;
+  const returning = isReturningCustomer(customer.id, bookings, subscriptions, credits);
+  const proposals = offer.proposedSlots ?? [];
+  /* Sent in, nothing back yet. Nothing on this page is actionable in that
+     state and pretending otherwise — leaving the grid live — invites a second
+     set of dates that would contradict the first. */
+  const awaitingOffice = proposals.length > 0 && !offer.slotConfirmedAt;
+
   const totalSlots = calendar.reduce((sum, day) => sum + day.slots.length, 0);
   const selectedDay = openDay ?? calendar.find((d) => d.slots.length > 0)?.date ?? null;
   const daySlots = calendar.find((d) => d.date === selectedDay)?.slots ?? [];
 
   function pick(slot: Slot) {
-    holdOfferSlot(offer.id, slot, now);
+    if (returning) {
+      holdOfferSlot(offer.id, slot, now);
+      return;
+    }
+    setPicked((current) =>
+      current.includes(slot.start)
+        ? current.filter((s) => s !== slot.start)
+        : current.length >= MAX_PROPOSALS
+          ? current
+          : [...current, slot.start],
+    );
+  }
+
+  function sendProposals() {
+    proposeOfferSlots(offer.id, picked);
   }
 
   const blockedLabel = (reason: string | null) =>
@@ -97,11 +134,55 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
           ? t('dayFull')
           : t('dayClosed');
 
+  if (awaitingOffice) {
+    return (
+      <OfferShell offer={offer} step="termin">
+        <div className="max-w-2xl">
+          <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">
+            {t('waitingTitle')}
+          </h1>
+          <p className="mt-4 text-ink-secondary">
+            {t('waitingBody', { hours: settings.responseTimeHours })}
+          </p>
+          <ul className="mt-8 space-y-2">
+            {proposals.map((start, i) => (
+              <li
+                key={start}
+                className="flex items-center gap-3 rounded-[var(--radius-md)] border border-line bg-sunken px-4 py-3"
+              >
+                <CalendarClock className="size-4 shrink-0 text-ink-secondary" aria-hidden />
+                <span data-numeric>
+                  {t('proposalN', { n: i + 1 })} ·{' '}
+                  {format.dateTime(new Date(start), 'full')},{' '}
+                  {format.dateTime(new Date(start), 'time')}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {/* The way back out. Without it the only exit from this state is the
+              browser's back button, which lands on a quote that now looks
+              unanswered. */}
+          <Button
+            variant="secondary"
+            className="mt-8"
+            onClick={() => proposeOfferSlots(offer.id, [])}
+          >
+            {t('waitingChange')}
+          </Button>
+        </div>
+      </OfferShell>
+    );
+  }
+
   return (
     <OfferShell offer={offer} step="termin">
       <div className="max-w-3xl">
-        <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">{t('title')}</h1>
-        <p className="mt-4 text-ink-secondary">{t('lead')}</p>
+        <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">
+          {returning ? t('title') : t('titleProposal')}
+        </h1>
+        <p className="mt-4 text-ink-secondary">
+          {returning ? t('lead') : t('leadProposal', { max: MAX_PROPOSALS })}
+        </p>
         <p data-numeric className="mt-2 text-sm text-ink-tertiary">
           {t('durationNote', { hours })}
         </p>
@@ -121,6 +202,9 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
               const date = new Date(day.date);
               const disabled = Boolean(day.blocked) || day.slots.length === 0;
               const active = selectedDay === day.date;
+              /* A day already carrying one of the picks needs to say so — the
+                 picks live on the slot buttons, which are a click away. */
+              const chosenHere = picked.some((s) => s.startsWith(day.date));
               return (
                 <li key={day.date}>
                   <button
@@ -134,6 +218,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
                         ? 'cursor-not-allowed border-line-subtle bg-sunken text-ink-tertiary opacity-60'
                         : 'border-line hover:bg-sunken',
                       active && !disabled && 'border-line-strong bg-accent-subtle',
+                      chosenHere && !active && 'border-line-strong',
                     )}
                   >
                     <span className="label-type text-ink-tertiary">
@@ -171,18 +256,25 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
                 {daySlots.map((slot) => {
                   const start = new Date(slot.start);
                   const windowEnd = addMinutes(start, arrivalWindowMinutes(hours));
-                  const active = hold?.start === slot.start;
+                  const active = returning
+                    ? hold?.start === slot.start
+                    : picked.includes(slot.start);
+                  /* Greyed rather than hidden once three are chosen: a slot
+                     that vanishes reads as "no longer free". */
+                  const full = !returning && !active && picked.length >= MAX_PROPOSALS;
                   return (
                     <li key={slot.start}>
                       <button
                         type="button"
                         onClick={() => pick(slot)}
+                        disabled={full}
                         aria-pressed={active}
                         className={cn(
                           'flex flex-col items-start rounded-[var(--radius-md)] border px-4 py-3 text-left transition-colors',
                           active
                             ? 'border-line-strong bg-accent-subtle'
                             : 'border-line hover:bg-sunken',
+                          full && 'cursor-not-allowed opacity-50 hover:bg-transparent',
                         )}
                       >
                         <span data-numeric className="font-medium">
@@ -204,7 +296,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
         </>
       )}
 
-      {hold && (
+      {returning && hold && (
         <div className="mt-10 max-w-2xl space-y-5">
           <HoldTimer hold={hold} />
           <Button
@@ -217,6 +309,33 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
         </div>
       )}
 
+      {/* The office has answered: one date, reserved, and the flow rejoins the
+          returning customer's at exactly this point. */}
+      {!returning && offer.slotConfirmedAt && hold && (
+        <div className="mt-10 max-w-2xl space-y-5">
+          <HoldTimer hold={hold} />
+          <Button
+            size="lg"
+            onClick={() => router.push(`/offerte/${offer.id}/unterschrift`)}
+          >
+            {t('continue')}
+            <ArrowRight className="size-4" aria-hidden />
+          </Button>
+        </div>
+      )}
+
+      {!returning && !offer.slotConfirmedAt && (
+        <div className="mt-10 max-w-2xl space-y-4">
+          <p data-numeric className="text-sm text-ink-secondary">
+            {t('pickedCount', { n: picked.length, max: MAX_PROPOSALS })}
+          </p>
+          <Button size="lg" disabled={picked.length === 0} onClick={sendProposals}>
+            {t('sendProposals')}
+            <Send className="size-4" aria-hidden />
+          </Button>
+          <p className="text-sm text-ink-tertiary">{t('proposalHint')}</p>
+        </div>
+      )}
     </OfferShell>
   );
 }

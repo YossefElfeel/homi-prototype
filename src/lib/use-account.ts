@@ -30,15 +30,28 @@ export function useAccount() {
   const requestIds = new Set(requests.map((r) => r.id));
   const bookings = data.bookings.filter((b) => b.customerId === customerId);
   const bookingIds = new Set(bookings.map((b) => b.id));
+  const offers = data.offers.filter((o) => requestIds.has(o.requestId));
+  const offerIds = new Set(offers.map((o) => o.id));
+  const invoices = data.invoices.filter((i) => i.customerId === customerId);
+  const invoiceIds = new Set(invoices.map((i) => i.id));
 
   return {
     customerId,
     customer: data.customers.find((c) => c.id === customerId),
     properties,
     requests,
-    offers: data.offers.filter((o) => requestIds.has(o.requestId)),
+    offers,
     bookings,
-    invoices: data.invoices.filter((i) => i.customerId === customerId),
+    invoices,
+    /* A payment hangs off either the quote it settled or the invoice it paid,
+       never off the customer directly — so it is reached through the two
+       records that are already filtered above rather than by a third rule
+       that could disagree with them. */
+    payments: data.payments.filter(
+      (p) =>
+        (p.offerId && offerIds.has(p.offerId)) ||
+        (p.invoiceId && invoiceIds.has(p.invoiceId)),
+    ),
     subscriptions: data.subscriptions.filter((s) => s.customerId === customerId),
     credits: data.credits.filter((c) => c.customerId === customerId),
     messages: data.messages.filter((m) => m.customerId === customerId),

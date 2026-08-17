@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Clock } from 'lucide-react';
+import { CalendarCheck, Clock } from 'lucide-react';
 
+import { useFormatter } from '@/i18n/format';
 import { HOLD_MINUTES, holdSecondsLeft } from '@/mock/engines/availability';
+import { CONFIRMED_HOLD_HOURS } from '@/lib/offer-facts';
 import { useStore } from '@/mock/store';
 import type { SlotHold } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -31,6 +33,7 @@ export function HoldTimer({
   className?: string;
 }) {
   const t = useTranslations('offer.slot');
+  const format = useFormatter();
   const dateOverride = useStore((s) => s.demo.dateOverride);
   const [seconds, setSeconds] = useState(() =>
     holdSecondsLeft(hold, dateOverride ? new Date(dateOverride) : new Date()),
@@ -47,6 +50,36 @@ export function HoldTimer({
   useEffect(() => {
     if (seconds === 0) onExpire?.();
   }, [seconds, onExpire]);
+
+  /*
+   * A date the office confirmed is not a checkout timer.
+   *
+   * Rendering it as one would print "2879:41" and put a stopwatch on a
+   * decision that has already been made — the customer chose, we agreed, and
+   * the only thing left is signing. So it says what the reservation is and
+   * until when, and counts nothing down.
+   */
+  if (hold.confirmed) {
+    return (
+      <div
+        className={cn(
+          'flex gap-3 rounded-[var(--radius-md)] border border-status-success-line bg-status-success p-4',
+          className,
+        )}
+      >
+        <CalendarCheck className="mt-0.5 size-4 shrink-0 text-status-success-fg" aria-hidden />
+        <div>
+          <p className="font-medium text-status-success-fg">{t('confirmedTitle')}</p>
+          <p className="mt-1 text-sm text-status-success-fg">
+            {t('confirmedBody', {
+              date: `${format.dateTime(new Date(hold.start), 'full')}, ${format.dateTime(new Date(hold.start), 'time')}`,
+              hours: CONFIRMED_HOLD_HOURS,
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;

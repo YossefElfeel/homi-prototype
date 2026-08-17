@@ -95,8 +95,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-5xl">
+      {/* Was `/admin/kalender`, because the calendar was the only way in.
+          Now that bookings have a list, sending everyone who arrives from it
+          back to a timeline view is a dead end — the list is the place you
+          came from and the place the next row is. */}
       <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/kalender">
+        <Link href="/admin/buchungen">
           <ArrowLeft className="size-4" aria-hidden />
           {t('back')}
         </Link>

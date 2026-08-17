@@ -290,6 +290,22 @@ export interface Offer {
   signedAt?: ISODate;
   /** Estimated hours the scheduler must fit, derived from the hourly lines. */
   estimatedHours: number;
+  /**
+   * Up to three dates a *new* customer proposed, waiting for the office to
+   * pick one.
+   *
+   * A returning customer books a slot outright — we know their place, their
+   * access and their history, so the live picker can commit on the spot. A
+   * first job is the one where the office wants a look before the calendar is
+   * spent, and offering a single take-it-or-leave-it slot to someone with no
+   * relationship yet is how a quote quietly dies. These are *preferences*, not
+   * holds: nothing is blocked in the calendar until the office confirms one.
+   */
+  proposedSlots?: ISODate[];
+  /** Which of `proposedSlots` the office picked. */
+  confirmedSlot?: ISODate;
+  /** When it picked it. Both, because the hold is rebuilt from the pair. */
+  slotConfirmedAt?: ISODate;
 }
 
 /* ----------------------------------------------------------------- booking */
@@ -345,6 +361,17 @@ export interface SlotHold {
   start: ISODate;
   duration: number;
   expiresAt: ISODate;
+  /**
+   * Set when the hold came from the office confirming a proposed date rather
+   * than from the customer picking one at checkout.
+   *
+   * The two need different lifetimes and different words. A checkout hold is
+   * fifteen minutes and is drawn as a countdown, because the customer is on
+   * the page right now. A confirmed date has to survive the customer closing
+   * the tab, reading the mail tomorrow and paying the day after — drawn as a
+   * countdown it would read as pressure on a decision that is already made.
+   */
+  confirmed?: boolean;
 }
 
 /* ------------------------------------------------------------ subscription */

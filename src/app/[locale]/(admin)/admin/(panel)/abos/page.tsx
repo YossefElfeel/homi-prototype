@@ -14,18 +14,18 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Select } from '@/components/ui/field';
 import { addDays, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
+import { PLAN_RHYTHM } from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { PlanTier, Subscription } from '@/mock/schema';
-
-const FREQUENCY: Record<string, string> = {
-  basic: 'Alle zwei Wochen',
-  premium: 'Wöchentlich',
-  vip: 'Zweimal wöchentlich',
-};
 
 /** Screen 69 — plans, their payment state and the next visit. */
 export default function SubscriptionsPage() {
   const t = useTranslations('admin.subscriptions');
+  /* Was a local `FREQUENCY` map of hardcoded German, and an identical one sat
+     in the detail screen. Two places both claiming how often a plan is
+     visited disagree eventually — and neither of them translated, on a panel
+     that ships in four languages. */
+  const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const router = useRouter();
   const now = useNow();
@@ -81,7 +81,7 @@ export default function SubscriptionsPage() {
     {
       key: 'frequency',
       header: t('colFrequency'),
-      cell: (s) => <span className="text-ink-secondary">{FREQUENCY[s.plan]}</span>,
+      cell: (s) => <span className="text-ink-secondary">{rhythmT(PLAN_RHYTHM[s.plan])}</span>,
     },
     {
       key: 'next',
@@ -187,7 +187,7 @@ export default function SubscriptionsPage() {
                 <Select {...props} name="plan" defaultValue="basic">
                   {(['basic', 'premium', 'vip'] as PlanTier[]).map((tier) => (
                     <option key={tier} value={tier}>
-                      {tier} — {FREQUENCY[tier]}
+                      {tier} — {rhythmT(PLAN_RHYTHM[tier])}
                     </option>
                   ))}
                 </Select>

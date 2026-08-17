@@ -165,7 +165,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 {jobs.map((job) => (
                   <li key={job.id}>
                     <Link
-                      href={`/admin/kalender/${job.id}`}
+                      href={`/admin/buchungen/${job.id}`}
                       className="flex items-center justify-between gap-4 py-3.5 transition-colors hover:bg-sunken"
                     >
                       <span>

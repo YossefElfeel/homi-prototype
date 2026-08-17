@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { Field, Textarea } from '@/components/ui/field';
 import { Lifecycle } from '@/components/ui/lifecycle';
-import { requestStages } from '@/lib/request-lifecycle';
+import { quoteStages } from '@/lib/quote-lifecycle';
+import { offerBooking, offerPayment } from '@/lib/offer-facts';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -38,7 +39,8 @@ export default function AccountRequestPage({
   const hydrated = useHydrated();
 
   const now = useNow();
-  const { requests, offers, properties } = useAccount();
+  const { requests, offers, properties, payments, bookings } = useAccount();
+  const holds = useStore((s) => s.holds);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const cancelRequest = useStore((s) => s.cancelRequest);
@@ -131,17 +133,27 @@ export default function AccountRequestPage({
         <Lifecycle
           className="mt-4"
           label={t('timelineTitle')}
-          stages={requestStages(
-            request,
-            offer,
+          stages={quoteStages(
+            {
+              request,
+              offer,
+              hold: holds.find((h) => h.offerId === offer?.id),
+              payment: offer ? offerPayment(offer.id, payments) : undefined,
+              booking: offer ? offerBooking(offer.id, bookings) : undefined,
+            },
             {
               received: t('stageReceived'),
               reviewed: t('stageReviewed'),
-              quoted: t('stageQuoted'),
-              accepted: t('stageAccepted'),
+              drafted: t('stageDrafted'),
+              sent: t('stageQuoted'),
+              revision: t('stageRevision'),
+              scheduled: t('stageScheduled'),
+              signed: t('stageSigned'),
+              paid: t('stagePaid'),
+              booked: t('stageBooked'),
               declined: t('stageDeclined'),
               cancelled: t('stageCancelled'),
-              settled: t('stageSettled'),
+              expired: t('stageExpired'),
             },
             (iso) => format.dateTime(new Date(iso), 'full'),
           )}

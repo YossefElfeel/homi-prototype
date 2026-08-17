@@ -68,7 +68,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         kind: t('typeBooking'),
         label: `${b.reference} · ${services.find((s) => s.slug === b.serviceSlug)?.name[locale]}`,
         badge: <StatusBadge entity="booking" state={b.status} size="sm" />,
-        href: `/admin/kalender/${b.id}`,
+        href: `/admin/buchungen/${b.id}`,
       })),
     ...invoices
       .filter((i) => i.customerId === customer.id)

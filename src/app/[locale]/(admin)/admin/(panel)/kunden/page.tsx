@@ -43,6 +43,23 @@ export default function CustomersPage() {
       cell: (c) => `${c.firstName} ${c.lastName}`,
     },
     {
+      /*
+       * `colStatus`, `active` and `inactive` were translated in all four
+       * locales and rendered by nothing. A closed account (§15 — the record
+       * survives because invoices hang off it) was indistinguishable from a
+       * live one, so the list invited you to quote somebody who had left.
+       */
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      cell: (c) =>
+        c.status === 'active' ? (
+          <span className="text-sm text-ink-tertiary">{t('active')}</span>
+        ) : (
+          <span className="text-sm font-medium text-ink-secondary">{t('inactive')}</span>
+        ),
+    },
+    {
       key: 'properties',
       header: t('colProperties'),
       trailing: true,
