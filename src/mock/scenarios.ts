@@ -520,11 +520,39 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /*
+   * A workable queue, in every scenario that is not launch day.
+   *
+   * The four hand-written requests above stage the walkthrough — a new one to
+   * quote, a quote already out. That was enough while screen 52 was a list
+   * sorted by arrival, and stopped being enough the moment it became a queue:
+   * with three rows and nothing overdue, the deadline column, the overdue-first
+   * sort, the overdue filter, the draft badge and half the status filter had
+   * nothing to act on in *any* scenario except `states`.
+   *
+   * Ten rows across nine statuses, using the shared households so the queue is
+   * not the same three names repeating. `fresh` is built from EMPTY and never
+   * reaches this — its empty list is the deliverable.
+   */
+  const queue: ServiceRequest[] = [
+    queueRequest(now, { id: 'req_q_draft', ref: 'A-2490', n: 3, service: 'einmalreinigung', status: 'draft', agedHours: 30, note: undefined, internal: 'Angerufen, Fläche noch unklar. Rückruf abgemacht.' }),
+    queueRequest(now, { id: 'req_q_new1', ref: 'A-2491', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 5, intent: 'basic' }),
+    queueRequest(now, { id: 'req_q_new2', ref: 'A-2492', n: 8, service: 'fensterreinigung', status: 'new', agedHours: 20, preferredInDays: 9 }),
+    /* One day past the promise — the row the red deadline state exists for. */
+    queueRequest(now, { id: 'req_q_late', ref: 'A-2493', n: 6, service: 'grundreinigung', status: 'inReview', agedHours: 52 }),
+    queueRequest(now, { id: 'req_q_offer', ref: 'A-2494', n: 5, service: 'umzugsreinigung', status: 'offerSent', agedDays: 3, preferredInDays: 12 }),
+    queueRequest(now, { id: 'req_q_revision', ref: 'A-2495', n: 2, service: 'grundreinigung', status: 'revisionRequested', agedDays: 5, note: 'Können Sie die Fenster rausrechnen?' }),
+    queueRequest(now, { id: 'req_q_accepted', ref: 'A-2496', n: 9, service: 'einmalreinigung', status: 'accepted', agedDays: 12 }),
+    queueRequest(now, { id: 'req_q_rejected', ref: 'A-2497', n: 12, service: 'einmalreinigung', status: 'rejected', agedDays: 8, internal: 'Abgelehnt: ausserhalb Gebiet, Anfahrt trägt sich nicht.' }),
+    queueRequest(now, { id: 'req_q_expired', ref: 'A-2498', n: 10, service: 'fensterreinigung', status: 'expired', agedDays: 38 }),
+    queueRequest(now, { id: 'req_q_cancel', ref: 'A-2499', n: 4, service: 'bueroreinigung', status: 'cancelledByCustomer', agedDays: 6, internal: 'Zurückgezogen: intern gelöst.' }),
+  ];
+
   return {
     ...EMPTY,
-    customers,
-    properties,
-    requests,
+    customers: [...customers, ...extraCustomers(now)],
+    properties: [...properties, ...extraProperties()],
+    requests: [...queue, ...requests],
     offers,
     bookings,
     subscriptions,
@@ -1076,35 +1104,35 @@ const SERVICE_NOTES: Record<ServiceSlug, string> = {
  * was accepted. Inventing more than the status claims would make the data
  * pretty and the screens wrong.
  */
-function withAllStates(data: DataSet, now: Date): DataSet {
-  /*
-   * Twelve households across the eight served municipalities, plus one in the
-   * city. Spread on purpose: the area filter, the route map and the travel
-   * buffer all read the postcode, and a queue where every row says "Andrea
-   * Keller" hides exactly the ordering mistakes this scenario exists to show.
-   *
-   * `MATRIX_PEOPLE` is the source for both the customer and the property, so
-   * the two can never disagree about which town somebody lives in.
-   */
-  const MATRIX_PEOPLE: {
-    n: number;
-    first: string;
-    last: string;
-    lang: Locale;
-    phone: string;
-    since: number;
-    street: string;
-    postcode: string;
-    city: string;
-    kind: PropertyKind;
-    area: number;
-    rooms: number;
-    baths: number;
-    floor: number;
-    lift: boolean;
-    pets?: boolean;
-    effort?: boolean;
-  }[] = [
+/**
+ * Twelve households across the eight served municipalities, plus one in the
+ * city.
+ *
+ * Module scope, because more than one scenario draws on them now: `states`
+ * needs all twelve for the matrix, and `busy`, `overdue` and `away` need a
+ * slice so their queues stop being the same three names repeating. One source
+ * for the person and their property, so the two can never disagree about which
+ * town somebody lives in.
+ */
+const EXTRA_PEOPLE: {
+  n: number;
+  first: string;
+  last: string;
+  lang: Locale;
+  phone: string;
+  since: number;
+  street: string;
+  postcode: string;
+  city: string;
+  kind: PropertyKind;
+  area: number;
+  rooms: number;
+  baths: number;
+  floor: number;
+  lift: boolean;
+  pets?: boolean;
+  effort?: boolean;
+}[] = [
     { n: 1, first: 'Beatrice', last: 'Ammann', lang: 'de', phone: '+41 79 221 64 08', since: 150, street: 'Alte Landstrasse 62', postcode: '8700', city: 'Küsnacht', kind: 'house', area: 205, rooms: 7.5, baths: 3, floor: 0, lift: false, pets: true },
     { n: 2, first: 'Daniel', last: 'Schoch', lang: 'de', phone: '+41 78 445 19 73', since: 132, street: 'Kirchgasse 9', postcode: '8706', city: 'Meilen', kind: 'apartment', area: 104, rooms: 4.5, baths: 2, floor: 3, lift: true },
     { n: 3, first: 'Nadia', last: 'Vogt', lang: 'de', phone: '+41 76 512 88 40', since: 118, street: 'Bergstrasse 21', postcode: '8707', city: 'Uetikon am See', kind: 'apartment', area: 88, rooms: 3.5, baths: 1, floor: 1, lift: false },
@@ -1118,14 +1146,14 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     { n: 11, first: 'Oliver', last: 'Hartmann', lang: 'en', phone: '+41 79 708 26 83', since: 28, street: 'Lindenhof 4', postcode: '8712', city: 'Stäfa', kind: 'office', area: 140, rooms: 5, baths: 2, floor: 0, lift: false },
     /* Outside the eight municipalities. §20.1 lets the request through and
        flags it — the list has a chip for exactly this, and it needs a row. */
-    { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Militärstrasse 76', postcode: '8004', city: 'Zürich', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
-  ];
+  { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Militärstrasse 76', postcode: '8004', city: 'Zürich', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
+];
 
-  const matrixCustomers: Customer[] = MATRIX_PEOPLE.map((p) =>
-    person(`cus_m${p.n}`, p.first, p.last, p.lang, now, p.since, p.phone),
-  );
+const extraCustomers = (now: Date): Customer[] =>
+  EXTRA_PEOPLE.map((p) => person(`cus_m${p.n}`, p.first, p.last, p.lang, now, p.since, p.phone));
 
-  const matrixProperties: Property[] = MATRIX_PEOPLE.map((p) => ({
+const extraProperties = (): Property[] =>
+  EXTRA_PEOPLE.map((p) => ({
     id: `prp_m${p.n}`,
     customerId: `cus_m${p.n}`,
     label: p.kind === 'office' ? 'Büro' : p.kind === 'house' ? 'Haus' : 'Wohnung',
@@ -1167,11 +1195,76 @@ function withAllStates(data: DataSet, now: Date): DataSet {
               },
   }));
 
-  /* Offices only for office cleaning, homes for everything else — routing a
-     Umzugsreinigung to a reception desk would price and schedule fine and read
-     as nonsense. */
-  const officeIds = MATRIX_PEOPLE.filter((p) => p.kind === 'office').map((p) => p.n);
-  const homeIds = MATRIX_PEOPLE.filter((p) => p.kind !== 'office').map((p) => p.n);
+/* Offices only for office cleaning, homes for everything else — routing a
+   Umzugsreinigung to a reception desk would price and schedule fine and read
+   as nonsense. */
+const OFFICE_IDS = EXTRA_PEOPLE.filter((p) => p.kind === 'office').map((p) => p.n);
+const HOME_IDS = EXTRA_PEOPLE.filter((p) => p.kind !== 'office').map((p) => p.n);
+
+/**
+ * A request, compactly.
+ *
+ * The per-scenario queues below would otherwise be four hundred lines of
+ * near-identical object literals, which is how a fixture set stops being
+ * reviewable. Ages are given the way the screen reads them: `agedHours` for
+ * anything still inside or just past the response window, `agedDays` for
+ * everything already settled.
+ */
+function queueRequest(
+  now: Date,
+  input: {
+    id: string;
+    ref: string;
+    n: number;
+    service: ServiceSlug;
+    status: RequestStatus;
+    agedHours?: number;
+    agedDays?: number;
+    note?: string;
+    internal?: string;
+    intent?: 'basic' | 'premium' | 'vip';
+    preferredInDays?: number;
+  },
+): ServiceRequest {
+  const p = EXTRA_PEOPLE.find((x) => x.n === input.n)!;
+  const createdAt =
+    input.agedHours != null
+      ? iso(new Date(now.getTime() - input.agedHours * 3_600_000))
+      : iso(days(now, -(input.agedDays ?? 2)));
+  const read = input.status !== 'new' && input.status !== 'draft';
+
+  return {
+    id: input.id,
+    reference: input.ref,
+    customerId: `cus_m${input.n}`,
+    propertyId: `prp_m${input.n}`,
+    serviceSlug: input.service,
+    addOnIds: [],
+    windowCount: input.service === 'fensterreinigung' ? 8 : undefined,
+    furniturePieces: input.service === 'moebelmontage' ? 3 : undefined,
+    preferred:
+      input.preferredInDays != null
+        ? { date: iso(days(now, input.preferredInDays)), band: 'morning', flexible: false }
+        : { flexible: true },
+    photoIds: [],
+    customerNote: input.note ?? SERVICE_NOTES[input.service],
+    internalNote: input.internal,
+    status: input.status,
+    outOfArea: p.postcode === '8004',
+    createdAt,
+    openedAt: read ? createdAt : undefined,
+    respondedAt: read && input.agedDays != null ? iso(days(now, -Math.max(1, input.agedDays - 1))) : undefined,
+    subscriptionIntent: input.intent,
+  };
+}
+
+function withAllStates(data: DataSet, now: Date): DataSet {
+  /* `baseData` already carries the households — it needs them for its own
+     queue. Adding them again here would duplicate every id, and `find` would
+     start returning whichever copy came first. */
+  const matrixProperties = extraProperties();
+  const officeIds = OFFICE_IDS;
+  const homeIds = HOME_IDS;
 
   const customers: Customer[] = [
     ...data.customers,
@@ -1184,7 +1277,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       status: 'inactive',
       internalNotes: 'Konto vom Kunden geschlossen — weggezogen, kein Objekt mehr im Gebiet.',
     },
-    ...matrixCustomers,
   ];
 
   const properties: Property[] = [
@@ -1228,7 +1320,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       hasPets: true,
       needsExtraEffort: true,
     },
-    ...matrixProperties,
   ];
 
   const hours = (n: number) => iso(new Date(now.getTime() - n * 3_600_000));
@@ -2042,13 +2133,48 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
 
     case 'busy': {
       const data = baseData(now);
-      const extra: ServiceRequest[] = Array.from({ length: 5 }, (_, i) => ({
-        ...data.requests[0]!,
-        id: `req_b${i}`,
-        reference: `A-25${10 + i}`,
-        status: 'new' as const,
-        createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * (26 + i * 4))),
-      }));
+      /*
+       * A full week, properly.
+       *
+       * This used to be five spread copies of `requests[0]` — same customer,
+       * same service, same note, same everything but the timestamp. Five
+       * identical rows do not test a queue; they test whether the table can
+       * repeat itself. And at eight rows the list never crossed the 25-row page
+       * size, so pagination was unreachable in the one scenario named for being
+       * under load.
+       *
+       * Twenty-four varied requests across all seven services, every household
+       * and a spread of ages — enough to fill a second page, with the late ones
+       * sorting to the top where the owner needs them.
+       */
+      const BUSY_SERVICES: ServiceSlug[] = [
+        'unterhaltsreinigung',
+        'einmalreinigung',
+        'grundreinigung',
+        'umzugsreinigung',
+        'fensterreinigung',
+        'moebelmontage',
+      ];
+      /* Hours old. Six are past the 24-hour promise by a day or more, which is
+         what a backlog actually looks like — not a uniform ramp. */
+      const BUSY_AGES = [
+        2, 5, 8, 11, 14, 17, 20, 22, 26, 31, 38, 44, 50, 56, 63, 71, 78, 84, 92, 101, 118, 134,
+        150, 178,
+      ];
+      const extra: ServiceRequest[] = BUSY_AGES.map((agedHours, i) =>
+        queueRequest(now, {
+          id: `req_bz_${i}`,
+          ref: `A-26${String(20 + i).padStart(2, '0')}`,
+          /* Skips the out-of-area household: a busy week is local work, and one
+             flagged row already exists in the base queue. */
+          n: (i % 11) + 1,
+          service: BUSY_SERVICES[i % BUSY_SERVICES.length]!,
+          status: i % 3 === 0 ? 'inReview' : 'new',
+          agedHours,
+          intent: i % 7 === 0 ? 'basic' : undefined,
+          preferredInDays: i % 4 === 0 ? undefined : 4 + (i % 10),
+        }),
+      );
       const reviews: Review[] = [
         {
           id: 'rev_1',
@@ -2136,8 +2262,24 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
           qrReference: '21 00000 00003 13947 14300 09017',
         },
       ];
+      /*
+       * The scenario is named for money, and the request side has the same
+       * failure: §4.1 promises an answer inside a window, and a request past it
+       * is overdue in exactly the sense the invoice is. Four badly late ones, so
+       * the red deadline state, the overdue count in the toolbar and the
+       * overdue-only filter all have something to show here too — not only in
+       * `states`.
+       */
+      const lateRequests: ServiceRequest[] = [
+        queueRequest(now, { id: 'req_ov_1', ref: 'A-2521', n: 2, service: 'grundreinigung', status: 'new', agedHours: 74 }),
+        queueRequest(now, { id: 'req_ov_2', ref: 'A-2522', n: 7, service: 'bueroreinigung', status: 'inReview', agedHours: 122 }),
+        queueRequest(now, { id: 'req_ov_3', ref: 'A-2523', n: 6, service: 'umzugsreinigung', status: 'new', agedHours: 196, preferredInDays: 3 }),
+        queueRequest(now, { id: 'req_ov_4', ref: 'A-2524', n: 10, service: 'unterhaltsreinigung', status: 'inReview', agedHours: 268, intent: 'premium' }),
+      ];
+
       return {
         ...data,
+        requests: [...lateRequests, ...data.requests],
         // Appended, not replaced: the point of this scenario is an overdue
         // invoice sitting next to normal ones, not a world with only one.
         invoices: [...invoices, ...data.invoices],
@@ -2145,8 +2287,23 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
       };
     }
 
-    case 'away':
-      return withClosure(baseData(now), now);
+    case 'away': {
+      const data = withClosure(baseData(now), now);
+      /*
+       * §14 — the owner is away, so nothing is being answered. That is the
+       * interesting part for screen 52 and it had no data: requests keep
+       * arriving during a closure and quietly breach the response window,
+       * and two of these ask for a date that falls *inside* the closure, which
+       * is the case the scheduler has to refuse when a quote is written.
+       */
+      const duringAbsence: ServiceRequest[] = [
+        queueRequest(now, { id: 'req_aw_1', ref: 'A-2531', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 30, preferredInDays: 5, note: 'Wäre der 5. möglich? Wir sind ab dann zurück.' }),
+        queueRequest(now, { id: 'req_aw_2', ref: 'A-2532', n: 8, service: 'einmalreinigung', status: 'new', agedHours: 54, preferredInDays: 7, note: 'Sobald es geht, wir haben Besuch angekündigt.' }),
+        queueRequest(now, { id: 'req_aw_3', ref: 'A-2533', n: 5, service: 'fensterreinigung', status: 'new', agedHours: 96 }),
+        queueRequest(now, { id: 'req_aw_4', ref: 'A-2534', n: 3, service: 'grundreinigung', status: 'inReview', agedHours: 140, internal: 'Gesehen, kann erst nach den Ferien beantwortet werden.' }),
+      ];
+      return { ...data, requests: [...duringAbsence, ...data.requests] };
+    }
 
     case 'conflict': {
       // §20.2 — two jobs far apart on the same day, travel time short.
@@ -2165,6 +2322,15 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
             duration: 180,
             subscriptionId: undefined,
           },
+        ],
+        /* Two requests asking for the day that is already double-booked, one at
+           each end of the lake. Quoting either of them is where the travel
+           buffer in `slotsForDay` has to refuse a slot the calendar looks free
+           for — and there was no request to quote from. */
+        requests: [
+          queueRequest(now, { id: 'req_cf_1', ref: 'A-2541', n: 1, service: 'einmalreinigung', status: 'new', agedHours: 8, preferredInDays: 0, note: 'Am liebsten heute noch, falls irgendwie möglich.' }),
+          queueRequest(now, { id: 'req_cf_2', ref: 'A-2542', n: 8, service: 'grundreinigung', status: 'new', agedHours: 15, preferredInDays: 0 }),
+          ...data.requests,
         ],
       };
     }
