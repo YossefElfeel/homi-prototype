@@ -12,14 +12,18 @@ import type {
   PackageCredit,
   Offer,
   Payment,
+  PropertyKind,
+  RequestStatus,
   SavedPaymentMethod,
   Photo,
   Property,
   Review,
   ServiceRequest,
+  ServiceSlug,
   Subscription,
   TeamMember,
 } from './schema';
+import { SERVICE_SLUGS } from './schema';
 import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildOfferLines } from './engines/offers';
@@ -964,22 +968,211 @@ function withHiring(data: DataSet, now: Date): DataSet {
   };
 }
 
+/* ------------------------------------------------- the state matrix ------ */
+
 /**
- * Every state in the model, carried by a real record.
+ * The ten request statuses, in lifecycle order.
+ *
+ * Order matters for reading the queue: the list is generated status-major, so
+ * a reviewer scrolling the unfiltered table walks the lifecycle rather than
+ * meeting it shuffled.
+ */
+const MATRIX_STATUSES: RequestStatus[] = [
+  'draft',
+  'new',
+  'inReview',
+  'offerSent',
+  'revisionRequested',
+  'accepted',
+  'rejected',
+  'expired',
+  'cancelledByCustomer',
+  'cancelledByCompany',
+];
+
+/**
+ * Ages in hours for the two statuses that still owe an answer.
+ *
+ * Explicit rather than computed, because the spread is the point: the queue
+ * sorts by lateness and the deadline column has three visual states, and all
+ * of them have to be on screen at once. `responseTimeHours` is 24 and
+ * `overdueDays` counts *whole* days past the deadline, so an age of 50h is one
+ * full day late, not two.
+ *
+ * One entry per service, so each list is seven long.
+ */
+const OPEN_AGES: Record<'new' | 'inReview', number[]> = {
+  //     inside  inside  due today  1d    2d    3d     6d
+  new: [4, 12, 20, 50, 76, 100, 172],
+  //     inside  inside  due today  1d    2d    4d     8d
+  inReview: [6, 16, 22, 54, 84, 130, 220],
+};
+
+/** Age in days for the statuses that are already settled, one per service. */
+const SETTLED_AGES: Partial<Record<RequestStatus, number[]>> = {
+  draft: [1, 2, 2, 3, 4, 5, 7],
+  offerSent: [2, 3, 3, 4, 5, 6, 8],
+  revisionRequested: [4, 5, 6, 6, 7, 8, 9],
+  accepted: [10, 12, 14, 15, 17, 19, 22],
+  rejected: [7, 8, 9, 11, 12, 13, 14],
+  expired: [35, 38, 40, 42, 45, 48, 52],
+  cancelledByCustomer: [5, 6, 7, 9, 10, 11, 12],
+  cancelledByCompany: [6, 7, 8, 10, 12, 14, 15],
+};
+
+/** Statuses whose very name says a quote reached the customer. */
+const IMPLIES_SENT_OFFER: RequestStatus[] = [
+  'offerSent',
+  'revisionRequested',
+  'accepted',
+  'rejected',
+  'expired',
+];
+
+/** The offer state each request status implies. */
+const OFFER_FOR: Partial<Record<RequestStatus, Offer['status']>> = {
+  offerSent: 'sent',
+  revisionRequested: 'revisionRequested',
+  accepted: 'accepted',
+  /* A declined request means the customer said no to the quote — §9 has no
+     other way to reach `rejected` from `offerSent`. */
+  rejected: 'rejected',
+  expired: 'expired',
+  /* `cancelRequest` closes any live quote as rejected. So a cancelled request
+     that had one shows it rejected, which is what the store would have done. */
+  cancelledByCustomer: 'rejected',
+  cancelledByCompany: 'rejected',
+};
+
+/** Per-service notes, so seventy rows do not all read identically. */
+const SERVICE_NOTES: Record<ServiceSlug, string> = {
+  unterhaltsreinigung: 'Alle zwei Wochen wäre ideal, am liebsten vormittags.',
+  einmalreinigung: 'Einmal richtig durch, danach schauen wir weiter.',
+  grundreinigung: 'Ist lange nicht gemacht worden — Küche und Bad sind das Thema.',
+  umzugsreinigung: 'Übergabe steht an, die Verwaltung nimmt es genau.',
+  fensterreinigung: 'Sprossenfenster, teilweise schwer erreichbar.',
+  bueroreinigung: 'Nach Büroschluss, ab 18 Uhr. Rechnung an die Firma.',
+  moebelmontage: 'Neue Möbel geliefert, Aufbau fehlt noch.',
+};
+
+/**
+ * Every state in the model, carried by a real record — and every combination
+ * of service and request status.
  *
  * Built on top of `withHiring(baseData(…))` rather than from scratch: the
  * applications track already stages all four `ApplicationStatus` values, and
  * duplicating them here would give two sources for the same thing.
  *
- * The requests are laid out deliberately across the response window, because
- * the queue's whole ordering now hangs off it — one inside the promise, one due
- * today, one a day late and one five days late. Anything that reorders the list
- * wrongly is visible on sight in this scenario.
+ * The seventy requests are generated rather than typed out. Seven services
+ * times ten statuses is a table, and a table written by hand acquires holes:
+ * the reviewer filters to `accepted` + `Fensterreinigung`, gets an empty
+ * screen, and cannot tell a missing fixture from a broken filter. Generating
+ * it means the matrix is complete by construction, and the accompanying test
+ * reads the unions out of `schema.ts` so a status added later fails the build
+ * until data carries it.
+ *
+ * What is *not* generated is the lifecycle attached to each row: an offer only
+ * exists where the status says one was sent, a booking only where the quote
+ * was accepted. Inventing more than the status claims would make the data
+ * pretty and the screens wrong.
  */
 function withAllStates(data: DataSet, now: Date): DataSet {
-  /* Two more customers so the states below do not all pile onto the same four
-     people — a queue where every row says "Andrea Keller" hides exactly the
-     ordering mistakes this scenario exists to expose. */
+  /*
+   * Twelve households across the eight served municipalities, plus one in the
+   * city. Spread on purpose: the area filter, the route map and the travel
+   * buffer all read the postcode, and a queue where every row says "Andrea
+   * Keller" hides exactly the ordering mistakes this scenario exists to show.
+   *
+   * `MATRIX_PEOPLE` is the source for both the customer and the property, so
+   * the two can never disagree about which town somebody lives in.
+   */
+  const MATRIX_PEOPLE: {
+    n: number;
+    first: string;
+    last: string;
+    lang: Locale;
+    phone: string;
+    since: number;
+    street: string;
+    postcode: string;
+    city: string;
+    kind: PropertyKind;
+    area: number;
+    rooms: number;
+    baths: number;
+    floor: number;
+    lift: boolean;
+    pets?: boolean;
+    effort?: boolean;
+  }[] = [
+    { n: 1, first: 'Beatrice', last: 'Ammann', lang: 'de', phone: '+41 79 221 64 08', since: 150, street: 'Alte Landstrasse 62', postcode: '8700', city: 'Küsnacht', kind: 'house', area: 205, rooms: 7.5, baths: 3, floor: 0, lift: false, pets: true },
+    { n: 2, first: 'Daniel', last: 'Schoch', lang: 'de', phone: '+41 78 445 19 73', since: 132, street: 'Kirchgasse 9', postcode: '8706', city: 'Meilen', kind: 'apartment', area: 104, rooms: 4.5, baths: 2, floor: 3, lift: true },
+    { n: 3, first: 'Nadia', last: 'Vogt', lang: 'de', phone: '+41 76 512 88 40', since: 118, street: 'Bergstrasse 21', postcode: '8707', city: 'Uetikon am See', kind: 'apartment', area: 88, rooms: 3.5, baths: 1, floor: 1, lift: false },
+    { n: 4, first: 'Roland', last: 'Zuberbühler', lang: 'de', phone: '+41 44 790 33 15', since: 96, street: 'Bahnhofstrasse 3', postcode: '8708', city: 'Männedorf', kind: 'office', area: 165, rooms: 6, baths: 2, floor: 2, lift: true },
+    { n: 5, first: 'Claudia', last: 'Meier', lang: 'de', phone: '+41 79 634 07 52', since: 84, street: 'Seestrasse 88', postcode: '8712', city: 'Stäfa', kind: 'house', area: 158, rooms: 6.5, baths: 2, floor: 0, lift: false },
+    { n: 6, first: 'Marco', last: 'Steiner', lang: 'de', phone: '+41 78 902 41 66', since: 71, street: 'Forchstrasse 14', postcode: '8132', city: 'Egg', kind: 'house', area: 172, rooms: 5.5, baths: 2, floor: 0, lift: false, effort: true },
+    { n: 7, first: 'Simone', last: 'Bachmann', lang: 'de', phone: '+41 44 935 27 91', since: 63, street: 'Städtlistrasse 6', postcode: '8627', city: 'Grüningen', kind: 'office', area: 120, rooms: 5, baths: 2, floor: 1, lift: false },
+    { n: 8, first: 'Yannick', last: 'Roth', lang: 'de', phone: '+41 79 483 12 29', since: 55, street: 'Feldbachstrasse 30', postcode: '8634', city: 'Hombrechtikon', kind: 'apartment', area: 92, rooms: 3.5, baths: 1, floor: 2, lift: true, pets: true },
+    { n: 9, first: 'Élodie', last: 'Perret', lang: 'fr', phone: '+41 78 116 95 37', since: 47, street: 'Wiesenstrasse 11', postcode: '8700', city: 'Küsnacht', kind: 'apartment', area: 78, rooms: 3, baths: 1, floor: 4, lift: true },
+    { n: 10, first: 'Giulia', last: 'Ferrari', lang: 'it', phone: '+41 76 350 78 14', since: 39, street: 'Rebbergweg 5', postcode: '8706', city: 'Meilen', kind: 'apartment', area: 96, rooms: 3.5, baths: 1, floor: 1, lift: false },
+    { n: 11, first: 'Oliver', last: 'Hartmann', lang: 'en', phone: '+41 79 708 26 83', since: 28, street: 'Lindenhof 4', postcode: '8712', city: 'Stäfa', kind: 'office', area: 140, rooms: 5, baths: 2, floor: 0, lift: false },
+    /* Outside the eight municipalities. §20.1 lets the request through and
+       flags it — the list has a chip for exactly this, and it needs a row. */
+    { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Militärstrasse 76', postcode: '8004', city: 'Zürich', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
+  ];
+
+  const matrixCustomers: Customer[] = MATRIX_PEOPLE.map((p) =>
+    person(`cus_m${p.n}`, p.first, p.last, p.lang, now, p.since, p.phone),
+  );
+
+  const matrixProperties: Property[] = MATRIX_PEOPLE.map((p) => ({
+    id: `prp_m${p.n}`,
+    customerId: `cus_m${p.n}`,
+    label: p.kind === 'office' ? 'Büro' : p.kind === 'house' ? 'Haus' : 'Wohnung',
+    street: p.street,
+    postcode: p.postcode,
+    city: p.city,
+    kind: p.kind,
+    area: p.area,
+    rooms: p.rooms,
+    bathrooms: p.baths,
+    floor: p.floor,
+    hasElevator: p.lift,
+    hasPets: p.pets ?? false,
+    needsExtraEffort: p.effort ?? false,
+    /* Access rotates through all four methods so the field screens and the
+       masked-code rule have every variant to work against. */
+    access:
+      p.n % 4 === 1
+        ? {
+            method: 'key-box',
+            boxLocation: 'Neben der Haustür',
+            boxCode: `${4000 + p.n * 7}`,
+            keyReturnLocation: 'Zurück in den Kasten',
+          }
+        : p.n % 4 === 2
+          ? { method: 'customer-present', contactPhone: p.phone }
+          : p.n % 4 === 3
+            ? {
+                method: 'key-left',
+                keyLocation: 'Beim Nachbarn im Erdgeschoss',
+                keyReturnLocation: 'Briefkasten',
+              }
+            : {
+                method: 'other-person',
+                personName: 'Empfang',
+                personPhone: p.phone,
+                personRelation: p.kind === 'office' ? 'Empfang' : 'Nachbarin',
+                alarmCode: `${1200 + p.n * 3}`,
+              },
+  }));
+
+  /* Offices only for office cleaning, homes for everything else — routing a
+     Umzugsreinigung to a reception desk would price and schedule fine and read
+     as nonsense. */
+  const officeIds = MATRIX_PEOPLE.filter((p) => p.kind === 'office').map((p) => p.n);
+  const homeIds = MATRIX_PEOPLE.filter((p) => p.kind !== 'office').map((p) => p.n);
+
   const customers: Customer[] = [
     ...data.customers,
     person('cus_5', 'Livia', 'Bernasconi', 'it', now, 88, '+41 79 305 77 12'),
@@ -991,6 +1184,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       status: 'inactive',
       internalNotes: 'Konto vom Kunden geschlossen — weggezogen, kein Objekt mehr im Gebiet.',
     },
+    ...matrixCustomers,
   ];
 
   const properties: Property[] = [
@@ -1034,6 +1228,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       hasPets: true,
       needsExtraEffort: true,
     },
+    ...matrixProperties,
   ];
 
   const hours = (n: number) => iso(new Date(now.getTime() - n * 3_600_000));
@@ -1174,7 +1369,10 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       reference: 'A-2609',
       customerId: 'cus_6',
       propertyId: 'prp_6',
-      serviceSlug: 'bueroreinigung',
+      /* Was `bueroreinigung` on a 68 m² residential flat — office cleaning
+         priced and scheduled fine against it, which is precisely why nothing
+         caught it. The matrix carries office/rejected on a real office. */
+      serviceSlug: 'einmalreinigung',
       addOnIds: [],
       preferred: { flexible: true },
       photoIds: [],
@@ -1234,6 +1432,199 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       respondedAt: iso(days(now, -2)),
     },
   ];
+
+  /* ------------------------------------- the 7 × 10 matrix ------------- */
+
+  const SHORT: Record<ServiceSlug, string> = {
+    unterhaltsreinigung: 'reg',
+    einmalreinigung: 'one',
+    grundreinigung: 'deep',
+    umzugsreinigung: 'move',
+    fensterreinigung: 'win',
+    bueroreinigung: 'off',
+    moebelmontage: 'asm',
+  };
+
+  const matrixRequests: ServiceRequest[] = [];
+  const matrixOffers: Offer[] = [];
+  const matrixBookings: Booking[] = [];
+  const matrixInvoices: Invoice[] = [];
+
+  let seq = 0;
+
+  MATRIX_STATUSES.forEach((status) => {
+    SERVICE_SLUGS.forEach((slug, si) => {
+      seq += 1;
+      const reference = `A-${2700 + seq}`;
+      const id = `req_m_${SHORT[slug]}_${status}`;
+
+      /* Office cleaning goes to an office, everything else to a home. Rotating
+         with the service index keeps one household from collecting the whole
+         column. */
+      const pool = slug === 'bueroreinigung' ? officeIds : homeIds;
+      const n = pool[(si + seq) % pool.length]!;
+      const property = matrixProperties.find((p) => p.id === `prp_m${n}`)!;
+
+      const openAge =
+        status === 'new' || status === 'inReview' ? (OPEN_AGES[status][si] ?? 12) : null;
+      const settledDays = SETTLED_AGES[status]?.[si] ?? 3;
+      const createdAt = openAge != null ? hours(openAge) : iso(days(now, -settledDays));
+
+      /* `new` is the only status meaning nobody has looked yet, and a draft has
+         not arrived at all — everything else was read. */
+      const openedAt =
+        status === 'draft' || status === 'new'
+          ? undefined
+          : openAge != null
+            ? hours(openAge - 1)
+            : iso(days(now, -settledDays));
+
+      const settled = !['draft', 'new', 'inReview'].includes(status);
+
+      const request: ServiceRequest = {
+        id,
+        reference,
+        customerId: `cus_m${n}`,
+        propertyId: property.id,
+        serviceSlug: slug,
+        /* Add-ons only where they apply to the service, so the pricing engine
+           is never handed a window clean on a furniture job. */
+        addOnIds: SEED_ADDONS.filter(
+          (a) => a.active && a.services.includes(slug) && a.slug === 'backofen',
+        ).map((a) => a.id),
+        windowCount: slug === 'fensterreinigung' ? 6 + si * 3 : undefined,
+        furniturePieces: slug === 'moebelmontage' ? 2 + si : undefined,
+        preferred:
+          si % 3 === 0
+            ? { flexible: true }
+            : {
+                date: iso(days(now, 5 + si)),
+                band: si % 3 === 1 ? 'morning' : 'afternoon',
+                flexible: false,
+              },
+        photoIds: [],
+        customerNote: status === 'draft' ? undefined : SERVICE_NOTES[slug],
+        internalNote:
+          status === 'draft'
+            ? 'Angerufen, Angaben noch unvollständig. Rückruf zugesagt.'
+            : status === 'rejected'
+              ? 'Abgelehnt: passt nicht in die Route.'
+              : status === 'cancelledByCustomer'
+                ? 'Zurückgezogen durch den Kunden.'
+                : status === 'cancelledByCompany'
+                  ? 'Storniert durch uns.'
+                  : undefined,
+        status,
+        outOfArea: property.postcode === '8004',
+        createdAt,
+        openedAt,
+        respondedAt: settled ? iso(days(now, -Math.max(1, settledDays - 1))) : undefined,
+        /* Regular cleaning is the plan service, so that is where an intent
+           belongs — it drives the "plan wanted" value in the type column. */
+        subscriptionIntent: slug === 'unterhaltsreinigung' ? 'basic' : undefined,
+      };
+      matrixRequests.push(request);
+
+      /* --- the lifecycle the status implies, and nothing beyond it --- */
+
+      const offerStatus = OFFER_FOR[status];
+      /* Cancelled requests only carry a quote for half the services: some calls
+         are called off before anything went out, and pretending every one had
+         a quote would overstate how far they got. */
+      const cancelledWithOffer =
+        (status === 'cancelledByCustomer' || status === 'cancelledByCompany') && si % 2 === 0;
+
+      if (offerStatus && (IMPLIES_SENT_OFFER.includes(status) || cancelledWithOffer)) {
+        matrixOffers.push(
+          makeOffer(`off_m_${SHORT[slug]}_${status}`, request, property, now, {
+            issuedDaysAgo: Math.max(1, settledDays - 1),
+            validDays: SEED_SETTINGS.offerValidityDays,
+            status: offerStatus,
+            reference: `O-${reference.replace('A-', '')}-1`,
+          }),
+        );
+      }
+
+      /* A quote being written right now: `inReview` plus an unsent draft. Only
+         a couple, and only as a draft — an unsent offer has reached nobody, so
+         the lifecycle rail must still show "Offerte versendet" as pending. */
+      if (status === 'inReview' && si < 2) {
+        matrixOffers.push(
+          makeOffer(`off_m_${SHORT[slug]}_draft`, request, property, now, {
+            issuedDaysAgo: 0,
+            validDays: SEED_SETTINGS.offerValidityDays,
+            status: 'draft',
+            reference: `O-${reference.replace('A-', '')}-1`,
+          }),
+        );
+      }
+
+      /* Accepted means signed and paid, so there is a job. Statuses rotate
+         across the booking lifecycle rather than all landing on `scheduled`. */
+      if (status === 'accepted') {
+        const BOOKING_ARC: Booking['status'][] = [
+          'scheduled',
+          'rescheduled',
+          'inProgress',
+          'awaitingApproval',
+          'completed',
+          'invoiced',
+          'closed',
+        ];
+        const bookingStatus = BOOKING_ARC[si]!;
+        const future = bookingStatus === 'scheduled' || bookingStatus === 'rescheduled';
+        const start = future ? at(days(now, 2 + si), 9) : at(days(now, -(si + 2)), 9);
+        const bookingId = `bkg_m_${SHORT[slug]}`;
+
+        matrixBookings.push({
+          id: bookingId,
+          reference: `B-12${String(si + 10).padStart(2, '0')}`,
+          customerId: request.customerId,
+          propertyId: property.id,
+          serviceSlug: slug,
+          start: iso(start),
+          duration: 180 + si * 30,
+          arrivalWindow: 60,
+          assigneeId: 'tm_owner',
+          status: bookingStatus,
+          photoIds: [],
+          checkInAt: future ? undefined : iso(at(start, 9, 5)),
+          checkOutAt:
+            future || bookingStatus === 'inProgress' ? undefined : iso(at(start, 13, 30)),
+          history: [
+            { at: iso(days(now, -settledDays)), kind: 'created', label: 'Gebucht' },
+            ...(bookingStatus === 'awaitingApproval'
+              ? [
+                  {
+                    at: iso(at(start, 13, 30)),
+                    kind: 'checkOut',
+                    label: 'Ausgecheckt · +1 Std. gemeldet',
+                  },
+                ]
+              : []),
+          ],
+        });
+
+        /* Only the two states that mean money has been billed. A `completed`
+           job is billable and deliberately has no invoice yet — that is the
+           row the invoice screen's create action exists for. */
+        if (bookingStatus === 'invoiced' || bookingStatus === 'closed') {
+          matrixInvoices.push({
+            id: `inv_m_${SHORT[slug]}`,
+            reference: `RE-2026-01${String(si + 10).padStart(2, '0')}`,
+            customerId: request.customerId,
+            bookingId,
+            lines: [{ label: 'Reinigung', quantity: 3 + si, unitPrice: SEED_SETTINGS.hourlyRate }],
+            status: bookingStatus === 'closed' ? 'paid' : 'sent',
+            issuedAt: iso(days(now, -(si + 1))),
+            dueAt: iso(days(now, 29 - si)),
+            paidAt: bookingStatus === 'closed' ? iso(days(now, -si)) : undefined,
+            qrReference: `21 00000 00003 13947 14300 09${String(200 + seq)}`,
+          });
+        }
+      }
+    });
+  });
 
   const find = (id: string) => requests.find((r) => r.id === id)!;
   const prop = (id: string) => properties.find((p) => p.id === id)!;
@@ -1629,11 +2020,14 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     ...data,
     customers,
     properties,
-    requests: [...requests, ...data.requests],
-    offers,
-    bookings,
+    /* Matrix first: it is status-major, so an unfiltered table opens on the
+       lifecycle in order rather than on whatever arrived last. The queue's own
+       overdue-first sort still overrides this for the rows that are late. */
+    requests: [...matrixRequests, ...requests, ...data.requests],
+    offers: [...matrixOffers, ...offers],
+    bookings: [...matrixBookings, ...bookings],
     subscriptions,
-    invoices,
+    invoices: [...matrixInvoices, ...invoices],
     reviews,
     keyLog,
     messages,
