@@ -10,11 +10,14 @@ import { routing } from '@/i18n/routing';
 import { fontVariables } from '@/app/fonts';
 import {
   DEFAULT_DENSITY,
+  DEFAULT_SIDEBAR,
   DEFAULT_THEME,
   DENSITY_COOKIE,
+  SIDEBAR_COOKIE,
   STRESS_COOKIE,
   THEME_COOKIE,
   isDensity,
+  isSidebar,
   isTheme,
 } from '@/lib/theme';
 import { DemoBar } from '@/components/demo/demo-bar';
@@ -61,6 +64,8 @@ export default async function LocaleLayout({
   const stress = cookieStore.get(STRESS_COOKIE)?.value === 'on' ? 'on' : 'off';
   const densityCookie = cookieStore.get(DENSITY_COOKIE)?.value;
   const density = isDensity(densityCookie) ? densityCookie : DEFAULT_DENSITY;
+  const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE)?.value;
+  const sidebar = isSidebar(sidebarCookie) ? sidebarCookie : DEFAULT_SIDEBAR;
 
   return (
     <html
@@ -68,6 +73,7 @@ export default async function LocaleLayout({
       data-theme={theme}
       data-stress={stress}
       data-density={density}
+      data-sidebar={sidebar}
       className={fontVariables}
       suppressHydrationWarning
     >

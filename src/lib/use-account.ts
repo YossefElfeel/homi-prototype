@@ -15,7 +15,18 @@ export function useAccount() {
 
   const properties = data.properties.filter((p) => p.customerId === customerId);
   const propertyIds = new Set(properties.map((p) => p.id));
-  const requests = data.requests.filter((r) => r.customerId === customerId);
+  /*
+   * Drafts are the office's, not the customer's.
+   *
+   * A draft is a half-taken phone call — the address heard wrong, the service
+   * not settled, the note still saying "sounded eilig". It carries the
+   * customer's id from the moment it is saved, so without this filter it would
+   * surface in their own account as a request they never made, and screen 37
+   * would promise them a quote within 24 hours for it.
+   */
+  const requests = data.requests.filter(
+    (r) => r.customerId === customerId && r.status !== 'draft',
+  );
   const requestIds = new Set(requests.map((r) => r.id));
   const bookings = data.bookings.filter((b) => b.customerId === customerId);
   const bookingIds = new Set(bookings.map((b) => b.id));

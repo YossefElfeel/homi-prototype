@@ -207,9 +207,22 @@ interface StoreState {
       customerNote?: string;
       internalNote?: string;
       subscriptionIntent?: PlanTier | null;
+      /**
+       * A call that ended before the answers did. `RequestStatus` has carried
+       * `draft` since the first wave — labelled, coloured, and written by
+       * nothing, so a half-taken call had to be either invented in full or
+       * thrown away.
+       */
+      asDraft?: boolean;
     },
     now: Date,
   ) => { id: ID; reference: string; outOfArea: boolean };
+  /** Edits a request in place. Only ever used while it is still a draft. */
+  updateRequest: (id: ID, patch: Partial<ServiceRequest>) => void;
+  /** Draft → a real request in the queue. */
+  submitRequestDraft: (id: ID, now: Date) => void;
+  /** Discards a draft outright. Refuses anything further along. */
+  discardRequestDraft: (id: ID) => void;
 
   /* ---- ending a request or a quote ----
      RequestStatus declared `cancelledByCustomer` and `cancelledByCompany`, the
@@ -671,10 +684,12 @@ export const useStore = create<StoreState>()(
            * response-time counter on screen 52 flag a request that was in fact
            * answered the moment it arrived.
            */
-          status: 'inReview',
+          status: input.asDraft ? 'draft' : 'inReview',
           outOfArea,
           createdAt: now.toISOString(),
-          openedAt: now.toISOString(),
+          /* A draft has not been opened, because it has not arrived. Stamping
+             it would start the response clock against a note to self. */
+          openedAt: input.asDraft ? undefined : now.toISOString(),
           subscriptionIntent: input.subscriptionIntent ?? undefined,
         };
 
@@ -682,10 +697,62 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'request',
           entityId: id,
-          summary: `Anfrage telefonisch erfasst: ${reference}`,
+          summary: input.asDraft
+            ? `Anfrage als Entwurf gespeichert: ${reference}`
+            : `Anfrage telefonisch erfasst: ${reference}`,
         });
         return { id, reference, outOfArea };
       },
+
+      updateRequest: (id, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            requests: s.data.requests.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+          },
+        })),
+
+      submitRequestDraft: (id, now) => {
+        const s = get();
+        const request = s.data.requests.find((r) => r.id === id);
+        if (!request || request.status !== 'draft') return;
+
+        set({
+          data: {
+            ...s.data,
+            requests: s.data.requests.map((r) =>
+              r.id !== id
+                ? r
+                : {
+                    ...r,
+                    status: 'inReview' as const,
+                    /* The clock starts here, not when the draft was opened.
+                       Dating it from the draft would show a request that
+                       breached the response window before anyone saw it. */
+                    createdAt: now.toISOString(),
+                    openedAt: now.toISOString(),
+                  },
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'request',
+          entityId: id,
+          summary: `Entwurf zur Anfrage gemacht: ${request.reference}`,
+        });
+      },
+
+      discardRequestDraft: (id) =>
+        set((s) => {
+          const request = s.data.requests.find((r) => r.id === id);
+          /* Guarded rather than trusted: this deletes outright, and the only
+             thing that makes that safe is that a draft has no quote, no
+             booking and no invoice hanging off it. */
+          if (!request || request.status !== 'draft') return {};
+          return {
+            data: { ...s.data, requests: s.data.requests.filter((r) => r.id !== id) },
+          };
+        }),
 
       /* -------------------------------------- ending a request or quote ---- */
 

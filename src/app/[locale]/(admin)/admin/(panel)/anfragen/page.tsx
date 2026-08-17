@@ -2,35 +2,72 @@
 
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { AlertTriangle, Plus, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import { useFormatter } from '@/i18n/format';
+import {
+  AlertTriangle,
+  Eye,
+  FileText,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Select } from '@/components/ui/field';
+import { Input, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { statesOf } from '@/lib/status-registry';
-import { elapsed, hoursSince } from '@/lib/elapsed';
+import { deadlineFor, elapsed, overdueDays } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceRequest } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
 const PER_PAGE = 25;
 
-/** Screen 52 — filters by status, area and free text, per §17.2. */
+/** Statuses still waiting on us, and so the only ones that can breach §4.1. */
+const OPEN_STATES: readonly string[] = ['new', 'inReview'];
+
+/**
+ * Screen 52 — the queue.
+ *
+ * A list of requests sorted by arrival is a log, not a queue. What makes it a
+ * queue is knowing which one is late: §4.1 promises an answer inside a stated
+ * window, so every open request has a deadline and the ones past it are the
+ * work. Both are derived from `settings.responseTimeHours` rather than stored,
+ * which means changing the promise re-prioritises the whole list instead of
+ * only what arrives after the change.
+ *
+ * The filters are the five questions actually asked of this screen — status,
+ * service, area, date range, and "what is late" — and each narrows the count in
+ * the toolbar, so a filter that matched nothing reads as a filter rather than
+ * as a broken screen.
+ */
 export default function RequestsPage() {
   const t = useTranslations('admin.requests');
   const appT = useTranslations('app');
   const statusLabel = useTranslations('status.request');
   const locale = useLocale() as Locale;
+  const format = useFormatter();
   const router = useRouter();
   const now = useNow();
   const hydrated = useHydrated();
@@ -38,41 +75,125 @@ export default function RequestsPage() {
   const requests = useStore((s) => s.data.requests);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const offers = useStore((s) => s.data.offers);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
+  const discardRequestDraft = useStore((s) => s.discardRequestDraft);
 
   const [status, setStatus] = useState('all');
+  const [service, setService] = useState('all');
   const [region, setRegion] = useState('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
 
+  const customerOf = (id: string) => customers.find((c) => c.id === id);
   const nameOf = (id: string) => {
-    const c = customers.find((x) => x.id === id);
+    const c = customerOf(id);
     return c ? `${c.firstName} ${c.lastName}` : '—';
   };
   const propertyOf = (id: string) => properties.find((p) => p.id === id);
 
+  /** Whole days past the promise. 0 for anything already answered or drafted. */
+  const lateDays = (r: ServiceRequest) =>
+    OPEN_STATES.includes(r.status)
+      ? overdueDays(r.createdAt, settings.responseTimeHours, now)
+      : 0;
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    /* <input type="date"> gives YYYY-MM-DD and createdAt is a full ISO string;
+       comparing the first ten characters keeps the range on calendar days
+       rather than drifting by a timezone offset. */
+    const fromKey = from || null;
+    const toKey = to || null;
+
     return requests
       .filter((r) => (status === 'all' ? true : r.status === status))
+      .filter((r) => (service === 'all' ? true : r.serviceSlug === service))
       .filter((r) =>
         region === 'all' ? true : propertyOf(r.propertyId)?.postcode === region,
       )
-      .filter((r) =>
-        q
-          ? r.reference.toLowerCase().includes(q) ||
-            nameOf(r.customerId).toLowerCase().includes(q)
-          : true,
-      )
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .filter((r) => (fromKey ? r.createdAt.slice(0, 10) >= fromKey : true))
+      .filter((r) => (toKey ? r.createdAt.slice(0, 10) <= toKey : true))
+      .filter((r) => (overdueOnly ? lateDays(r) > 0 : true))
+      .filter((r) => {
+        if (!q) return true;
+        const c = customerOf(r.customerId);
+        return (
+          r.reference.toLowerCase().includes(q) ||
+          nameOf(r.customerId).toLowerCase().includes(q) ||
+          (c?.email ?? '').toLowerCase().includes(q) ||
+          (c?.phone ?? '').includes(q)
+        );
+      })
+      .sort((a, b) => {
+        /* Late first, most overdue at the top — the list opens on the work.
+           Ties keep the newest-first order the screen had before. */
+        const diff = lateDays(b) - lateDays(a);
+        return diff !== 0 ? diff : b.createdAt.localeCompare(a.createdAt);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requests, customers, properties, status, region, query]);
+  }, [
+    requests,
+    customers,
+    properties,
+    status,
+    service,
+    region,
+    from,
+    to,
+    overdueOnly,
+    query,
+    settings.responseTimeHours,
+    now,
+  ]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const view = paginate(filtered, page, PER_PAGE);
-  const filtering = Boolean(query) || status !== 'all' || region !== 'all';
+  const filtering =
+    Boolean(query) ||
+    status !== 'all' ||
+    service !== 'all' ||
+    region !== 'all' ||
+    Boolean(from) ||
+    Boolean(to) ||
+    overdueOnly;
+
+  const overdueTotal = requests.filter((r) => lateDays(r) > 0).length;
+
+  /** One-off, plan wanted, or already on a plan — §3 prices these apart. */
+  const kindOf = (r: ServiceRequest) => {
+    if (r.status === 'draft') return { label: t('kindDraft'), tone: 'neutral' as const };
+    if (r.subscriptionIntent) return { label: t('kindRecurring'), tone: 'accent' as const };
+    if (subscriptions.some((s) => s.customerId === r.customerId && s.status === 'active'))
+      return { label: t('kindSubscriber'), tone: 'accent' as const };
+    return { label: t('kindOneOff'), tone: 'quiet' as const };
+  };
+
+  function reset() {
+    setStatus('all');
+    setService('all');
+    setRegion('all');
+    setFrom('');
+    setTo('');
+    setOverdueOnly(false);
+    setQuery('');
+    setPage(1);
+  }
+
+  const addButton = (
+    <Button asChild>
+      <Link href="/admin/anfragen/neu">
+        <Plus className="size-4" aria-hidden />
+        {t('addAction')}
+      </Link>
+    </Button>
+  );
 
   const columns: Column<ServiceRequest>[] = [
     {
@@ -109,13 +230,67 @@ export default function RequestsPage() {
       ),
     },
     {
+      /* The office rings back far more often than it writes. Having the number
+         in the row is the difference between one click and three — and the
+         links stop propagation so tapping a number does not also open the row. */
+      key: 'contact',
+      header: t('colContact'),
+      tableOnly: true,
+      sortBy: (r) => customerOf(r.customerId)?.email ?? '',
+      cell: (r) => {
+        const c = customerOf(r.customerId);
+        if (!c) return <span className="text-ink-tertiary">—</span>;
+        return (
+          <span className="block max-w-52 text-sm">
+            <a
+              href={`tel:${c.phone.replace(/\s/g, '')}`}
+              data-numeric
+              className="block text-ink-secondary underline-offset-4 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {c.phone}
+            </a>
+            <a
+              href={`mailto:${c.email}`}
+              className="block truncate text-ink-tertiary underline-offset-4 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {c.email}
+            </a>
+          </span>
+        );
+      },
+    },
+    {
       key: 'service',
       header: t('colService'),
+      sortBy: (r) => r.serviceSlug,
       cell: (r) => services.find((s) => s.slug === r.serviceSlug)?.name[locale] ?? '—',
+    },
+    {
+      key: 'kind',
+      header: t('colKind'),
+      sortBy: (r) => kindOf(r).label,
+      cell: (r) => {
+        const kind = kindOf(r);
+        return (
+          <span
+            className={cn(
+              'text-sm',
+              kind.tone === 'accent' && 'text-ink-accent',
+              kind.tone === 'quiet' && 'text-ink-secondary',
+              kind.tone === 'neutral' && 'text-ink-tertiary',
+            )}
+          >
+            {kind.label}
+          </span>
+        );
+      },
     },
     {
       key: 'region',
       header: t('colRegion'),
+      tableOnly: true,
       sortBy: (r) => propertyOf(r.propertyId)?.city ?? '',
       cell: (r) => propertyOf(r.propertyId)?.city ?? '—',
     },
@@ -124,42 +299,53 @@ export default function RequestsPage() {
       header: t('colReceived'),
       align: 'end',
       sortBy: (r) => r.createdAt,
+      cell: (r) => (
+        <span data-numeric className="text-sm text-ink-tertiary">
+          {elapsed(r.createdAt, now, locale)}
+        </span>
+      ),
+    },
+    {
+      key: 'deadline',
+      header: t('colDeadline'),
+      align: 'end',
+      /* Sorts by lateness rather than by date: the column exists to answer
+         "which one next", and two requests can share a deadline. */
+      sortBy: (r) => lateDays(r),
       cell: (r) => {
-        const late =
-          (r.status === 'new' || r.status === 'inReview') &&
-          hoursSince(r.createdAt, now) > settings.responseTimeHours;
+        if (!OPEN_STATES.includes(r.status)) {
+          return <span className="text-sm text-ink-tertiary">{t('noDeadline')}</span>;
+        }
+        const days = lateDays(r);
+        const due = deadlineFor(r.createdAt, settings.responseTimeHours);
+        if (days > 0) {
+          return (
+            <span
+              data-numeric
+              className="text-sm font-medium text-status-danger-fg"
+              title={t('dueIn', { date: format.dateTime(due, 'short') })}
+            >
+              {t('overdueBy', { days })}
+            </span>
+          );
+        }
+        const sameDay = due.toDateString() === now.toDateString();
         return (
           <span
             data-numeric
-            className={cn(
-              'text-sm',
-              late ? 'font-medium text-status-danger-fg' : 'text-ink-tertiary',
-            )}
+            className={cn('text-sm', sameDay ? 'text-status-warning-fg' : 'text-ink-tertiary')}
           >
-            {elapsed(r.createdAt, now, locale)}
+            {sameDay ? t('dueToday') : t('dueIn', { date: format.dateTime(due, 'short') })}
           </span>
         );
       },
     },
   ];
 
-  const addButton = (
-    <Button asChild>
-      <Link href="/admin/anfragen/neu">
-        <Plus className="size-4" aria-hidden />
-        {t('addAction')}
-      </Link>
-    </Button>
-  );
-
   return (
     <div className="mx-auto max-w-[100rem]">
       <PageHeader title={t('title')} actions={addButton} />
 
-      {/*
-        The filters used to sit bare on the page background with no result
-        count, so "did that filter do anything" was answered by counting rows.
-      */}
       <Toolbar
         search={{
           value: query,
@@ -171,13 +357,22 @@ export default function RequestsPage() {
           clearLabel: appT('clearSearch'),
         }}
         count={
-          filtering
-            ? appT('results', { shown: filtered.length, total: requests.length })
-            : appT('resultsAll', { total: requests.length })
+          <>
+            {filtering
+              ? appT('results', { shown: filtered.length, total: requests.length })
+              : appT('resultsAll', { total: requests.length })}
+            {/* The overdue count stays visible whatever the filter says — it is
+                the one number this screen exists to keep at zero. */}
+            {overdueTotal > 0 && (
+              <span className="ms-3 font-medium text-status-danger-fg">
+                {t('overdueCount', { n: overdueTotal })}
+              </span>
+            )}
+          </>
         }
         filters={
           <>
-            <label className="min-w-40">
+            <label className="min-w-36">
               <span className="sr-only">{t('filterStatus')}</span>
               <Select
                 dense
@@ -200,7 +395,28 @@ export default function RequestsPage() {
               </Select>
             </label>
 
-            <label className="min-w-40">
+            <label className="min-w-36">
+              <span className="sr-only">{t('filterService')}</span>
+              <Select
+                dense
+                value={service}
+                onChange={(e) => {
+                  setService(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="all">
+                  {t('filterService')}: {t('filterAll')}
+                </option>
+                {services.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name[locale]}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="min-w-36">
               <span className="sr-only">{t('filterRegion')}</span>
               <Select
                 dense
@@ -220,6 +436,55 @@ export default function RequestsPage() {
                 ))}
               </Select>
             </label>
+
+            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
+              <span className="text-ink-tertiary">{t('filterFrom')}</span>
+              <Input
+                dense
+                type="date"
+                value={from}
+                max={to || undefined}
+                className="w-auto"
+                onChange={(e) => {
+                  setFrom(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
+              <span className="text-ink-tertiary">{t('filterTo')}</span>
+              <Input
+                dense
+                type="date"
+                value={to}
+                min={from || undefined}
+                className="w-auto"
+                onChange={(e) => {
+                  setTo(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </label>
+
+            <Button
+              size="sm"
+              variant={overdueOnly ? 'quiet' : 'ghost'}
+              aria-pressed={overdueOnly}
+              onClick={() => {
+                setOverdueOnly((v) => !v);
+                setPage(1);
+              }}
+            >
+              <AlertTriangle className="size-3.5" aria-hidden />
+              {t('filterOverdue')}
+            </Button>
+
+            {filtering && (
+              <Button size="sm" variant="ghost" onClick={reset}>
+                <X className="size-3.5" aria-hidden />
+                {t('filterReset')}
+              </Button>
+            )}
           </>
         }
       />
@@ -228,21 +493,108 @@ export default function RequestsPage() {
         items={view.slice}
         columns={columns}
         getKey={(r) => r.id}
-        onSelect={(r) => router.push(`/admin/anfragen/${r.id}`)}
+        onSelect={(r) =>
+          /* A draft opens where it was left, not on a detail screen that would
+             show a half-filled record as if it were a real request. */
+          router.push(
+            r.status === 'draft'
+              ? `/admin/anfragen/neu?draft=${r.id}`
+              : `/admin/anfragen/${r.id}`,
+          )
+        }
         caption={t('title')}
+        rowActions={(r) => {
+          const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
+          const answerable = r.status === 'new' || r.status === 'inReview';
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={t('rowActions')}
+                className="inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              >
+                <MoreHorizontal className="size-4" aria-hidden />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {r.status === 'draft' ? (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/anfragen/neu?draft=${r.id}`}>
+                        <Pencil aria-hidden />
+                        {t('rowContinue')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      tone="danger"
+                      onSelect={() => {
+                        /* A draft has no quote, booking or invoice hanging off
+                           it, which is the only reason a straight delete is
+                           safe here. The store guards the same rule. */
+                        if (!window.confirm(t('rowDiscardConfirm'))) return;
+                        discardRequestDraft(r.id);
+                        toast.success(t('rowDiscardDone'));
+                      }}
+                    >
+                      <Trash2 aria-hidden />
+                      {t('rowDiscard')}
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/anfragen/${r.id}`}>
+                        <Eye aria-hidden />
+                        {t('rowOpen')}
+                      </Link>
+                    </DropdownMenuItem>
+                    {answerable && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/anfragen/${r.id}/offerte`}>
+                          <FileText aria-hidden />
+                          {t('rowQuote')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {offer && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/offerten/${offer.id}`}>
+                          <FileText aria-hidden />
+                          {t('rowOffer')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {answerable && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild tone="danger">
+                          <Link href={`/admin/anfragen/${r.id}/ablehnen`}>
+                            <X aria-hidden />
+                            {t('rowReject')}
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }}
         empty={
           filtering ? (
             <EmptyState
               icon={Search}
               title={t('searchEmptyTitle')}
               body={t('searchEmptyBody', { query: query || '—' })}
+              action={
+                <Button variant="secondary" onClick={reset}>
+                  {t('filterReset')}
+                </Button>
+              }
             />
           ) : (
-            <EmptyState
-              title={t('emptyTitle')}
-              body={t('emptyBody')}
-              action={addButton}
-            />
+            <EmptyState title={t('emptyTitle')} body={t('emptyBody')} action={addButton} />
           )
         }
       />

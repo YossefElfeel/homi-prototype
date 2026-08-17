@@ -11,6 +11,8 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { Field, Textarea } from '@/components/ui/field';
+import { Lifecycle } from '@/components/ui/lifecycle';
+import { requestStages } from '@/lib/request-lifecycle';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -119,6 +121,32 @@ export default function AccountRequestPage({
           </div>
         </div>
       )}
+
+      {/* `timelineTitle` had been defined in all four locales since wave 8 and
+          rendered by nothing. Same stages as the panel, from the same
+          derivation — two answers to "where is this?" would be worse than the
+          none the customer had. */}
+      <section className="mt-10">
+        <h2 className="label-type text-ink-tertiary">{t('timelineTitle')}</h2>
+        <Lifecycle
+          className="mt-4"
+          label={t('timelineTitle')}
+          stages={requestStages(
+            request,
+            offer,
+            {
+              received: t('stageReceived'),
+              reviewed: t('stageReviewed'),
+              quoted: t('stageQuoted'),
+              accepted: t('stageAccepted'),
+              declined: t('stageDeclined'),
+              cancelled: t('stageCancelled'),
+              settled: t('stageSettled'),
+            },
+            (iso) => format.dateTime(new Date(iso), 'full'),
+          )}
+        />
+      </section>
 
       <div className="mt-10 grid gap-8 sm:grid-cols-2">
         <section>

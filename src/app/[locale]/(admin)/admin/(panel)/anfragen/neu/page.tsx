@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
-import { AlertTriangle, Building2, Check, Home, Plus, Store } from 'lucide-react';
+import { AlertTriangle, Building2, Check, Home, Plus, Store, Trash2 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -16,6 +17,7 @@ import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field'
 import { MoneyRange } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { computeEstimate } from '@/components/booking/use-estimate';
 import { addDays, dayBlockReason, startOfDay } from '@/mock/engines/availability';
 import { checkCoverage } from '@/mock/engines/coverage';
@@ -97,6 +99,7 @@ export default function NewRequestPage() {
 
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
+  const requests = useStore((s) => s.data.requests);
   const services = useStore((s) => s.services);
   const addOns = useStore((s) => s.addOns);
   const settings = useStore((s) => s.settings);
@@ -104,6 +107,13 @@ export default function NewRequestPage() {
   const closures = useStore((s) => s.data.closures);
   const createProperty = useStore((s) => s.createProperty);
   const createRequestForCustomer = useStore((s) => s.createRequestForCustomer);
+  const updateRequest = useStore((s) => s.updateRequest);
+  const submitRequestDraft = useStore((s) => s.submitRequestDraft);
+  const discardRequestDraft = useStore((s) => s.discardRequestDraft);
+
+  /** Set when the screen was opened on an existing draft (`?draft=req_…`). */
+  const draftId = useSearchParams().get('draft');
+  const draft = requests.find((r) => r.id === draftId && r.status === 'draft');
 
   const [open, setOpen] = useState<string[]>(['customer', 'property', 'service']);
 
@@ -119,6 +129,32 @@ export default function NewRequestPage() {
   const [flexible, setFlexible] = useState(false);
   const [customerNote, setCustomerNote] = useState('');
   const [internalNote, setInternalNote] = useState('');
+
+  /*
+   * Load an existing draft into the form, exactly once.
+   *
+   * Once only, and guarded by a ref rather than by comparing values: every
+   * field below is controlled, so re-running this on any later render would
+   * fight the person typing — each keystroke would be reset to what the store
+   * still holds. The draft is the starting point, not a live binding.
+   */
+  const loaded = useRef<string | null>(null);
+  useEffect(() => {
+    if (!draft || loaded.current === draft.id) return;
+    loaded.current = draft.id;
+
+    setCustomerId(draft.customerId);
+    setPropertyChoice(draft.propertyId);
+    setServiceSlug(draft.serviceSlug);
+    setAddOnIds(draft.addOnIds);
+    setWindowCount(draft.windowCount ?? null);
+    setFurniturePieces(draft.furniturePieces ?? null);
+    setFlexible(draft.preferred.flexible);
+    setDate(draft.preferred.date ?? null);
+    setBand(draft.preferred.band ?? null);
+    setCustomerNote(draft.customerNote ?? '');
+    setInternalNote(draft.internalNote ?? '');
+  }, [draft]);
 
   const customerProperties = useMemo(
     () => properties.filter((p) => p.customerId === customerId),
@@ -214,32 +250,69 @@ export default function NewRequestPage() {
 
   /* --------------------------------------------------------------- submit */
 
+  const preferred = flexible
+    ? { flexible: true }
+    : { date: date ?? undefined, band: band ?? undefined, flexible: false };
+
+  /**
+   * Turns whatever address is on screen into a real property id.
+   *
+   * A typed-in address has to become a property before anything can point at
+   * it — and the office should not have to visit another screen mid-call to
+   * make that happen. Returns null only when there is nothing to save yet,
+   * which is legal for a draft and not for a request.
+   */
+  function resolvePropertyId(): string | null {
+    if (savedProperty) return savedProperty.id;
+    if (!customerId || !property.street) return null;
+    return createProperty(
+      {
+        customerId,
+        label: property.street,
+        street: property.street,
+        postcode: property.postcode,
+        city: property.city,
+        kind: property.kind,
+        area: property.area ?? 0,
+        rooms: property.rooms ?? 0,
+        bathrooms: property.bathrooms ?? 1,
+        floor: property.floor,
+        hasElevator: property.hasElevator,
+        hasPets: property.hasPets,
+        needsExtraEffort: property.needsExtraEffort,
+      },
+      now,
+    );
+  }
+
   function save(thenQuote: boolean) {
     if (!canSave || !serviceSlug) return;
+    const propertyId = resolvePropertyId();
+    if (!propertyId) return;
 
-    /* A typed-in address becomes a real property first — the request needs an
-       id to point at, and the office should not have to create the property on
-       a separate screen before it can write down the call. */
-    const propertyId = savedProperty
-      ? savedProperty.id
-      : createProperty(
-          {
-            customerId,
-            label: property.street,
-            street: property.street,
-            postcode: property.postcode,
-            city: property.city,
-            kind: property.kind,
-            area: property.area ?? 0,
-            rooms: property.rooms ?? 0,
-            bathrooms: property.bathrooms ?? 1,
-            floor: property.floor,
-            hasElevator: property.hasElevator,
-            hasPets: property.hasPets,
-            needsExtraEffort: property.needsExtraEffort,
-          },
-          now,
-        );
+    /* Promoting an existing draft rather than creating a second record — the
+       reference the office may already have read out on the phone stays the
+       one the customer hears again. */
+    if (draft) {
+      updateRequest(draft.id, {
+        customerId,
+        propertyId,
+        serviceSlug,
+        addOnIds,
+        windowCount: windowCount ?? undefined,
+        furniturePieces: furniturePieces ?? undefined,
+        preferred,
+        customerNote: customerNote.trim() || undefined,
+        internalNote: internalNote.trim() || undefined,
+        outOfArea: coverage.state !== 'inside',
+      });
+      submitRequestDraft(draft.id, now);
+      toast.success(t('done', { reference: draft.reference }));
+      router.push(
+        thenQuote ? `/admin/anfragen/${draft.id}/offerte` : `/admin/anfragen/${draft.id}`,
+      );
+      return;
+    }
 
     const result = createRequestForCustomer(
       {
@@ -249,9 +322,7 @@ export default function NewRequestPage() {
         addOnIds,
         windowCount,
         furniturePieces,
-        preferred: flexible
-          ? { flexible: true }
-          : { date: date ?? undefined, band: band ?? undefined, flexible: false },
+        preferred,
         customerNote,
         internalNote,
       },
@@ -266,6 +337,55 @@ export default function NewRequestPage() {
     router.push(
       thenQuote ? `/admin/anfragen/${result.id}/offerte` : `/admin/anfragen/${result.id}`,
     );
+  }
+
+  /**
+   * Save without finishing.
+   *
+   * The only hard requirement is a customer — a draft has to belong to
+   * somebody to be findable again. Everything else may be missing, which is
+   * the entire point: the call ended before the answers did.
+   */
+  function saveDraft() {
+    if (!customerId) return;
+
+    if (draft) {
+      updateRequest(draft.id, {
+        customerId,
+        propertyId: resolvePropertyId() ?? draft.propertyId,
+        ...(serviceSlug ? { serviceSlug } : {}),
+        addOnIds,
+        windowCount: windowCount ?? undefined,
+        furniturePieces: furniturePieces ?? undefined,
+        preferred,
+        customerNote: customerNote.trim() || undefined,
+        internalNote: internalNote.trim() || undefined,
+      });
+      toast.success(t('draftUpdated'));
+      router.push('/admin/anfragen');
+      return;
+    }
+
+    const result = createRequestForCustomer(
+      {
+        customerId,
+        /* An empty string rather than a fabricated property: the draft has to
+           be storable before the address is known, and a placeholder record in
+           `properties` would be a real object nobody asked for. */
+        propertyId: resolvePropertyId() ?? '',
+        serviceSlug: (serviceSlug || 'unterhaltsreinigung') as ServiceSlug,
+        addOnIds,
+        windowCount,
+        furniturePieces,
+        preferred,
+        customerNote,
+        internalNote,
+        asDraft: true,
+      },
+      now,
+    );
+    toast.success(t('draftSaved', { reference: result.reference }));
+    router.push('/admin/anfragen');
   }
 
   /* -------------------------------------------------------------- summary */
@@ -290,19 +410,50 @@ export default function NewRequestPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title={t('title')}
-        lead={t('lead')}
+        title={draft ? t('draftTitle') : t('title')}
+        lead={draft ? t('draftLead') : t('lead')}
         back={{ href: '/admin/anfragen', label: t('back') }}
+        meta={
+          draft && (
+            <StatusBadge entity="request" state="draft" />
+          )
+        }
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setOpen(open.length === allValues.length ? [] : allValues)}
-          >
-            {open.length === allValues.length ? t('closeAll') : t('openAll')}
-          </Button>
+          <>
+            {draft && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (!window.confirm(t('draftDiscardConfirm'))) return;
+                  discardRequestDraft(draft.id);
+                  toast.success(t('draftDiscardDone'));
+                  router.push('/admin/anfragen');
+                }}
+              >
+                <Trash2 className="size-3.5" aria-hidden />
+                {t('draftDiscard')}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOpen(open.length === allValues.length ? [] : allValues)}
+            >
+              {open.length === allValues.length ? t('closeAll') : t('openAll')}
+            </Button>
+          </>
         }
       />
+
+      {/* A link that no longer resolves is worse than a missing one: it looks
+          like the draft was lost rather than already dealt with. */}
+      {draftId && !draft && (
+        <Card tone="warning" pad="sm" className="mb-app-section flex gap-3">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-status-warning-fg" aria-hidden />
+          <p className="text-sm">{t('draftNotFound')}</p>
+        </Card>
+      )}
 
       {customers.length === 0 ? (
         <EmptyState
@@ -936,8 +1087,16 @@ export default function NewRequestPage() {
                   disabled={!canSave}
                   onClick={() => save(false)}
                 >
-                  {t('save')}
+                  {draft ? t('draftPromote') : t('save')}
                 </Button>
+                {/* Needs only a customer, so it stays available exactly when
+                    the other two are not — which is the moment it is for. */}
+                <Button block variant="quiet" disabled={!customerId} onClick={saveDraft}>
+                  {t('saveDraft')}
+                </Button>
+                <p className="text-center text-xs text-ink-tertiary">
+                  {t('saveDraftHint')}
+                </p>
                 <Button asChild block variant="ghost">
                   <Link href="/admin/anfragen">{t('cancel')}</Link>
                 </Button>

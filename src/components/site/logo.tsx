@@ -37,17 +37,27 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({
   className,
   showMark = true,
+  showWordmark = true,
 }: {
   className?: string;
   showMark?: boolean;
+  /**
+   * Dropped on the collapsed sidebar rail, where 4rem cannot hold the
+   * wordmark. The mark alone still identifies the brand — that is what it was
+   * reduced for — and the link that carries it takes an aria-label so the
+   * destination keeps a name.
+   */
+  showWordmark?: boolean;
 }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       {showMark && <LogoMark className="size-7 shrink-0" />}
-      <span className="font-display text-xl leading-none font-bold tracking-[-0.02em]">
-        <span style={{ color: 'var(--brand-navy-700)' }}>HOMI</span>
-        <span style={{ color: 'var(--brand-red-600)' }}>VARO</span>
-      </span>
+      {showWordmark && (
+        <span className="font-display text-xl leading-none font-bold tracking-[-0.02em]">
+          <span style={{ color: 'var(--brand-navy-700)' }}>HOMI</span>
+          <span style={{ color: 'var(--brand-red-600)' }}>VARO</span>
+        </span>
+      )}
     </span>
   );
 }
