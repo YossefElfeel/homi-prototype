@@ -12,13 +12,8 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import type { PlanTier } from '@/mock/schema';
+import { PLAN_RHYTHM } from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-
-const FREQUENCY: Record<string, string> = {
-  basic: 'Alle zwei Wochen',
-  premium: 'Wöchentlich',
-  vip: 'Zweimal wöchentlich',
-};
 
 /**
  * Screen 70 — one plan.
@@ -31,6 +26,8 @@ const FREQUENCY: Record<string, string> = {
 export default function SubscriptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('admin.subscription');
+  /* The second copy of the hardcoded German `FREQUENCY` map lived here. */
+  const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const now = useNow();
   const hydrated = useHydrated();
@@ -96,7 +93,7 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
         <StatusBadge entity="subscription" state={sub.status} />
       </div>
       <p className="mt-2 text-ink-secondary">
-        <span className="capitalize">{sub.plan}</span> · {FREQUENCY[sub.plan]} ·{' '}
+        <span className="capitalize">{sub.plan}</span> · {rhythmT(PLAN_RHYTHM[sub.plan])} ·{' '}
         <Link
           href={`/admin/kunden/${customer.id}`}
           className="underline decoration-from-font underline-offset-4"
@@ -173,7 +170,7 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
                   {upcoming.map((visit) => (
                     <li key={visit.id}>
                       <Link
-                        href={`/admin/kalender/${visit.id}`}
+                        href={`/admin/buchungen/${visit.id}`}
                         className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-sunken"
                       >
                         <span data-numeric>

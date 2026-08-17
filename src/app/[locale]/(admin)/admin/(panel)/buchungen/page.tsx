@@ -39,9 +39,11 @@ import type { Booking } from '@/mock/schema';
  * still has no invoice. Every one of those was a scroll through four calendar
  * views, counting by eye.
  *
- * Rows open `/admin/kalender/[id]` rather than a detail of their own. Screen
- * 63 is already that detail and a second copy of it would drift from the first
- * the week after it shipped — this is a second *way in*, not a second screen.
+ * Screen 63 — the booking detail — moved here from `/admin/kalender/[id]`
+ * rather than being copied. A second detail would have drifted from the first
+ * the week after it shipped, and leaving it under the calendar meant its back
+ * button threw everyone who arrived from this list into a timeline view they
+ * had not come from.
  */
 export default function BookingsPage() {
   const t = useTranslations('admin.bookings');
@@ -229,7 +231,7 @@ export default function BookingsPage() {
         columns={columns}
         getKey={(b) => b.id}
         defaultSort={{ key: 'start', dir: 'desc' }}
-        onSelect={(b) => router.push(`/admin/kalender/${b.id}`)}
+        onSelect={(b) => router.push(`/admin/buchungen/${b.id}`)}
         caption={t('title')}
         openLabel={t('rowOpen')}
         empty={
@@ -276,7 +278,7 @@ export default function BookingsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link href={`/admin/kalender/${b.id}`}>
+                  <Link href={`/admin/buchungen/${b.id}`}>
                     <CalendarDays className="size-4" aria-hidden />
                     {t('rowOpen')}
                   </Link>

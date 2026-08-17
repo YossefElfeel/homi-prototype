@@ -182,7 +182,11 @@ export const adminDe = {
     templateLabel: 'Vorlage einsetzen',
     templatePlaceholder: 'Vorlage wählen …',
     templateHint:
-      'Setzt den Text in der Sprache des Kunden ein. Platzhalter in {"{"}geschweiften Klammern{"}"} bleiben stehen — bitte vor dem Senden ersetzen.',
+      /* `{"{"}` ist JSX-Escaping in einem reinen String — ICU liest die
+         Klammern als Platzhalter und wirft MALFORMED_ARGUMENT, was den
+         ganzen Bildschirm 48 beim Rendern abbrechen liess. In ICU wird eine
+         wörtliche Klammer mit einfachen Anführungszeichen geschützt. */
+      "Setzt den Text in der Sprache des Kunden ein. Platzhalter wie '{'name'}' bleiben stehen — bitte vor dem Senden ersetzen.",
     templateOverwrite: 'Der angefangene Text wird ersetzt. Fortfahren?',
     templateInserted: 'Vorlage eingesetzt.',
     replyLabel: 'Antwort',
@@ -696,7 +700,7 @@ export const adminDe = {
   },
 
   booking: {
-    back: 'Kalender',
+    back: 'Buchungen',
     title: 'Buchung',
     whenTitle: 'Termin',
     windowTitle: 'Ankunftsfenster',

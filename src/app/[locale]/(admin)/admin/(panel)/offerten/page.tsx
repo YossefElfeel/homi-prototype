@@ -266,7 +266,7 @@ export default function OffersPage() {
                 )}
                 {booking && (
                   <DropdownMenuItem asChild>
-                    <Link href={`/admin/kalender/${booking.id}`}>
+                    <Link href={`/admin/buchungen/${booking.id}`}>
                       <CalendarCheck className="size-4" aria-hidden />
                       {t('rowOpenBooking', { reference: booking.reference })}
                     </Link>

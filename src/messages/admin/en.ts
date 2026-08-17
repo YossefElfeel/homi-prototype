@@ -155,7 +155,7 @@ export const adminEn: typeof adminDe = {
     templateLabel: 'Insert a template',
     templatePlaceholder: 'Choose a template …',
     templateHint:
-      'Inserts the text in the customer’s language. Placeholders in {"{"}curly braces{"}"} stay as they are — please replace them before sending.',
+      "Inserts the text in the customer’s language. Placeholders like '{'name'}' stay as they are — please replace them before sending.",
     templateOverwrite: 'This replaces what you have started. Continue?',
     templateInserted: 'Template inserted.',
     replyLabel: 'Reply',
@@ -604,7 +604,7 @@ export const adminEn: typeof adminDe = {
   },
 
   booking: {
-    back: 'Calendar',
+    back: 'Bookings',
     title: 'Booking',
     whenTitle: 'Slot',
     windowTitle: 'Arrival window',

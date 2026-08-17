@@ -159,6 +159,26 @@ export const FLOWS: Flow[] = [
         '/admin/nachrichten',
         'Elf Vorlagen lagen in den Einstellungen, genau eine wurde je gelesen. Setzt in der Sprache des Kunden ein und lässt Platzhalter stehen',
       ),
+      added(
+        'Vorlage im Offert-Builder',
+        '/admin/anfragen/req_1/offerte',
+        'Screen 48 bekam den Vorlagen-Wähler, das Begleitschreiben nicht — dabei geht genau dieser Text mit jeder einzelnen Offerte raus',
+      ),
+      added(
+        'Drei Termine vorschlagen (Erstkunde)',
+        '/offerte/off_propose/termin',
+        'Stammkunden buchen direkt weiter — wir kennen Objekt, Zutritt und Verlauf. Beim ersten Einsatz schlägt der Kunde bis zu drei Termine vor, nichts wird dabei blockiert',
+      ),
+      added(
+        'Termin bestätigen',
+        '/admin/offerten/off_propose',
+        'Der einzige Schritt in diesem Flow, der beim Inhaber liegt. Reserviert den Slot 48 Stunden; ohne die Karte sah die Offerte aus, als läge sie beim Kunden',
+      ),
+      added(
+        'Zahlungsstand lesen',
+        '/admin/offerten',
+        'Nur lesend. Der Inhaber hat hier weder Karte einzugeben noch etwas zurückzuerstatten — die eine Auskunft, die fehlte, war ob das Geld da ist',
+      ),
     ],
     exits: [
       ok('Bezahlt und gebucht', '/offerte/off_1/bestaetigt'),
@@ -168,6 +188,16 @@ export const FLOWS: Flow[] = [
         'Offerte ablehnen',
         '/offerte/off_1',
         'Es gab nur annehmen oder ändern. Ein Nein wurde zu Schweigen und drei Wochen später zu «abgelaufen» — ohne Grund im System. Gibt die reservierte Zeit sofort frei',
+      ),
+      added(
+        'Ohne Zahlung gebucht (Paket oder Abo)',
+        '/offerte/off_pkg/zahlung',
+        '§11.3 — gekaufte Stunden werden nicht zweimal verrechnet. Vorher verlangte der Ablauf eine Karte, belastete den vollen Betrag und liess die Stunden unangetastet im Konto liegen',
+      ),
+      added(
+        'Weiter zur Buchung',
+        '/admin/offerten/off_paid',
+        'Die Verknüpfung Offerte → Buchung stand in den Daten und auf keinem Bildschirm. «Ist das gemacht worden?» begann bisher im Kalender',
       ),
     ],
   },
@@ -206,22 +236,27 @@ export const FLOWS: Flow[] = [
     actors: ['owner', 'contractor'],
     entries: [
       ok('Aus bezahlter Offerte', '/admin/kalender'),
+      added(
+        'Buchungen als Liste',
+        '/admin/buchungen',
+        'Die Buchung war die einzige grosse Entität ohne eigene Liste. Der Kalender beantwortet «was ist am Dienstag» — nicht «welche Einsätze kommen aus Offerten», nicht «welcher fertige Einsatz hat noch keine Rechnung»',
+      ),
       ok('Heutige Einsätze', '/einsatz', 'Rolle «Mitarbeitende»'),
     ],
     actions: [
-      ok('Zuweisen und verschieben', '/admin/kalender/bkg_1'),
+      ok('Zuweisen und verschieben', '/admin/buchungen/bkg_1'),
       ok('Ein- und Auschecken mit Fotos', '/einsatz/bkg_1/check'),
       ok('Zugangscodes nur am Einsatztag', '/einsatz/bkg_1', 'Demo-Uhr verschieben — der Block leert sich wirklich'),
       added(
         'Mehraufwand freigeben',
-        '/admin/kalender/bkg_1',
+        '/admin/buchungen/bkg_1',
         '§5.3 teilt den Vorgang: melden darf die ausführende Person, bewerten das Büro. Nur die erste Hälfte war gebaut — «wartet auf Freigabe» hatte keinen Ausgang und «abgeschlossen» war unerreichbar',
       ),
     ],
     exits: [
-      added('Freigegeben und verrechenbar', '/admin/kalender/bkg_1'),
+      added('Freigegeben und verrechenbar', '/admin/buchungen/bkg_1'),
       ok('Kein Zutritt, mit Wartezeit und Foto', '/einsatz/bkg_1/kein-zutritt'),
-      ok('Storniert', '/admin/kalender/bkg_1'),
+      ok('Storniert', '/admin/buchungen/bkg_1'),
       ok('Verrechnet', '/admin/rechnungen'),
     ],
   },

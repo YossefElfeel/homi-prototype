@@ -102,7 +102,7 @@ export default function RouteMapPage() {
             {stops.map((stop, i) => (
               <li key={stop.job.id}>
                 <Link
-                  href={`/admin/kalender/${stop.job.id}`}
+                  href={`/admin/buchungen/${stop.job.id}`}
                   className="flex gap-4 rounded-[var(--radius-lg)] border border-line p-4 transition-colors hover:bg-sunken"
                 >
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-medium text-on-accent">

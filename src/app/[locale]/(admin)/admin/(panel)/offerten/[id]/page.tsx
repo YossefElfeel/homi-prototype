@@ -428,7 +428,7 @@ export default function AdminOfferDetailPage({
                   {format.dateTime(new Date(booking.start), 'time')}
                 </p>
                 <Button asChild block variant="secondary" className="mt-4">
-                  <Link href={`/admin/kalender/${booking.id}`}>
+                  <Link href={`/admin/buchungen/${booking.id}`}>
                     <CalendarCheck className="size-4" aria-hidden />
                     {t('bookingOpen')}
                   </Link>

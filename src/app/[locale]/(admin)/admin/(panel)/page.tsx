@@ -258,7 +258,7 @@ export default function AdminDashboard() {
                   return (
                     <li key={job.id} className="border-b border-line-subtle last:border-0">
                       <Link
-                        href={`/admin/kalender/${job.id}`}
+                        href={`/admin/buchungen/${job.id}`}
                         className="flex gap-4 px-card py-row transition-colors hover:bg-sunken"
                       >
                         <span data-numeric className="w-24 shrink-0 text-sm">

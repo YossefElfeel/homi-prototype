@@ -149,7 +149,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <>
             {' · '}
             <Link
-              href={`/admin/kalender/${invoice.bookingId}`}
+              href={`/admin/buchungen/${invoice.bookingId}`}
               className="underline decoration-from-font underline-offset-4"
             >
               {t('bookingLink')}

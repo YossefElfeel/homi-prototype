@@ -217,7 +217,7 @@ export default function CalendarPage({
                 return (
                   <li key={job.id}>
                     <Link
-                      href={`/admin/kalender/${job.id}`}
+                      href={`/admin/buchungen/${job.id}`}
                       className="flex gap-5 py-4 transition-colors hover:bg-sunken"
                     >
                       <span data-numeric className="w-28 shrink-0">
@@ -266,7 +266,7 @@ export default function CalendarPage({
                       {jobs.map((job) => (
                         <li key={job.id}>
                           <Link
-                            href={`/admin/kalender/${job.id}`}
+                            href={`/admin/buchungen/${job.id}`}
                             className="block rounded-[var(--radius-sm)] bg-accent-subtle p-2 text-xs transition-colors hover:brightness-97"
                           >
                             <span data-numeric className="block font-medium">
@@ -370,7 +370,7 @@ export default function CalendarPage({
                   return (
                     <li key={job.id}>
                       <Link
-                        href={`/admin/kalender/${job.id}`}
+                        href={`/admin/buchungen/${job.id}`}
                         className="flex flex-wrap gap-x-5 gap-y-1 py-4 transition-colors hover:bg-sunken"
                       >
                         <span data-numeric className="w-36 shrink-0 text-sm">
