@@ -64,8 +64,14 @@ Marco Brunner`;
 /* 7: Review gained publishConsent and OfferLine gained displayLabel. A store
    persisted under 6 has reviews with no consent recorded, which the moderation
    screen would have to read as "not consented" — correct, but it would look
-   like the seed was wrong rather than stale. Re-seeding is cleaner. */
-const SCHEMA_VERSION = 7;
+   like the seed was wrong rather than stale. Re-seeding is cleaner.
+
+   8: The shape did not move this time — the data did. Every seeded customer
+   used to share one phone number, which was invisible until the request list
+   started printing it in every row. A store persisted under 7 keeps the old
+   numbers, so the column would show four identical values and look like the
+   bug this bump exists to clear. */
+const SCHEMA_VERSION = 8;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and

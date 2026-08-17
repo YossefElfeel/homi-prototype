@@ -255,6 +255,7 @@ export const en: Messages = {
       away: 'Owner away',
       conflict: 'Slot collision',
       hiring: 'Applications',
+      states: 'Every state',
     },
   },
 };

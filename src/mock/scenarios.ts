@@ -40,6 +40,17 @@ export const SCENARIOS = [
   'away',
   'conflict',
   'hiring',
+  /**
+   * Every declared state, at once.
+   *
+   * The other scenarios each stage one situation. This one stages none: it
+   * exists so that every value in every status union in `schema.ts` has a
+   * record carrying it, and so a badge, a filter option or a lifecycle branch
+   * can be *seen* rather than reasoned about. `/flows` claims two states are
+   * deliberately unreachable — this is the data set that shows the other
+   * forty-odd are not.
+   */
+  'states',
 ] as const;
 export type ScenarioName = (typeof SCENARIOS)[number];
 
@@ -132,13 +143,23 @@ function person(
   language: Locale,
   now: Date,
   daysAgo: number,
+  /**
+   * Distinct per customer.
+   *
+   * Every seeded person used to carry `+41 79 000 00 00`. That was invisible
+   * while the phone number only appeared on a detail screen — but the request
+   * list now puts it in every row, and four identical numbers down a column
+   * read as a rendering fault rather than as data. It also made the duplicate
+   * check on screen 64a fire against whichever customer happened to be first.
+   */
+  phone = '+41 79 000 00 00',
 ): Customer {
   return {
     id,
     firstName,
     lastName,
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/[^a-z]/g, '')}@example.ch`,
-    phone: '+41 79 000 00 00',
+    phone,
     language,
     loginMethod: 'magic-link',
     status: 'active',
@@ -154,10 +175,10 @@ function person(
 
 function baseData(now: Date): DataSet {
   const customers: Customer[] = [
-    person('cus_1', 'Andrea', 'Keller', 'de', now, 64),
-    person('cus_2', 'Thomas', 'Widmer', 'de', now, 31),
-    person('cus_3', 'Sophie', 'Marchand', 'fr', now, 12),
-    person('cus_4', 'James', 'Whitfield', 'en', now, 5),
+    person('cus_1', 'Andrea', 'Keller', 'de', now, 64, '+41 79 412 08 31'),
+    person('cus_2', 'Thomas', 'Widmer', 'de', now, 31, '+41 79 654 21 07'),
+    person('cus_3', 'Sophie', 'Marchand', 'fr', now, 12, '+41 78 233 96 44'),
+    person('cus_4', 'James', 'Whitfield', 'en', now, 5, '+41 76 810 55 29'),
   ];
 
   const properties: Property[] = [
@@ -943,6 +964,682 @@ function withHiring(data: DataSet, now: Date): DataSet {
   };
 }
 
+/**
+ * Every state in the model, carried by a real record.
+ *
+ * Built on top of `withHiring(baseData(…))` rather than from scratch: the
+ * applications track already stages all four `ApplicationStatus` values, and
+ * duplicating them here would give two sources for the same thing.
+ *
+ * The requests are laid out deliberately across the response window, because
+ * the queue's whole ordering now hangs off it — one inside the promise, one due
+ * today, one a day late and one five days late. Anything that reorders the list
+ * wrongly is visible on sight in this scenario.
+ */
+function withAllStates(data: DataSet, now: Date): DataSet {
+  /* Two more customers so the states below do not all pile onto the same four
+     people — a queue where every row says "Andrea Keller" hides exactly the
+     ordering mistakes this scenario exists to expose. */
+  const customers: Customer[] = [
+    ...data.customers,
+    person('cus_5', 'Livia', 'Bernasconi', 'it', now, 88, '+41 79 305 77 12'),
+    person('cus_6', 'Peter', 'Huber', 'de', now, 41, '+41 44 926 18 03'),
+    {
+      /* §15 — the customer closed their own account from screen 49. The record
+         stays because invoices hang off it; only the status moves. */
+      ...person('cus_7', 'Regula', 'Frei', 'de', now, 210, '+41 79 118 40 62'),
+      status: 'inactive',
+      internalNotes: 'Konto vom Kunden geschlossen — weggezogen, kein Objekt mehr im Gebiet.',
+    },
+  ];
+
+  const properties: Property[] = [
+    ...data.properties,
+    {
+      id: 'prp_5',
+      customerId: 'cus_5',
+      label: 'Reihenhaus',
+      street: 'Rebbergstrasse 7',
+      postcode: '8634',
+      city: 'Hombrechtikon',
+      kind: 'house',
+      area: 142,
+      rooms: 5.5,
+      bathrooms: 2,
+      floor: 0,
+      hasElevator: false,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: {
+        method: 'key-left',
+        keyLocation: 'Schlüsseltresor am Gartentor',
+        keyReturnLocation: 'Zurück in den Tresor',
+      },
+    },
+    {
+      id: 'prp_6',
+      customerId: 'cus_6',
+      /* Outside the eight municipalities on purpose — §20.1 lets the request
+         through and flags it, and the list has a chip for exactly this. */
+      label: 'Wohnung Zürich',
+      street: 'Langstrasse 140',
+      postcode: '8004',
+      city: 'Zürich',
+      kind: 'apartment',
+      area: 68,
+      rooms: 2.5,
+      bathrooms: 1,
+      floor: 4,
+      hasElevator: false,
+      hasPets: true,
+      needsExtraEffort: true,
+    },
+  ];
+
+  const hours = (n: number) => iso(new Date(now.getTime() - n * 3_600_000));
+
+  /*
+   * The ten RequestStatus values, plus the four positions relative to the
+   * response window that the deadline column has to distinguish.
+   *
+   * `responseTimeHours` is 24 in the seed, and `overdueDays` counts *whole*
+   * days past the deadline — so the ages are 24h plus the lateness, not the
+   * lateness itself. 6h is inside the promise, 20h comes due today, 50h is one
+   * full day late, 150h is five.
+   */
+  const requests: ServiceRequest[] = [
+    {
+      id: 'req_s_draft',
+      reference: 'A-2601',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'einmalreinigung',
+      addOnIds: [],
+      preferred: { flexible: false },
+      photoIds: [],
+      internalNote: 'Angerufen Dienstag, wollte Preis für Erdgeschoss. Rückruf zugesagt.',
+      /* No openedAt: a draft has not arrived, so no clock has started. The
+         deadline column has to print "—" here, not a breach. */
+      status: 'draft',
+      outOfArea: false,
+      createdAt: hours(50),
+    },
+    {
+      id: 'req_s_new',
+      reference: 'A-2602',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'fensterreinigung',
+      addOnIds: [],
+      windowCount: 14,
+      preferred: { date: iso(days(now, 6)), band: 'morning', flexible: false },
+      photoIds: [],
+      customerNote: 'Sprossenfenster, teilweise sehr hoch.',
+      status: 'new',
+      outOfArea: false,
+      createdAt: hours(6), // inside the window
+    },
+    {
+      id: 'req_s_late1',
+      reference: 'A-2603',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+      serviceSlug: 'grundreinigung',
+      addOnIds: ['add_backofen'],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Wohnung war lange vermietet, ist ziemlich mitgenommen.',
+      status: 'new',
+      outOfArea: true, // 8004 — outside the eight municipalities
+      createdAt: hours(50), // one full day late
+    },
+    {
+      id: 'req_s_late5',
+      reference: 'A-2604',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+      serviceSlug: 'moebelmontage',
+      addOnIds: [],
+      furniturePieces: 4,
+      preferred: { flexible: true },
+      photoIds: [],
+      status: 'inReview',
+      outOfArea: true,
+      createdAt: hours(150), // five days late — sorts to the top
+      openedAt: hours(149),
+    },
+    {
+      id: 'req_s_today',
+      reference: 'A-2605',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'unterhaltsreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      status: 'inReview',
+      outOfArea: false,
+      createdAt: hours(20), // comes due today
+      openedAt: hours(19),
+    },
+    {
+      id: 'req_s_offer',
+      reference: 'A-2606',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'umzugsreinigung',
+      addOnIds: ['add_schraenke'],
+      preferred: { date: iso(days(now, 11)), band: 'midday', flexible: false },
+      photoIds: [],
+      status: 'offerSent',
+      outOfArea: false,
+      createdAt: iso(days(now, -3)),
+      openedAt: iso(days(now, -3)),
+      respondedAt: iso(days(now, -3)),
+      subscriptionIntent: 'basic', // "plan wanted" in the type column
+    },
+    {
+      id: 'req_s_revision',
+      reference: 'A-2607',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      addOnIds: ['add_fenster'],
+      preferred: { date: iso(days(now, 8)), band: 'afternoon', flexible: false },
+      photoIds: [],
+      customerNote: 'Können Sie die Fenster rausrechnen? Der Rest passt.',
+      status: 'revisionRequested',
+      outOfArea: false,
+      createdAt: iso(days(now, -5)),
+      openedAt: iso(days(now, -5)),
+      respondedAt: iso(days(now, -4)),
+    },
+    {
+      id: 'req_s_accepted',
+      reference: 'A-2608',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'einmalreinigung',
+      addOnIds: [],
+      preferred: { date: iso(days(now, -6)), band: 'morning', flexible: false },
+      photoIds: [],
+      status: 'accepted',
+      outOfArea: false,
+      createdAt: iso(days(now, -12)),
+      openedAt: iso(days(now, -12)),
+      respondedAt: iso(days(now, -11)),
+    },
+    {
+      id: 'req_s_rejected',
+      reference: 'A-2609',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+      serviceSlug: 'bueroreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      internalNote: 'Abgelehnt: ausserhalb Gebiet und Anfahrt trägt sich nicht.',
+      status: 'rejected',
+      outOfArea: true,
+      createdAt: iso(days(now, -9)),
+      openedAt: iso(days(now, -9)),
+      respondedAt: iso(days(now, -8)),
+    },
+    {
+      id: 'req_s_expired',
+      reference: 'A-2610',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'fensterreinigung',
+      addOnIds: [],
+      windowCount: 8,
+      preferred: { flexible: true },
+      photoIds: [],
+      status: 'expired',
+      outOfArea: false,
+      createdAt: iso(days(now, -40)),
+      openedAt: iso(days(now, -40)),
+      respondedAt: iso(days(now, -39)),
+    },
+    {
+      id: 'req_s_cancelcus',
+      reference: 'A-2611',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'einmalreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      internalNote: 'Zurückgezogen durch den Kunden: anders gelöst.',
+      status: 'cancelledByCustomer',
+      outOfArea: false,
+      createdAt: iso(days(now, -7)),
+      openedAt: iso(days(now, -7)),
+      respondedAt: iso(days(now, -6)),
+    },
+    {
+      id: 'req_s_cancelco',
+      reference: 'A-2612',
+      customerId: 'cus_3',
+      propertyId: 'prp_3',
+      serviceSlug: 'umzugsreinigung',
+      addOnIds: [],
+      preferred: { date: iso(days(now, 3)), band: 'morning', flexible: false },
+      photoIds: [],
+      internalNote: 'Storniert durch uns: Objekt verkauft, Übergabe abgesagt.',
+      status: 'cancelledByCompany',
+      outOfArea: false,
+      createdAt: iso(days(now, -10)),
+      openedAt: iso(days(now, -10)),
+      respondedAt: iso(days(now, -2)),
+    },
+  ];
+
+  const find = (id: string) => requests.find((r) => r.id === id)!;
+  const prop = (id: string) => properties.find((p) => p.id === id)!;
+
+  /* All six OfferStatus values. The draft one has no `issuedAt`, which is what
+     keeps the lifecycle rail honest: an unsent draft has not reached anybody,
+     so the "Offerte versendet" stage must stay pending. */
+  const offers: Offer[] = [
+    ...data.offers,
+    makeOffer('off_s_draft', find('req_s_today'), prop('prp_1'), now, {
+      issuedDaysAgo: 0,
+      validDays: 14,
+      status: 'draft',
+      reference: 'O-2605-1',
+    }),
+    makeOffer('off_s_sent', find('req_s_offer'), prop('prp_5'), now, {
+      issuedDaysAgo: 3,
+      validDays: 14,
+      reference: 'O-2606-1',
+    }),
+    makeOffer('off_s_revision', find('req_s_revision'), prop('prp_2'), now, {
+      issuedDaysAgo: 4,
+      validDays: 14,
+      status: 'revisionRequested',
+      reference: 'O-2607-1',
+    }),
+    makeOffer('off_s_accepted', find('req_s_accepted'), prop('prp_1'), now, {
+      issuedDaysAgo: 11,
+      validDays: 14,
+      status: 'accepted',
+      reference: 'O-2608-1',
+    }),
+    makeOffer('off_s_rejected', find('req_s_rejected'), prop('prp_6'), now, {
+      issuedDaysAgo: 8,
+      validDays: 14,
+      status: 'rejected',
+      reference: 'O-2609-1',
+    }),
+    makeOffer('off_s_expired', find('req_s_expired'), prop('prp_5'), now, {
+      issuedDaysAgo: 39,
+      validDays: 14,
+      status: 'expired',
+      reference: 'O-2610-1',
+    }),
+  ];
+
+  /* All nine BookingStatus values. `awaitingApproval` is the one worth staging
+     with a reported-hours note in its history — it is the state the approval
+     action on screen 63 exists for, and without the note the screen asks the
+     owner to approve something with nothing to read. */
+  const bookings: Booking[] = [
+    ...data.bookings,
+    {
+      id: 'bkg_s_resched',
+      reference: 'B-1101',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, 2), 13)),
+      duration: 210,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'rescheduled',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -6)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -1)), kind: 'rescheduled', label: 'Verschoben auf Wunsch des Kunden' },
+      ],
+    },
+    {
+      id: 'bkg_s_inprogress',
+      reference: 'B-1102',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'unterhaltsreinigung',
+      start: iso(at(days(now, 0), 8)),
+      duration: 240,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'inProgress',
+      photoIds: [],
+      checkInAt: iso(at(days(now, 0), 8, 5)),
+      history: [
+        { at: iso(days(now, -5)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(days(now, 0), 8, 5)), kind: 'checkIn', label: 'Eingecheckt' },
+      ],
+    },
+    {
+      id: 'bkg_s_await',
+      reference: 'B-1103',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      serviceSlug: 'grundreinigung',
+      start: iso(at(days(now, -1), 9)),
+      duration: 300,
+      arrivalWindow: 90,
+      assigneeId: 'tm_owner',
+      status: 'awaitingApproval',
+      photoIds: [],
+      checkInAt: iso(at(days(now, -1), 9, 3)),
+      checkOutAt: iso(at(days(now, -1), 15, 20)),
+      history: [
+        { at: iso(days(now, -8)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(days(now, -1), 9, 3)), kind: 'checkIn', label: 'Eingecheckt' },
+        {
+          at: iso(at(days(now, -1), 15, 20)),
+          kind: 'checkOut',
+          /* §5.3 — reported by the person on site, priced by the office. This
+             is the sentence the approval button is asking about. */
+          label: 'Ausgecheckt · +1.5 Std. gemeldet · Keller war zusätzlich vereinbart',
+        },
+      ],
+    },
+    {
+      id: 'bkg_s_noaccess',
+      reference: 'B-1104',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, -3), 10)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'noAccess',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -11)), kind: 'created', label: 'Gebucht' },
+        {
+          at: iso(at(days(now, -3), 10, 25)),
+          kind: 'noAccess',
+          label: 'Kein Zutritt — 20 Min. gewartet, 50% verrechnet',
+        },
+      ],
+    },
+    {
+      id: 'bkg_s_completed',
+      reference: 'B-1105',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, -6), 9)),
+      duration: 240,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'completed',
+      photoIds: [],
+      checkInAt: iso(at(days(now, -6), 9, 2)),
+      checkOutAt: iso(at(days(now, -6), 13, 10)),
+      history: [
+        { at: iso(days(now, -12)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(days(now, -6), 13, 10)), kind: 'checkOut', label: 'Ausgecheckt' },
+        { at: iso(days(now, -5)), kind: 'approved', label: 'Freigegeben' },
+      ],
+    },
+    {
+      id: 'bkg_s_invoiced',
+      reference: 'B-1106',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      start: iso(at(days(now, -20), 9)),
+      duration: 300,
+      arrivalWindow: 90,
+      assigneeId: 'tm_owner',
+      status: 'invoiced',
+      photoIds: [],
+      history: [{ at: iso(days(now, -20)), kind: 'checkOut', label: 'Ausgecheckt' }],
+    },
+    {
+      id: 'bkg_s_closed',
+      reference: 'B-1107',
+      customerId: 'cus_3',
+      propertyId: 'prp_3',
+      serviceSlug: 'umzugsreinigung',
+      start: iso(at(days(now, -48), 8)),
+      duration: 360,
+      arrivalWindow: 120,
+      assigneeId: 'tm_owner',
+      status: 'closed',
+      photoIds: [],
+      history: [{ at: iso(days(now, -47)), kind: 'closed', label: 'Abgeschlossen und bezahlt' }],
+    },
+    {
+      id: 'bkg_s_cancelled',
+      reference: 'B-1108',
+      customerId: 'cus_3',
+      propertyId: 'prp_3',
+      serviceSlug: 'umzugsreinigung',
+      start: iso(at(days(now, 3), 8)),
+      duration: 360,
+      arrivalWindow: 120,
+      status: 'cancelled',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -10)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -2)), kind: 'cancelled', label: 'Storniert — Objekt verkauft' },
+      ],
+    },
+  ];
+
+  /* All five SubscriptionStatus values. `pastDue` and `cancelled` have no path
+     that reaches them in the app — /flows says so — which is exactly why they
+     have to exist in data, or screen 70 has states no reviewer can open. */
+  const subscriptions: Subscription[] = [
+    ...data.subscriptions,
+    {
+      id: 'sub_s_pastdue',
+      reference: 'S-0021',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      plan: 'basic',
+      serviceSlug: 'unterhaltsreinigung',
+      startDate: iso(days(now, -200)),
+      commitmentEndsAt: iso(days(now, 165)),
+      status: 'pastDue',
+      skipsUsedThisMonth: 0,
+      lastChargedAt: iso(days(now, -38)),
+      nextChargeAt: iso(days(now, -8)),
+    },
+    {
+      id: 'sub_s_paused',
+      reference: 'S-0022',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      plan: 'basic',
+      serviceSlug: 'unterhaltsreinigung',
+      startDate: iso(days(now, -120)),
+      commitmentEndsAt: iso(days(now, 245)),
+      status: 'paused',
+      skipsUsedThisMonth: 2,
+      lastChargedAt: iso(days(now, -20)),
+      nextChargeAt: iso(days(now, 10)),
+    },
+    {
+      id: 'sub_s_pending',
+      reference: 'S-0023',
+      customerId: 'cus_3',
+      propertyId: 'prp_3',
+      plan: 'vip',
+      serviceSlug: 'unterhaltsreinigung',
+      startDate: iso(days(now, -300)),
+      commitmentEndsAt: iso(days(now, 65)),
+      status: 'cancellationPending',
+      skipsUsedThisMonth: 1,
+      cancellationRequestedAt: iso(days(now, -4)),
+      lastChargedAt: iso(days(now, -12)),
+      nextChargeAt: iso(days(now, 18)),
+    },
+    {
+      id: 'sub_s_cancelled',
+      reference: 'S-0024',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+      plan: 'basic',
+      serviceSlug: 'unterhaltsreinigung',
+      startDate: iso(days(now, -420)),
+      commitmentEndsAt: iso(days(now, -55)),
+      status: 'cancelled',
+      skipsUsedThisMonth: 0,
+      lastChargedAt: iso(days(now, -85)),
+    },
+  ];
+
+  /* All five InvoiceStatus values. `sent`, `overdue` and `cancelled` were the
+     three the seed never carried. */
+  const invoices: Invoice[] = [
+    ...data.invoices,
+    {
+      id: 'inv_s_sent',
+      reference: 'RE-2026-0061',
+      customerId: 'cus_5',
+      bookingId: 'bkg_s_completed',
+      lines: [{ label: 'Einmalreinigung', quantity: 4, unitPrice: 49 }],
+      status: 'sent',
+      issuedAt: iso(days(now, -4)),
+      dueAt: iso(days(now, 26)),
+      qrReference: '21 00000 00003 13947 14300 09121',
+    },
+    {
+      id: 'inv_s_overdue',
+      reference: 'RE-2026-0055',
+      customerId: 'cus_6',
+      bookingId: 'bkg_s_invoiced',
+      lines: [
+        { label: 'Grundreinigung', quantity: 5, unitPrice: 49 },
+        { label: 'Backofenreinigung', quantity: 1, unitPrice: 45 },
+      ],
+      status: 'overdue',
+      issuedAt: iso(days(now, -52)),
+      dueAt: iso(days(now, -22)),
+      qrReference: '21 00000 00003 13947 14300 09088',
+    },
+    {
+      id: 'inv_s_cancelled',
+      reference: 'RE-2026-0058',
+      customerId: 'cus_3',
+      bookingId: 'bkg_s_cancelled',
+      lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
+      status: 'cancelled',
+      issuedAt: iso(days(now, -14)),
+      dueAt: iso(days(now, 16)),
+      cancelReason: 'Einsatz storniert — Objekt verkauft, nie erbracht.',
+      qrReference: '21 00000 00003 13947 14300 09104',
+    },
+  ];
+
+  /* Published, pending and rejected — the third had no record anywhere, so the
+     moderation screen's own filter had an option that matched nothing. */
+  const reviews: Review[] = [
+    {
+      id: 'rev_s_published',
+      bookingId: 'bkg_s_completed',
+      customerId: 'cus_1',
+      rating: 5,
+      text: 'Sehr sorgfältig, und die Absprachen haben genau gestimmt.',
+      status: 'published',
+      submittedAt: iso(days(now, -5)),
+      ownerReply: 'Vielen Dank, Frau Keller — bis zum nächsten Mal.',
+      publishConsent: true,
+    },
+    {
+      id: 'rev_s_pending',
+      bookingId: 'bkg_s_invoiced',
+      customerId: 'cus_2',
+      rating: 3,
+      text: 'Gute Arbeit, aber die Ankunft war fast eine Stunde später als angekündigt.',
+      status: 'pending',
+      submittedAt: iso(days(now, -2)),
+      publishConsent: true,
+    },
+    {
+      id: 'rev_s_rejected',
+      bookingId: 'bkg_s_noaccess',
+      customerId: 'cus_6',
+      rating: 1,
+      text: 'Niemand ist gekommen und trotzdem wurde verrechnet.',
+      status: 'rejected',
+      submittedAt: iso(days(now, -3)),
+      ownerReply:
+        'Der Termin war bestätigt, es war 20 Minuten niemand da und das ist mit Foto und Zeitstempel dokumentiert. Die Gebühr steht in den AGB §8.',
+      publishConsent: true,
+    },
+  ];
+
+  /* Both KeyStatus values — `returned` existed only as a type. */
+  const keyLog: KeyLogEntry[] = [
+    ...data.keyLog,
+    {
+      id: 'key_s_returned',
+      propertyId: 'prp_3',
+      receivedAt: iso(days(now, -60)),
+      receivedBy: 'Marco Brunner',
+      storageLocation: 'Schlüsselschrank Büro, Fach 5',
+      returnedAt: iso(days(now, -46)),
+      status: 'returned',
+    },
+  ];
+
+  /* Threads for the template picker to answer into — one unread from the
+     customer, one the office already replied to. */
+  const messages: CustomerMessage[] = [
+    ...data.messages,
+    {
+      id: 'msg_s_1',
+      customerId: 'cus_5',
+      subject: 'A-2606',
+      from: 'customer',
+      body: 'Guten Tag, passt der 11. auch am Nachmittag statt am Mittag?',
+      at: iso(days(now, -1)),
+      readByCustomer: true,
+    },
+    {
+      id: 'msg_s_2',
+      customerId: 'cus_6',
+      subject: 'RE-2026-0055',
+      from: 'customer',
+      body: 'Ich bestreite diese Rechnung — es war niemand vor Ort.',
+      at: iso(days(now, -2)),
+      readByCustomer: true,
+    },
+    {
+      id: 'msg_s_3',
+      customerId: 'cus_6',
+      subject: 'RE-2026-0055',
+      from: 'homivaro',
+      body: 'Guten Tag Herr Huber\n\nDer Einsatz ist mit Foto und Zeitstempel dokumentiert. Ich schicke Ihnen die Aufnahme gerne zu.\n\nFreundliche Grüsse\nMarco Brunner',
+      at: iso(days(now, -2)),
+      readByCustomer: false,
+    },
+  ];
+
+  return {
+    ...data,
+    customers,
+    properties,
+    requests: [...requests, ...data.requests],
+    offers,
+    bookings,
+    subscriptions,
+    invoices,
+    reviews,
+    keyLog,
+    messages,
+  };
+}
+
 export function buildScenario(name: ScenarioName, now: Date): DataSet {
   switch (name) {
     case 'fresh':
@@ -1080,6 +1777,12 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
 
     case 'hiring':
       return withHiring(baseData(now), now);
+
+    /* Stacked on hiring rather than on baseData: the applications track
+       already carries all four ApplicationStatus values, and staging them a
+       second time here would give the same states two sources. */
+    case 'states':
+      return withAllStates(withHiring(baseData(now), now), now);
 
     case 'demo':
     default:

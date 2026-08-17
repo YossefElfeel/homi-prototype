@@ -266,6 +266,7 @@ export const de = {
       away: 'Inhaber abwesend',
       conflict: 'Termin-Kollision',
       hiring: 'Bewerbungen',
+      states: 'Alle Zustände',
     },
   },
 };
