@@ -147,6 +147,18 @@ export const de = {
       failed: 'Fehlgeschlagen',
       refunded: 'Rückerstattet',
     },
+    /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
+       vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
+       Zahlschritt der Offerte und einmal als `admin.offers.method`, also
+       innerhalb einer einzigen Bildschirm-Namespace. */
+    method: {
+      twint: 'TWINT',
+      card: 'Karte',
+      'apple-pay': 'Apple Pay',
+      'google-pay': 'Google Pay',
+      'qr-bill': 'QR-Rechnung',
+      cash: 'Bar',
+    },
   },
 
   form: {

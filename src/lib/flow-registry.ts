@@ -159,14 +159,14 @@ export const FLOWS: Flow[] = [
         'Der Block zeigte Zeiten ohne zu sagen, woher sie kommen — «sucht das System oder der Mensch?» hatte auf dem Bildschirm keine Antwort. Öffnungszeiten und Vorlaufzeit lesen ihre Werte aus den Einstellungen, damit der Text nicht von der Engine abdriften kann',
       ),
       added(
-        'Vorlage einsetzen',
+        'Vorlage einsetzen oder direkt senden',
         '/admin/nachrichten',
-        'Elf Vorlagen lagen in den Einstellungen, genau eine wurde je gelesen. Setzt in der Sprache des Kunden ein und lässt Platzhalter stehen',
+        'Der Wähler setzte nur ein und liess {name} stehen, weil nichts die Platzhalter auflöste. Aufgelöst wird jetzt gegen den Datensatz auf dem Bildschirm — was aufgeht, darf mit einem Klick raus, was nicht aufgeht, sperrt den Direktversand',
       ),
       added(
         'Vorlage im Offert-Builder',
         '/admin/anfragen/req_1/offerte',
-        'Screen 48 bekam den Vorlagen-Wähler, das Begleitschreiben nicht — dabei geht genau dieser Text mit jeder einzelnen Offerte raus',
+        'Bot genau eine fest verdrahtete Option, weshalb «Offerte läuft ab» im ganzen Produkt keinen erreichbaren Weg hatte. Liest jetzt den Bereich Offerten',
       ),
       added(
         'Wählbare Position: an oder aus vorwählen',
@@ -248,6 +248,31 @@ export const FLOWS: Flow[] = [
         'Sperren und entsperren',
         '/admin/kunden',
         '«Der ist weg» und «den bedienen wir nicht» waren dieselbe Zeile. Die Sperre beisst wirklich: keine Offerte aus dem Builder, in der Erfassung nicht wählbar, Kundenbereich zu',
+      ),
+      added(
+        'Nach Status filtern',
+        '/admin/kunden',
+        'Die Statusspalte wurde zum Schalter, bevor sie zum Filter wurde — «wen haben wir gesperrt?» hiess jede Zeile lesen. Dazu die Trefferzahl, die jede andere Admin-Liste über die `Toolbar` längst hatte',
+      ),
+      added(
+        'Zahlungsmittel sehen, hinterlegen, Standard setzen',
+        '/admin/kunden/cus_2',
+        'Der Kunde sah seine Karten auf Screen 45, der Inhaber nirgends — und am Telefon wird er gefragt, nicht der Kunde. Das Feld ist eine Bezeichnung, nie eine Kartennummer',
+      ),
+      ok(
+        'Zahlungsmittel entfernen',
+        '/konto/zahlungsmittel',
+        'Durch den Kunden selbst. Hinterlegen gibt er am Telefon durch, löschen nicht — das Zahlungsmittel gehört ihm. Screen 65 sagt das hin, wo der Knopf fehlt, sonst sieht es nach einem vergessenen Control aus',
+      ),
+      added(
+        'Rechnungen des Kunden mit Betrag und Zahlweg',
+        '/admin/kunden/cus_2',
+        'In der Zeitachse war eine Rechnung eine Zeile mit einer Nummer: kein Betrag, kein Zahlungsstand, kein Zahlweg. Details öffnen im Popup, geändert wird weiterhin nur auf Screen 72',
+      ),
+      added(
+        'Ganzen Verlauf durchsuchen und filtern',
+        '/admin/kunden/cus_2/verlauf',
+        'Der Datensatz trug die ganze Zeitachse ungefiltert. Jetzt trägt er die letzten fünf, und Screen 65a den Rest — mit Suche, Art-Filter und Zeitraum. Offerten sind neu drin: vorher sprang der Verlauf von der Anfrage direkt zur Buchung',
       ),
     ],
     exits: [
@@ -376,6 +401,11 @@ export const FLOWS: Flow[] = [
     actions: [
       ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
       ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
+      added(
+        'Zahlweg beim Erfassen angeben',
+        '/admin/rechnungen/inv_paid',
+        '«Als bezahlt markieren» schrieb den Status und sonst nichts — kein `Payment`, also stand nirgends, wie das Geld gekommen ist. `PaymentMethod` kannte dafür auch die zwei Wege nicht, über die eine Rechnung hier tatsächlich zurückkommt: QR-Rechnung und bar',
+      ),
       ok('Besuch überspringen, pausieren, kündigen', '/konto/abo'),
     ],
     exits: [
@@ -387,8 +417,70 @@ export const FLOWS: Flow[] = [
         'Wird beim Lesen aus dem Fälligkeitsdatum abgeleitet, nicht gespeichert — richtig so, sonst bräuchte es einen nächtlichen Lauf',
       ),
       open(
+        'Rückerstattung',
+        'Bewusst auf die nächste Welle geschoben. Bis jetzt war sie gar nicht baubar: eine bezahlte Rechnung hatte keinen `Payment`-Datensatz, also gab es nichts, worauf sich eine Erstattung beziehen könnte. Den gibt es seit dieser Welle — `refunded` steht in `PaymentStatus` und in der Statusfarbtabelle, und die Offerten-Seite zeigt ihn bereits für eine Offert-Zahlung. Für eine Rechnung führt noch kein Knopf dahin',
+      ),
+      open(
         'Zahlung im Abo fehlgeschlagen (pastDue)',
         'Nur in den Demodaten vorhanden. Es gibt keinen Abrechnungslauf, der einen fehlgeschlagenen Einzug erzeugen könnte — den zu erfinden, hiesse Verhalten zu behaupten, das der Prototyp nicht hat',
+      ),
+    ],
+  },
+  {
+    id: 'templates',
+    de: 'Textvorlagen',
+    en: 'Message templates',
+    actors: ['owner'],
+    entries: [
+      ok('Vorlagen-Übersicht', '/admin/vorlagen'),
+      added(
+        'Neue Vorlage',
+        '/admin/vorlagen/neu',
+        'Die elf Vorlagen waren ein geschlossener Union-Typ. Eine zwölfte anzulegen war nicht ungebaut, sondern unmöglich — und «Pricing List» aus dem Briefing hatte deshalb nirgends Platz',
+      ),
+      added(
+        'Aus einem Wähler heraus',
+        '/admin/rechnungen',
+        'Jeder Wähler verlinkt auf die Verwaltung, damit «diese Vorlage taugt nicht» dort endet, wo man sie ändert',
+      ),
+    ],
+    actions: [
+      added(
+        'Suchen und filtern',
+        '/admin/vorlagen',
+        'Bei elf Zeilen eine Bequemlichkeit, bei dreissig die einzige Art, etwas zu finden',
+      ),
+      added('Bearbeiten in vier Sprachen', '/admin/vorlagen/tpl_offer_sent'),
+      added(
+        'Standardvorlage bestimmen',
+        '/admin/vorlagen',
+        'Ein Anlass kann mehrere Vorlagen haben. Welche automatisch rausgeht, ist eine Entscheidung — sie wird gesetzt, nicht geraten',
+      ),
+      added(
+        'Löschen mit Rückfrage',
+        '/admin/vorlagen',
+        'Drei verschiedene Rückfragen, je nachdem was kaputtgehen könnte: eine gewöhnliche, eine die nach der Nachfolgerin fragt, und eine die sagt, dass der Originaltext wiederhergestellt wird',
+      ),
+    ],
+    exits: [
+      added(
+        'Vorlage steht in den Wählern',
+        '/admin/nachrichten',
+        'Der Bereich der Vorlage bestimmt, welcher Wähler sie anbietet — dieselbe Tabelle, die die Verwendungs-Liste im Editor füllt',
+      ),
+      added(
+        'Vorlage geht automatisch raus',
+        '/admin/vorlagen',
+        'Nur mit Anlass und nur als Standardvorlage. Ohne Anlass ist sie ausschliesslich von Hand wählbar',
+      ),
+      added(
+        'Gelöscht — Anlass sendet weiter',
+        '/admin/vorlagen',
+        'Die einzige Zusicherung, die das Löschen einschränkt: ein Anlass steht nie ohne Text da. Beim Löschen der letzten Vorlage kommt der Originaltext zurück',
+      ),
+      open(
+        'Automatischer Versand selbst',
+        'Es gibt keinen Job, der «Offerte läuft ab» zum Ablaufdatum verschickt. Der Prototyp hat keinen Scheduler, und einen zu behaupten hiesse, Verhalten zu zeigen, das nicht existiert — die Vorlagen sind vorhanden und von Hand sendbar',
       ),
     ],
   },

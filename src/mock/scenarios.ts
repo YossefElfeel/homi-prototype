@@ -859,6 +859,24 @@ function baseData(now: Date): DataSet {
       status: 'refunded',
       gatewayRef: 'mock_CD118R',
     },
+    /*
+     * The one payment in the seed that settles an *invoice* rather than a
+     * quote. `inv_paid` said `paid` and carried nothing to say how, which was
+     * fine while nothing rendered it and wrong the moment the customer record
+     * grew a "Zahlweg" column — a paid invoice was reporting itself as open.
+     *
+     * QR-bill, because §10 puts one on every invoice and the bank transfer is
+     * how a Swiss invoice comes back. The card on file pays the plan.
+     */
+    {
+      id: 'pay_inv_paid',
+      invoiceId: 'inv_paid',
+      amount: 3 * 49,
+      method: 'qr-bill',
+      at: iso(days(now, -19)),
+      status: 'succeeded',
+      gatewayRef: 'qr_2100000000313947143000899',
+    },
   ];
 
   /*
@@ -1929,6 +1947,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
   const matrixOffers: Offer[] = [];
   const matrixBookings: Booking[] = [];
   const matrixInvoices: Invoice[] = [];
+  const matrixPayments: Payment[] = [];
 
   let seq = 0;
 
@@ -2089,8 +2108,10 @@ function withAllStates(data: DataSet, now: Date): DataSet {
            job is billable and deliberately has no invoice yet — that is the
            row the invoice screen's create action exists for. */
         if (bookingStatus === 'invoiced' || bookingStatus === 'closed') {
+          const invoiceId = `inv_m_${SHORT[slug]}`;
+          const amount = (3 + si) * SEED_SETTINGS.hourlyRate;
           matrixInvoices.push({
-            id: `inv_m_${SHORT[slug]}`,
+            id: invoiceId,
             reference: `RE-2026-01${String(si + 10).padStart(2, '0')}`,
             customerId: request.customerId,
             bookingId,
@@ -2101,6 +2122,29 @@ function withAllStates(data: DataSet, now: Date): DataSet {
             paidAt: bookingStatus === 'closed' ? iso(days(now, -si)) : undefined,
             qrReference: `21 00000 00003 13947 14300 09${String(200 + seq)}`,
           });
+
+          /*
+           * A paid invoice with no payment behind it reads as unpaid on any
+           * screen that prints how it was settled — and this is the scenario
+           * whose entire promise is that every declared value has a record
+           * carrying it. Rotating the three routes an invoice can actually
+           * come back by is what puts `qr-bill` and `cash` on screen at all.
+           */
+          if (bookingStatus === 'closed') {
+            matrixPayments.push({
+              id: `pay_${invoiceId}`,
+              invoiceId,
+              amount,
+              /* QR-bill flat rather than rotated. §10 puts a slip on every
+                 invoice, so it is the honest default for a generated row —
+                 the other two routes are carried by the hand-written records
+                 below, where the story behind each one is visible. */
+              method: 'qr-bill',
+              at: iso(days(now, -si)),
+              status: 'succeeded',
+              gatewayRef: `manual_RE-2026-01${String(si + 10).padStart(2, '0')}`,
+            });
+          }
         }
       }
     });
@@ -2416,6 +2460,40 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       cancelReason: 'Einsatz storniert — Objekt verkauft, nie erbracht.',
       qrReference: '21 00000 00003 13947 14300 09104',
     },
+    /*
+     * `bkg_s_closed` had none, and `closed` is the status `markInvoicePaid`
+     * writes on a booking whose invoice has been settled — so the one booking
+     * in this scenario claiming to be paid for had nothing that was paid.
+     */
+    {
+      id: 'inv_s_paid_cash',
+      reference: 'RE-2026-0044',
+      customerId: 'cus_3',
+      bookingId: 'bkg_s_closed',
+      lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -47)),
+      dueAt: iso(days(now, -17)),
+      paidAt: iso(days(now, -47)),
+      qrReference: '21 00000 00003 13947 14300 09077',
+    },
+  ];
+
+  /*
+   * Paid at the door on the day, which is the case the QR-bill never covers
+   * and the one an owner most wants written down — "did they pay you or is it
+   * still out?" is the question a slip answers by existing and cash does not.
+   */
+  const statePayments: Payment[] = [
+    {
+      id: 'pay_s_cash',
+      invoiceId: 'inv_s_paid_cash',
+      amount: 6 * 49,
+      method: 'cash',
+      at: iso(days(now, -47)),
+      status: 'succeeded',
+      gatewayRef: 'manual_RE-2026-0044',
+    },
   ];
 
   /* Published, pending and rejected — the third had no record anywhere, so the
@@ -2604,6 +2682,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     events: [...stateEvents, ...data.events],
     subscriptions,
     invoices: [...matrixInvoices, ...invoices],
+    payments: [...matrixPayments, ...statePayments, ...data.payments],
     reviews,
     keyLog,
     messages,

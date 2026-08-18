@@ -316,8 +316,27 @@ export const TRACKS: Track[] = [
         ['planned', 'no reply', 'became a request'],
         'The call that produced work becomes a request without being retyped. cev_converted opens on the closed loop, cev_noreply on the one still outstanding',
       ),
-      done('64', 'Kunden', 'Customers', '/admin/kunden', ['empty', 'no search result']),
-      done('65', 'Kunden-Detail', 'Customer detail', '/admin/kunden/cus_1', [], 'Requests, bookings and invoices merged into one timeline rather than three tabs'),
+      done('64', 'Kunden', 'Customers', '/admin/kunden', [
+        'empty',
+        'no search result',
+        'no match for the status filter',
+      ]),
+      done(
+        '65',
+        'Kunden-Detail',
+        'Customer detail',
+        '/admin/kunden/cus_2',
+        ['no method on file', 'no invoice yet'],
+        'Payment methods, the invoices as a table with amount and route, and the last five things that happened. cus_1 opens on the empty halves of all three',
+      ),
+      done(
+        '65a',
+        'Kunden-Verlauf',
+        'Customer history',
+        '/admin/kunden/cus_2/verlauf',
+        ['empty', 'no match for the filters'],
+        'The timeline the record used to carry whole — searchable, filtered by type and by date. Quotes are in it, which they never were on the record',
+      ),
       done('66', 'Objekte', 'Properties', '/admin/objekte', ['empty']),
       done('67', 'Objekt-Detail', 'Property detail', '/admin/objekte/prp_1', [
         'codes masked',
@@ -362,7 +381,12 @@ export const TRACKS: Track[] = [
       ], 'A critical review cannot be published without a reply'),
       done('79', 'Textvorlagen', 'Message templates', '/admin/vorlagen', [
         'translation gap',
-      ]),
+        'empty',
+      ], 'Suche, Filter nach Bereich und Schlagwort, und pro Zeile, ob die Vorlage automatisch rausgeht'),
+      done('79a', 'Vorlage bearbeiten', 'Edit template', '/admin/vorlagen/neu', [
+        'new',
+        'translation gap',
+      ], 'Zeigt, in welchen Bereichen die Vorlage angeboten wird — aus derselben Tabelle, die die Wähler lesen'),
       done('80', 'Einstellungen — Gebiete', 'Settings — regions', '/admin/einstellungen'),
       done('81', 'Einstellungen — Zeiten', 'Settings — hours & closures', '/admin/einstellungen', [
         'closure period',

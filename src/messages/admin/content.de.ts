@@ -133,19 +133,78 @@ export const adminContentDe = {
 
   templates: {
     title: 'Textvorlagen',
-    lead: 'Die Texte, die automatisch versendet werden — in vier Sprachen.',
-    colEvent: 'Anlass',
+    lead: 'Jeder Text, den wir versenden — automatisch oder von Hand ausgewählt.',
+    searchLabel: 'Suchen',
+    searchPlaceholder: 'Betreff, Text oder Schlagwort',
+    filterFlow: 'Bereich',
+    filterTag: 'Schlagwort',
+    filterAll: 'Alle',
+    newAction: 'Neue Vorlage',
+    colSubject: 'Betreff',
+    colFlow: 'Bereich',
     colChannels: 'Kanäle',
     colLanguages: 'Sprachen',
     complete: 'Vollständig',
     missing: '{n} fehlen',
     editAction: 'Bearbeiten',
+    deleteAction: 'Löschen',
+    untitled: 'Ohne Betreff',
+    automatic: 'Automatisch',
+    automaticOn: 'Automatisch bei: {event}',
+    manual: 'Nur manuell',
+    standard: 'Standard',
+    makeStandard: 'Als Standard setzen',
+    standardDone: 'Diese Vorlage geht ab jetzt automatisch raus.',
+    count: '{n} von {total} Vorlagen',
     fallbackNote: 'Fehlt eine Sprache, wird der deutsche Text versendet.',
     channelEmail: 'E-Mail',
     channelSms: 'SMS',
+    smsWarning: 'Über {limit} Zeichen — wird als zwei SMS verrechnet.',
     placeholderNote: 'Platzhalter in geschweiften Klammern werden beim Versand ersetzt.',
     emptyForLocale: 'Kein Text — es wird die deutsche Fassung versendet.',
-    selectPrompt: 'Wählen Sie links ein Ereignis.',
+    emptyTitle: 'Keine Vorlage gefunden',
+    emptyBody:
+      'Die Suche oder die Filter schliessen alle Vorlagen aus. Filter zurücksetzen oder eine neue Vorlage anlegen.',
+    emptyAction: 'Filter zurücksetzen',
+
+    deleteTitle: 'Vorlage löschen?',
+    deleteBody: 'Der Text ist danach weg. Das lässt sich nicht rückgängig machen.',
+    deleteConfirm: 'Endgültig löschen',
+    deleteCancel: 'Behalten',
+    /* The two cases where deleting touches an automatic send. Both name the
+       consequence before it happens — that is the whole point of the step. */
+    deleteReplaceTitle: 'Standardvorlage löschen?',
+    deleteReplaceBody:
+      'Diese Vorlage geht bei "{event}" automatisch raus. Wählen Sie, welche Vorlage die Aufgabe übernimmt.',
+    deleteReplaceLabel: 'Übernimmt ab jetzt',
+    deleteLastTitle: 'Letzte Vorlage für "{event}" löschen?',
+    deleteLastBody:
+      'Für diesen Anlass bleibt keine Vorlage übrig. Damit "{event}" weiterhin versendet, stellen wir den Originaltext wieder her — Ihre Änderungen daran gehen verloren.',
+    deleteLastConfirm: 'Löschen und Originaltext wiederherstellen',
+    deleteDone: 'Vorlage gelöscht.',
+    restoreDone: 'Vorlage gelöscht — Originaltext wiederhergestellt.',
+
+    usageTitle: 'Wird verwendet in',
+    usageNote:
+      'Diese Vorlage steht in den Auswahllisten der folgenden Bereiche zur Verfügung.',
+    usage: {
+      messages: 'Nachrichten',
+      quote: 'Offerten',
+      invoice: 'Rechnungen',
+      booking: 'Einsätze',
+      review: 'Bewertungen',
+      request: 'Anfragen',
+    },
+
+    flows: {
+      requests: 'Anfragen',
+      quotes: 'Offerten',
+      bookings: 'Einsätze',
+      invoices: 'Rechnungen',
+      reviews: 'Bewertungen',
+      general: 'Allgemein',
+    },
+
     events: {
       'request-received': 'Anfrage eingegangen',
       'offer-sent': 'Offerte versendet',
@@ -160,6 +219,57 @@ export const adminContentDe = {
       'review-request': 'Bewertung anfragen',
     },
   },
+
+  template: {
+    back: 'Zurück zu den Vorlagen',
+    newTitle: 'Neue Vorlage',
+    saveAction: 'Speichern',
+    savedDone: 'Vorlage gespeichert.',
+    createdDone: 'Vorlage angelegt.',
+
+    flowLabel: 'Bereich',
+    flowHint:
+      'Bestimmt, in welchen Auswahllisten die Vorlage auftaucht — nicht nur, wie sie sortiert wird.',
+    eventLabel: 'Automatischer Anlass',
+    eventNone: 'Keiner — nur manuell auswählbar',
+    eventHint:
+      'Mit einem Anlass kann diese Vorlage automatisch versendet werden. Ohne Anlass steht sie nur in den Auswahllisten.',
+    channelsLabel: 'Kanäle',
+    tagsLabel: 'Schlagwörter',
+    tagsHint: 'Mit Komma trennen. Sie erscheinen als Filter in der Übersicht.',
+    subjectLabel: 'Betreff',
+    bodyLabel: 'Text',
+    subjectMissing: 'Ohne Betreff hat die Vorlage in der Auswahlliste keinen Namen.',
+
+    placeholderTitle: 'Platzhalter',
+    placeholderNote:
+      'Beim Versand durch die echten Werte ersetzt. Was wir nicht kennen, bleibt in Klammern stehen und blockiert den Direktversand.',
+    placeholderInsert: 'Einfügen',
+
+    requiredTitle: 'Deutscher Text fehlt',
+    requiredBody:
+      'Deutsch ist die Rückfallsprache (§20.6). Ohne deutschen Text hat diese Vorlage in drei von vier Sprachen nichts zu senden.',
+  },
+
+  templatePicker: {
+    label: 'Vorlage',
+    placeholder: 'Vorlage wählen …',
+    empty: 'Für diesen Bereich ist keine Vorlage angelegt.',
+    manage: 'Vorlagen verwalten',
+    previewTitle: 'Vorschau',
+    subjectLabel: 'Betreff',
+    sendDirect: 'Direkt senden',
+    editFirst: 'Vor dem Senden bearbeiten',
+    insertDone: 'Vorlage eingesetzt — Text vor dem Senden prüfen.',
+    sentDone: 'Nachricht versendet.',
+    overwrite: 'Der begonnene Text wird ersetzt. Fortfahren?',
+    /* The gate that lets "send directly" exist at all. */
+    unresolvedTitle: 'Direktversand nicht möglich',
+    unresolvedBody:
+      'Für {fields} kennen wir hier keinen Wert. Der Platzhalter würde so beim Kunden ankommen — bitte vor dem Senden ausfüllen.',
+    resolvedNote: 'Alle Platzhalter sind gefüllt.',
+  },
+
 
   settings: {
     title: 'Einstellungen',

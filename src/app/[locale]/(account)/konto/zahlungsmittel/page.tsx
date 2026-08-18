@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { CreditCard, Info, Plus, Smartphone, Trash2 } from 'lucide-react';
+import { CreditCard, Info, Plus, Trash2 } from 'lucide-react';
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,20 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
-import type { PaymentMethod } from '@/mock/schema';
+import { METHOD_ICONS, SAVABLE_METHODS } from '@/lib/payment-methods';
+import type { SavedMethodKind } from '@/mock/schema';
 
-const ADDABLE = [
-  { kind: 'card', key: 'card', icon: CreditCard },
-  { kind: 'twint', key: 'twint', icon: Smartphone },
-  { kind: 'apple-pay', key: 'applePay', icon: Smartphone },
-  { kind: 'google-pay', key: 'googlePay', icon: Smartphone },
-] as const satisfies readonly { kind: PaymentMethod; key: string; icon: typeof CreditCard }[];
+/**
+ * What each savable method is called on this screen. The glyphs are not here:
+ * they come from `lib/payment-methods.ts`, which is what stops this screen and
+ * the owner's copy of the same list (65) drawing TWINT two different ways.
+ */
+const LABEL_KEY: Record<SavedMethodKind, string> = {
+  card: 'card',
+  twint: 'twint',
+  'apple-pay': 'applePay',
+  'google-pay': 'googlePay',
+};
 
 /**
  * Screen 45 — payment methods.
@@ -65,17 +71,15 @@ export default function AccountPaymentPage() {
           </p>
         ) : (
           <ul className="mt-3">
-            {methods.map((method) => (
+            {methods.map((method) => {
+              const Icon = METHOD_ICONS[method.kind];
+              return (
               <li
                 key={method.id}
                 className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-subtle px-card py-row"
               >
                 <span className="flex items-center gap-3">
-                  {method.kind === 'card' ? (
-                    <CreditCard className="size-4 text-ink-tertiary" aria-hidden />
-                  ) : (
-                    <Smartphone className="size-4 text-ink-tertiary" aria-hidden />
-                  )}
+                  <Icon className="size-4 text-ink-tertiary" aria-hidden />
                   <span data-numeric>{method.label}</span>
                   {method.isDefault && <Chip>{t('defaultLabel')}</Chip>}
                 </span>
@@ -105,7 +109,8 @@ export default function AccountPaymentPage() {
                   </Button>
                 </span>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </Card>
@@ -113,23 +118,27 @@ export default function AccountPaymentPage() {
       <section className="mt-app-section">
         <h2 className="label-type text-ink-tertiary">{t('addTitle')}</h2>
         <div className="gap-app mt-3 grid sm:grid-cols-2">
-          {ADDABLE.map(({ kind, key, icon: Icon }) => (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => {
-                addPaymentMethod({ customerId, kind, label: t(key) }, now);
-                toast.success(t('added'));
-              }}
-              className={cn(
-                'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] border border-line bg-card px-4 py-3 text-start transition-[box-shadow,border-color] hover:border-line-focus hover:shadow-[var(--shadow-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
-              )}
-            >
-              <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-              <span className="flex-1">{t(key)}</span>
-              <Plus className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-            </button>
-          ))}
+          {SAVABLE_METHODS.map((kind) => {
+            const Icon = METHOD_ICONS[kind];
+            const key = LABEL_KEY[kind];
+            return (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => {
+                  addPaymentMethod({ customerId, kind, label: t(key) }, now);
+                  toast.success(t('added'));
+                }}
+                className={cn(
+                  'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] border border-line bg-card px-4 py-3 text-start transition-[box-shadow,border-color] hover:border-line-focus hover:shadow-[var(--shadow-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+                )}
+              >
+                <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                <span className="flex-1">{t(key)}</span>
+                <Plus className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+              </button>
+            );
+          })}
         </div>
       </section>
 

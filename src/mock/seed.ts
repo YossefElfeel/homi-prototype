@@ -1,5 +1,12 @@
 import type { Locale } from '@/i18n/routing';
-import type { AddOn, Service, Settings } from './schema';
+import type {
+  AddOn,
+  MessageTemplate,
+  Service,
+  Settings,
+  TemplateChannel,
+  TemplateFlow,
+} from './schema';
 
 /**
  * Seed catalogue and settings.
@@ -211,58 +218,202 @@ export const SEED_ADDONS: AddOn[] = [
 ];
 
 /**
- * §15 — the automatic messages.
+ * §15 — the messages the business sends.
  *
  * German and English are written; French and Italian are left out on purpose.
  * They fall back to German (§20.6), which is the behaviour the templates screen
  * has to make visible rather than hide.
+ *
+ * Subjects are new. The eleven texts shipped as bare bodies, which was fine
+ * while nothing sent them — the moment a picker offers a list, a template with
+ * no subject has no name, and "Guten Tag {name}…" is the same name eleven
+ * times over. The subject is the name and the email header at once.
+ *
+ * `tpl` fills the shape so a template that is only German-and-English does not
+ * have to spell out two absent locales.
  */
-const SEED_TEMPLATES: Settings['messageTemplates'] = {
-  'request-received': {
-    de: 'Guten Tag {name}\n\nIhre Anfrage ist bei uns eingegangen — Referenz {reference}. Wir melden uns innerhalb von 24 Stunden mit einer Offerte.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nWe have your request — reference {reference}. You will hear back from us with a quote within 24 hours.\n\nKind regards\nHomivaro',
+function tpl(
+  id: string,
+  input: {
+    event?: MessageTemplate['event'];
+    flow: TemplateFlow;
+    tags: string[];
+    channels: TemplateChannel[];
+    subject: { de: string; en: string };
+    body: { de: string; en: string };
   },
-  'offer-sent': {
-    de: 'Guten Tag {name}\n\nIhre Offerte ist bereit: {link}\nSie ist bis {validUntil} gültig. Termin wählen und bestätigen können Sie direkt darin.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nYour quote is ready: {link}\nIt is valid until {validUntil}. You can pick a slot and confirm inside it.\n\nKind regards\nHomivaro',
+): MessageTemplate {
+  return {
+    id,
+    event: input.event,
+    flow: input.flow,
+    tags: input.tags,
+    channels: input.channels,
+    subject: input.subject,
+    body: input.body,
+    /* Every seeded event ships exactly one template, so each is its own
+       default. A second template on the same event is something the admin
+       adds, and `addTemplate` leaves this false for it. */
+    isDefault: true,
+  };
+}
+
+const SEED_TEMPLATES: MessageTemplate[] = [
+  tpl('tpl_request_received', {
+    event: 'request-received',
+    flow: 'requests',
+    tags: ['Bestätigung'],
+    channels: ['email'],
+    subject: {
+      de: 'Ihre Anfrage {reference} ist eingegangen',
+      en: 'We have your request {reference}',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nIhre Anfrage ist bei uns eingegangen — Referenz {reference}. Wir melden uns innerhalb von 24 Stunden mit einer Offerte.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nWe have your request — reference {reference}. You will hear back from us with a quote within 24 hours.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_offer_sent', {
+    event: 'offer-sent',
+    flow: 'quotes',
+    tags: ['Offerte'],
+    channels: ['email', 'sms'],
+    subject: { de: 'Ihre Offerte von Homivaro', en: 'Your quote from Homivaro' },
+    body: {
+      de: 'Guten Tag {name}\n\nIhre Offerte ist bereit: {link}\nSie ist bis {validUntil} gültig. Termin wählen und bestätigen können Sie direkt darin.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nYour quote is ready: {link}\nIt is valid until {validUntil}. You can pick a slot and confirm inside it.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_offer_reminder', {
+    event: 'offer-reminder',
+    flow: 'quotes',
+    tags: ['Offerte', 'Erinnerung'],
+    channels: ['email'],
+    subject: {
+      de: 'Ihre Offerte läuft am {validUntil} ab',
+      en: 'Your quote expires on {validUntil}',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nIhre Offerte läuft am {validUntil} ab. Falls Sie Fragen haben, antworten Sie einfach auf diese Nachricht.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nYour quote expires on {validUntil}. If anything is unclear, simply reply to this message.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_booking_confirmed', {
+    event: 'booking-confirmed',
+    flow: 'bookings',
+    tags: ['Termin', 'Bestätigung'],
+    channels: ['email', 'sms'],
+    subject: { de: 'Termin bestätigt: {date}', en: 'Appointment confirmed: {date}' },
+    body: {
+      de: 'Guten Tag {name}\n\nIhr Termin ist bestätigt: {date}, Ankunft zwischen {windowStart} und {windowEnd}. Referenz {reference}.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nYour appointment is confirmed: {date}, arrival between {windowStart} and {windowEnd}. Reference {reference}.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_appointment_reminder', {
+    event: 'appointment-reminder',
+    flow: 'bookings',
+    tags: ['Termin', 'Erinnerung'],
+    channels: ['sms'],
+    subject: { de: 'Erinnerung an Ihren Termin', en: 'Appointment reminder' },
+    body: {
+      de: 'Erinnerung: morgen, {date}, Ankunft zwischen {windowStart} und {windowEnd}. Kostenlose Absage noch bis {freeUntil}.',
+      en: 'Reminder: tomorrow, {date}, arrival between {windowStart} and {windowEnd}. Free cancellation until {freeUntil}.',
+    },
+  }),
+  tpl('tpl_on_the_way', {
+    event: 'on-the-way',
+    flow: 'bookings',
+    tags: ['Termin'],
+    channels: ['sms'],
+    subject: { de: 'Wir sind unterwegs', en: 'On the way' },
+    body: {
+      de: '{member} ist unterwegs zu Ihnen und trifft voraussichtlich um {eta} ein.',
+      en: '{member} is on the way and should arrive around {eta}.',
+    },
+  }),
+  tpl('tpl_job_done', {
+    event: 'job-done',
+    flow: 'bookings',
+    tags: ['Abschluss'],
+    channels: ['email'],
+    subject: { de: 'Die Arbeiten sind abgeschlossen', en: 'The work is finished' },
+    body: {
+      de: 'Guten Tag {name}\n\nDie Arbeiten sind abgeschlossen. Bericht und Fotos: {link}\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nThe work is finished. Report and photos: {link}\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_invoice_sent', {
+    event: 'invoice-sent',
+    flow: 'invoices',
+    tags: ['Rechnung'],
+    channels: ['email'],
+    subject: { de: 'Rechnung {invoiceNumber}', en: 'Invoice {invoiceNumber}' },
+    body: {
+      de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount}, zahlbar bis {dueDate}. QR-Rechnung im Anhang.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount}, due {dueDate}. QR invoice attached.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_payment_reminder', {
+    event: 'payment-reminder',
+    flow: 'invoices',
+    tags: ['Rechnung', 'Erinnerung'],
+    channels: ['email'],
+    subject: {
+      de: 'Rechnung {invoiceNumber} ist noch offen',
+      en: 'Invoice {invoiceNumber} is still open',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount} ist seit {dueDate} offen. Falls sie sich überschnitten hat, betrachten Sie diese Nachricht als gegenstandslos.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount} has been open since {dueDate}. If your payment crossed with this message, please disregard it.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_cancellation', {
+    event: 'cancellation',
+    flow: 'bookings',
+    tags: ['Stornierung'],
+    channels: ['email', 'sms'],
+    subject: {
+      de: 'Ihr Termin am {date} ist storniert',
+      en: 'Your appointment on {date} is cancelled',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nIhr Termin am {date} ist storniert. {feeNote}\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nYour appointment on {date} is cancelled. {feeNote}\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_review_request', {
+    event: 'review-request',
+    flow: 'reviews',
+    tags: ['Bewertung'],
+    channels: ['email'],
+    subject: { de: 'Waren Sie zufrieden?', en: 'Were you happy with the work?' },
+    body: {
+      de: 'Guten Tag {name}\n\nWaren Sie zufrieden? Eine kurze Rückmeldung hilft uns sehr: {link}\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nWere you happy with the work? A short review helps us a great deal: {link}\n\nKind regards\nHomivaro',
+    },
+  }),
+  /*
+   * The brief names "Pricing List" as a category beside Send Quote and Send
+   * Invoice. Nothing in the system answered to it: no event sends a price list,
+   * so under the fixed-eleven shape it could not have existed at all. It is the
+   * first template with no `event` — which is what makes the manual half of the
+   * list real rather than a field nothing uses. {priceList} resolves from the
+   * service catalogue, so an edited price reaches this text without anyone
+   * remembering to retype it.
+   */
+  {
+    id: 'tpl_pricing_list',
+    flow: 'general',
+    tags: ['Preise'],
+    channels: ['email'],
+    subject: { de: 'Unsere Preise auf einen Blick', en: 'Our prices at a glance' },
+    body: {
+      de: 'Guten Tag {name}\n\nGerne unsere aktuellen Preise:\n\n{priceList}\n\nDie Preise verstehen sich inklusive Anfahrt innerhalb unseres Einzugsgebiets. Für eine verbindliche Offerte melden Sie sich jederzeit.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nHere are our current prices:\n\n{priceList}\n\nPrices include travel within our service area. Get in touch any time for a binding quote.\n\nKind regards\nHomivaro',
+    },
+    isDefault: false,
   },
-  'offer-reminder': {
-    de: 'Guten Tag {name}\n\nIhre Offerte läuft am {validUntil} ab. Falls Sie Fragen haben, antworten Sie einfach auf diese Nachricht.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nYour quote expires on {validUntil}. If anything is unclear, simply reply to this message.\n\nKind regards\nHomivaro',
-  },
-  'booking-confirmed': {
-    de: 'Guten Tag {name}\n\nIhr Termin ist bestätigt: {date}, Ankunft zwischen {windowStart} und {windowEnd}. Referenz {reference}.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nYour appointment is confirmed: {date}, arrival between {windowStart} and {windowEnd}. Reference {reference}.\n\nKind regards\nHomivaro',
-  },
-  'appointment-reminder': {
-    de: 'Erinnerung: morgen, {date}, Ankunft zwischen {windowStart} und {windowEnd}. Kostenlose Absage noch bis {freeUntil}.',
-    en: 'Reminder: tomorrow, {date}, arrival between {windowStart} and {windowEnd}. Free cancellation until {freeUntil}.',
-  },
-  'on-the-way': {
-    de: '{member} ist unterwegs zu Ihnen und trifft voraussichtlich um {eta} ein.',
-    en: '{member} is on the way and should arrive around {eta}.',
-  },
-  'job-done': {
-    de: 'Guten Tag {name}\n\nDie Arbeiten sind abgeschlossen. Bericht und Fotos: {link}\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nThe work is finished. Report and photos: {link}\n\nKind regards\nHomivaro',
-  },
-  'invoice-sent': {
-    de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount}, zahlbar bis {dueDate}. QR-Rechnung im Anhang.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount}, due {dueDate}. QR invoice attached.\n\nKind regards\nHomivaro',
-  },
-  'payment-reminder': {
-    de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount} ist seit {dueDate} offen. Falls sie sich überschnitten hat, betrachten Sie diese Nachricht als gegenstandslos.\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount} has been open since {dueDate}. If your payment crossed with this message, please disregard it.\n\nKind regards\nHomivaro',
-  },
-  cancellation: {
-    de: 'Guten Tag {name}\n\nIhr Termin am {date} ist storniert. {feeNote}\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nYour appointment on {date} is cancelled. {feeNote}\n\nKind regards\nHomivaro',
-  },
-  'review-request': {
-    de: 'Guten Tag {name}\n\nWaren Sie zufrieden? Eine kurze Rückmeldung hilft uns sehr: {link}\n\nFreundliche Grüsse\nHomivaro',
-    en: 'Hello {name}\n\nWere you happy with the work? A short review helps us a great deal: {link}\n\nKind regards\nHomivaro',
-  },
-};
+];
 
 export const SEED_SETTINGS: Settings = {
   hourlyRate: 49, // §5.1

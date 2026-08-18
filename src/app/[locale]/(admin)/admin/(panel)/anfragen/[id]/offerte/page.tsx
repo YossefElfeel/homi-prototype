@@ -4,7 +4,6 @@ import { use, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { ArrowLeft, CalendarClock, Plus, Send, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -15,6 +14,7 @@ import { nextSlots, startOfDay } from '@/mock/engines/availability';
 import { offerHours, offerSubtotal, offerTotal, offerDiscount } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { CalcMethod, OfferLine } from '@/mock/schema';
+import { TemplatePicker } from '@/components/admin/template-picker';
 import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
 
@@ -63,8 +63,6 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const rt = useTranslations('admin.request');
   /* Reusing screen 48's picker labels and screen 79's event names rather than
      a third copy that would drift the first time either is reworded. */
-  const msgT = useTranslations('admin.messages');
-  const templateEvent = useTranslations('admin.templates.events');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -357,38 +355,32 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
             <h2 className="display-type text-xl">{t('messageTitle')}</h2>
             <p className="mt-1 text-sm text-ink-secondary">{t('messageHint')}</p>
             {/*
-              Screen 48 got a template picker in wave 12 and this box did not,
-              which is the wrong way round: the covering note goes out with
-              every single quote, and rewriting it by hand is where a promise
-              the business does not make gets typed by accident. Same three
-              rules as the messages screen — customer's language, German
-              fallback (§20.6), and placeholders left visible so a half-filled
-              `{'{'}name{'}'}` cannot slip out.
+              This offered exactly one option, hard-coded to `offer-sent`, which
+              is why `offer-reminder` had no reachable path anywhere in the
+              product — nobody deleted it, it simply never appeared in a list
+              anyone maintained. Reading the Quotes flow instead means a template
+              the admin adds shows up here without a code change.
+
+              No `onSend`: this box is the covering letter, and the quote goes
+              out through its own send step. A "send" button here would be a
+              second, quieter way to send a quote.
             */}
-            <label className="mt-3 block max-w-sm">
-              <span className="label-type mb-1.5 block text-ink-tertiary">
-                {msgT('templateLabel')}
-              </span>
-              <Select
-                dense
-                value=""
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  if (offer.message.trim() && !window.confirm(msgT('templateOverwrite'))) {
-                    return;
-                  }
-                  const body =
-                    settings.messageTemplates['offer-sent'][customer.language] ??
-                    settings.messageTemplates['offer-sent'].de ??
-                    '';
-                  updateOffer(offer.id, { message: body });
-                  toast.success(msgT('templateInserted'));
-                }}
-              >
-                <option value="">{msgT('templatePlaceholder')}</option>
-                <option value="offer-sent">{templateEvent('offer-sent')}</option>
-              </Select>
-            </label>
+            <TemplatePicker
+              className="mt-3"
+              flow="quotes"
+              locale={customer.language}
+              vars={{
+                name: `${customer.firstName} ${customer.lastName}`,
+                reference: request.reference,
+                validUntil: format.dateTime(
+                  new Date(now.getTime() + settings.offerValidityDays * 86_400_000),
+                  'full',
+                ),
+              }}
+              hasDraft={Boolean(offer.message.trim())}
+              onInsert={(message) => updateOffer(offer.id, { message: message.body })}
+            />
+
             <Textarea
               className="mt-3 min-h-44"
               value={offer.message}

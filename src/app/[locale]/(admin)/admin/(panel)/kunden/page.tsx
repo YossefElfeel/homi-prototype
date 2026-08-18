@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/field';
+import { Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import {
   RowAction,
@@ -21,13 +21,15 @@ import {
   RowActionsDivider,
 } from '@/components/ui/row-actions';
 import { Switch } from '@/components/ui/switch';
+import { Toolbar } from '@/components/ui/toolbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { Customer } from '@/mock/schema';
+import type { Customer, CustomerStatus } from '@/mock/schema';
 
 /** Screen 64 — the customer list, with search across name, email and phone. */
 export default function CustomersPage() {
   const t = useTranslations('admin.customers');
+  const appT = useTranslations('app');
   const format = useFormatter();
   const now = useNow();
   const hydrated = useHydrated();
@@ -43,6 +45,13 @@ export default function CustomersPage() {
    * record back.
    */
   const [tab, setTab] = useState<'active' | 'archived'>('active');
+  /*
+   * The status column became a control before it became a filter, so a list
+   * carrying three states could be sorted by none of them. "Who have we
+   * blocked?" is the one that has to be answerable without reading every row —
+   * it is the answer to "why can I not quote this person".
+   */
+  const [status, setStatus] = useState<'all' | CustomerStatus>('all');
 
   const inTab = useMemo(
     () =>
@@ -52,15 +61,22 @@ export default function CustomersPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return inTab;
-    return inTab.filter((c) =>
-      [c.firstName, c.lastName, c.email, c.phone].join(' ').toLowerCase().includes(q),
-    );
-  }, [inTab, query]);
+    return inTab
+      .filter((c) => (status === 'all' ? true : c.status === status))
+      .filter((c) =>
+        q
+          ? [c.firstName, c.lastName, c.email, c.phone]
+              .join(' ')
+              .toLowerCase()
+              .includes(q)
+          : true,
+      );
+  }, [inTab, query, status]);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
   const archivedCount = customers.filter((c) => c.archivedAt).length;
+  const filtering = status !== 'all' || Boolean(query.trim());
   const nameOf = (c: Customer) => `${c.firstName} ${c.lastName}`;
 
   const columns: Column<Customer>[] = [
@@ -195,7 +211,6 @@ export default function CustomersPage() {
 
   const list = (
     <DataView
-      className="mt-6"
       items={filtered}
       columns={columns}
       getKey={(c) => c.id}
@@ -239,11 +254,14 @@ export default function CustomersPage() {
         </RowActions>
       )}
       empty={
-        query ? (
+        /* Was keyed on the search box alone, so filtering everything out by
+           status landed on "no customers yet" — an empty state telling you to
+           create the records you were looking at a moment ago. */
+        filtering ? (
           <EmptyState
             icon={Search}
             title={t('searchEmptyTitle')}
-            body={t('searchEmptyBody', { query })}
+            body={query ? t('searchEmptyBody', { query }) : t('filterEmptyBody')}
           />
         ) : tab === 'archived' ? (
           <EmptyState
@@ -267,33 +285,54 @@ export default function CustomersPage() {
       <PageHeader title={t('title')} actions={addButton} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <div className="flex flex-wrap items-center gap-4">
-          <TabsList>
-            <TabsTrigger value="active">{t('tabActive')}</TabsTrigger>
-            <TabsTrigger value="archived">
-              {t('tabArchived')}
-              {archivedCount > 0 && (
-                <span data-numeric className="text-ink-tertiary">
-                  {archivedCount}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <TabsList className="mb-4">
+          <TabsTrigger value="active">{t('tabActive')}</TabsTrigger>
+          <TabsTrigger value="archived">
+            {t('tabArchived')}
+            {archivedCount > 0 && (
+              <span data-numeric className="text-ink-tertiary">
+                {archivedCount}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-          <label className="relative block min-w-56 flex-1 sm:max-w-md">
-            <span className="sr-only">{t('search')}</span>
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-tertiary"
-              aria-hidden
-            />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('search')}
-              className="pl-10"
-            />
-          </label>
-        </div>
+        {/*
+          The search box was hand-built here — an absolutely positioned icon
+          over a padded input — while every other admin list had moved to
+          `Toolbar`. Same shape, and it brought the result count with it: "did
+          the filter do anything" was previously answered by counting rows.
+        */}
+        <Toolbar
+          search={{
+            value: query,
+            onChange: setQuery,
+            label: t('search'),
+            clearLabel: appT('clearSearch'),
+          }}
+          count={
+            filtering
+              ? appT('results', { shown: filtered.length, total: inTab.length })
+              : appT('resultsAll', { total: inTab.length })
+          }
+          filters={
+            <label className="min-w-36">
+              <span className="sr-only">{t('filterStatus')}</span>
+              <Select
+                dense
+                value={status}
+                onChange={(e) => setStatus(e.target.value as typeof status)}
+              >
+                <option value="all">
+                  {t('filterStatus')}: {t('filterAll')}
+                </option>
+                <option value="active">{t('active')}</option>
+                <option value="inactive">{t('inactive')}</option>
+                <option value="blocked">{t('blocked')}</option>
+              </Select>
+            </label>
+          }
+        />
 
         <TabsContent value="active">{list}</TabsContent>
         <TabsContent value="archived">{list}</TabsContent>
