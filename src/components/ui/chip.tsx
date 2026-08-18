@@ -36,6 +36,7 @@ export function Chip({
 }) {
   return (
     <span
+      data-chip=""
       className={cn(
         'inline-flex items-center gap-1 rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-2xs whitespace-nowrap',
         TONE[tone],

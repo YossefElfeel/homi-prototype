@@ -204,7 +204,7 @@ export function DataView<T>({
                 <th
                   scope="col"
                   className={cn(
-                    'w-12 border-b border-line-subtle bg-card px-4',
+                    'w-12 border-b border-line-subtle bg-card px-2.5 xl:px-3',
                     stickyHeader && 'sticky top-topbar z-10',
                     surface === 'card' && 'rounded-tl-[var(--radius-lg)]',
                   )}
@@ -248,7 +248,7 @@ export function DataView<T>({
                           : undefined
                     }
                     className={cn(
-                      'label-type border-b border-line-subtle bg-card px-4 py-2.5 font-medium text-ink-tertiary',
+                      'label-type border-b border-line-subtle bg-card px-2.5 py-2.5 font-medium whitespace-normal text-ink-tertiary xl:px-3 2xl:px-4',
                       stickyHeader && 'sticky top-topbar z-10',
                       column.align === 'end' && 'text-right',
                       /* Round with the card so the header does not square off
@@ -307,7 +307,7 @@ export function DataView<T>({
                 )}
               >
                 {selection && (
-                  <td className="px-4 py-row" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-2.5 py-row xl:px-3" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedSet.has(getKey(item))}
@@ -337,7 +337,16 @@ export function DataView<T>({
                     <td
                       key={column.key}
                       className={cn(
-                        'px-4 py-row align-middle',
+                        'px-2.5 py-row align-middle xl:px-3 2xl:px-4',
+                        /* A chip is the widest unbreakable thing in a row —
+                           "Paket · 2.5 Std. übrig" alone set the minimum width
+                           of its column. Inside a cell it may wrap; everywhere
+                           else it stays on one line. */
+                        '[&_[data-chip]]:whitespace-normal [&_[data-status]]:whitespace-normal',
+                        /* `anywhere`, not `break-word`: only the former is
+                           counted in the min-content width, and that width is
+                           what decides whether the table outgrows the page. */
+                        '[overflow-wrap:anywhere]',
                         column.align === 'end' && 'text-right',
                       )}
                     >

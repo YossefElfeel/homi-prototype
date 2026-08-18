@@ -23,6 +23,7 @@ export function StatusBadge({
 
   return (
     <span
+      data-status=""
       className={cn(
         /* Was `rounded-sm` — Tailwind's own 2px, not the theme axis. So the
            badge stayed square in Zuhause, which rounds everything else to
