@@ -562,13 +562,13 @@ export const adminDe = {
     submit: 'Ablehnen und senden',
     submitting: 'Wird gesendet …',
     cancel: 'Abbrechen',
-    /* Die Erfolgsseite hat vorher Titel und Lead des Formulars wiederverwendet
-       und ihre einzige Weiter-Aktion «Abbrechen» genannt. */
+    /* Früher eine eigene Erfolgsseite, deren einzige Weiter-Aktion zurück
+       dorthin führte, wo man ohnehin schon war. Der Dialog schliesst sich und
+       die Zeile dahinter wechselt auf «abgelehnt» — die Bestätigung ist ein
+       Toast, keine Seite. */
     sentTitle: 'Absage ist unterwegs',
     sentBody:
       'Der Kunde hat Ihre Nachricht erhalten. Die Anfrage ist als abgelehnt erfasst.',
-    sentToList: 'Zurück zu den Anfragen',
-    sentToRequest: 'Anfrage ansehen',
   },
 
   /*
@@ -714,6 +714,10 @@ export const adminDe = {
   booking: {
     back: 'Buchungen',
     title: 'Buchung',
+    /* Der Block hatte gar keine Überschrift, weil er keine Karte war. Als
+       Karte braucht er einen Namen — und «Termin» allein wäre der Name der
+       ersten Zelle, nicht des Blocks. */
+    scheduleTitle: 'Termin & Dauer',
     whenTitle: 'Termin',
     windowTitle: 'Ankunftsfenster',
     durationTitle: 'Dauer',

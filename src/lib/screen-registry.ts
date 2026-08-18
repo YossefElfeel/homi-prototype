@@ -248,7 +248,14 @@ export const TRACKS: Track[] = [
         'sending',
         'sent',
       ]),
-      done('56', 'Anfrage ablehnen', 'Decline request', '/admin/anfragen/req_1/ablehnen', ['sent']),
+      done(
+        '56',
+        'Anfrage ablehnen',
+        'Decline request',
+        '/admin/anfragen/req_1?action=reject',
+        ['sending'],
+        'A dialog over the queue rather than a page of its own — the decision is made over the row it is about. The link opens the same dialog on the request',
+      ),
       done(
         '57',
         'Offerten',

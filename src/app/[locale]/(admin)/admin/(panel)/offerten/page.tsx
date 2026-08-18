@@ -7,9 +7,9 @@ import {
   CalendarCheck,
   CalendarClock,
   ExternalLink,
-  FileText,
+  Eye,
+  Inbox,
   Package,
-  RefreshCw,
   Repeat,
   Search,
   X,
@@ -422,7 +422,7 @@ export default function OffersPage() {
           return (
             <RowActions>
               <RowAction href={`/admin/offerten/${o.id}`} label={t('rowOpen')}>
-                <FileText aria-hidden />
+                <Eye aria-hidden />
               </RowAction>
               {awaitingConfirmation && (
                 <RowAction
@@ -445,7 +445,7 @@ export default function OffersPage() {
                 href={`/admin/anfragen/${o.requestId}`}
                 label={t('rowOpenRequest')}
               >
-                <RefreshCw aria-hidden />
+                <Inbox aria-hidden />
               </RowAction>
               <RowAction
                 href={`/offerte/${o.id}`}

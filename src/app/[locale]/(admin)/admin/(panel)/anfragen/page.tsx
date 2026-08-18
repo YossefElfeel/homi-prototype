@@ -10,13 +10,14 @@ import {
   FileText,
   Pencil,
   Plus,
-  Receipt,
   Search,
+  Share2,
   Trash2,
   X,
 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
+import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -88,6 +89,9 @@ export default function RequestsPage() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  /* Declining used to be a page. It is a decision made about a row while
+     looking at the queue, so it happens over the queue — see the dialog. */
+  const [rejecting, setRejecting] = useState<string | null>(null);
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
   const nameOf = (id: string) => {
@@ -509,8 +513,8 @@ export default function RequestsPage() {
          *
          * What keeps "decline" from being a mis-click away from "open": it is
          * last, behind a divider, and it turns red under the pointer. Neither
-         * one fires on the spot either — decline opens a page that asks for a
-         * reason, discard asks first.
+         * one fires on the spot either — decline opens a dialog that asks for
+         * a reason, discard asks first.
          */
         rowActions={(r) => {
           const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
@@ -553,7 +557,7 @@ export default function RequestsPage() {
                       href={`/admin/anfragen/${r.id}/offerte`}
                       label={t('rowQuote')}
                     >
-                      <FileText aria-hidden />
+                      <Share2 aria-hidden />
                     </RowAction>
                   )}
                   {offer && (
@@ -561,19 +565,19 @@ export default function RequestsPage() {
                       href={`/admin/offerten/${offer.id}`}
                       label={t('rowOffer')}
                     >
-                      <Receipt aria-hidden />
+                      <FileText aria-hidden />
                     </RowAction>
                   )}
                   {answerable && (
                     <>
                       <RowActionsDivider />
-                      <RowAction
-                        href={`/admin/anfragen/${r.id}/ablehnen`}
+                      <RowActionButton
+                        onClick={() => setRejecting(r.id)}
                         label={t('rowReject')}
                         tone="danger"
                       >
                         <X aria-hidden />
-                      </RowAction>
+                      </RowActionButton>
                     </>
                   )}
                 </>
@@ -612,6 +616,8 @@ export default function RequestsPage() {
           total: view.total,
         })}
       />
+
+      <RejectRequestDialog requestId={rejecting} onClose={() => setRejecting(null)} />
     </div>
   );
 }

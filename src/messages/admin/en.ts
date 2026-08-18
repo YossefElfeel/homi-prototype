@@ -490,8 +490,6 @@ export const adminEn: typeof adminDe = {
     sentTitle: 'The decline is on its way',
     sentBody:
       'The customer has your message. The request is recorded as declined.',
-    sentToList: 'Back to requests',
-    sentToRequest: 'View the request',
   },
 
   offers: {
@@ -616,6 +614,7 @@ export const adminEn: typeof adminDe = {
   booking: {
     back: 'Bookings',
     title: 'Booking',
+    scheduleTitle: 'Slot & duration',
     whenTitle: 'Slot',
     windowTitle: 'Arrival window',
     durationTitle: 'Duration',

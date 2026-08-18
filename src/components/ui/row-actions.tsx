@@ -16,6 +16,16 @@ import { cn } from '@/lib/cn';
  * phone, so an icon-only strip there is a row of unnamed buttons. The desk has
  * the tooltip and cannot spare the width; the card has the width and cannot
  * have the tooltip.
+ *
+ * Which glyph goes on which action is a convention, not a per-screen choice,
+ * because an icon strip is only readable once the same picture means the same
+ * thing in every list. `Eye` opens the row's own record. Jumping to a related
+ * one borrows that entity's sidebar glyph — `Inbox` for a request, `FileText`
+ * for a quote, `CalendarCheck` for a booking, `Receipt` for an invoice — so a
+ * row says what it is attached to without being opened. Anything that changes
+ * something gets a glyph of its own and never one of those four: `FileText`
+ * used to mean both "open the quote" and "write one", and `Receipt` meant a
+ * quote in one table and an invoice in the next.
  */
 export function RowActions({ children }: { children: React.ReactNode }) {
   return (
