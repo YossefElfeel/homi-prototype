@@ -54,6 +54,11 @@ export const adminCrmDe = {
       'Ein Konto entsteht automatisch, sobald jemand über die Website anfragt. Wer angerufen hat, wird hier von Hand erfasst.',
     searchEmptyTitle: 'Keine Treffer',
     searchEmptyBody: 'Für «{query}» wurde nichts gefunden.',
+    /* Der leere Zustand hing allein an der Suche, also landete «nur Gesperrte»
+       ohne Treffer auf «Noch keine Kunden» — samt Knopf zum Anlegen. */
+    filterEmptyBody: 'Kein Kunde in diesem Status.',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
     addAction: 'Kunde erfassen',
   },
 
@@ -123,6 +128,11 @@ export const adminCrmDe = {
     propertiesEmpty: 'Noch kein Objekt hinterlegt.',
     historyTitle: 'Verlauf',
     historyEmpty: 'Noch keine Anfragen oder Buchungen.',
+    /* Die Zeitachse zeigt nur noch die letzten fünf Einträge. Bei einem Kunden
+       aus dem dritten Jahr war sie vorher der längste Block der Seite — und
+       durchsuchen liess sie sich trotzdem nicht. */
+    historyRecent: 'Die letzten {n} Einträge.',
+    historyAll: 'Ganzen Verlauf öffnen',
     subscriptionTitle: 'Abo',
     noSubscription: 'Kein Abo',
     revenueTitle: 'Umsatz total',
@@ -130,8 +140,101 @@ export const adminCrmDe = {
     notesHint: 'Nur für Sie. Der Kunde sieht das nie.',
     notesPlaceholder: 'Was Sie sich über diesen Kunden merken wollen …',
     typeRequest: 'Anfrage',
+    typeOffer: 'Offerte',
     typeBooking: 'Buchung',
     typeInvoice: 'Rechnung',
+
+    /* Screen 65 — Zahlungsmittel.
+       Der Kunde verwaltet dieselben Einträge unter /konto/zahlungsmittel. Am
+       Telefon ist es aber der Inhaber, der gefragt wird «welche Karte liegt
+       bei euch?» — und die Antwort stand auf keinem Panel-Bildschirm. */
+    paymentTitle: 'Zahlungsmittel',
+    paymentLead: 'Was für diesen Kunden hinterlegt ist. Dieselben Einträge sieht er in seinem Konto.',
+    paymentEmpty: 'Nichts hinterlegt. Rechnungen laufen dann über die QR-Rechnung.',
+    paymentDefaultLabel: 'Standard',
+    paymentMakeDefault: 'Als Standard',
+    paymentDefaultSet: 'Standard geändert.',
+    paymentAddedOn: 'seit {date}',
+    paymentAdd: 'Zahlungsmittel hinterlegen',
+    paymentAddTitle: 'Zahlungsmittel hinterlegen',
+    paymentAddLead:
+      'Für den Kunden, der am Telefon sagt, womit er zahlt. Der Kunde selbst hinterlegt es sonst in seinem Konto.',
+    paymentKind: 'Art',
+    paymentLabelField: 'Bezeichnung',
+    /* Der Hinweis ist keine Höflichkeit: das Feld ist eine Bezeichnung, kein
+       Zahlungsdatenfeld. Eine volle Kartennummer gehört nirgendwo in diesen
+       Datensatz — auch nicht «nur zur Erinnerung». */
+    paymentLabelHint: 'Nur zum Wiedererkennen: die letzten vier Ziffern. Nie die ganze Nummer.',
+    paymentLabelPlaceholder: 'z. B. Visa · 4242',
+    paymentAddSave: 'Hinterlegen',
+    paymentCancel: 'Abbrechen',
+    paymentAdded: 'Zahlungsmittel hinterlegt.',
+    /* Kein Löschknopf, und der Satz sagt warum. Hinterlegen ist etwas, das der
+       Kunde am Telefon durchgibt; entfernen ist es nicht — das Zahlungsmittel
+       gehört ihm, und er nimmt es in seinem eigenen Konto wieder raus. */
+    paymentRemoveHint:
+      'Entfernen kann nur der Kunde selbst, in seinem Konto unter «Zahlungsmittel».',
+
+    /* Screen 65 — Rechnungen als Tabelle, nicht als Zeile in der Zeitachse.
+       Die Zeitachse beantwortete «was ist passiert», nie «was hat der Kunde
+       bezahlt und womit». Betrag und Zahlweg standen dort schlicht nicht. */
+    invoicesTitle: 'Rechnungen',
+    colInvoice: 'Rechnung',
+    colService: 'Leistung',
+    colDate: 'Datum',
+    colAmount: 'Betrag',
+    colPaymentStatus: 'Zahlung',
+    colMethod: 'Zahlweg',
+    methodNone: 'Offen',
+    invoiceRowView: 'Details ansehen',
+    invoicesEmptyTitle: 'Noch keine Rechnung',
+    invoicesEmptyBody:
+      'Eine Rechnung entsteht aus einem erledigten Einsatz und wartet dann auf Ihre Freigabe.',
+    /* Der Dialog ist die Kurzfassung; bearbeiten lässt sich eine Rechnung nur
+       auf Screen 72. Ein zweiter Ort zum Ändern wäre ein zweiter Ort, an dem
+       ein Betrag abweichen kann. */
+    invoiceDialogIssued: 'Ausgestellt',
+    invoiceDialogDue: 'Fällig',
+    invoiceDialogPaid: 'Bezahlt am',
+    invoiceDialogPaidVia: 'Bezahlt per {method}',
+    invoiceDialogLines: 'Positionen',
+    invoiceDialogTotal: 'Total',
+    invoiceDialogOpen: 'Rechnung öffnen',
+    dismiss: 'Schliessen',
+  },
+
+  /**
+   * Screen 65a — der ganze Verlauf, durchsuchbar.
+   *
+   * Auf der Kundenseite lag alles in einer Liste ohne Suche und ohne Filter.
+   * Bei einem Kunden mit vier Jahren Historie ist «wann war das mit dem
+   * Schlüssel?» genau die Frage, die dort gestellt wird — und die einzige
+   * Antwort war scrollen.
+   */
+  customerHistory: {
+    title: 'Verlauf',
+    lead: 'Anfragen, Offerten, Buchungen und Rechnungen — in einer Liste, neuste zuerst.',
+    back: 'Zurück zum Kunden',
+    search: 'Referenz oder Leistung',
+    filterType: 'Art',
+    allTypes: 'Alle Arten',
+    from: 'Von',
+    to: 'Bis',
+    count: '{shown} von {total}',
+    reset: 'Filter zurücksetzen',
+    colWhen: 'Wann',
+    colType: 'Art',
+    colReference: 'Referenz',
+    colDetail: 'Leistung',
+    colStatus: 'Status',
+    colAmount: 'Betrag',
+    rowOpen: 'Datensatz öffnen',
+    emptyTitle: 'Noch nichts passiert',
+    emptyBody:
+      'Sobald dieser Kunde anfragt, eine Offerte bekommt oder gebucht wird, steht es hier.',
+    filteredEmptyTitle: 'Nichts gefunden',
+    filteredEmptyBody: 'Kein Eintrag passt zu diesen Filtern.',
+    notFound: 'Diesen Kunden gibt es nicht.',
   },
 
   properties: {

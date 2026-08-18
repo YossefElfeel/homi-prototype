@@ -82,6 +82,7 @@ export default function OffersPage() {
   const appT = useTranslations('app');
   const statusLabel = useTranslations('status.request');
   const paymentLabel = useTranslations('status.payment');
+  const methodLabel = useTranslations('status.method');
   const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -275,7 +276,7 @@ export default function OffersPage() {
         return (
           <span className="flex flex-col items-end gap-1">
             <StatusBadge entity="payment" state={payment.status} size="sm" />
-            <span className="text-xs text-ink-tertiary">{t(`method.${payment.method}`)}</span>
+            <span className="text-xs text-ink-tertiary">{methodLabel(payment.method)}</span>
           </span>
         );
       },

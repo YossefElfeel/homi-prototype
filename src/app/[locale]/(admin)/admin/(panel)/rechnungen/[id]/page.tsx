@@ -40,6 +40,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const t = useTranslations('admin.invoice');
   const brand = useTranslations('brand');
+  const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const now = useNow();
@@ -48,7 +49,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const invoices = useStore((s) => s.data.invoices);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
+  const payments = useStore((s) => s.data.payments);
   const sendInvoice = useStore((s) => s.sendInvoice);
+  const sendMessage = useStore((s) => s.sendMessage);
   const markInvoicePaid = useStore((s) => s.markInvoicePaid);
   const cancelInvoiceInStore = useStore((s) => s.cancelInvoice);
   const updateInvoiceLine = useStore((s) => s.updateInvoiceLine);
@@ -58,6 +61,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const [state, setState] = useState<'idle' | 'sending'>('idle');
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
+  /* The QR-bill is on the invoice, so the slip is what most of them come back
+     as — and the owner who was paid in cash at the door only has to change it
+     when that is not what happened. */
+  const [paying, setPaying] = useState(false);
+  const [method, setMethod] = useState<PaymentMethod>('qr-bill');
+  const [note, setNote] = useState('');
 
   if (!hydrated) return <SkeletonPage label={t('back')} />;
 
@@ -86,6 +95,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   /** A paid invoice is refunded, not cancelled — and cancelling twice is not a thing. */
   const canCancel = invoice.status !== 'paid' && invoice.status !== 'cancelled';
   const canMarkPaid = invoice.status === 'sent' || invoice.status === 'overdue';
+  const settledBy = invoicePayment(invoice.id, payments);
 
   function send() {
     setState('sending');
@@ -126,7 +136,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </Button>
             )}
             {canMarkPaid && (
-              <Button onClick={markPaid}>
+              <Button onClick={() => setPaying(true)}>
                 <BadgeCheck className="size-4" aria-hidden />
                 {t('markPaid')}
               </Button>
@@ -176,9 +186,17 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       )}
       {invoice.status === 'paid' && invoice.paidAt && (
         <Alert tone="success" className="mb-app">
-          {t('paidOn', {
-            date: format.dateTime(new Date(invoice.paidAt), 'full'),
-          })}
+          {/* The seed's paid invoices predate `Payment` records for invoices,
+              and so does every invoice paid before this screen asked how. The
+              date alone is what those can honestly say. */}
+          {settledBy
+            ? t('paidVia', {
+                date: format.dateTime(new Date(invoice.paidAt), 'full'),
+                method: methodLabel(settledBy.method),
+              })
+            : t('paidOn', {
+                date: format.dateTime(new Date(invoice.paidAt), 'full'),
+              })}
         </Alert>
       )}
 
@@ -455,6 +473,52 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </p>
         )}
       </div>
+
+      {/*
+        "Mark as paid" was one click that wrote a status and nothing else. The
+        money had moved somehow, and the record could not say how — so a refund
+        weeks later started with a phone call to ask the customer. One question
+        with a default already filled in is the whole cost of fixing that.
+      */}
+      <Dialog open={paying} onOpenChange={setPaying}>
+        <DialogContent closeLabel={t('dismiss')}>
+          <DialogHeader>
+            <DialogTitle>{t('markPaidTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('markPaidLead', {
+                reference: invoice.reference,
+                amount: formatChf(total(invoice), locale),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Field label={t('markPaidMethod')}>
+            {(props) => (
+              <Select
+                {...props}
+                value={method}
+                onChange={(e) => setMethod(e.target.value as PaymentMethod)}
+              >
+                {INVOICE_METHODS.map((value) => (
+                  <option key={value} value={value}>
+                    {methodLabel(value)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPaying(false)}>
+              {t('dismiss')}
+            </Button>
+            <Button onClick={markPaid}>
+              <BadgeCheck className="size-4" aria-hidden />
+              {t('markPaid')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

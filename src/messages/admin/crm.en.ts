@@ -40,6 +40,11 @@ export const adminCrmEn: typeof adminCrmDe = {
       'An account is created automatically when somebody requests through the website. Anyone who phoned is entered here by hand.',
     searchEmptyTitle: 'No matches',
     searchEmptyBody: 'Nothing found for “{query}”.',
+    /* The empty state hung on the search box alone, so "blocked only" with no
+       hits landed on "No customers yet" — with a button to create one. */
+    filterEmptyBody: 'No customer in this status.',
+    filterStatus: 'Status',
+    filterAll: 'All',
     addAction: 'Add customer',
   },
 
@@ -104,6 +109,11 @@ export const adminCrmEn: typeof adminCrmDe = {
     propertiesEmpty: 'No property on file yet.',
     historyTitle: 'History',
     historyEmpty: 'No requests or bookings yet.',
+    /* The timeline shows the last five entries only. On a third-year customer
+       it used to be the longest block on the page — and still could not be
+       searched. */
+    historyRecent: 'The last {n} entries.',
+    historyAll: 'Open the full history',
     subscriptionTitle: 'Plan',
     noSubscription: 'No plan',
     revenueTitle: 'Total revenue',
@@ -111,8 +121,100 @@ export const adminCrmEn: typeof adminCrmDe = {
     notesHint: 'Yours only. The customer never sees this.',
     notesPlaceholder: 'Whatever you want to remember about this customer …',
     typeRequest: 'Request',
+    typeOffer: 'Quote',
     typeBooking: 'Booking',
     typeInvoice: 'Invoice',
+
+    /* Screen 65 — payment methods.
+       The customer manages the same records under /konto/zahlungsmittel. On
+       the phone it is the owner who gets asked "which card do you have on
+       file?" — and no panel screen carried the answer. */
+    paymentTitle: 'Payment methods',
+    paymentLead: 'What is on file for this customer. They see the same entries in their account.',
+    paymentEmpty: 'Nothing on file. Invoices then go out as a QR-bill.',
+    paymentDefaultLabel: 'Default',
+    paymentMakeDefault: 'Make default',
+    paymentDefaultSet: 'Default changed.',
+    paymentAddedOn: 'since {date}',
+    paymentAdd: 'Put a method on file',
+    paymentAddTitle: 'Put a method on file',
+    paymentAddLead:
+      'For the customer who says on the phone how they pay. Otherwise they add it themselves in their account.',
+    paymentKind: 'Kind',
+    paymentLabelField: 'Label',
+    /* The hint is not politeness: this field is a label, not a payment-data
+       field. A full card number belongs nowhere in this record — not even
+       "just as a reminder". */
+    paymentLabelHint: 'For recognition only: the last four digits. Never the full number.',
+    paymentLabelPlaceholder: 'e.g. Visa · 4242',
+    paymentAddSave: 'Save',
+    paymentCancel: 'Cancel',
+    paymentAdded: 'Method saved.',
+    /* No delete button, and the sentence says why. Putting a method on file is
+       something the customer dictates on the phone; removing one is not — the
+       instrument is theirs, and they take it out in their own account. */
+    paymentRemoveHint:
+      'Only the customer can remove one, under “Payment methods” in their account.',
+
+    /* Screen 65 — invoices as a table, not a line in the timeline. The
+       timeline answered "what happened", never "what did this customer pay,
+       and how". Amount and method were simply not there. */
+    invoicesTitle: 'Invoices',
+    colInvoice: 'Invoice',
+    colService: 'Service',
+    colDate: 'Date',
+    colAmount: 'Amount',
+    colPaymentStatus: 'Payment',
+    colMethod: 'Method',
+    methodNone: 'Open',
+    invoiceRowView: 'View details',
+    invoicesEmptyTitle: 'No invoice yet',
+    invoicesEmptyBody:
+      'An invoice comes out of a finished job and then waits for your approval.',
+    /* The dialog is the short version; an invoice is only editable on screen
+       72. A second place to change one would be a second place an amount can
+       diverge. */
+    invoiceDialogIssued: 'Issued',
+    invoiceDialogDue: 'Due',
+    invoiceDialogPaid: 'Paid on',
+    invoiceDialogPaidVia: 'Paid by {method}',
+    invoiceDialogLines: 'Lines',
+    invoiceDialogTotal: 'Total',
+    invoiceDialogOpen: 'Open the invoice',
+    dismiss: 'Close',
+  },
+
+  /**
+   * Screen 65a — the whole history, searchable.
+   *
+   * On the customer screen it was one list with no search and no filter. On a
+   * customer with four years behind them, "when was that thing with the key?"
+   * is exactly the question asked there — and scrolling was the only answer.
+   */
+  customerHistory: {
+    title: 'History',
+    lead: 'Requests, quotes, bookings and invoices — one list, newest first.',
+    back: 'Back to the customer',
+    search: 'Reference or service',
+    filterType: 'Type',
+    allTypes: 'All types',
+    from: 'From',
+    to: 'To',
+    count: '{shown} of {total}',
+    reset: 'Clear filters',
+    colWhen: 'When',
+    colType: 'Type',
+    colReference: 'Reference',
+    colDetail: 'Service',
+    colStatus: 'Status',
+    colAmount: 'Amount',
+    rowOpen: 'Open the record',
+    emptyTitle: 'Nothing has happened yet',
+    emptyBody:
+      'As soon as this customer asks for something, gets a quote or is booked, it shows up here.',
+    filteredEmptyTitle: 'Nothing found',
+    filteredEmptyBody: 'No entry matches these filters.',
+    notFound: 'No such customer.',
   },
 
   properties: {

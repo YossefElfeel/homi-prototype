@@ -249,6 +249,31 @@ export const FLOWS: Flow[] = [
         '/admin/kunden',
         '«Der ist weg» und «den bedienen wir nicht» waren dieselbe Zeile. Die Sperre beisst wirklich: keine Offerte aus dem Builder, in der Erfassung nicht wählbar, Kundenbereich zu',
       ),
+      added(
+        'Nach Status filtern',
+        '/admin/kunden',
+        'Die Statusspalte wurde zum Schalter, bevor sie zum Filter wurde — «wen haben wir gesperrt?» hiess jede Zeile lesen. Dazu die Trefferzahl, die jede andere Admin-Liste über die `Toolbar` längst hatte',
+      ),
+      added(
+        'Zahlungsmittel sehen, hinterlegen, Standard setzen',
+        '/admin/kunden/cus_2',
+        'Der Kunde sah seine Karten auf Screen 45, der Inhaber nirgends — und am Telefon wird er gefragt, nicht der Kunde. Das Feld ist eine Bezeichnung, nie eine Kartennummer',
+      ),
+      ok(
+        'Zahlungsmittel entfernen',
+        '/konto/zahlungsmittel',
+        'Durch den Kunden selbst. Hinterlegen gibt er am Telefon durch, löschen nicht — das Zahlungsmittel gehört ihm. Screen 65 sagt das hin, wo der Knopf fehlt, sonst sieht es nach einem vergessenen Control aus',
+      ),
+      added(
+        'Rechnungen des Kunden mit Betrag und Zahlweg',
+        '/admin/kunden/cus_2',
+        'In der Zeitachse war eine Rechnung eine Zeile mit einer Nummer: kein Betrag, kein Zahlungsstand, kein Zahlweg. Details öffnen im Popup, geändert wird weiterhin nur auf Screen 72',
+      ),
+      added(
+        'Ganzen Verlauf durchsuchen und filtern',
+        '/admin/kunden/cus_2/verlauf',
+        'Der Datensatz trug die ganze Zeitachse ungefiltert. Jetzt trägt er die letzten fünf, und Screen 65a den Rest — mit Suche, Art-Filter und Zeitraum. Offerten sind neu drin: vorher sprang der Verlauf von der Anfrage direkt zur Buchung',
+      ),
     ],
     exits: [
       ok('Konto schliessen', '/konto/profil', 'Durch den Kunden selbst'),
@@ -376,6 +401,11 @@ export const FLOWS: Flow[] = [
     actions: [
       ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
       ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
+      added(
+        'Zahlweg beim Erfassen angeben',
+        '/admin/rechnungen/inv_paid',
+        '«Als bezahlt markieren» schrieb den Status und sonst nichts — kein `Payment`, also stand nirgends, wie das Geld gekommen ist. `PaymentMethod` kannte dafür auch die zwei Wege nicht, über die eine Rechnung hier tatsächlich zurückkommt: QR-Rechnung und bar',
+      ),
       ok('Besuch überspringen, pausieren, kündigen', '/konto/abo'),
     ],
     exits: [

@@ -555,7 +555,22 @@ export interface Invoice {
   cancelReason?: string;
 }
 
-export type PaymentMethod = 'twint' | 'card' | 'apple-pay' | 'google-pay';
+/**
+ * A method that can be kept on file. Cash cannot, and neither can a QR-bill —
+ * a slip is a way to settle one invoice, not a token we hold.
+ */
+export type SavedMethodKind = 'twint' | 'card' | 'apple-pay' | 'google-pay';
+
+/**
+ * How money actually moved.
+ *
+ * The union used to be the four savable ones, which meant the two ways an
+ * invoice is normally settled in this market did not exist: the QR-bill (§10 —
+ * every invoice carries one) and cash at the door. So `markInvoicePaid` had
+ * nothing it could honestly write and wrote no `Payment` at all, and the
+ * question "how was this one paid?" had no answer anywhere in the data.
+ */
+export type PaymentMethod = SavedMethodKind | 'qr-bill' | 'cash';
 
 /**
  * A method the customer has kept on file (screen 45).
@@ -568,7 +583,7 @@ export type PaymentMethod = 'twint' | 'card' | 'apple-pay' | 'google-pay';
 export interface SavedPaymentMethod {
   id: ID;
   customerId: ID;
-  kind: PaymentMethod;
+  kind: SavedMethodKind;
   /** "Visa · 4242", "+41 79 ··· 66" — never the full number. */
   label: string;
   isDefault: boolean;

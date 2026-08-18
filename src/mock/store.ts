@@ -29,6 +29,7 @@ import type {
   PreferredTime,
   Property,
   RequestDraft,
+  SavedMethodKind,
   Service,
   ServiceRequest,
   ServiceSlug,
@@ -369,7 +370,14 @@ interface StoreState {
   addInvoiceLine: (id: ID) => void;
   removeInvoiceLine: (id: ID, index: number) => void;
   sendInvoice: (id: ID, now: Date) => void;
-  markInvoicePaid: (id: ID, now: Date) => void;
+  /**
+   * `method` is required, and is why `PaymentMethod` grew `qr-bill` and
+   * `cash`. Marking an invoice paid used to flip the status and write nothing
+   * else — no `Payment` record, so the data had a settled invoice and no trace
+   * of how it settled. Every screen that wanted to print "paid by" had to
+   * either guess from the customer's saved card or leave the column blank.
+   */
+  markInvoicePaid: (id: ID, now: Date, method: PaymentMethod) => void;
   cancelInvoice: (id: ID, reason: string) => void;
 
   /* ---- field check in / out (screen 87) ----
@@ -393,7 +401,7 @@ interface StoreState {
      Add, remove and set-default were all local component state, so every
      change vanished on navigation. */
   addPaymentMethod: (
-    input: { customerId: ID; kind: PaymentMethod; label: string },
+    input: { customerId: ID; kind: SavedMethodKind; label: string },
     now: Date,
   ) => void;
   removePaymentMethod: (id: ID) => void;
@@ -1806,10 +1814,15 @@ export const useStore = create<StoreState>()(
       },
 
       /** §10 — there was no path to 'paid' anywhere in the app. */
-      markInvoicePaid: (id, now) => {
+      markInvoicePaid: (id, now, method) => {
         const s = get();
         const invoice = s.data.invoices.find((i) => i.id === id);
         if (!invoice || invoice.status === 'paid' || invoice.status === 'cancelled') return;
+
+        const amount = invoice.lines.reduce(
+          (sum, line) => sum + line.quantity * line.unitPrice,
+          0,
+        );
 
         set({
           data: {
@@ -1822,12 +1835,31 @@ export const useStore = create<StoreState>()(
             bookings: s.data.bookings.map((b) =>
               b.id !== invoice.bookingId ? b : { ...b, status: 'closed' as const },
             ),
+            /*
+             * The money moving is a fact of its own, not an adjective on the
+             * invoice. Recorded here so the customer record can say what was
+             * paid and how — and so `succeeded` is the only status this path
+             * can produce: the owner is confirming money that has already
+             * arrived, not attempting a charge that might fail.
+             */
+            payments: [
+              ...s.data.payments,
+              {
+                id: `pay_${id}_${now.getTime().toString(36)}`,
+                invoiceId: id,
+                amount,
+                method,
+                at: now.toISOString(),
+                status: 'succeeded' as const,
+                gatewayRef: `manual_${invoice.reference}`,
+              },
+            ],
           },
         });
         get().logChange({
           entity: 'invoice',
           entityId: id,
-          summary: `Rechnung ${invoice.reference} als bezahlt markiert`,
+          summary: `Rechnung ${invoice.reference} als bezahlt markiert (${method})`,
         });
       },
 
