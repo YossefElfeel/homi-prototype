@@ -198,6 +198,53 @@ export default function RequestsPage() {
     </Button>
   );
 
+  /*
+   * The date range sits beside the CTA rather than in the filter row.
+   *
+   * That row was carrying eight controls, and the two date inputs are the
+   * widest things in it by a distance — so on an ordinary panel width they
+   * pushed everything after them onto a second line, which is how the
+   * overdue toggle ended up orphaned at the end of a row it did not look
+   * like it belonged to. Up here the range balances a header that was a
+   * title and one button, and the row below is one line of same-shaped
+   * controls again.
+   *
+   * «Clear filters» still clears it: a range is a filter wherever it is
+   * drawn, and leaving it behind would mean the reset button lies.
+   */
+  const dateRange = (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="flex items-center gap-1.5 text-sm">
+        <span className="text-ink-tertiary">{t('filterFrom')}</span>
+        <Input
+          dense
+          type="date"
+          value={from}
+          max={to || undefined}
+          className="w-auto"
+          onChange={(e) => {
+            setFrom(e.target.value);
+            setPage(1);
+          }}
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-sm">
+        <span className="text-ink-tertiary">{t('filterTo')}</span>
+        <Input
+          dense
+          type="date"
+          value={to}
+          min={from || undefined}
+          className="w-auto"
+          onChange={(e) => {
+            setTo(e.target.value);
+            setPage(1);
+          }}
+        />
+      </label>
+    </div>
+  );
+
   const columns: Column<ServiceRequest>[] = [
     {
       key: 'customer',
@@ -347,7 +394,15 @@ export default function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-[100rem]">
-      <PageHeader title={t('title')} actions={addButton} />
+      <PageHeader
+        title={t('title')}
+        actions={
+          <>
+            {dateRange}
+            {addButton}
+          </>
+        }
+      />
 
       <Toolbar
         search={{
@@ -440,35 +495,10 @@ export default function RequestsPage() {
               </Select>
             </label>
 
-            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
-              <span className="text-ink-tertiary">{t('filterFrom')}</span>
-              <Input
-                dense
-                type="date"
-                value={from}
-                max={to || undefined}
-                className="w-auto"
-                onChange={(e) => {
-                  setFrom(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
-            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
-              <span className="text-ink-tertiary">{t('filterTo')}</span>
-              <Input
-                dense
-                type="date"
-                value={to}
-                min={from || undefined}
-                className="w-auto"
-                onChange={(e) => {
-                  setTo(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
-
+            {/* Where the two date inputs used to be — the one filter that
+                answers "which of these is the work", next to the three that
+                answer "which of these are they", rather than trailing the
+                row on its own. */}
             <Button
               size="sm"
               variant={overdueOnly ? 'quiet' : 'ghost'}
