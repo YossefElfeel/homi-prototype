@@ -310,6 +310,27 @@ for (const clock of CLOCKS) {
   }
 }
 
+/*
+ * An invoice reference is what a human says out loud — on the phone, in a
+ * reminder, in a calendar entry that names one. Two invoices wearing the same
+ * one is not a type error and not a crash: it is a screen that looks right and
+ * a conversation that goes wrong, and the seed is the only place it can be
+ * caught. Checked across the whole file, not per scenario, because the number
+ * is read by a person who has no idea which scenario they are looking at.
+ */
+const refOwner = new Map<string, string>();
+for (const name of SCENARIOS) {
+  for (const invoice of buildScenario(name, CLOCKS[0]!).invoices) {
+    const seen = refOwner.get(invoice.reference);
+    check(
+      `invoice reference ${invoice.reference} belongs to one invoice`,
+      seen === undefined || seen === invoice.id,
+      seen ? `${seen} and ${invoice.id}` : '',
+    );
+    refOwner.set(invoice.reference, invoice.id);
+  }
+}
+
 /* The scenario whose whole promise is that every declared value has a record
    carrying it. Two of these values are new in this wave. */
 const states = buildScenario('states', CLOCKS[0]!);

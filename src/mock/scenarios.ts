@@ -2467,7 +2467,12 @@ function withAllStates(data: DataSet, now: Date): DataSet {
      */
     {
       id: 'inv_s_paid_cash',
-      reference: 'RE-2026-0044',
+      /* Not 0044. `inv_1` in the `overdue` scenario already wears that number,
+         and a follow-up event there names it out loud — "Rechnung RE-2026-0044
+         — zweite Mahnung besprechen". Two invoices behind one reference is not
+         a crash: it is a reminder about a bill that was paid in cash, which
+         only ever goes wrong on the phone. */
+      reference: 'RE-2026-0041',
       customerId: 'cus_3',
       bookingId: 'bkg_s_closed',
       lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
@@ -2492,7 +2497,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       method: 'cash',
       at: iso(days(now, -47)),
       status: 'succeeded',
-      gatewayRef: 'manual_RE-2026-0044',
+      gatewayRef: 'manual_RE-2026-0041',
     },
   ];
 
