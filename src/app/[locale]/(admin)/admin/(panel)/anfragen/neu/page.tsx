@@ -442,7 +442,7 @@ export default function NewRequestPage() {
   const allValues = ['customer', 'property', 'access', 'service', 'extras', 'time', 'notes'];
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <PageHeader
         title={draft ? t('draftTitle') : t('title')}
         lead={draft ? t('draftLead') : t('lead')}
@@ -534,9 +534,19 @@ export default function NewRequestPage() {
                       <option value="" disabled>
                         {t('customerPlaceholder')}
                       </option>
+                      {/* A blocked customer stays in the list and cannot be
+                          picked. Hiding them outright would read as "this
+                          person is not in the system", which is a different
+                          fact and sends the owner off to create a second
+                          record for somebody they blocked on purpose. */}
                       {customers.map((c) => (
-                        <option key={c.id} value={c.id}>
+                        <option
+                          key={c.id}
+                          value={c.id}
+                          disabled={c.status === 'blocked'}
+                        >
                           {c.lastName}, {c.firstName} — {c.phone}
+                          {c.status === 'blocked' ? ` (${t('customerBlocked')})` : ''}
                         </option>
                       ))}
                     </Select>

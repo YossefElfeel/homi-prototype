@@ -3,16 +3,30 @@
 import { use } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, Lock, Mail, MessageCircle, Phone } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  Ban,
+  Lock,
+  Mail,
+  MessageCircle,
+  Pencil,
+  Phone,
+  ShieldCheck,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Chip } from '@/components/ui/chip';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
 import { Textarea } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 
 /**
  * Screen 65 — one customer, their properties, and everything that has happened.
@@ -24,8 +38,15 @@ import { useHydrated, useStore } from '@/mock/store';
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('admin.customer');
+  /* The list owns the vocabulary for these three states and the two decisions
+     that reach them. A second copy here is a second thing to reword. */
+  const lt = useTranslations('admin.customers');
+  /* Field labels belong to the form that writes them (64a), not to a second
+     list here that would drift the first time one is reworded. */
+  const ft = useTranslations('admin.customerNew');
   const locale = useLocale() as Locale;
   const format = useFormatter();
+  const now = useNow();
   const hydrated = useHydrated();
 
   const customers = useStore((s) => s.data.customers);
@@ -37,6 +58,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const services = useStore((s) => s.services);
   const data = useStore((s) => s.data);
   const patchData = useStore((s) => s.patchData);
+  const updateCustomer = useStore((s) => s.updateCustomer);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -81,6 +103,30 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       })),
   ].sort((a, b) => b.at.localeCompare(a.at));
 
+  const name = `${customer.firstName} ${customer.lastName}`;
+
+  function toggleBlock() {
+    if (customer!.status === 'blocked') {
+      updateCustomer(customer!.id, { status: 'active' });
+      toast.success(lt('unblockDone', { name }));
+      return;
+    }
+    if (!window.confirm(lt('blockConfirm', { name }))) return;
+    updateCustomer(customer!.id, { status: 'blocked' });
+    toast.success(lt('blockDone', { name }));
+  }
+
+  function toggleArchive() {
+    if (customer!.archivedAt) {
+      updateCustomer(customer!.id, { archivedAt: undefined });
+      toast.success(lt('restoreDone', { name }));
+      return;
+    }
+    if (!window.confirm(lt('archiveConfirm', { name }))) return;
+    updateCustomer(customer!.id, { archivedAt: now.toISOString() });
+    toast.success(lt('archiveDone', { name }));
+  }
+
   function setNotes(notes: string) {
     patchData({
       customers: data.customers.map((c) =>
@@ -90,7 +136,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/kunden">
           <ArrowLeft className="size-4" aria-hidden />
@@ -98,33 +144,107 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         </Link>
       </Button>
 
-      <h1 className="display-type text-3xl">
-        {customer.firstName} {customer.lastName}
-      </h1>
-      <p data-numeric className="mt-2 text-sm text-ink-secondary">
-        {t('since')} {format.dateTime(new Date(customer.createdAt), 'full')} ·{' '}
-        {t('language')} {customer.language.toUpperCase()}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="display-type text-3xl">{name}</h1>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <a href={`tel:${customer.phone.replace(/\s/g, '')}`}>
-            <Phone className="size-3.5" aria-hidden />
-            {customer.phone}
-          </a>
-        </Button>
-        <Button asChild size="sm" variant="secondary">
-          <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`}>
-            <MessageCircle className="size-3.5" aria-hidden />
-            WhatsApp
-          </a>
-        </Button>
-        <Button asChild size="sm" variant="secondary">
-          <a href={`mailto:${customer.email}`}>
-            <Mail className="size-3.5" aria-hidden />
-            {customer.email}
-          </a>
-        </Button>
+        {/* The record could be read here and changed nowhere. Every decision
+            the list can take now also lives on the screen you land on when you
+            follow a link into this customer from a request or an invoice. */}
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/admin/kunden/${customer.id}/bearbeiten`}>
+              <Pencil className="size-3.5" aria-hidden />
+              {t('edit')}
+            </Link>
+          </Button>
+          <Button size="sm" variant="secondary" onClick={toggleBlock}>
+            {customer.status === 'blocked' ? (
+              <ShieldCheck className="size-3.5" aria-hidden />
+            ) : (
+              <Ban className="size-3.5" aria-hidden />
+            )}
+            {lt(customer.status === 'blocked' ? 'rowUnblock' : 'rowBlock')}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={toggleArchive}>
+            {customer.archivedAt ? (
+              <ArchiveRestore className="size-3.5" aria-hidden />
+            ) : (
+              <Archive className="size-3.5" aria-hidden />
+            )}
+            {lt(customer.archivedAt ? 'rowRestore' : 'rowArchive')}
+          </Button>
+        </div>
+      </div>
+
+      {customer.status === 'blocked' && (
+        <Alert tone="danger" icon={Ban} title={t('blockedTitle')} className="mt-5">
+          {t('blockedBody')}
+        </Alert>
+      )}
+      {customer.archivedAt && (
+        <Alert tone="warning" icon={Archive} title={t('archivedTitle')} className="mt-3">
+          {t('archivedBody')}
+        </Alert>
+      )}
+
+      {/*
+        Name, since-date and language used to be three loose lines under the
+        heading, and the contact links a bare row of buttons under those — the
+        only block on the screen with no surface of its own, next to four that
+        had one. Status was not there at all, so "why can I not send this
+        person a quote" had no answer on the record it was true of.
+      */}
+      <div className="surface-card mt-6 p-5">
+        <h2 className="label-type text-ink-tertiary">{t('detailsTitle')}</h2>
+        <dl className="mt-3 grid gap-x-10 text-sm sm:grid-cols-2">
+          <DetailRow label={t('statusLabel')}>
+            {customer.status === 'blocked' ? (
+              <Chip tone="danger">{lt('blocked')}</Chip>
+            ) : customer.status === 'active' ? (
+              lt('active')
+            ) : (
+              lt('inactive')
+            )}
+          </DetailRow>
+          <DetailRow label={t('since')}>
+            <span data-numeric>
+              {format.dateTime(new Date(customer.createdAt), 'full')}
+            </span>
+          </DetailRow>
+          <DetailRow label={ft('email')}>{customer.email}</DetailRow>
+          <DetailRow label={ft('phone')}>
+            <span data-numeric>{customer.phone}</span>
+          </DetailRow>
+          <DetailRow label={t('language')}>{customer.language.toUpperCase()}</DetailRow>
+          {customer.archivedAt && (
+            <DetailRow label={lt('tabArchived')}>
+              <span data-numeric>
+                {format.dateTime(new Date(customer.archivedAt), 'full')}
+              </span>
+            </DetailRow>
+          )}
+        </dl>
+
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-line-subtle pt-4">
+          <Button asChild size="sm" variant="secondary">
+            <a href={`tel:${customer.phone.replace(/\s/g, '')}`}>
+              <Phone className="size-3.5" aria-hidden />
+              {customer.phone}
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`}>
+              <MessageCircle className="size-3.5" aria-hidden />
+              WhatsApp
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <a href={`mailto:${customer.email}`}>
+              <Mail className="size-3.5" aria-hidden />
+              {customer.email}
+            </a>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
@@ -228,6 +348,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/** Label left, value right — the shape the summary blocks already use. */
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-line-subtle py-1.5">
+      <dt className="shrink-0 text-ink-tertiary">{label}</dt>
+      <dd className="min-w-0 text-right [overflow-wrap:anywhere]">{children}</dd>
     </div>
   );
 }

@@ -142,7 +142,7 @@ export default function AdminOfferDetailPage({
   }
 
   return (
-    <div className="mx-auto max-w-[80rem]">
+    <div>
       <PageHeader
         back={{ href: '/admin/offerten', label: t('back') }}
         title={offer.reference}

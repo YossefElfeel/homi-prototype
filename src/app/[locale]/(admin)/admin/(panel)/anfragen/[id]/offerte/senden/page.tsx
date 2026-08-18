@@ -2,10 +2,11 @@
 
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowLeft, ArrowRight, Check, ExternalLink, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Ban, Check, ExternalLink, Loader2, Send } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
 import { offerTotal } from '@/mock/engines/offers';
@@ -47,6 +48,7 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
   if (!request || !offer) return <p className="text-ink-tertiary">—</p>;
 
   const customer = customers.find((c) => c.id === request.customerId)!;
+  const blocked = customer.status === 'blocked';
   const service = services.find((s) => s.slug === request.serviceSlug)!;
   const waiting = requests
     .filter((r) => r.id !== id && (r.status === 'new' || r.status === 'inReview'))
@@ -101,7 +103,7 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href={`/admin/anfragen/${id}/offerte`}>
           <ArrowLeft className="size-4" aria-hidden />
@@ -110,6 +112,15 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
       </Button>
 
       <h1 className="display-type text-3xl">{t('title')}</h1>
+
+      {/* The block has to bite on the screen that would break it. Stated
+          here rather than only disabling the button, because a dead
+          control with no sentence next to it reads as a bug in the app. */}
+      {blocked && (
+        <Alert tone="danger" icon={Ban} title={t('blockedTitle')} className="mt-6">
+          {t('blockedBody', { name: `${customer.firstName} ${customer.lastName}` })}
+        </Alert>
+      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <section>
@@ -159,6 +170,21 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
             <p className="mt-4 border-t border-line-subtle pt-3 text-2xl">
               <Money amount={offerTotal(offer)} emphasis="strong" />
             </p>
+            {/*
+              The card claimed to be "what the customer sees" and left out the
+              one part of the quote written by hand. Reference, name and total
+              come from data and cannot be typed wrong; the covering note is
+              exactly where a sentence the business does not mean gets in — and
+              this is the last screen before it goes.
+            */}
+            {offer.message.trim() && (
+              <div className="mt-4 border-t border-line-subtle pt-3">
+                <h3 className="label-type text-ink-tertiary">{t('messageTitle')}</h3>
+                <p className="mt-1.5 max-h-48 overflow-y-auto text-sm whitespace-pre-line text-ink-secondary">
+                  {offer.message}
+                </p>
+              </div>
+            )}
             <Button asChild variant="link" className="mt-4">
               <Link href={`/offerte/${offer.id}`}>
                 <ExternalLink className="size-4" aria-hidden />
@@ -173,7 +199,7 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
         size="lg"
         className="mt-10"
         onClick={send}
-        disabled={channels.length === 0 || state === 'sending'}
+        disabled={blocked || channels.length === 0 || state === 'sending'}
       >
         {state === 'sending' ? (
           <>

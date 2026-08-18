@@ -64,7 +64,14 @@ export interface AddOn {
 
 /* ---------------------------------------------------------------- customer */
 
-export type CustomerStatus = 'active' | 'inactive';
+/**
+ * `inactive` is a closed account — the person left, or the owner parked them.
+ * `blocked` is a decision about them: no new work is taken, the quote builder
+ * refuses to send, and their own account area is shut. Two different facts that
+ * one boolean had to carry between them, so "left us" and "we are not serving
+ * this person" were the same row in the list.
+ */
+export type CustomerStatus = 'active' | 'inactive' | 'blocked';
 export type LoginMethod = 'password' | 'phone' | 'google' | 'apple' | 'magic-link';
 
 export interface NotificationPrefs {
@@ -86,6 +93,13 @@ export interface Customer {
   createdAt: ISODate;
   notifications: NotificationPrefs;
   internalNotes?: string;
+  /**
+   * Out of the working list, still in the data. Deleting outright is not
+   * available: `customerId` is dereferenced with `!` on three admin screens
+   * and the invoices have to survive anyway (§15). Archiving is what "delete"
+   * means here, and the archive tab is where it is honest about that.
+   */
+  archivedAt?: ISODate;
 }
 
 /* ---------------------------------------------------------------- property */
