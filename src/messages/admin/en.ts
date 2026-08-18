@@ -526,12 +526,8 @@ export const adminEn: typeof adminDe = {
     coveragePackage: 'Package · {hours} h left',
     coverageSubscription: 'On the plan',
     paymentNotDue: 'Nothing due',
-    method: {
-      twint: 'TWINT',
-      card: 'Card',
-      'apple-pay': 'Apple Pay',
-      'google-pay': 'Google Pay',
-    },
+    /* `method` lived here and described something this list does not own. It
+       is `status.method` now, next to the payment states. */
     rowActions: 'Actions',
     rowOpen: 'View details',
     rowConfirmSlot: 'Confirm a date',

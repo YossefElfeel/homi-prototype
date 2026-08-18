@@ -612,12 +612,8 @@ export const adminDe = {
     coveragePackage: 'Paket · {hours} Std. übrig',
     coverageSubscription: 'Im Abo',
     paymentNotDue: 'Nichts offen',
-    method: {
-      twint: 'TWINT',
-      card: 'Karte',
-      'apple-pay': 'Apple Pay',
-      'google-pay': 'Google Pay',
-    },
+    /* `method` stand hier und beschrieb etwas, das nicht dieser Liste gehört.
+       Jetzt `status.method`, neben den Zahlungszuständen. */
     rowActions: 'Aktionen',
     rowOpen: 'Details ansehen',
     rowConfirmSlot: 'Termin bestätigen',

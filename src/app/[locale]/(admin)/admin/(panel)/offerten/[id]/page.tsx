@@ -62,6 +62,7 @@ export default function AdminOfferDetailPage({
   const { id } = use(params);
   const t = useTranslations('admin.offerDetail');
   const listT = useTranslations('admin.offers');
+  const methodLabel = useTranslations('status.method');
   const rhythmT = useTranslations('admin.rhythm');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -416,7 +417,7 @@ export default function AdminOfferDetailPage({
                       <span className="inline-flex items-center gap-2">
                         <StatusBadge entity="payment" state={payment.status} size="sm" />
                         <span className="text-ink-tertiary">
-                          {listT(`method.${payment.method}`)}
+                          {methodLabel(payment.method)}
                         </span>
                       </span>
                     ) : (

@@ -1,39 +1,64 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  ArrowRight,
   Ban,
   Lock,
   Mail,
   MessageCircle,
   Pencil,
   Phone,
+  Plus,
+  Receipt,
   ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { ActionIcon } from '@/lib/action-icons';
+import { customerHistory, invoiceSubject, invoiceTotal } from '@/lib/customer-history';
+import { METHOD_ICONS, SAVABLE_METHODS, invoicePayment } from '@/lib/payment-methods';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Chip } from '@/components/ui/chip';
+import { DataView, type Column } from '@/components/ui/data-view';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
-import { Textarea } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/empty-state';
+import { RowAction, RowActionButton, RowActions } from '@/components/ui/row-actions';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { Invoice, SavedMethodKind } from '@/mock/schema';
+
+/** How much of the timeline the record itself carries. The rest is screen 65a. */
+const RECENT = 5;
 
 /**
  * Screen 65 — one customer, their properties, and everything that has happened.
  *
- * The history merges requests, bookings and invoices into a single timeline
- * rather than three tabs. When the phone rings, the owner needs "what is going
- * on with this person" in one read, not a filing system.
+ * The page answers four questions in the order they get asked on a phone call:
+ * who is this, what do we hold for them, what have they paid, and what has
+ * happened. The last two used to be one merged timeline, which meant the
+ * invoice was a line reading "R-2024-014" with no amount, no payment state and
+ * no way to see what was on it — the two facts the call is usually about.
+ *
+ * The timeline stays, shortened to the last five, with the searchable version
+ * on its own screen. A list that only grows is a list that stops being read.
  */
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -44,6 +69,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   /* Field labels belong to the form that writes them (64a), not to a second
      list here that would drift the first time one is reworded. */
   const ft = useTranslations('admin.customerNew');
+  const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const now = useNow();
@@ -52,13 +78,25 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const requests = useStore((s) => s.data.requests);
+  const offers = useStore((s) => s.data.offers);
   const bookings = useStore((s) => s.data.bookings);
   const invoices = useStore((s) => s.data.invoices);
+  const payments = useStore((s) => s.data.payments);
+  const paymentMethods = useStore((s) => s.data.paymentMethods);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const services = useStore((s) => s.services);
   const data = useStore((s) => s.data);
   const patchData = useStore((s) => s.patchData);
   const updateCustomer = useStore((s) => s.updateCustomer);
+  const addPaymentMethod = useStore((s) => s.addPaymentMethod);
+  /* No `removePaymentMethod` here on purpose — see the list. */
+  const setDefaultPaymentMethod = useStore((s) => s.setDefaultPaymentMethod);
+
+  const [adding, setAdding] = useState(false);
+  const [kind, setKind] = useState<SavedMethodKind>('card');
+  const [label, setLabel] = useState('');
+  /** The invoice open in the popup, by id — never the record, which the store replaces. */
+  const [openInvoice, setOpenInvoice] = useState<string | null>(null);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -69,39 +107,25 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const subscription = subscriptions.find(
     (s) => s.customerId === customer.id && s.status !== 'cancelled',
   );
-  const paid = invoices
-    .filter((i) => i.customerId === customer.id && i.status === 'paid')
-    .reduce((sum, i) => sum + i.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0), 0);
+  const myInvoices = invoices
+    .filter((i) => i.customerId === customer.id)
+    .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
+  const paid = myInvoices
+    .filter((i) => i.status === 'paid')
+    .reduce((sum, i) => sum + invoiceTotal(i), 0);
+  const myMethods = paymentMethods.filter((m) => m.customerId === customer.id);
 
-  const timeline = [
-    ...requests
-      .filter((r) => r.customerId === customer.id)
-      .map((r) => ({
-        at: r.createdAt,
-        kind: t('typeRequest'),
-        label: `${r.reference} · ${services.find((s) => s.slug === r.serviceSlug)?.name[locale]}`,
-        badge: <StatusBadge entity="request" state={r.status} size="sm" />,
-        href: `/admin/anfragen/${r.id}`,
-      })),
-    ...bookings
-      .filter((b) => b.customerId === customer.id)
-      .map((b) => ({
-        at: b.start,
-        kind: t('typeBooking'),
-        label: `${b.reference} · ${services.find((s) => s.slug === b.serviceSlug)?.name[locale]}`,
-        badge: <StatusBadge entity="booking" state={b.status} size="sm" />,
-        href: `/admin/buchungen/${b.id}`,
-      })),
-    ...invoices
-      .filter((i) => i.customerId === customer.id)
-      .map((i) => ({
-        at: i.issuedAt,
-        kind: t('typeInvoice'),
-        label: i.reference,
-        badge: <StatusBadge entity="invoice" state={i.status} size="sm" />,
-        href: `/admin/rechnungen/${i.id}`,
-      })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+  const sources = {
+    requests,
+    offers,
+    bookings,
+    invoices,
+    subscriptions,
+    services,
+    locale,
+  };
+  const timeline = customerHistory(customer.id, sources);
+  const invoiceInDialog = myInvoices.find((i) => i.id === openInvoice);
 
   const name = `${customer.firstName} ${customer.lastName}`;
 
@@ -134,6 +158,87 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       ),
     });
   }
+
+  function saveMethod() {
+    addPaymentMethod({ customerId: customer!.id, kind, label: label.trim() }, now);
+    setAdding(false);
+    setLabel('');
+    setKind('card');
+    toast.success(t('paymentAdded'));
+  }
+
+
+  /*
+   * Six columns on a record screen rather than a list screen, so `tableOnly`
+   * carries the two that are already on the card in another form: the card
+   * shows the amount next to the title and the payment state as its trailing
+   * badge, and repeating them as labelled rows underneath is the "compressed
+   * table" the brief rules out.
+   */
+  const invoiceColumns: Column<Invoice>[] = [
+    {
+      key: 'reference',
+      header: t('colInvoice'),
+      primary: true,
+      sortBy: (i) => i.reference,
+      cell: (i) => (
+        <span data-numeric className="font-medium">
+          {i.reference}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('colPaymentStatus'),
+      trailing: true,
+      sortBy: (i) => i.status,
+      cell: (i) => <StatusBadge entity="invoice" state={i.status} size="sm" />,
+    },
+    {
+      key: 'service',
+      header: t('colService'),
+      cell: (i) => (
+        <span className="text-ink-secondary">{invoiceSubject(i, sources)}</span>
+      ),
+    },
+    {
+      key: 'date',
+      header: t('colDate'),
+      sortBy: (i) => i.issuedAt,
+      cell: (i) => (
+        <span data-numeric className="text-sm text-ink-secondary">
+          {format.dateTime(new Date(i.issuedAt), 'short')}
+        </span>
+      ),
+    },
+    {
+      key: 'method',
+      header: t('colMethod'),
+      cell: (i) => {
+        const payment = invoicePayment(i.id, payments);
+        /* An unpaid invoice has no method and never had one — printing an em
+           dash there would read as missing data rather than as "still open". */
+        if (!payment) {
+          return <span className="text-sm text-ink-tertiary">{t('methodNone')}</span>;
+        }
+        const Icon = METHOD_ICONS[payment.method];
+        return (
+          <span className="inline-flex items-center gap-2 text-sm text-ink-secondary">
+            <Icon className="size-3.5 shrink-0 text-ink-tertiary" aria-hidden />
+            {methodLabel(payment.method)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'amount',
+      header: t('colAmount'),
+      align: 'end',
+      trailing: true,
+      sortBy: (i) => invoiceTotal(i),
+      cell: (i) => <Money amount={invoiceTotal(i)} />,
+    },
+  ];
 
   return (
     <div>
@@ -278,34 +383,83 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             )}
           </section>
 
+          {/*
+            §11.2 pays a plan by card and §10 settles an invoice by QR-bill, so
+            "what do we have on file for this person" was a real question with
+            no screen behind it: the customer could see their own methods on 45
+            and the owner could see nothing at all. The list is the same store
+            records, which is what makes the two views agree.
+          */}
           <section>
-            <h2 className="display-type text-xl">{t('historyTitle')}</h2>
-            {timeline.length === 0 ? (
-              <EmptyState compact className="mt-4" title={t('historyEmpty')} body={t('historyEmpty')} />
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="display-type text-xl">{t('paymentTitle')}</h2>
+              <Button size="sm" variant="secondary" onClick={() => setAdding(true)}>
+                <Plus className="size-3.5" aria-hidden />
+                {t('paymentAdd')}
+              </Button>
+            </div>
+            <p className="mt-1 text-sm text-ink-tertiary">{t('paymentLead')}</p>
+
+            {myMethods.length === 0 ? (
+              <p className="mt-4 border-y border-line-subtle py-3.5 text-sm text-ink-tertiary">
+                {t('paymentEmpty')}
+              </p>
             ) : (
               <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
-                {timeline.map((entry) => (
-                  <li key={`${entry.kind}-${entry.label}`}>
-                    <Link
-                      href={entry.href}
-                      className="flex flex-wrap items-center justify-between gap-3 py-3.5 transition-colors hover:bg-sunken"
+                {myMethods.map((method) => {
+                  const Icon = METHOD_ICONS[method.kind];
+                  return (
+                    <li
+                      key={method.id}
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"
                     >
-                      <span className="min-w-0">
-                        <span className="label-type block text-ink-tertiary">{entry.kind}</span>
-                        <span data-numeric className="block">
-                          {entry.label}
+                      <span className="flex min-w-0 items-center gap-3">
+                        <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                        <span className="min-w-0">
+                          <span data-numeric className="block">
+                            {method.label}
+                          </span>
+                          <span className="block text-xs text-ink-tertiary">
+                            {methodLabel(method.kind)} ·{' '}
+                            {t('paymentAddedOn', {
+                              date: format.dateTime(new Date(method.addedAt), 'short'),
+                            })}
+                          </span>
                         </span>
+                        {method.isDefault && <Chip>{t('paymentDefaultLabel')}</Chip>}
                       </span>
-                      <span className="flex items-center gap-3">
-                        <span data-numeric className="text-sm text-ink-tertiary">
-                          {format.dateTime(new Date(entry.at), 'short')}
-                        </span>
-                        {entry.badge}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                      {/*
+                        Which card is charged is an instruction the customer
+                        gives on the phone, so the owner can act on it. Deleting
+                        one is not: it is the customer's own instrument, and it
+                        stays theirs to remove on screen 45. A bin icon here
+                        would be the owner throwing away something they were
+                        only ever shown.
+                      */}
+                      {!method.isDefault && (
+                        <Button
+                          variant="quiet"
+                          size="sm"
+                          onClick={() => {
+                            setDefaultPaymentMethod(method.id);
+                            toast.success(t('paymentDefaultSet'));
+                          }}
+                        >
+                          {t('paymentMakeDefault')}
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
+            )}
+
+            {/* Says where the missing control is. A section that can add and
+                cannot remove looks like a control that was forgotten unless
+                the screen names the reason — and "ring us to delete your card"
+                is the support call this sentence prevents. */}
+            {myMethods.length > 0 && (
+              <p className="mt-3 text-xs text-ink-tertiary">{t('paymentRemoveHint')}</p>
             )}
           </section>
         </div>
@@ -348,7 +502,259 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </aside>
       </div>
+
+      {/*
+        Full width rather than in the seven-column half, because six columns in
+        a half-width grid cell is the squeezed table the card layout exists to
+        avoid. This is also the only place in the panel where one customer's
+        invoices are listed together — /admin/rechnungen is every customer's.
+      */}
+      <section className="mt-10">
+        <h2 className="display-type text-xl">{t('invoicesTitle')}</h2>
+        <DataView
+          className="mt-4"
+          items={myInvoices}
+          columns={invoiceColumns}
+          getKey={(i) => i.id}
+          caption={t('invoicesTitle')}
+          rowActions={(i) => (
+            <RowActions>
+              {/* Opens over the record rather than navigating: the question is
+                  usually "what was on that one" mid-call, and leaving the
+                  customer to answer it costs the way back. */}
+              <RowActionButton
+                label={t('invoiceRowView')}
+                onClick={() => setOpenInvoice(i.id)}
+              >
+                <ActionIcon.open aria-hidden />
+              </RowActionButton>
+              <RowAction href={`/admin/rechnungen/${i.id}`} label={t('invoiceDialogOpen')}>
+                <ActionIcon.invoice aria-hidden />
+              </RowAction>
+            </RowActions>
+          )}
+          empty={
+            <EmptyState
+              icon={Receipt}
+              title={t('invoicesEmptyTitle')}
+              body={t('invoicesEmptyBody')}
+            />
+          }
+        />
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="display-type text-xl">{t('historyTitle')}</h2>
+          {timeline.length > 0 && (
+            <Button asChild variant="link" size="sm">
+              <Link href={`/admin/kunden/${customer.id}/verlauf`}>
+                {t('historyAll')}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {timeline.length === 0 ? (
+          <EmptyState compact className="mt-4" title={t('historyEmpty')} body={t('historyEmpty')} />
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-ink-tertiary">
+              {t('historyRecent', { n: Math.min(RECENT, timeline.length) })}
+            </p>
+            <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+              {timeline.slice(0, RECENT).map((entry) => (
+                <li key={`${entry.kind}-${entry.id}`}>
+                  <Link
+                    href={entry.href}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3.5 transition-colors hover:bg-sunken"
+                  >
+                    <span className="min-w-0">
+                      <span className="label-type block text-ink-tertiary">
+                        {t(kindKey(entry.kind))}
+                      </span>
+                      <span data-numeric className="block">
+                        {entry.reference} · {entry.detail}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      <span data-numeric className="text-sm text-ink-tertiary">
+                        {entry.at ? format.dateTime(new Date(entry.at), 'short') : '—'}
+                      </span>
+                      <StatusBadge
+                        entity={entry.badge.entity}
+                        state={entry.badge.state}
+                        size="sm"
+                      />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      <Dialog open={adding} onOpenChange={setAdding}>
+        <DialogContent closeLabel={t('paymentCancel')}>
+          <DialogHeader>
+            <DialogTitle>{t('paymentAddTitle')}</DialogTitle>
+            <DialogDescription>{t('paymentAddLead')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Field label={t('paymentKind')}>
+              {(props) => (
+                <Select
+                  {...props}
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as SavedMethodKind)}
+                >
+                  {SAVABLE_METHODS.map((value) => (
+                    <option key={value} value={value}>
+                      {methodLabel(value)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <Field label={t('paymentLabelField')} hint={t('paymentLabelHint')}>
+              {(props) => (
+                <Input
+                  {...props}
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder={t('paymentLabelPlaceholder')}
+                />
+              )}
+            </Field>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAdding(false)}>
+              {t('paymentCancel')}
+            </Button>
+            <Button onClick={saveMethod} disabled={!label.trim()}>
+              {t('paymentAddSave')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(invoiceInDialog)} onOpenChange={() => setOpenInvoice(null)}>
+        <DialogContent closeLabel={t('dismiss')}>
+          {invoiceInDialog && (
+            <InvoiceDialogBody
+              invoice={invoiceInDialog}
+              subject={invoiceSubject(invoiceInDialog, sources)}
+              methodName={(() => {
+                const payment = invoicePayment(invoiceInDialog.id, payments);
+                return payment ? methodLabel(payment.method) : undefined;
+              })()}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+/** The timeline's four kinds answer to four label keys on `admin.customer`. */
+function kindKey(kind: 'request' | 'offer' | 'booking' | 'invoice') {
+  return (
+    {
+      request: 'typeRequest',
+      offer: 'typeOffer',
+      booking: 'typeBooking',
+      invoice: 'typeInvoice',
+    } as const
+  )[kind];
+}
+
+/**
+ * The popup's contents.
+ *
+ * Read-only on purpose: screen 72 is where an invoice is edited, and a second
+ * place to change an amount is a second place two amounts can disagree.
+ */
+function InvoiceDialogBody({
+  invoice,
+  subject,
+  methodName,
+}: {
+  invoice: Invoice;
+  subject: string;
+  methodName?: string;
+}) {
+  const t = useTranslations('admin.customer');
+  const format = useFormatter();
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          <span data-numeric>{invoice.reference}</span>
+        </DialogTitle>
+        <DialogDescription>{subject}</DialogDescription>
+      </DialogHeader>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge entity="invoice" state={invoice.status} />
+        {invoice.paidAt && (
+          <span className="text-sm text-ink-secondary">
+            {methodName
+              ? t('invoiceDialogPaidVia', { method: methodName })
+              : t('invoiceDialogPaid')}
+          </span>
+        )}
+      </div>
+
+      <dl className="mt-4 grid gap-x-10 text-sm sm:grid-cols-2">
+        <DetailRow label={t('invoiceDialogIssued')}>
+          <span data-numeric>{format.dateTime(new Date(invoice.issuedAt), 'full')}</span>
+        </DetailRow>
+        <DetailRow label={t('invoiceDialogDue')}>
+          <span data-numeric>{format.dateTime(new Date(invoice.dueAt), 'full')}</span>
+        </DetailRow>
+        {invoice.paidAt && (
+          <DetailRow label={t('invoiceDialogPaid')}>
+            <span data-numeric>{format.dateTime(new Date(invoice.paidAt), 'full')}</span>
+          </DetailRow>
+        )}
+      </dl>
+
+      <h3 className="label-type mt-5 text-ink-tertiary">{t('invoiceDialogLines')}</h3>
+      <ul className="mt-2 divide-y divide-line-subtle border-y border-line-subtle">
+        {invoice.lines.map((line, index) => (
+          <li
+            key={`${line.label}-${index}`}
+            className="flex items-baseline justify-between gap-4 py-2 text-sm"
+          >
+            <span className="min-w-0">
+              {line.label}
+              {line.quantity !== 1 && (
+                <span data-numeric className="text-ink-tertiary">
+                  {' '}
+                  × {line.quantity}
+                </span>
+              )}
+            </span>
+            <Money amount={line.quantity * line.unitPrice} />
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 flex items-baseline justify-between gap-4">
+        <span className="font-medium">{t('invoiceDialogTotal')}</span>
+        <Money amount={invoiceTotal(invoice)} emphasis="strong" className="text-xl" />
+      </p>
+
+      <DialogFooter>
+        <Button asChild variant="secondary">
+          <Link href={`/admin/rechnungen/${invoice.id}`}>{t('invoiceDialogOpen')}</Link>
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
