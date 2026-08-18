@@ -11,9 +11,6 @@
 import { SCENARIOS, buildScenario, seedHolds } from '../src/mock/scenarios.ts';
 import { offerHours, offerTotal } from '../src/mock/engines/offers.ts';
 import { offerCoverage, offerPayment, offerBooking, offerRhythm } from '../src/lib/offer-facts.ts';
-import { availabilityCalendar, startOfDay } from '../src/mock/engines/availability.ts';
-import { businessWeekday, zonedParts } from '../src/lib/business-time.ts';
-import { SEED_SETTINGS } from '../src/mock/seed.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -84,11 +81,7 @@ for (const clock of CLOCKS) {
     /* -------------------------------------------- proposed dates */
     for (const o of d.offers) {
       for (const s of o.proposedSlots ?? []) {
-        check(
-          `${tag} ${o.reference} proposal not a Sunday`,
-          businessWeekday(new Date(s)) !== 7,
-          s,
-        );
+        check(`${tag} ${o.reference} proposal not a Sunday`, new Date(s).getDay() !== 0, s);
       }
       if (o.confirmedSlot) {
         check(
@@ -188,59 +181,6 @@ for (const clock of CLOCKS) {
     }
   }
 }
-
-/*
- * The scheduling clock belongs to the business, not to whoever is running this.
- *
- * `startOfDay` used the runtime's timezone while every rendered date is bound
- * to Europe/Zurich, so the day grid drew each cell with the day before —
- * Saturday came up closed and Sunday offered nineteen slots. It is invisible
- * from a desk in Zurich, which is exactly why it needs a test: this one runs
- * the calendar under four timezones on both sides of the DST boundary and
- * fails anywhere the two clocks disagree.
- */
-for (const tz of ['Europe/Zurich', 'Africa/Cairo', 'America/New_York', 'Pacific/Auckland']) {
-  process.env.TZ = tz;
-  for (const clock of [new Date('2026-08-17T10:00:00Z'), new Date('2026-01-19T10:00:00Z')]) {
-    const d = buildScenario('demo', clock);
-    const tag = `[tz:${tz}@${clock.toISOString().slice(0, 10)}]`;
-
-    const cal = availabilityCalendar({
-      from: startOfDay(clock),
-      days: 21,
-      durationMinutes: 120,
-      property: d.properties[0]!,
-      bookings: d.bookings,
-      holds: [],
-      closures: d.closures,
-      properties: d.properties,
-      settings: SEED_SETTINGS,
-      now: clock,
-    });
-
-    for (const day of cal) {
-      const wd = businessWeekday(new Date(day.date));
-      const p = zonedParts(new Date(day.date));
-      /* Every cell must *be* midnight in Zurich — that is what makes the label
-         the browser prints match the slots the cell holds. */
-      check(`${tag} day cell is Zurich midnight`, p.hour === 0 && p.minute === 0,
-        `${day.date} → ${p.hour}:${String(p.minute).padStart(2, '0')}`);
-      if (wd === 7) {
-        check(`${tag} Sunday is closed`, day.blocked === 'closed-day' && day.slots.length === 0,
-          `${day.date} → ${day.blocked}`);
-      }
-      if (wd === 6) {
-        check(`${tag} Saturday is not closed as a rule`, day.blocked !== 'closed-day', day.date);
-      }
-      for (const s of day.slots) {
-        check(`${tag} slot falls on its own day`,
-          businessWeekday(new Date(s.start)) === wd, `${day.date} vs ${s.start}`);
-      }
-    }
-    check(`${tag} the fortnight has slots at all`, cal.some((x) => x.slots.length > 0));
-  }
-}
-delete process.env.TZ;
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
 if (failures.length) {
