@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { StatGrid, StatTile } from '@/components/ui/stat';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { CustomerLink, RecordLink } from '@/components/ui/record-link';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
@@ -196,10 +197,19 @@ export default function AdminDashboard() {
                 >
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{nameOf(request.customerId)}</span>
-                      <span data-numeric className="text-2xs text-ink-tertiary">
-                        {request.reference}
+                      <span className="font-medium">
+                        <CustomerLink
+                          id={request.customerId}
+                          name={nameOf(request.customerId)}
+                        />
                       </span>
+                      <RecordLink
+                        href={`/admin/anfragen/${request.id}`}
+                        numeric
+                        className="text-2xs"
+                      >
+                        {request.reference}
+                      </RecordLink>
                       {request.outOfArea && (
                         <StatusChip>{property?.postcode}</StatusChip>
                       )}
