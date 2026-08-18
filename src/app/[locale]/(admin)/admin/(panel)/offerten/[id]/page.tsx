@@ -25,6 +25,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import {
+  canReissue,
   daysLeft,
   isExpired,
   offerDiscount,
@@ -119,9 +120,14 @@ export default function AdminOfferDetailPage({
   const awaitingSlot = Boolean(offer.proposedSlots?.length && !offer.slotConfirmedAt);
 
   const state = expired && offer.status === 'sent' ? 'expired' : offer.status;
+  /* Not every quote is one a new version applies to — see `canReissue`. The
+     button is hidden rather than disabled: on the quotes this excludes, the
+     reason is already on screen next to it (a succeeded payment, a booking),
+     and a greyed control with no tooltip explains nothing. */
+  const reissuable = canReissue(offer, now);
 
   function reissue() {
-    reissueOffer(offer!.id, now);
+    if (!reissueOffer(offer!.id, now)) return;
     toast.success(t('reissued'));
     router.push(`/admin/anfragen/${offer!.requestId}/offerte`);
   }
@@ -159,10 +165,12 @@ export default function AdminOfferDetailPage({
         }
         actions={
           <>
-            <Button variant="secondary" onClick={reissue}>
-              <RefreshCw className="size-4" aria-hidden />
-              {t('reissue')}
-            </Button>
+            {reissuable && (
+              <Button variant="secondary" onClick={reissue}>
+                <RefreshCw className="size-4" aria-hidden />
+                {t('reissue')}
+              </Button>
+            )}
             <Button asChild variant="secondary">
               {/* Deliberately a plain anchor with a new tab: this leaves the
                   console for the customer-facing flow, and coming back should
@@ -273,6 +281,25 @@ export default function AdminOfferDetailPage({
               </table>
             </div>
           </Card>
+
+          {/*
+            What the customer wrote back, which until now had nowhere of its
+            own: it was stored over the covering note, so this text appeared
+            under the heading "Covering note" and the note the office had
+            actually sent was gone. Two headings because they are two
+            directions — one is what we said, one is what they answered.
+          */}
+          {offer.revisionNote && (
+            <Card className="mt-app border-status-warning-line">
+              <CardHeader
+                title={t('revisionTitle')}
+                description={t('revisionLead', { name: customer?.firstName ?? '' })}
+              />
+              <p className="mt-3 max-w-[var(--measure)] whitespace-pre-line text-ink-secondary">
+                {offer.revisionNote}
+              </p>
+            </Card>
+          )}
 
           {offer.message && (
             <Card className="mt-app">

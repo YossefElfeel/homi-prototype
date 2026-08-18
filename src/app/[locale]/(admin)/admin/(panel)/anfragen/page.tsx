@@ -8,9 +8,9 @@ import {
   AlertTriangle,
   Eye,
   FileText,
-  MoreHorizontal,
   Pencil,
   Plus,
+  Receipt,
   Search,
   Trash2,
   X,
@@ -21,18 +21,17 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination, paginate } from '@/components/ui/pagination';
+import {
+  RowAction,
+  RowActionButton,
+  RowActions,
+  RowActionsDivider,
+} from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
@@ -503,82 +502,83 @@ export default function RequestsPage() {
           )
         }
         caption={t('title')}
+        /*
+         * Every way out of a row is on the row — including the two that end it.
+         * They were behind a menu, which cost two clicks and a guess about what
+         * the menu held.
+         *
+         * What keeps "decline" from being a mis-click away from "open": it is
+         * last, behind a divider, and it turns red under the pointer. Neither
+         * one fires on the spot either — decline opens a page that asks for a
+         * reason, discard asks first.
+         */
         rowActions={(r) => {
           const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
           const answerable = r.status === 'new' || r.status === 'inReview';
+          const draft = r.status === 'draft';
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={t('rowActions')}
-                className="inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
-              >
-                <MoreHorizontal className="size-4" aria-hidden />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {r.status === 'draft' ? (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/admin/anfragen/neu?draft=${r.id}`}>
-                        <Pencil aria-hidden />
-                        {t('rowContinue')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      tone="danger"
-                      onSelect={() => {
-                        /* A draft has no quote, booking or invoice hanging off
-                           it, which is the only reason a straight delete is
-                           safe here. The store guards the same rule. */
-                        if (!window.confirm(t('rowDiscardConfirm'))) return;
-                        discardRequestDraft(r.id);
-                        toast.success(t('rowDiscardDone'));
-                      }}
+            <RowActions>
+              {draft ? (
+                <>
+                  <RowAction
+                    href={`/admin/anfragen/neu?draft=${r.id}`}
+                    label={t('rowContinue')}
+                  >
+                    <Pencil aria-hidden />
+                  </RowAction>
+                  <RowActionsDivider />
+                  <RowActionButton
+                    tone="danger"
+                    label={t('rowDiscard')}
+                    onClick={() => {
+                      /* A draft has no quote, booking or invoice hanging off
+                         it, which is the only reason a straight delete is
+                         safe here. The store guards the same rule. */
+                      if (!window.confirm(t('rowDiscardConfirm'))) return;
+                      discardRequestDraft(r.id);
+                      toast.success(t('rowDiscardDone'));
+                    }}
+                  >
+                    <Trash2 aria-hidden />
+                  </RowActionButton>
+                </>
+              ) : (
+                <>
+                  <RowAction href={`/admin/anfragen/${r.id}`} label={t('rowOpen')}>
+                    <Eye aria-hidden />
+                  </RowAction>
+                  {answerable && (
+                    <RowAction
+                      href={`/admin/anfragen/${r.id}/offerte`}
+                      label={t('rowQuote')}
                     >
-                      <Trash2 aria-hidden />
-                      {t('rowDiscard')}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/admin/anfragen/${r.id}`}>
-                        <Eye aria-hidden />
-                        {t('rowOpen')}
-                      </Link>
-                    </DropdownMenuItem>
-                    {answerable && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/anfragen/${r.id}/offerte`}>
-                          <FileText aria-hidden />
-                          {t('rowQuote')}
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    {offer && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/offerten/${offer.id}`}>
-                          <FileText aria-hidden />
-                          {t('rowOffer')}
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    {answerable && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild tone="danger">
-                          <Link href={`/admin/anfragen/${r.id}/ablehnen`}>
-                            <X aria-hidden />
-                            {t('rowReject')}
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      <FileText aria-hidden />
+                    </RowAction>
+                  )}
+                  {offer && (
+                    <RowAction
+                      href={`/admin/offerten/${offer.id}`}
+                      label={t('rowOffer')}
+                    >
+                      <Receipt aria-hidden />
+                    </RowAction>
+                  )}
+                  {answerable && (
+                    <>
+                      <RowActionsDivider />
+                      <RowAction
+                        href={`/admin/anfragen/${r.id}/ablehnen`}
+                        label={t('rowReject')}
+                        tone="danger"
+                      >
+                        <X aria-hidden />
+                      </RowAction>
+                    </>
+                  )}
+                </>
+              )}
+            </RowActions>
           );
         }}
         empty={

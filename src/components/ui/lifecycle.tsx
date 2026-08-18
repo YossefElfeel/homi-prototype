@@ -56,11 +56,24 @@ export function Lifecycle({
   stages,
   label,
   className,
+  orientation = 'vertical',
 }: {
   stages: Stage[];
   label: string;
   className?: string;
+  /**
+   * `horizontal` when the rail is the header of a record rather than an item
+   * in its sidebar — it reads left to right like the process it describes and
+   * the whole run is visible before any of the detail. It scrolls sideways
+   * rather than wrapping: eight stages folded onto two lines stop being a
+   * sequence and start being a grid.
+   */
+  orientation?: 'vertical' | 'horizontal';
 }) {
+  if (orientation === 'horizontal') {
+    return <LifecycleRow stages={stages} label={label} className={className} />;
+  }
+
   return (
     <ol aria-label={label} className={cn('space-y-0', className)}>
       {stages.map((stage, i) => {
@@ -123,5 +136,83 @@ export function Lifecycle({
         );
       })}
     </ol>
+  );
+}
+
+function LifecycleRow({
+  stages,
+  label,
+  className,
+}: {
+  stages: Stage[];
+  label: string;
+  className?: string;
+}) {
+  return (
+    /* The scroller, not the list, owns the overflow — `overflow-x` on the `ol`
+       would clip the `current` dot's ring against its own edge. */
+    <div className={cn('-mx-1 overflow-x-auto px-1 pb-1', className)}>
+      <ol aria-label={label} className="flex min-w-max items-start">
+        {stages.map((stage, i) => {
+          const mark = DOT[stage.state];
+          const Icon = mark.icon;
+          const last = i === stages.length - 1;
+          const connectorLit = stage.state === 'done';
+
+          return (
+            <li
+              key={stage.key}
+              className={cn('flex min-w-0 flex-col', !last && 'flex-1')}
+            >
+              <span className="flex items-center">
+                <span
+                  className={cn(
+                    'flex size-6 shrink-0 items-center justify-center rounded-full',
+                    mark.ring,
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      stage.state === 'current' ? 'size-4' : 'size-3.5',
+                      mark.icon_,
+                    )}
+                    aria-hidden
+                  />
+                </span>
+                {!last && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'mx-1.5 h-0.5 w-14 flex-1 rounded-full',
+                      connectorLit ? 'bg-accent' : 'bg-line-subtle',
+                    )}
+                  />
+                )}
+              </span>
+
+              <span className={cn('mt-2 block', !last && 'pe-4')}>
+                <span
+                  className={cn(
+                    'block text-sm',
+                    stage.state === 'current' && 'font-medium text-ink',
+                    stage.state === 'done' && 'text-ink',
+                    stage.state === 'failed' && 'font-medium text-status-danger-fg',
+                    (stage.state === 'pending' || stage.state === 'skipped') &&
+                      'text-ink-tertiary',
+                  )}
+                >
+                  {stage.label}
+                </span>
+                {stage.detail && (
+                  <span data-numeric className="mt-0.5 block text-xs text-ink-tertiary">
+                    {stage.detail}
+                  </span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

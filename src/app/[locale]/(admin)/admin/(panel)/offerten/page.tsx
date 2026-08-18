@@ -1,24 +1,32 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { CalendarCheck, CalendarClock, ExternalLink, FileText, MoreHorizontal, Package, RefreshCw, Repeat } from 'lucide-react';
+import {
+  CalendarCheck,
+  CalendarClock,
+  ExternalLink,
+  FileText,
+  Package,
+  RefreshCw,
+  Repeat,
+  Search,
+  X,
+} from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Select } from '@/components/ui/field';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { Toolbar } from '@/components/ui/toolbar';
 import { Chip } from '@/components/ui/chip';
 import { daysLeft, isExpired, offerTotal } from '@/mock/engines/offers';
 import {
@@ -31,6 +39,38 @@ import {
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Offer } from '@/mock/schema';
 import { cn } from '@/lib/cn';
+
+/**
+ * The states a quote can actually be in on this screen.
+ *
+ * Not `statesOf('request')`: the badge borrows the request registry for its
+ * colour, but a quote is never `new`, `inReview` or `cancelledByCustomer`, and
+ * a filter offering those is a filter with dead options in it. `draft` is out
+ * too — the list itself excludes drafts.
+ */
+const OFFER_STATES = [
+  'sent',
+  'revisionRequested',
+  'accepted',
+  'rejected',
+  'expired',
+] as const;
+
+/** The badge reads from the request registry, so `sent` answers to `offerSent`. */
+const STATE_LABEL_KEY: Record<(typeof OFFER_STATES)[number], string> = {
+  sent: 'offerSent',
+  revisionRequested: 'revisionRequested',
+  accepted: 'accepted',
+  rejected: 'rejected',
+  expired: 'expired',
+};
+
+/**
+ * The payment column has three shapes, and only one of them is a `Payment`
+ * record — so the filter has to carry the other two as well, or "which jobs
+ * owe us nothing?" stays unanswerable on the screen that shows it.
+ */
+const PAYMENT_FILTERS = ['succeeded', 'failed', 'pending', 'refunded', 'notDue', 'none'] as const;
 
 /**
  * Screen 57 — quotes.
@@ -48,6 +88,9 @@ import { cn } from '@/lib/cn';
  */
 export default function OffersPage() {
   const t = useTranslations('admin.offers');
+  const appT = useTranslations('app');
+  const statusLabel = useTranslations('status.request');
+  const paymentLabel = useTranslations('status.payment');
   const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -64,15 +107,64 @@ export default function OffersPage() {
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
 
-  if (!hydrated) return <SkeletonPage label={t('title')} />;
-
-  const visible = offers
-    .filter((o) => o.status !== 'draft')
-    .sort((a, b) => (b.issuedAt ?? '').localeCompare(a.issuedAt ?? ''));
+  const [status, setStatus] = useState('all');
+  const [payment, setPayment] = useState('all');
+  const [query, setQuery] = useState('');
 
   const requestOf = (offer: Offer) => requests.find((r) => r.id === offer.requestId);
-  const nameOf = (offer: Offer) =>
-    customerName(customers.find((c) => c.id === requestOf(offer)?.customerId));
+  const customerOf = (offer: Offer) =>
+    customers.find((c) => c.id === requestOf(offer)?.customerId);
+  const nameOf = (offer: Offer) => customerName(customerOf(offer));
+
+  /* Derived, like every other column here — the stored `status` still says
+     `sent` on a quote whose date has passed, and a filter that disagreed with
+     the badge next to it would be worse than no filter. */
+  const stateOf = (o: Offer) =>
+    isExpired(o, now) && o.status === 'sent' ? 'expired' : o.status;
+
+  const paymentStateOf = (o: Offer) => {
+    const record = offerPayment(o.id, payments);
+    if (record) return record.status;
+    return offerCoverage(o, requestOf(o), subscriptions, credits, now).kind === 'payable'
+      ? 'none'
+      : 'notDue';
+  };
+
+  const all = useMemo(
+    () =>
+      offers
+        .filter((o) => o.status !== 'draft')
+        .sort((a, b) => (b.issuedAt ?? '').localeCompare(a.issuedAt ?? '')),
+    [offers],
+  );
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return all
+      .filter((o) => (status === 'all' ? true : stateOf(o) === status))
+      .filter((o) => (payment === 'all' ? true : paymentStateOf(o) === payment))
+      .filter((o) => {
+        if (!q) return true;
+        const c = customerOf(o);
+        return (
+          o.reference.toLowerCase().includes(q) ||
+          nameOf(o).toLowerCase().includes(q) ||
+          (requestOf(o)?.reference ?? '').toLowerCase().includes(q) ||
+          (c?.email ?? '').toLowerCase().includes(q)
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, requests, customers, payments, subscriptions, credits, status, payment, query, now]);
+
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
+
+  const filtering = status !== 'all' || payment !== 'all' || Boolean(query);
+
+  function reset() {
+    setStatus('all');
+    setPayment('all');
+    setQuery('');
+  }
 
   const columns: Column<Offer>[] = [
     {
@@ -91,31 +183,38 @@ export default function OffersPage() {
       key: 'status',
       header: t('colStatus'),
       trailing: true,
-      cell: (o) => (
-        <StatusBadge
-          entity="request"
-          state={
-            isExpired(o, now) && o.status === 'sent'
-              ? 'expired'
-              : o.status === 'sent'
-                ? 'offerSent'
-                : o.status === 'accepted'
-                  ? 'accepted'
-                  : o.status === 'revisionRequested'
-                    ? 'revisionRequested'
-                    : o.status === 'rejected'
-                      ? 'rejected'
-                      : 'expired'
-          }
-          size="sm"
-        />
-      ),
+      cell: (o) => {
+        const state = stateOf(o);
+        return (
+          <StatusBadge
+            entity="request"
+            state={state === 'sent' ? 'offerSent' : state}
+            size="sm"
+          />
+        );
+      },
     },
     {
       key: 'customer',
       header: t('colCustomer'),
       sortBy: nameOf,
-      cell: nameOf,
+      /* The name was plain text, so the one screen that lists every quote a
+         person has had gave no way to reach the person. Stops propagation —
+         the row underneath goes to the quote, and tapping the name should not
+         be a coin flip between the two. */
+      cell: (o) => {
+        const customer = customerOf(o);
+        if (!customer) return <span className="text-ink-tertiary">—</span>;
+        return (
+          <Link
+            href={`/admin/kunden/${customer.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-[var(--radius-xs)] underline-offset-4 hover:text-ink-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+          >
+            {customerName(customer)}
+          </Link>
+        );
+      },
     },
     {
       /* Service and rhythm read as one fact — "Unterhaltsreinigung, weekly" is
@@ -218,6 +317,71 @@ export default function OffersPage() {
   return (
     <div className="mx-auto max-w-[100rem]">
       <PageHeader title={t('title')} lead={t('lead')} />
+
+      {/*
+        The list opened on every quote ever issued, newest first, and that was
+        the only view of it. The two questions a working week actually asks —
+        "what is still out there waiting for an answer" and "what has been paid"
+        — were both a scroll and a squint. Status and payment are the two
+        columns the screen already derives, so filtering on them costs nothing
+        the page was not computing anyway.
+      */}
+      <Toolbar
+        search={{
+          value: query,
+          onChange: setQuery,
+          label: t('search'),
+          clearLabel: appT('clearSearch'),
+        }}
+        count={
+          filtering
+            ? appT('results', { shown: visible.length, total: all.length })
+            : appT('resultsAll', { total: all.length })
+        }
+        filters={
+          <>
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterStatus')}</span>
+              <Select dense value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="all">
+                  {t('filterStatus')}: {t('filterAll')}
+                </option>
+                {OFFER_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {statusLabel(STATE_LABEL_KEY[state])}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterPayment')}</span>
+              <Select dense value={payment} onChange={(e) => setPayment(e.target.value)}>
+                <option value="all">
+                  {t('filterPayment')}: {t('filterAll')}
+                </option>
+                {PAYMENT_FILTERS.map((state) => (
+                  <option key={state} value={state}>
+                    {state === 'notDue'
+                      ? t('paymentNotDue')
+                      : state === 'none'
+                        ? t('filterPaymentNone')
+                        : paymentLabel(state)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            {filtering && (
+              <Button size="sm" variant="ghost" onClick={reset}>
+                <X className="size-3.5" aria-hidden />
+                {t('filterReset')}
+              </Button>
+            )}
+          </>
+        }
+      />
+
       <DataView
         items={visible}
         columns={columns}
@@ -228,13 +392,27 @@ export default function OffersPage() {
         onSelect={(o) => router.push(`/admin/offerten/${o.id}`)}
         caption={t('title')}
         openLabel={t('rowOpen')}
-        empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
+        empty={
+          filtering ? (
+            <EmptyState
+              icon={Search}
+              title={t('searchEmptyTitle')}
+              body={t('searchEmptyBody')}
+              action={
+                <Button variant="secondary" onClick={reset}>
+                  {t('filterReset')}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
+          )
+        }
         /*
-         * The row led to exactly one place and every other move — read the
-         * request it answers, open the job it became, check what the customer
-         * sees, reissue a lapsed one — meant landing on the detail page first
-         * and setting off again. The requests list has had this menu since
-         * wave 6; the quotes list was the one that never got it.
+         * The menu was two clicks to reach anything and said nothing from the
+         * row: whether a quote had produced a booking, or was sitting on three
+         * dates waiting for us, was only visible once it was open. As icons the
+         * conditional two announce themselves by existing.
          */
         rowActions={(o) => {
           const booking = offerBooking(o.id, bookings);
@@ -242,51 +420,41 @@ export default function OffersPage() {
             o.proposedSlots?.length && !o.slotConfirmedAt,
           );
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={t('rowActions')}
-                className="rounded-[var(--radius-sm)] p-1.5 text-ink-tertiary hover:bg-sunken hover:text-ink"
+            <RowActions>
+              <RowAction href={`/admin/offerten/${o.id}`} label={t('rowOpen')}>
+                <FileText aria-hidden />
+              </RowAction>
+              {awaitingConfirmation && (
+                <RowAction
+                  href={`/admin/offerten/${o.id}#termin`}
+                  label={t('rowConfirmSlot')}
+                  className="text-status-warning-fg"
+                >
+                  <CalendarClock aria-hidden />
+                </RowAction>
+              )}
+              {booking && (
+                <RowAction
+                  href={`/admin/buchungen/${booking.id}`}
+                  label={t('rowOpenBooking', { reference: booking.reference })}
+                >
+                  <CalendarCheck aria-hidden />
+                </RowAction>
+              )}
+              <RowAction
+                href={`/admin/anfragen/${o.requestId}`}
+                label={t('rowOpenRequest')}
               >
-                <MoreHorizontal className="size-4" aria-hidden />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/offerten/${o.id}`}>
-                    <FileText className="size-4" aria-hidden />
-                    {t('rowOpen')}
-                  </Link>
-                </DropdownMenuItem>
-                {awaitingConfirmation && (
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/offerten/${o.id}#termin`}>
-                      <CalendarClock className="size-4" aria-hidden />
-                      {t('rowConfirmSlot')}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {booking && (
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/buchungen/${booking.id}`}>
-                      <CalendarCheck className="size-4" aria-hidden />
-                      {t('rowOpenBooking', { reference: booking.reference })}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/anfragen/${o.requestId}`}>
-                    <RefreshCw className="size-4" aria-hidden />
-                    {t('rowOpenRequest')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <a href={`/offerte/${o.id}`} target="_blank" rel="noreferrer">
-                    <ExternalLink className="size-4" aria-hidden />
-                    {t('rowOpenAsCustomer')}
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <RefreshCw aria-hidden />
+              </RowAction>
+              <RowAction
+                href={`/offerte/${o.id}`}
+                label={t('rowOpenAsCustomer')}
+                external
+              >
+                <ExternalLink aria-hidden />
+              </RowAction>
+            </RowActions>
           );
         }}
       />
