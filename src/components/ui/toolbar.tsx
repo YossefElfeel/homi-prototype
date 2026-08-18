@@ -40,9 +40,20 @@ export function Toolbar({
         className,
       )}
     >
-      <div className="flex flex-wrap items-center gap-2">
+      {/*
+        Every filter on every screen is a bare <label> carrying a `min-w-*`,
+        and `min-width` does nothing on an inline box — so those widths were
+        silently dropped and each select sat at whatever its longest option
+        happened to measure. Six screens asked; none of them got it. Setting it
+        on the children here fixes all six at once instead of asking each to
+        remember a rule it cannot enforce.
+
+        The search box took every spare pixel too (`flex-1` with no ceiling),
+        which shoved the filters against the far edge of a wide panel.
+      */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 [&>label]:inline-flex [&>label]:min-w-44 [&>label]:flex-col">
         {search && (
-          <div className="relative min-w-56 flex-1">
+          <div className="relative min-w-56 flex-1 lg:max-w-sm">
             <Input
               type="search"
               dense

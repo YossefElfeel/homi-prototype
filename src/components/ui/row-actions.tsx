@@ -19,7 +19,9 @@ import { cn } from '@/lib/cn';
  */
 export function RowActions({ children }: { children: React.ReactNode }) {
   return (
-    <span className="flex flex-wrap items-center justify-end gap-0.5">{children}</span>
+    <span className="flex flex-wrap items-center justify-end gap-0.5 lg:flex-nowrap">
+      {children}
+    </span>
   );
 }
 
