@@ -17,6 +17,7 @@ import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { CustomerLink } from '@/components/ui/record-link';
 import { Toolbar } from '@/components/ui/toolbar';
 import { offerTotal } from '@/mock/engines/offers';
 import { customerName } from '@/lib/offer-facts';
@@ -96,7 +97,7 @@ export default function BookingsPage() {
       key: 'customer',
       header: t('colCustomer'),
       sortBy: nameOf,
-      cell: nameOf,
+      cell: (b) => <CustomerLink id={b.customerId} name={nameOf(b)} />,
     },
     {
       key: 'service',

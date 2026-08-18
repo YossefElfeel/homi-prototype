@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { CustomerLink } from '@/components/ui/record-link';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Review, ReviewStatus } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -116,7 +117,10 @@ export default function AdminReviewsPage() {
                             label={t('starsLabel', { n: review.rating })}
                           />
                           <span className="font-medium">
-                            {customerName(review.customerId)}
+                            <CustomerLink
+                              id={review.customerId}
+                              name={customerName(review.customerId)}
+                            />
                           </span>
                         </span>
                         <span data-numeric className="text-sm text-ink-tertiary">

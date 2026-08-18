@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { CustomerLink } from '@/components/ui/record-link';
 import { addDays, addMinutes, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
 import { distanceKm, regionByPostcode, travelMinutes } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -111,7 +112,10 @@ export default function RouteMapPage() {
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="font-medium">
-                        {stop.customer?.firstName} {stop.customer?.lastName}
+                        <CustomerLink
+                          id={stop.customer?.id}
+                          name={`${stop.customer?.firstName ?? ''} ${stop.customer?.lastName ?? ''}`.trim()}
+                        />
                       </span>
                       <span data-numeric className="text-sm text-ink-secondary">
                         {format.dateTime(new Date(stop.job.start), 'time')}–

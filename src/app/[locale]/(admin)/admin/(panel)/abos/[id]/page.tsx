@@ -9,6 +9,7 @@ import { AlertTriangle, ArrowLeft, Lock, Pause, Play, SkipForward } from 'lucide
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { CustomerLink } from '@/components/ui/record-link';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import type { PlanTier } from '@/mock/schema';
@@ -88,7 +89,10 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="display-type text-3xl">
-          {customer.firstName} {customer.lastName}
+          <CustomerLink
+            id={customer.id}
+            name={`${customer.firstName} ${customer.lastName}`}
+          />
         </h1>
         <StatusBadge entity="subscription" state={sub.status} />
       </div>
