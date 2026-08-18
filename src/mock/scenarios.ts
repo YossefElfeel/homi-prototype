@@ -28,7 +28,6 @@ import { SERVICE_SLUGS } from './schema';
 import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildOfferLines, offerTotal } from './engines/offers';
-import { businessWeekday, fromZoned, zonedParts } from '@/lib/business-time';
 
 /**
  * Demo scenarios.
@@ -112,18 +111,10 @@ const days = (from: Date, n: number) => {
   out.setDate(out.getDate() + n);
   return out;
 };
-/**
- * A seeded time of day means the Zurich clock.
- *
- * `setHours(9)` meant nine o'clock wherever the seed happened to be built, so
- * the eight-o'clock job showed up at seven for a reviewer an hour ahead and at
- * ten for one an hour behind. Every rendered time is bound to Europe/Zurich,
- * so the seed has to be written in it too or the two disagree by exactly the
- * reviewer's offset.
- */
 const at = (d: Date, h: number, m = 0) => {
-  const p = zonedParts(d);
-  return fromZoned(p.year, p.month, p.day, h, m);
+  const out = new Date(d);
+  out.setHours(h, m, 0, 0);
+  return out;
 };
 
 /**
@@ -137,7 +128,7 @@ const at = (d: Date, h: number, m = 0) => {
  */
 const openDay = (from: Date, n: number) => {
   const out = days(from, n);
-  return businessWeekday(out) === 7 ? days(out, 1) : out;
+  return out.getDay() === 0 ? days(out, 1) : out;
 };
 
 /** The owner. One person — this is the whole company at launch. */

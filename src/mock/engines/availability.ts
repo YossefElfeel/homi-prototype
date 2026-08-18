@@ -14,13 +14,6 @@
  */
 
 import type { Booking, ClosurePeriod, Property, Settings, SlotHold } from '../schema';
-import {
-  addBusinessDays,
-  atBusinessTime,
-  businessMonthDay,
-  businessWeekday,
-  startOfBusinessDay,
-} from '@/lib/business-time';
 import { distanceKm, regionByPostcode, travelMinutes } from './coverage';
 
 export interface Slot {
@@ -48,20 +41,27 @@ const SLOT_GRANULARITY_MIN = 30;
 
 /* ------------------------------------------------------------------ dates */
 
-/*
- * All four of these used to work in the *runtime's* timezone — `setHours`,
- * `setDate`, `getDay`. Every rendered date, meanwhile, is bound to
- * Europe/Zurich by `formats.ts`. From a desk in Zurich the two agree and the
- * bug is invisible; anywhere east of it the day grid labelled every cell with
- * the day before, so the picker offered Sunday and closed Saturday — the
- * inverse of §1.2. See `lib/business-time.ts`.
- */
-export const atTime = atBusinessTime;
-export const startOfDay = startOfBusinessDay;
-export const addDays = addBusinessDays;
+export function atTime(day: Date, hhmm: string) {
+  const [h = 0, m = 0] = hhmm.split(':').map(Number);
+  const out = new Date(day);
+  out.setHours(h, m, 0, 0);
+  return out;
+}
+
+export function startOfDay(d: Date) {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  return out;
+}
 
 export function addMinutes(d: Date, minutes: number) {
   return new Date(d.getTime() + minutes * 60_000);
+}
+
+export function addDays(d: Date, days: number) {
+  const out = new Date(d);
+  out.setDate(out.getDate() + days);
+  return out;
 }
 
 export function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) {
@@ -79,8 +79,9 @@ export function closureFor(day: Date, closures: ClosurePeriod[]) {
     const end = startOfDay(new Date(c.end));
     if (c.recurringYearly) {
       // Compare month/day only, so an annual shutdown keeps applying.
-      const today = businessMonthDay(day);
-      return today >= businessMonthDay(start) && today <= businessMonthDay(end);
+      const key = (x: Date) => (x.getMonth() + 1) * 100 + x.getDate();
+      const today = key(new Date(day));
+      return today >= key(start) && today <= key(end);
     }
     return d >= start.getTime() && d <= end.getTime();
   });
@@ -93,7 +94,8 @@ export function dayBlockReason(
   const { settings, now, closures, bookings } = q;
 
   // §1.2 — Monday to Saturday. Sunday and public holidays never appear.
-  if (!settings.workingDays.includes(businessWeekday(day))) return 'closed-day';
+  const weekday = day.getDay() === 0 ? 7 : day.getDay();
+  if (!settings.workingDays.includes(weekday)) return 'closed-day';
 
   if (closureFor(day, closures)) return 'closure-period';
 
