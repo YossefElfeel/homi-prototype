@@ -67,7 +67,7 @@ export default function EditCouponPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/gutscheine">
           <ArrowLeft className="size-4" aria-hidden />

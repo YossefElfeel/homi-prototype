@@ -160,7 +160,7 @@ export default function NewAppointmentPage() {
   const noCustomers = customers.length === 0;
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <PageHeader
         title={t('title')}
         lead={t('lead')}

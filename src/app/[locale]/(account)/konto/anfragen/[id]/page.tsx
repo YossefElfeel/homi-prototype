@@ -72,7 +72,7 @@ export default function AccountRequestPage({
     request.status === 'cancelledByCustomer' || request.status === 'cancelledByCompany';
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/konto/anfragen">
           <ArrowLeft className="size-4" aria-hidden />

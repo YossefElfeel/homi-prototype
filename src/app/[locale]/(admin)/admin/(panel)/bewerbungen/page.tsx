@@ -137,7 +137,7 @@ export default function AdminApplicationsPage() {
   ];
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <h1 className="display-type text-3xl">{t('title')}</h1>
       <p className="mt-2 flex max-w-[var(--measure)] items-start gap-2 text-ink-secondary">
         <Lock className="mt-1 size-4 shrink-0" aria-hidden />

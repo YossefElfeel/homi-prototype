@@ -116,7 +116,7 @@ export default function AccountReviewPage() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <h1 className="display-type text-3xl">{t('title')}</h1>
       <p className="mt-2 text-ink-secondary">
         {t('lead', {

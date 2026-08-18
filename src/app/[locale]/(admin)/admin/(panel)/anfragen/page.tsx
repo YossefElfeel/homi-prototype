@@ -4,17 +4,7 @@ import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import {
-  AlertTriangle,
-  Eye,
-  FileText,
-  Pencil,
-  Plus,
-  Search,
-  Share2,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Plus, Search, X } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
@@ -36,6 +26,7 @@ import {
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
+import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
 import { deadlineFor, elapsed, overdueDays } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -393,7 +384,7 @@ export default function RequestsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader
         title={t('title')}
         actions={
@@ -559,7 +550,7 @@ export default function RequestsPage() {
                     href={`/admin/anfragen/neu?draft=${r.id}`}
                     label={t('rowContinue')}
                   >
-                    <Pencil aria-hidden />
+                    <ActionIcon.edit aria-hidden />
                   </RowAction>
                   <RowActionsDivider />
                   <RowActionButton
@@ -574,20 +565,20 @@ export default function RequestsPage() {
                       toast.success(t('rowDiscardDone'));
                     }}
                   >
-                    <Trash2 aria-hidden />
+                    <ActionIcon.delete aria-hidden />
                   </RowActionButton>
                 </>
               ) : (
                 <>
                   <RowAction href={`/admin/anfragen/${r.id}`} label={t('rowOpen')}>
-                    <Eye aria-hidden />
+                    <ActionIcon.open aria-hidden />
                   </RowAction>
                   {answerable && (
                     <RowAction
                       href={`/admin/anfragen/${r.id}/offerte`}
                       label={t('rowQuote')}
                     >
-                      <Share2 aria-hidden />
+                      <ActionIcon.sendOffer aria-hidden />
                     </RowAction>
                   )}
                   {offer && (
@@ -595,7 +586,7 @@ export default function RequestsPage() {
                       href={`/admin/offerten/${offer.id}`}
                       label={t('rowOffer')}
                     >
-                      <FileText aria-hidden />
+                      <ActionIcon.offer aria-hidden />
                     </RowAction>
                   )}
                   {answerable && (
@@ -606,7 +597,7 @@ export default function RequestsPage() {
                         label={t('rowReject')}
                         tone="danger"
                       >
-                        <X aria-hidden />
+                        <ActionIcon.decline aria-hidden />
                       </RowActionButton>
                     </>
                   )}

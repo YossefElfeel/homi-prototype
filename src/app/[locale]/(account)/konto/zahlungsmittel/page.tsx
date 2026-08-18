@@ -52,7 +52,7 @@ export default function AccountPaymentPage() {
   const forPlan = methods.find((m) => m.kind === 'card');
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
       <Card pad="none">

@@ -71,7 +71,7 @@ export default function ConvertApplicantPage({
   }
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href={`/admin/bewerbungen/${id}`}>
           <ArrowLeft className="size-4" aria-hidden />

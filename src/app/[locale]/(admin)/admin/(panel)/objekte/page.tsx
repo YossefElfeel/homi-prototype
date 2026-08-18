@@ -100,7 +100,7 @@ export default function PropertiesPage() {
   );
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <PageHeader title={t('title')} actions={addButton} />
 
       {adding && (

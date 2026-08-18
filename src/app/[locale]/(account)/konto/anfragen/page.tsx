@@ -8,6 +8,8 @@ import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
@@ -22,7 +24,7 @@ export default function AccountRequestsPage() {
   const router = useRouter();
   const hydrated = useHydrated();
 
-  const { requests, properties } = useAccount();
+  const { requests, properties, offers } = useAccount();
   const services = useStore((s) => s.services);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
@@ -78,6 +80,30 @@ export default function AccountRequestsPage() {
         getKey={(r) => r.id}
         onSelect={(r) => router.push(`/konto/anfragen/${r.id}`)}
         caption={t('title')}
+        /*
+         * The row was already the link, but nothing on it said so — a table of
+         * plain text that happens to be clickable is a thing you find by
+         * accident. The eye is the same one the panel uses for "open this row",
+         * and the quote it produced hangs off the row it came from rather than
+         * making the customer match references across two screens.
+         */
+        rowActions={(r) => {
+          const offer = offers.find(
+            (o) => o.requestId === r.id && o.status !== 'draft',
+          );
+          return (
+            <RowActions>
+              <RowAction href={`/konto/anfragen/${r.id}`} label={t('rowOpen')}>
+                <ActionIcon.open aria-hidden />
+              </RowAction>
+              {offer && (
+                <RowAction href={`/offerte/${offer.id}`} label={t('rowOffer')}>
+                  <ActionIcon.offer aria-hidden />
+                </RowAction>
+              )}
+            </RowActions>
+          );
+        }}
         empty={
           <EmptyState
             title={t('emptyTitle')}

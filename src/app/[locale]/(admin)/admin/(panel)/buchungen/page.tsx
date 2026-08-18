@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { CalendarCheck, CalendarDays, FileText, Receipt, Repeat } from 'lucide-react';
+import { CalendarDays, Repeat } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -21,6 +21,7 @@ import { CustomerLink } from '@/components/ui/record-link';
 import { Toolbar } from '@/components/ui/toolbar';
 import { offerTotal } from '@/mock/engines/offers';
 import { customerName } from '@/lib/offer-facts';
+import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Booking } from '@/mock/schema';
@@ -177,7 +178,7 @@ export default function BookingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader
         title={t('title')}
         lead={t('lead')}
@@ -271,14 +272,14 @@ export default function BookingsPage() {
           return (
             <RowActions>
               <RowAction href={`/admin/buchungen/${b.id}`} label={t('rowOpen')}>
-                <CalendarCheck aria-hidden />
+                <ActionIcon.open aria-hidden />
               </RowAction>
               {offer && (
                 <RowAction
                   href={`/admin/offerten/${offer.id}`}
                   label={t('rowOpenOffer', { reference: offer.reference })}
                 >
-                  <FileText aria-hidden />
+                  <ActionIcon.offer aria-hidden />
                 </RowAction>
               )}
               {invoice && (
@@ -286,7 +287,7 @@ export default function BookingsPage() {
                   href={`/admin/rechnungen/${invoice.id}`}
                   label={t('rowOpenInvoice', { reference: invoice.reference })}
                 >
-                  <Receipt aria-hidden />
+                  <ActionIcon.invoice aria-hidden />
                 </RowAction>
               )}
             </RowActions>

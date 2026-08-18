@@ -47,7 +47,7 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
   const missing = routing.locales.filter((l) => !TRANSLATED_LOCALES.includes(l));
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/leistungen">
           <ArrowLeft className="size-4" aria-hidden />

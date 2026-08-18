@@ -115,7 +115,7 @@ export default function BookingDetailPage({
   ).includes(booking.status);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       {/* Was `/admin/kalender`, because the calendar was the only way in.
           Now that bookings have a list, sending everyone who arrives from it
           back to a timeline view is a dead end — the list is the place you

@@ -56,7 +56,7 @@ export default function RouteMapPage() {
   const totalDrive = legs.reduce((sum, leg) => sum + leg.minutes, 0);
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/kalender">
           <ArrowLeft className="size-4" aria-hidden />

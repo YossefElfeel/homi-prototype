@@ -68,7 +68,7 @@ export default function AccountPropertyPage({
   ];
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/konto/objekte">
           <ArrowLeft className="size-4" aria-hidden />

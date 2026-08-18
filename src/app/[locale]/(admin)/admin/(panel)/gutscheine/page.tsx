@@ -107,7 +107,7 @@ export default function AdminCouponsPage() {
   ];
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="display-type text-3xl">{t('title')}</h1>
         <Button asChild>

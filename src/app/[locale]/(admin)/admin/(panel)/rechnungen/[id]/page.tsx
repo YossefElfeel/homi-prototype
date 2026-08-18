@@ -112,7 +112,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="mx-auto max-w-[80rem]">
+    <div>
       <PageHeader
         back={{ href: '/admin/rechnungen', label: t('back') }}
         title={<span data-numeric>{invoice.reference}</span>}

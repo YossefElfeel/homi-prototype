@@ -51,7 +51,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
     .slice(0, 5);
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/team">
           <ArrowLeft className="size-4" aria-hidden />

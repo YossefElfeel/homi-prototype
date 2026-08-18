@@ -97,7 +97,7 @@ export default function NewCustomerPage() {
   const show = (key: string) => (touched ? errors[key] : undefined);
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <PageHeader
         title={t('title')}
         lead={t('lead')}

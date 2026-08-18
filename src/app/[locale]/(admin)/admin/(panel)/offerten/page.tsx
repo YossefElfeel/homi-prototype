@@ -3,17 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import {
-  CalendarCheck,
-  CalendarClock,
-  ExternalLink,
-  Eye,
-  Inbox,
-  Package,
-  Repeat,
-  Search,
-  X,
-} from 'lucide-react';
+import { Package, Repeat, Search, X } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -21,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { Select } from '@/components/ui/field';
 import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { ActionIcon } from '@/lib/action-icons';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
@@ -315,7 +306,7 @@ export default function OffersPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
       {/*
@@ -422,7 +413,7 @@ export default function OffersPage() {
           return (
             <RowActions>
               <RowAction href={`/admin/offerten/${o.id}`} label={t('rowOpen')}>
-                <Eye aria-hidden />
+                <ActionIcon.open aria-hidden />
               </RowAction>
               {awaitingConfirmation && (
                 <RowAction
@@ -430,7 +421,7 @@ export default function OffersPage() {
                   label={t('rowConfirmSlot')}
                   className="text-status-warning-fg"
                 >
-                  <CalendarClock aria-hidden />
+                  <ActionIcon.confirmSlot aria-hidden />
                 </RowAction>
               )}
               {booking && (
@@ -438,21 +429,21 @@ export default function OffersPage() {
                   href={`/admin/buchungen/${booking.id}`}
                   label={t('rowOpenBooking', { reference: booking.reference })}
                 >
-                  <CalendarCheck aria-hidden />
+                  <ActionIcon.booking aria-hidden />
                 </RowAction>
               )}
               <RowAction
                 href={`/admin/anfragen/${o.requestId}`}
                 label={t('rowOpenRequest')}
               >
-                <Inbox aria-hidden />
+                <ActionIcon.request aria-hidden />
               </RowAction>
               <RowAction
                 href={`/offerte/${o.id}`}
                 label={t('rowOpenAsCustomer')}
                 external
               >
-                <ExternalLink aria-hidden />
+                <ActionIcon.customerView aria-hidden />
               </RowAction>
             </RowActions>
           );

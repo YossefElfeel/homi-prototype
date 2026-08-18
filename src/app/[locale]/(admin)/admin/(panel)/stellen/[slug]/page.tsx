@@ -55,7 +55,7 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
   }
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/stellen">
           <ArrowLeft className="size-4" aria-hidden />

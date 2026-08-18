@@ -82,7 +82,7 @@ export default function AdminSettingsPage({
     patchData({ closures: closures.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       {/*
         Every field on this screen writes to the live store on each keystroke,
         and did so in complete silence — ~25 inputs that changed pricing and

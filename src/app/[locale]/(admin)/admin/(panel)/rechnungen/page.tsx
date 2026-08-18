@@ -166,7 +166,7 @@ export default function InvoicesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader title={t('title')} actions={createButton} />
 
       <DataView
