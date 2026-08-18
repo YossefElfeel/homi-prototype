@@ -127,7 +127,11 @@ export const FLOWS: Flow[] = [
         '/admin/anfragen/req_1',
         'Ab «Offerte versendet» ist «Ablehnen» das falsche Wort. Schliesst die Offerte gleich mit',
       ),
-      ok('Ablehnen mit Begründung', '/admin/anfragen/req_1/ablehnen', '§4.1'),
+      ok(
+        'Ablehnen mit Begründung',
+        '/admin/anfragen/req_1?action=reject',
+        '§4.1. Dialog über der Liste statt eigener Seite — die Absage wird dort entschieden, wo die Zeile steht',
+      ),
     ],
   },
   {

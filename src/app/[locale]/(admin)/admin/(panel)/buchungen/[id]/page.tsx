@@ -9,6 +9,7 @@ import { ArrowLeft, Check, DoorClosed, Eye, EyeOff, Lock, UserPlus } from 'lucid
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
 import { Field, Input, Select } from '@/components/ui/field';
@@ -143,89 +144,119 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       )}
 
       <div className="mt-8 grid gap-10 lg:grid-cols-12">
-        <div className="space-y-8 lg:col-span-7">
-          <dl className="grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
-            <div className="bg-page p-5">
-              <dt className="label-type text-ink-tertiary">{t('whenTitle')}</dt>
-              <dd data-numeric className="mt-2">
-                {format.dateTime(start, 'dayMonth')}
-                <span className="block text-lg">{format.dateTime(start, 'time')}</span>
-              </dd>
-            </div>
-            <div className="bg-page p-5">
-              <dt className="label-type text-ink-tertiary">{t('windowTitle')}</dt>
-              <dd data-numeric className="mt-2 text-lg">
-                {format.dateTime(start, 'time')}–
-                {format.dateTime(addMinutes(start, booking.arrivalWindow), 'time')}
-              </dd>
-            </div>
-            <div className="bg-page p-5">
-              <dt className="label-type text-ink-tertiary">{t('durationTitle')}</dt>
-              <dd data-numeric className="mt-2 text-lg">
-                {booking.duration / 60} Std.
-              </dd>
-            </div>
-          </dl>
+        {/*
+          The three blocks below were the only things on this screen not in
+          a card: a hairline grid with no heading at all, then two bare
+          sections whose titles floated on the page background while the
+          column beside them was cards the whole way down. Reading it, the
+          eye had to guess where the access details stopped and the history
+          started.
 
-          <section>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="display-type text-xl">{t('accessTitle')}</h2>
-              {hasSecrets && (
-                <Button variant="secondary" size="sm" onClick={() => setRevealed((v) => !v)}>
-                  {revealed ? (
-                    <>
-                      <EyeOff className="size-3.5" aria-hidden />
-                      {rt('accessHide')}
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="size-3.5" aria-hidden />
-                      {rt('accessReveal')}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-            <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
-              <Row label="Methode">{access ? ACCESS_LABELS[access.method] : '—'}</Row>
-              {access?.keyLocation && <Row label="Ort">{access.keyLocation}</Row>}
-              {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
-              {access?.boxCode && (
-                <Row label="Code">
-                  <Secret value={access.boxCode} revealed={revealed} />
-                </Row>
-              )}
-              {access?.alarmCode && (
-                <Row label="Alarmcode">
-                  <Secret value={access.alarmCode} revealed={revealed} />
-                </Row>
-              )}
-            </dl>
-            <p className="mt-3 flex gap-2 text-xs text-ink-tertiary">
-              <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              {rt('accessGuard')}
-            </p>
-          </section>
+          Same content, same order — one surface idiom, and each block now
+          has an edge that says where it ends.
+        */}
+        <div className="space-y-6 lg:col-span-7">
+          <Card>
+            <CardHeader title={t('scheduleTitle')} />
+            <CardBody>
+              <dl className="grid gap-5 sm:grid-cols-3">
+                <div>
+                  <dt className="label-type text-ink-tertiary">{t('whenTitle')}</dt>
+                  <dd data-numeric className="mt-1.5">
+                    {format.dateTime(start, 'dayMonth')}
+                    <span className="block text-lg">
+                      {format.dateTime(start, 'time')}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="label-type text-ink-tertiary">{t('windowTitle')}</dt>
+                  <dd data-numeric className="mt-1.5 text-lg">
+                    {format.dateTime(start, 'time')}–
+                    {format.dateTime(addMinutes(start, booking.arrivalWindow), 'time')}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="label-type text-ink-tertiary">{t('durationTitle')}</dt>
+                  <dd data-numeric className="mt-1.5 text-lg">
+                    {booking.duration / 60} Std.
+                  </dd>
+                </div>
+              </dl>
+            </CardBody>
+          </Card>
 
-          <section>
-            <h2 className="display-type text-xl">{t('historyTitle')}</h2>
-            <ol className="mt-4 space-y-3 border-l border-line-subtle pl-4">
-              {booking.history.map((entry, index) => (
-                // Not keyed on `at` alone: two actions inside one 30s tick of
-                // `useNow` share a timestamp.
-                <li key={`${entry.at}-${index}`} className="relative text-sm">
-                  <span
-                    aria-hidden
-                    className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full bg-line"
-                  />
-                  <span className="block">{entry.label}</span>
-                  <span data-numeric className="text-ink-tertiary">
-                    {format.dateTime(new Date(entry.at), 'short')}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
+          <Card>
+            <CardHeader
+              title={t('accessTitle')}
+              actions={
+                hasSecrets && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setRevealed((v) => !v)}
+                  >
+                    {revealed ? (
+                      <>
+                        <EyeOff className="size-3.5" aria-hidden />
+                        {rt('accessHide')}
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="size-3.5" aria-hidden />
+                        {rt('accessReveal')}
+                      </>
+                    )}
+                  </Button>
+                )
+              }
+            />
+            <CardBody>
+              {/* Inside a card the outer rules are the card's own edges, so
+                  only the rules between the rows are left. */}
+              <dl className="divide-y divide-line-subtle border-t border-line-subtle">
+                <Row label="Methode">{access ? ACCESS_LABELS[access.method] : '—'}</Row>
+                {access?.keyLocation && <Row label="Ort">{access.keyLocation}</Row>}
+                {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
+                {access?.boxCode && (
+                  <Row label="Code">
+                    <Secret value={access.boxCode} revealed={revealed} />
+                  </Row>
+                )}
+                {access?.alarmCode && (
+                  <Row label="Alarmcode">
+                    <Secret value={access.alarmCode} revealed={revealed} />
+                  </Row>
+                )}
+              </dl>
+              <p className="mt-3 flex gap-2 text-xs text-ink-tertiary">
+                <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {rt('accessGuard')}
+              </p>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title={t('historyTitle')} />
+            <CardBody>
+              <ol className="space-y-3 border-l border-line-subtle pl-4">
+                {booking.history.map((entry, index) => (
+                  // Not keyed on `at` alone: two actions inside one 30s
+                  // tick of `useNow` share a timestamp.
+                  <li key={`${entry.at}-${index}`} className="relative text-sm">
+                    <span
+                      aria-hidden
+                      className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full bg-line"
+                    />
+                    <span className="block">{entry.label}</span>
+                    <span data-numeric className="text-ink-tertiary">
+                      {format.dateTime(new Date(entry.at), 'short')}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </CardBody>
+          </Card>
         </div>
 
         <aside className="space-y-6 lg:col-span-5">

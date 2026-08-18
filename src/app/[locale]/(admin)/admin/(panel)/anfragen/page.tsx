@@ -10,13 +10,14 @@ import {
   FileText,
   Pencil,
   Plus,
-  Receipt,
   Search,
+  Share2,
   Trash2,
   X,
 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
+import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -88,6 +89,9 @@ export default function RequestsPage() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  /* Declining used to be a page. It is a decision made about a row while
+     looking at the queue, so it happens over the queue — see the dialog. */
+  const [rejecting, setRejecting] = useState<string | null>(null);
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
   const nameOf = (id: string) => {
@@ -192,6 +196,53 @@ export default function RequestsPage() {
         {t('addAction')}
       </Link>
     </Button>
+  );
+
+  /*
+   * The date range sits beside the CTA rather than in the filter row.
+   *
+   * That row was carrying eight controls, and the two date inputs are the
+   * widest things in it by a distance — so on an ordinary panel width they
+   * pushed everything after them onto a second line, which is how the
+   * overdue toggle ended up orphaned at the end of a row it did not look
+   * like it belonged to. Up here the range balances a header that was a
+   * title and one button, and the row below is one line of same-shaped
+   * controls again.
+   *
+   * «Clear filters» still clears it: a range is a filter wherever it is
+   * drawn, and leaving it behind would mean the reset button lies.
+   */
+  const dateRange = (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="flex items-center gap-1.5 text-sm">
+        <span className="text-ink-tertiary">{t('filterFrom')}</span>
+        <Input
+          dense
+          type="date"
+          value={from}
+          max={to || undefined}
+          className="w-auto"
+          onChange={(e) => {
+            setFrom(e.target.value);
+            setPage(1);
+          }}
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-sm">
+        <span className="text-ink-tertiary">{t('filterTo')}</span>
+        <Input
+          dense
+          type="date"
+          value={to}
+          min={from || undefined}
+          className="w-auto"
+          onChange={(e) => {
+            setTo(e.target.value);
+            setPage(1);
+          }}
+        />
+      </label>
+    </div>
   );
 
   const columns: Column<ServiceRequest>[] = [
@@ -343,7 +394,15 @@ export default function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-[100rem]">
-      <PageHeader title={t('title')} actions={addButton} />
+      <PageHeader
+        title={t('title')}
+        actions={
+          <>
+            {dateRange}
+            {addButton}
+          </>
+        }
+      />
 
       <Toolbar
         search={{
@@ -436,35 +495,10 @@ export default function RequestsPage() {
               </Select>
             </label>
 
-            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
-              <span className="text-ink-tertiary">{t('filterFrom')}</span>
-              <Input
-                dense
-                type="date"
-                value={from}
-                max={to || undefined}
-                className="w-auto"
-                onChange={(e) => {
-                  setFrom(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
-            <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
-              <span className="text-ink-tertiary">{t('filterTo')}</span>
-              <Input
-                dense
-                type="date"
-                value={to}
-                min={from || undefined}
-                className="w-auto"
-                onChange={(e) => {
-                  setTo(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
-
+            {/* Where the two date inputs used to be — the one filter that
+                answers "which of these is the work", next to the three that
+                answer "which of these are they", rather than trailing the
+                row on its own. */}
             <Button
               size="sm"
               variant={overdueOnly ? 'quiet' : 'ghost'}
@@ -509,8 +543,8 @@ export default function RequestsPage() {
          *
          * What keeps "decline" from being a mis-click away from "open": it is
          * last, behind a divider, and it turns red under the pointer. Neither
-         * one fires on the spot either — decline opens a page that asks for a
-         * reason, discard asks first.
+         * one fires on the spot either — decline opens a dialog that asks for
+         * a reason, discard asks first.
          */
         rowActions={(r) => {
           const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
@@ -553,7 +587,7 @@ export default function RequestsPage() {
                       href={`/admin/anfragen/${r.id}/offerte`}
                       label={t('rowQuote')}
                     >
-                      <FileText aria-hidden />
+                      <Share2 aria-hidden />
                     </RowAction>
                   )}
                   {offer && (
@@ -561,19 +595,19 @@ export default function RequestsPage() {
                       href={`/admin/offerten/${offer.id}`}
                       label={t('rowOffer')}
                     >
-                      <Receipt aria-hidden />
+                      <FileText aria-hidden />
                     </RowAction>
                   )}
                   {answerable && (
                     <>
                       <RowActionsDivider />
-                      <RowAction
-                        href={`/admin/anfragen/${r.id}/ablehnen`}
+                      <RowActionButton
+                        onClick={() => setRejecting(r.id)}
                         label={t('rowReject')}
                         tone="danger"
                       >
                         <X aria-hidden />
-                      </RowAction>
+                      </RowActionButton>
                     </>
                   )}
                 </>
@@ -612,6 +646,8 @@ export default function RequestsPage() {
           total: view.total,
         })}
       />
+
+      <RejectRequestDialog requestId={rejecting} onClose={() => setRejecting(null)} />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 
 import { Link } from '@/i18n/navigation';
+import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
@@ -56,8 +57,22 @@ const ACCESS_LABELS: Record<string, string> = {
  *    see, because "لازم يبان الفرق ده بصرياً" is the difference between a
  *    private reminder and an accident.
  */
-export default function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function RequestDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  /**
+   * Which panel to open on arrival. Declining is a dialog now rather than a
+   * page of its own, and a step that only exists as component state is a step
+   * nothing can link to — /screens and /flows both point at it.
+   * `?action=reject` keeps it addressable without giving it a second
+   * implementation.
+   */
+  searchParams: Promise<{ action?: string }>;
+}) {
   const { id } = use(params);
+  const { action } = use(searchParams);
   const t = useTranslations('admin.request');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -81,6 +96,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   const [revealed, setRevealed] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [rejecting, setRejecting] = useState(() => action === 'reject');
   /*
    * Access starts folded — the codes are the most sensitive thing on the
    * screen (§13.1) and the owner opens that section only when they need it, so
@@ -144,7 +160,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
    * Declining and cancelling are not the same act, and only one of them
    * existed. "Ablehnen" answers an open request with a no; once the quote is
    * out, the honest word is cancel — and it has to take the live offer down
-   * with it, which /ablehnen never did.
+   * with it, which declining never did.
    */
   const cancellable =
     request.status === 'offerSent' || request.status === 'revisionRequested';
@@ -224,11 +240,9 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
               {t('cancelAction')}
             </Button>
           ) : (
-            <Button asChild variant="danger">
-              <Link href={`/admin/anfragen/${request.id}/ablehnen`}>
-                <X className="size-4" aria-hidden />
-                {t('reject')}
-              </Link>
+            <Button variant="danger" onClick={() => setRejecting(true)}>
+              <X className="size-4" aria-hidden />
+              {t('reject')}
             </Button>
           )}
         </div>
@@ -538,6 +552,11 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
 
         </aside>
       </div>
+
+      <RejectRequestDialog
+        requestId={rejecting ? request.id : null}
+        onClose={() => setRejecting(false)}
+      />
     </div>
   );
 }

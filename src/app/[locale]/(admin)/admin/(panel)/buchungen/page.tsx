@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { CalendarDays, FileText, Receipt, Repeat } from 'lucide-react';
+import { CalendarCheck, CalendarDays, FileText, Receipt, Repeat } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -271,7 +271,7 @@ export default function BookingsPage() {
           return (
             <RowActions>
               <RowAction href={`/admin/buchungen/${b.id}`} label={t('rowOpen')}>
-                <CalendarDays aria-hidden />
+                <CalendarCheck aria-hidden />
               </RowAction>
               {offer && (
                 <RowAction
