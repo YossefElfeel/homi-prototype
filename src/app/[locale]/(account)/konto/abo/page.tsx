@@ -91,7 +91,7 @@ export default function AccountSubscriptionPage() {
   ];
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="display-type text-3xl">{t('title')}</h1>
         <StatusBadge entity="subscription" state={subscription.status} />

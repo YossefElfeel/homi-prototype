@@ -143,7 +143,7 @@ export default function KeyLogPage() {
   ];
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display-type text-3xl">{t('title')}</h1>

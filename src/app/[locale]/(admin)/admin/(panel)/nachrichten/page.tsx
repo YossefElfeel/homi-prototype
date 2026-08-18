@@ -143,7 +143,7 @@ export default function AdminMessagesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
       {threads.length === 0 ? (

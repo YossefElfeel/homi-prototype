@@ -1,0 +1,75 @@
+import {
+  Archive,
+  ArchiveRestore,
+  Ban,
+  CalendarClock,
+  CalendarDays,
+  ExternalLink,
+  Eye,
+  FileCheck,
+  FileText,
+  Pencil,
+  Receipt,
+  Send,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react';
+
+/**
+ * The single source of truth for what a row action looks like.
+ *
+ * `status-registry.ts` exists because one state wearing two colours on two
+ * screens is a bug review keeps missing. A row action strip had the same
+ * problem the other way round: the *same* meaning drew a different glyph on
+ * every list, and one glyph carried different meanings depending on the list.
+ * Opening a quote was a `Receipt` on the requests table, a `FileText` on the
+ * bookings table and a `FileText` again on the quotes table — where it meant
+ * "open this row", not "open a quote". Following the request behind a quote
+ * was a `RefreshCw`, which is the universal glyph for "retry".
+ *
+ * None of that is catchable by types, so it lives here instead: a meaning maps
+ * to exactly one icon, and a screen that needs a new meaning has to add it
+ * here where the collision is visible.
+ *
+ * The two rules the set is built on:
+ *
+ * 1. `open` is the row's *own* record — every table, no exception. A customer
+ *    who learns the eye once never has to learn it again.
+ * 2. A cross-link to a record of another type wears that record type's icon,
+ *    never the eye. Two eyes in one strip would be two buttons that claim to
+ *    do the same thing and do not.
+ */
+export const ActionIcon = {
+  /** This row's own record. Rule 1 — never used for anything else. */
+  open: Eye,
+
+  /* Rule 2 — one glyph per record type, wherever it is linked from. */
+  request: FileText,
+  offer: FileCheck,
+  booking: CalendarDays,
+  invoice: Receipt,
+
+  /** Leaves the panel for the page the customer sees. */
+  customerView: ExternalLink,
+
+  sendOffer: Send,
+  confirmSlot: CalendarClock,
+  edit: Pencil,
+
+  /* Reversible pairs. Each reversal is a distinct glyph rather than the same
+     one greyed out, because the strip shows only one of the pair at a time —
+     the icon *is* the answer to "which state is this row in".
+
+     Active/inactive is deliberately not here: two states that are the two
+     ends of one axis are a Switch in the row, not a pair of glyphs in the
+     strip. The strip is for the decisions that need a confirm. */
+  block: Ban,
+  unblock: ShieldCheck,
+  archive: Archive,
+  restore: ArchiveRestore,
+
+  /* Destructive. Both carry `tone="danger"` at the call site. */
+  decline: X,
+  delete: Trash2,
+} as const;

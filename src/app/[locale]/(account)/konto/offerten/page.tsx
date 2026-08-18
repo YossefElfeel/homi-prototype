@@ -6,6 +6,8 @@ import { useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { DataView, type Column } from '@/components/ui/data-view';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -108,6 +110,22 @@ export default function AccountOffersPage() {
         getKey={(o) => o.id}
         onSelect={(o) => router.push(`/offerte/${o.id}`)}
         caption={t('title')}
+        /* The quote and the request it answers are the two records a customer
+           compares when a price surprises them, and until now getting from one
+           to the other meant leaving for the menu and coming back. */
+        rowActions={(o) => (
+          <RowActions>
+            <RowAction href={`/offerte/${o.id}`} label={t('rowOpen')}>
+              <ActionIcon.open aria-hidden />
+            </RowAction>
+            <RowAction
+              href={`/konto/anfragen/${o.requestId}`}
+              label={t('rowRequest')}
+            >
+              <ActionIcon.request aria-hidden />
+            </RowAction>
+          </RowActions>
+        )}
         empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
       />
     </>

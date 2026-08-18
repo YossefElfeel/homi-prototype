@@ -108,7 +108,7 @@ export default function SubscriptionsPage() {
   ];
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="display-type text-3xl">{t('title')}</h1>
         <div className="text-right">

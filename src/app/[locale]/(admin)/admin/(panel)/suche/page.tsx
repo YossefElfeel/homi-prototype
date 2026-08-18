@@ -124,7 +124,7 @@ export default function AdminSearchPage() {
   const typing = query.trim().length >= 2;
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h1 className="display-type text-3xl">{t('title')}</h1>
       <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
 

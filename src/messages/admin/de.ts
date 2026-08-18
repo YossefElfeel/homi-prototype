@@ -272,6 +272,7 @@ export const adminDe = {
     customerPlaceholder: 'Kunde suchen …',
     customerNone: 'Noch kein Kunde gewählt',
     customerNew: 'Neuen Kunden erfassen',
+    customerBlocked: 'gesperrt',
     customerEmptyTitle: 'Noch keine Kunden',
     customerEmptyBody:
       'Eine Anfrage gehört immer zu einer Person. Erfassen Sie zuerst den Kunden — danach kommen Sie hierher zurück.',
@@ -539,6 +540,9 @@ export const adminDe = {
     channelWhatsapp: 'WhatsApp',
     channelHint: 'Die Offerte wird als Link versendet, in der Sprache des Kunden.',
     previewTitle: 'So sieht es der Kunde',
+    blockedTitle: 'Dieser Kunde ist gesperrt.',
+    blockedBody:
+      'An {name} kann keine Offerte gesendet werden. Die Sperre lässt sich im Kundendatensatz aufheben.',
     messageTitle: 'Begleittext',
     openPreview: 'Kundenansicht öffnen',
     send: 'Offerte senden',

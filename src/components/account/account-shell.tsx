@@ -96,6 +96,27 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   const messages = useStore((s) => s.data.messages);
   const invoices = useStore((s) => s.data.invoices);
 
+  /*
+   * A blocked customer is blocked from their own account too, or the block
+   * is only a note the office keeps: the person can still sign in, read
+   * their history and reply in the message thread. Same gate as the wrong
+   * role, one screen earlier than any of it renders.
+   */
+  const self = customers.find((c) => c.id === customerId);
+  if (hydrated && role === 'customer' && self?.status === 'blocked') {
+    return (
+      <AccessGate
+        title={t('blockedTitle')}
+        body={t('blockedBody')}
+        action={
+          <Button asChild variant="secondary">
+            <Link href="/">{appT('backToSite')}</Link>
+          </Button>
+        }
+      />
+    );
+  }
+
   if (hydrated && role !== 'customer') {
     return (
       <AccessGate

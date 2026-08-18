@@ -49,7 +49,7 @@ export default function AccountInvoicePage({
     (invoice.status === 'sent' && new Date(invoice.dueAt) < now);
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/konto/rechnungen">
           <ArrowLeft className="size-4" aria-hidden />

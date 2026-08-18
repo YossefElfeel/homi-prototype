@@ -85,7 +85,7 @@ export default function AdminReviewsPage() {
   ];
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
       {reviews.length === 0 ? (

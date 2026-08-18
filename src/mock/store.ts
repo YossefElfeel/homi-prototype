@@ -97,8 +97,13 @@ Marco Brunner`;
    11: `DataSet` gained `events` — the calls, follow-ups and viewings the
    calendar had no way to hold. A store persisted under 10 has no such array
    at all, and every calendar view would read `undefined.filter` on first
-   paint. This one is not a preference; it is a crash. */
-const SCHEMA_VERSION = 11;
+   paint. This one is not a preference; it is a crash.
+
+   12: `CustomerStatus` gained `blocked` and `Customer` gained `archivedAt`.
+   A store persisted under 11 has neither, so the customer list's archive tab
+   would be permanently empty and the block action would have nothing to
+   undo — which reads as a dead control rather than an empty state. */
+const SCHEMA_VERSION = 12;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and

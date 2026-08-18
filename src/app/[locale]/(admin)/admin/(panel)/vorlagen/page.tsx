@@ -63,7 +63,7 @@ export default function AdminTemplatesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[90rem]">
+    <div>
       {/* Four languages × nine events, all autosaving in silence. */}
       <PageHeader
         title={t('title')}

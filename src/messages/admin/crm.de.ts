@@ -15,6 +15,36 @@ export const adminCrmDe = {
     colStatus: 'Status',
     active: 'Aktiv',
     inactive: 'Inaktiv',
+    blocked: 'Gesperrt',
+    /* Der Schalter schreibt nur zwischen aktiv und inaktiv. Gesperrt ist keine
+       dritte Raste an derselben Achse, sondern ein Entscheid — er hat seinen
+       eigenen Knopf und seine eigene Bestätigung. */
+    statusToggleLabel: '{name}: aktiv oder inaktiv',
+    toggledActive: '{name} ist wieder aktiv.',
+    toggledInactive: '{name} ist auf inaktiv gesetzt.',
+    tabActive: 'Aktiv',
+    tabArchived: 'Archiv',
+    rowView: 'Kunde öffnen',
+    rowEdit: 'Daten bearbeiten',
+    rowBlock: 'Sperren',
+    rowUnblock: 'Entsperren',
+    rowArchive: 'Archivieren',
+    rowRestore: 'Wiederherstellen',
+    blockConfirm:
+      '{name} sperren? Es werden keine neuen Anfragen mehr angenommen, es lässt sich keine Offerte mehr senden, und der Kundenbereich ist geschlossen.',
+    blockDone: '{name} ist gesperrt.',
+    unblockDone: '{name} ist entsperrt.',
+    /* Heisst nicht «löschen». Ein Kunde lässt sich nicht löschen — Rechnungen
+       hängen daran (§15) und drei Admin-Screens dereferenzieren `customerId`
+       mit `!`. Das Archiv sagt, was wirklich passiert. */
+    archiveConfirm:
+      '{name} ins Archiv legen? Der Datensatz bleibt mit Rechnungen und Verlauf bestehen und verschwindet nur aus der Arbeitsliste.',
+    archiveDone: '{name} ist im Archiv.',
+    restoreDone: '{name} ist zurück in der Liste.',
+    archivedEmptyTitle: 'Archiv ist leer',
+    archivedEmptyBody:
+      'Archivierte Kunden landen hier. Der Datensatz bleibt bestehen — nur aus der Arbeitsliste ist er raus.',
+    archivedNote: 'Archiviert am {date}',
     emptyTitle: 'Noch keine Kunden',
     /* Stand vorher: «Ein Konto entsteht automatisch …» — und daneben kein
        Knopf. Das stimmte, solange der Assistent der einzige Weg herein war;
@@ -28,6 +58,16 @@ export const adminCrmDe = {
   },
 
   /** Screen 64a — der Kunde, der angerufen hat. */
+  customerEdit: {
+    title: 'Kunde bearbeiten',
+    lead: 'Änderungen gelten sofort. Der Verlauf bleibt am Datensatz hängen.',
+    back: 'Zurück zum Kunden',
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+    done: '{name} ist aktualisiert.',
+    notFound: 'Diesen Kunden gibt es nicht.',
+  },
+
   customerNew: {
     back: 'Alle Kunden',
     title: 'Kunde erfassen',
@@ -68,6 +108,15 @@ export const adminCrmDe = {
 
   customer: {
     back: 'Alle Kunden',
+    detailsTitle: 'Kontakt & Stammdaten',
+    statusLabel: 'Status',
+    edit: 'Bearbeiten',
+    archivedTitle: 'Dieser Kunde ist archiviert.',
+    archivedBody:
+      'Der Datensatz bleibt vollständig erhalten. Wiederherstellen bringt ihn zurück in die Arbeitsliste.',
+    blockedTitle: 'Dieser Kunde ist gesperrt.',
+    blockedBody:
+      'Es werden keine neuen Anfragen angenommen, es lässt sich keine Offerte senden, und der Kundenbereich ist geschlossen.',
     since: 'Kunde seit',
     language: 'Sprache',
     propertiesTitle: 'Objekte',

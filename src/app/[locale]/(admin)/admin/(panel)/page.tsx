@@ -107,7 +107,7 @@ export default function AdminDashboard() {
   const tomorrowStart = firstStart(tomorrow);
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader
         title={t('title', { name: member?.firstName ?? '' })}
         lead={t('lead')}

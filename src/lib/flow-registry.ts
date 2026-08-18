@@ -234,12 +234,32 @@ export const FLOWS: Flow[] = [
       ok('Interne Notizen', '/admin/kunden/cus_1'),
       ok('Zutritt und Schlüssel am Objekt', '/admin/objekte/prp_1', 'Codes rollen- und datumsgebunden, §13.1'),
       ok('Verlauf als eine Zeitachse', '/admin/kunden/cus_1'),
+      added(
+        'Stammdaten bearbeiten',
+        '/admin/kunden/cus_1/bearbeiten',
+        'Der Datensatz liess sich anlegen und lesen, sonst nichts. Eine am Telefon falsch getippte Nummer blieb falsch — das einzige änderbare Feld war die interne Notiz, also genau das Feld, das der Kunde nie sieht',
+      ),
+      added(
+        'Aktiv / inaktiv setzen',
+        '/admin/kunden',
+        'Die Spalte zeigte den Status und nichts im Panel konnte ihn schreiben — nur der Kunde selbst, indem er sein Konto schloss',
+      ),
+      added(
+        'Sperren und entsperren',
+        '/admin/kunden',
+        '«Der ist weg» und «den bedienen wir nicht» waren dieselbe Zeile. Die Sperre beisst wirklich: keine Offerte aus dem Builder, in der Erfassung nicht wählbar, Kundenbereich zu',
+      ),
     ],
     exits: [
       ok('Konto schliessen', '/konto/profil', 'Durch den Kunden selbst'),
+      added(
+        'Archivieren und wiederherstellen',
+        '/admin/kunden',
+        'Aus der Arbeitsliste raus, im Datensatz drin — mit eigenem Tab, denn ein Soft Delete, den man nirgends ansehen kann, ist von einem echten nicht zu unterscheiden',
+      ),
       open(
-        'Kunde löschen (revDSG)',
-        'Nur der Bewerber-Datensatz kennt eine echte Löschung. Für einen Kunden mit Rechnungen kollidiert das mit der Aufbewahrungspflicht — die Regel gehört geklärt, bevor der Knopf gebaut wird',
+        'Kunde endgültig löschen (revDSG)',
+        'Das Archiv ist bewusst kein Löschen. Rechnungen hängen am Datensatz (§15) und drei Admin-Screens dereferenzieren `customerId` mit `!`. Was revDSG für einen Kunden mit Rechnungen verlangt, gehört geklärt, bevor der Knopf gebaut wird',
       ),
     ],
   },

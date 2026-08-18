@@ -79,7 +79,7 @@ export default function SubscriptionDetailPage({ params }: { params: Promise<{ i
   const settled = sub.status === 'cancellationPending' || sub.status === 'cancelled';
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/abos">
           <ArrowLeft className="size-4" aria-hidden />

@@ -228,6 +228,7 @@ export const adminEn: typeof adminDe = {
     customerPlaceholder: 'Search customers …',
     customerNone: 'No customer chosen yet',
     customerNew: 'Add a new customer',
+    customerBlocked: 'blocked',
     customerEmptyTitle: 'No customers yet',
     customerEmptyBody:
       'A request always belongs to a person. Add the customer first, then come back here.',
@@ -464,6 +465,9 @@ export const adminEn: typeof adminDe = {
     channelWhatsapp: 'WhatsApp',
     channelHint: 'The quote is sent as a link, in the customer’s language.',
     previewTitle: 'What the customer sees',
+    blockedTitle: 'This customer is blocked.',
+    blockedBody:
+      'No quote can be sent to {name}. The block can be lifted on the customer record.',
     messageTitle: 'Covering note',
     openPreview: 'Open the customer view',
     send: 'Send the quote',

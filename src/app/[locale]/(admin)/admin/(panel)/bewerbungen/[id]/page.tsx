@@ -117,7 +117,7 @@ export default function ApplicationDetailPage({
     format.dateTime(new Date(iso), { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/bewerbungen">
           <ArrowLeft className="size-4" aria-hidden />

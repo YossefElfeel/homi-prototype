@@ -50,7 +50,7 @@ export default function AccountProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="display-type text-3xl">{t('title')}</h1>
         {/* One shared save status instead of three hand-rolled chips. */}

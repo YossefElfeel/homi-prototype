@@ -11,12 +11,46 @@ export const adminCrmEn: typeof adminCrmDe = {
     colStatus: 'Status',
     active: 'Active',
     inactive: 'Inactive',
+    blocked: 'Blocked',
+    statusToggleLabel: '{name}: active or inactive',
+    toggledActive: '{name} is active again.',
+    toggledInactive: '{name} is now inactive.',
+    tabActive: 'Active',
+    tabArchived: 'Archive',
+    rowView: 'Open customer',
+    rowEdit: 'Edit details',
+    rowBlock: 'Block',
+    rowUnblock: 'Unblock',
+    rowArchive: 'Archive',
+    rowRestore: 'Restore',
+    blockConfirm:
+      'Block {name}? No new requests are accepted, no quote can be sent, and their account area is closed.',
+    blockDone: '{name} is blocked.',
+    unblockDone: '{name} is unblocked.',
+    archiveConfirm:
+      'Move {name} to the archive? The record stays, with invoices and history — it only leaves the working list.',
+    archiveDone: '{name} is archived.',
+    restoreDone: '{name} is back in the list.',
+    archivedEmptyTitle: 'The archive is empty',
+    archivedEmptyBody:
+      'Archived customers land here. The record survives — it is only out of the working list.',
+    archivedNote: 'Archived on {date}',
     emptyTitle: 'No customers yet',
     emptyBody:
       'An account is created automatically when somebody requests through the website. Anyone who phoned is entered here by hand.',
     searchEmptyTitle: 'No matches',
     searchEmptyBody: 'Nothing found for “{query}”.',
     addAction: 'Add customer',
+  },
+
+  customerEdit: {
+    title: 'Edit customer',
+    lead: 'Changes take effect immediately. The history stays on the record.',
+    back: 'Back to the customer',
+    save: 'Save',
+    cancel: 'Cancel',
+    done: '{name} has been updated.',
+    notFound: 'That customer does not exist.',
   },
 
   customerNew: {
@@ -55,6 +89,15 @@ export const adminCrmEn: typeof adminCrmDe = {
 
   customer: {
     back: 'All customers',
+    detailsTitle: 'Contact & details',
+    statusLabel: 'Status',
+    edit: 'Edit',
+    archivedTitle: 'This customer is archived.',
+    archivedBody:
+      'The record is kept in full. Restoring brings it back into the working list.',
+    blockedTitle: 'This customer is blocked.',
+    blockedBody:
+      'No new requests are accepted, no quote can be sent, and their account area is closed.',
     since: 'Customer since',
     language: 'Language',
     propertiesTitle: 'Properties',

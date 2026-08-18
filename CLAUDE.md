@@ -73,4 +73,30 @@ npm run build
 
 Only one `next dev` can hold this directory at a time. If a server is already
 running, either use it or stop it — a second `next dev` is refused, and
-`next build` writes to the same `.next`.
+`next build` writes to the same `.next`. Two servers sharing one `.next` will
+eventually corrupt it; the symptom is a `JSON.parse` `SyntaxError` on every
+route including `/favicon.ico`, and the fix is `rm -rf .next`.
+
+Those three commands prove types, lint and that every route builds. They do not
+prove a screen renders, so anything visual still needs looking at.
+
+**To look at a screen, the browser pane has to be open on screen.** Not merely
+started — displayed. A pane that is closed renders its tab at 0×0 with
+`document.visibilityState === 'hidden'`, and a hidden zero-size tab never fires
+`requestAnimationFrame`. React 19 defers revealing a Suspense boundary to a
+callback inside one:
+
+```js
+requestAnimationFrame(function () { $RT = performance.now() });
+$RB = []; $RV = function (a) { /* reveal the queued boundaries */ };
+```
+
+With no frames, `$RV` is never called. Every route under `[locale]/loading.tsx`
+then sits on its fallback for ever, the real markup waiting in a hidden
+`div#S:0`, and the page reads as "Wird geladen" — which looks exactly like an
+infinite loading bug in the app. It is not. `window.$RV(window.$RB)` in the
+console reveals the boundary immediately, which is the quickest way to confirm
+the pane is the problem rather than the code.
+
+So: never report a visual check as done from a closed pane, and never chase a
+stuck loading state before checking `document.visibilityState`.

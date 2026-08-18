@@ -72,7 +72,7 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
   const open = event.status === 'planned' || event.status === 'noReply';
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <PageHeader
         title={event.title}
         back={{ href: '/admin/kalender', label: t('back') }}

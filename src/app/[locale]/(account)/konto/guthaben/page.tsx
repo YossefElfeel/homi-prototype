@@ -51,7 +51,7 @@ export default function AccountCreditPage() {
   const daysLeft = Math.ceil((new Date(credit.expiresAt).getTime() - now.getTime()) / 86_400_000);
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h1 className="display-type text-3xl">{t('title')}</h1>
 
       <div className="surface-card mt-8 p-6">

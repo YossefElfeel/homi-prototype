@@ -159,7 +159,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
     offerLineLabel(line, services, addOns, locale);
 
   return (
-    <div className="max-w-6xl pb-28 lg:pb-0">
+    <div className="pb-28 lg:pb-0">
       <Button asChild variant="link" className="mb-6">
         <Link href={`/admin/anfragen/${id}`}>
           <ArrowLeft className="size-4" aria-hidden />

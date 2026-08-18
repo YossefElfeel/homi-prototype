@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import { DataView, type Column } from '@/components/ui/data-view';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -81,6 +83,15 @@ export default function AccountInvoicesPage() {
         getKey={(i) => i.id}
         onSelect={(i) => router.push(`/konto/rechnungen/${i.id}`)}
         caption={t('title')}
+        /* One action, and it still earns the column: without it this is the
+           only list in the account with no visible way in. */
+        rowActions={(i) => (
+          <RowActions>
+            <RowAction href={`/konto/rechnungen/${i.id}`} label={t('rowOpen')}>
+              <ActionIcon.open aria-hidden />
+            </RowAction>
+          </RowActions>
+        )}
         empty={<EmptyState title={t('emptyTitle')} body={t('emptyBody')} />}
       />
     </>

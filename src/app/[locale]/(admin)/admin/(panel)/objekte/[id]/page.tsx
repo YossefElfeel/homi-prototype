@@ -69,7 +69,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Button asChild variant="link" className="mb-6">
         <Link href="/admin/objekte">
           <ArrowLeft className="size-4" aria-hidden />

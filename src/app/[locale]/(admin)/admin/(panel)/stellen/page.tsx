@@ -101,7 +101,7 @@ export default function AdminPostingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[100rem]">
+    <div>
       <PageHeader title={t('title')} lead={t('lead')} actions={createButton} />
 
       <DataView
