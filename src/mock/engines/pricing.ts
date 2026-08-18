@@ -18,6 +18,7 @@ import type {
   Settings,
   ServiceSlug,
 } from '../schema';
+import { businessWeekday, zonedParts } from '@/lib/business-time';
 
 /* --------------------------------------------------- §5.2 duration matrix */
 
@@ -176,13 +177,23 @@ export function estimateHours(input: EstimateInput, settings: Settings) {
 
 /* --------------------------------------------------------------- surcharges */
 
+/*
+ * Both read the Zurich clock, not the runtime's.
+ *
+ * A surcharge decided by the customer's own timezone is a price that changes
+ * with where the browser is: a 17:30 job billed as evening work in Zurich came
+ * out as 16:30 daytime for anyone an hour ahead, and a Saturday job could be
+ * priced as a Friday one. §5.1 sets these against the working week, and the
+ * working week belongs to the business.
+ */
 export function isSaturday(date: Date) {
-  return date.getDay() === 6;
+  return businessWeekday(date) === 6;
 }
 
 export function isEvening(date: Date, settings: Settings) {
   const [h = 17, m = 0] = settings.eveningSurchargeFrom.split(':').map(Number);
-  return date.getHours() > h || (date.getHours() === h && date.getMinutes() >= m);
+  const { hour, minute } = zonedParts(date);
+  return hour > h || (hour === h && minute >= m);
 }
 
 /* ------------------------------------------------------------------ price */
