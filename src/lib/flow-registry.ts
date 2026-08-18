@@ -169,6 +169,16 @@ export const FLOWS: Flow[] = [
         'Screen 48 bekam den Vorlagen-Wähler, das Begleitschreiben nicht — dabei geht genau dieser Text mit jeder einzelnen Offerte raus',
       ),
       added(
+        'Wählbare Position: an oder aus vorwählen',
+        '/admin/anfragen/req_1/offerte',
+        'Der Builder schrieb nur `optional`, nie `selected` — jede wählbare Position ging vorangekreuzt raus. Ein Extra konnte also nur ein Rabatt sein, den der Kunde wegnimmt, nie eine Leistung, die er dazunimmt',
+      ),
+      added(
+        'Begleittext vor dem Senden lesen',
+        '/admin/anfragen/req_1/offerte/senden',
+        'Die Karte hiess «So sieht es der Kunde» und liess genau den einen Teil weg, der von Hand geschrieben ist',
+      ),
+      added(
         'Drei Termine vorschlagen (Erstkunde)',
         '/offerte/off_propose/termin',
         'Stammkunden buchen direkt weiter — wir kennen Objekt, Zutritt und Verlauf. Beim ersten Einsatz schlägt der Kunde bis zu drei Termine vor, nichts wird dabei blockiert',
@@ -241,6 +251,11 @@ export const FLOWS: Flow[] = [
     entries: [
       ok('Aus bezahlter Offerte', '/admin/kalender'),
       added(
+        'Von Hand eintragen',
+        '/admin/kalender/neu',
+        'Eine Buchung entstand ausschliesslich aus einer bezahlten Offerte. Der Auftrag, der am Telefon zustande kommt — die Art, wie dieser Betrieb Arbeit bekommt — hatte keinen Weg in den Kalender, und /admin/buchungen druckte seit dem ersten Tag die Quelle «Manuell» für einen Datensatz, den nichts erzeugen konnte',
+      ),
+      added(
         'Buchungen als Liste',
         '/admin/buchungen',
         'Die Buchung war die einzige grosse Entität ohne eigene Liste. Der Kalender beantwortet «was ist am Dienstag» — nicht «welche Einsätze kommen aus Offerten», nicht «welcher fertige Einsatz hat noch keine Rechnung»',
@@ -249,6 +264,16 @@ export const FLOWS: Flow[] = [
     ],
     actions: [
       ok('Zuweisen und verschieben', '/admin/buchungen/bkg_1'),
+      added(
+        'Aktionen direkt aus dem Kalender',
+        '/admin/kalender',
+        'Verschieben, Zuweisen und Stornieren lagen hinter dem Öffnen des Einsatzes. Das Zeilenmenü springt in dieselbe Ansicht mit dem passenden Feld offen — eine Bestätigung im Dropdown wäre ein Dialog im Menü, und eine zweite Umsetzung von «Stornieren» wäre binnen einer Welle uneinig mit der ersten',
+      ),
+      added(
+        'Legende und Farbe nach Zustand',
+        '/admin/kalender',
+        'Woche und Monat zeichneten jeden Eintrag in derselben Akzentfarbe — ein stornierter und ein bestätigter Einsatz sahen gleich aus. Farben kommen aus der status-registry, die Legende liest dieselbe Quelle',
+      ),
       ok('Ein- und Auschecken mit Fotos', '/einsatz/bkg_1/check'),
       ok('Zugangscodes nur am Einsatztag', '/einsatz/bkg_1', 'Demo-Uhr verschieben — der Block leert sich wirklich'),
       added(
@@ -262,6 +287,61 @@ export const FLOWS: Flow[] = [
       ok('Kein Zutritt, mit Wartezeit und Foto', '/einsatz/bkg_1/kein-zutritt'),
       ok('Storniert', '/admin/buchungen/bkg_1'),
       ok('Verrechnet', '/admin/rechnungen'),
+    ],
+  },
+  {
+    /*
+     * Neu. Der Kalender hielt ausschliesslich Buchungen, und eine Buchung kam
+     * ausschliesslich aus einer bezahlten Offerte — dazwischen lag alles, was
+     * den Tag eines kleinen Betriebs ausmacht. «Rückruf zugesagt» stand zweimal
+     * im Seed, in einem Notizfeld, ohne Datum und auf keinem Bildschirm
+     * wiederfindbar.
+     */
+    id: 'calls',
+    de: 'Anrufe & Termine',
+    en: 'Calls & appointments',
+    actors: ['owner'],
+    entries: [
+      added(
+        'Termin eintragen',
+        '/admin/kalender/neu',
+        'Ein Knopf, zwei Dinge: Einsatz oder Anruf. Aus Sicht des Inhabers ist es ein Gedanke — an diesem Tag passiert etwas',
+      ),
+      added(
+        'Ohne Kundenakte',
+        '/admin/kalender/neu',
+        'Wer einmal angerufen hat, ist kein Kunde. Name und Telefon reichen — sonst füllt sich /admin/kunden mit Leuten, die noch nichts gebucht haben',
+      ),
+    ],
+    actions: [
+      added(
+        'Ergebnis festhalten',
+        '/admin/kalender/cev_today',
+        'Die Notiz ist, was gefragt werden sollte; das Ergebnis ist, was gesagt wurde — und genau dieser Text muss in die Anfrage übergehen, wenn Arbeit daraus wird',
+      ),
+      added(
+        'Besichtigung blockiert Zeit, Anruf nicht',
+        '/admin/kalender',
+        'Eine Besichtigung ist irgendwo, ein Telefonat ist überall. Nur die erste kollidiert mit einem Einsatz. Keines von beiden zählt gegen die zwei Einsätze pro Tag — siehe /open-questions',
+      ),
+    ],
+    exits: [
+      added(
+        'Daraus wurde eine Anfrage',
+        '/admin/kalender/cev_converted',
+        'Der eigentliche Zweck. Ohne diesen Weg endet ein gutes Gespräch als abgehakter Kalendereintrag, und dieselben Angaben werden eine Bildschirmbreite weiter aus dem Gedächtnis nochmal getippt',
+      ),
+      added(
+        'Erledigt',
+        '/admin/kalender/cev_today',
+        'Mit Ergebnis im Verlauf, mit Zeitstempel',
+      ),
+      added(
+        'Niemand erreicht',
+        '/admin/kalender/cev_noreply',
+        'Ausdrücklich nicht «erledigt». Sonst liest sich eine Woche unbeantworteter Anrufe wie eine Woche erledigter Arbeit',
+      ),
+      added('Abgesagt', '/admin/kalender', 'Verschwindet aus dem Kalender, bleibt im Datensatz'),
     ],
   },
   {

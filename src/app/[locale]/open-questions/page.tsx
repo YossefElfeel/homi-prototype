@@ -79,6 +79,22 @@ const ENTRIES: Entry[] = [
     state: 'decided',
   },
   {
+    ref: '§1.2a',
+    question: 'Does a phone call use up one of the two jobs a day?',
+    decision:
+      'No, and an on-site viewing does not either — but a viewing blocks the time while a call does not. The two-job ceiling is a statement about how much cleaning one person can do in a day; spending it on a five-minute callback would make the calendar refuse real work in order to protect a phone call. Blocking is a separate question and turns on where the owner has to be: a viewing is somewhere, a call is anywhere. Assumed, not specified — the documents never contemplated anything on the calendar that was not a job.',
+    screens: '58, 58a, 63a',
+    state: 'open',
+  },
+  {
+    ref: '§4.2a',
+    question: 'Can the office book a job the customer never paid for?',
+    decision:
+      'Yes, and it meets the same gate the customer does. A booking could previously only come out of a paid quote, which does not describe a business whose work arrives by phone. The manual path runs the identical dayBlockReason — Sunday, company holidays, the notice period and the daily ceiling all refuse it — because a rule the office can click around is not a rule. The override the owner actually needs is to move a closure or raise the ceiling, and both already exist in settings.',
+    screens: '58a, 57b',
+    state: 'decided',
+  },
+  {
     ref: '§11.2',
     question: 'Is a subscription visit a fixed recurring slot?',
     decision:

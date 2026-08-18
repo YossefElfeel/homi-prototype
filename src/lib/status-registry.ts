@@ -16,6 +16,7 @@ export type StatusTone = 'neutral' | 'info' | 'progress' | 'success' | 'warning'
 export type StatusEntity =
   | 'request'
   | 'booking'
+  | 'calendarEvent'
   | 'subscription'
   | 'invoice'
   | 'review'
@@ -49,6 +50,21 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     // A job the company called off. Distinct from `closed`, which is neutral
     // and reads as "finished" — the opposite of what happened here.
     cancelled: 'danger',
+  },
+  /*
+   * Calls, follow-ups and viewings.
+   *
+   * `noReply` is warning rather than danger: nobody picking up is not a
+   * failure, it is a thing that is still outstanding — the same weight as
+   * `rescheduled` on a booking, and for the same reason. `converted` is
+   * success because it is the outcome the call existed to produce.
+   */
+  calendarEvent: {
+    planned: 'info',
+    done: 'success',
+    noReply: 'warning',
+    converted: 'success',
+    cancelled: 'neutral',
   },
   // §4.3
   subscription: {

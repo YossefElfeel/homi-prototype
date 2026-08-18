@@ -109,6 +109,13 @@ export const de = {
       closed: 'Geschlossen',
       cancelled: 'Storniert',
     },
+    calendarEvent: {
+      planned: 'Geplant',
+      done: 'Erledigt',
+      noReply: 'Nicht erreicht',
+      converted: 'Anfrage entstanden',
+      cancelled: 'Abgesagt',
+    },
     subscription: {
       active: 'Aktiv',
       pastDue: 'Zahlung überfällig',

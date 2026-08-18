@@ -13,7 +13,15 @@
  * Pure functions only; the store owns the data and the timers.
  */
 
-import type { Booking, ClosurePeriod, Property, Settings, SlotHold } from '../schema';
+import type {
+  Booking,
+  CalendarEvent,
+  CalendarEventKind,
+  ClosurePeriod,
+  Property,
+  Settings,
+  SlotHold,
+} from '../schema';
 import {
   addBusinessDays,
   atBusinessTime,
@@ -42,6 +50,13 @@ export interface SlotQuery {
   properties: Pick<Property, 'id' | 'postcode'>[];
   settings: Settings;
   now: Date;
+  /**
+   * Viewings and the like. `slotsForDay` already read `q.events` and the field
+   * was never declared, so `tsc` refused the whole engine and every caller
+   * passing events was typed as passing nothing. Optional because most callers
+   * genuinely have none — see `occupiesSlot` for which kinds block a slot.
+   */
+  events?: CalendarEvent[];
 }
 
 const SLOT_GRANULARITY_MIN = 30;
@@ -108,6 +123,28 @@ export function dayBlockReason(
   return null;
 }
 
+/**
+ * A viewing is somewhere; a phone call is anywhere.
+ *
+ * Only the first can collide with a job, which is why only the first blocks a
+ * slot. Neither counts against `maxJobsPerDay` — that ceiling is about how
+ * much cleaning one person can do in a day, and spending it on a callback
+ * would make the calendar refuse real work in order to protect a phone call.
+ * Recorded on /open-questions rather than left implicit here.
+ */
+export function occupiesSlot(kind: CalendarEventKind) {
+  return kind === 'viewing';
+}
+
+/** Everything on the calendar for a day that is not a job. Cancelled events
+    are gone from the calendar — they are not a state the day has to show. */
+export function eventsOnDay(day: Date, events: CalendarEvent[]) {
+  const d = startOfDay(day).getTime();
+  return events
+    .filter((e) => e.status !== 'cancelled' && startOfDay(new Date(e.start)).getTime() === d)
+    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+}
+
 export function bookingsOnDay(day: Date, bookings: Booking[]) {
   const d = startOfDay(day).getTime();
   return bookings
@@ -145,6 +182,16 @@ export function slotsForDay(day: Date, q: SlotQuery): Slot[] {
       postcode: p?.postcode,
     };
   });
+
+  /* A viewing is an appointment the owner has to physically be at, so it
+     collides with a job exactly as another job would. A phone call does not —
+     see `occupiesSlot`. */
+  const occupied = eventsOnDay(day, q.events ?? [])
+    .filter((e) => occupiesSlot(e.kind) && e.status !== 'done' && e.status !== 'noReply')
+    .map((e) => ({
+      start: new Date(e.start),
+      end: addMinutes(new Date(e.start), e.duration),
+    }));
 
   const heldRanges = holds
     .filter((h) => new Date(h.expiresAt) > now)
@@ -190,6 +237,7 @@ export function slotsForDay(day: Date, q: SlotQuery): Slot[] {
     if (blocked) continue;
 
     if (heldRanges.some((h) => overlaps(start, end, h.start, h.end))) continue;
+    if (occupied.some((e) => overlaps(start, end, e.start, e.end))) continue;
 
     slots.push({
       start: start.toISOString(),
