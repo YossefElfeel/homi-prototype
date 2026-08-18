@@ -110,10 +110,23 @@ export default function NewRequestPage() {
   const updateRequest = useStore((s) => s.updateRequest);
   const submitRequestDraft = useStore((s) => s.submitRequestDraft);
   const discardRequestDraft = useStore((s) => s.discardRequestDraft);
+  const events = useStore((s) => s.data.events);
+  const linkEventToRequest = useStore((s) => s.linkEventToRequest);
 
+  const search = useSearchParams();
   /** Set when the screen was opened on an existing draft (`?draft=req_…`). */
-  const draftId = useSearchParams().get('draft');
+  const draftId = search.get('draft');
   const draft = requests.find((r) => r.id === draftId && r.status === 'draft');
+
+  /*
+   * Set when this intake came out of a call on the calendar (`?event=cev_…`).
+   *
+   * Without the link back, a call that produced work would be ticked off in
+   * one screen and retyped from memory in another, and the calendar entry
+   * would sit there afterwards as a promise still apparently unkept.
+   */
+  const sourceEventId = search.get('event');
+  const sourceEvent = events.find((e) => e.id === sourceEventId);
 
   const [open, setOpen] = useState<string[]>(['customer', 'property', 'service']);
 
@@ -138,6 +151,23 @@ export default function NewRequestPage() {
    * fight the person typing — each keystroke would be reset to what the store
    * still holds. The draft is the starting point, not a live binding.
    */
+  /*
+   * Prefill from the call, once, on the same guard and for the same reason as
+   * the draft below: every field is controlled, so re-running would fight the
+   * person typing. The customer and the note are all a call can supply — the
+   * address and the service are what the request screen is for.
+   */
+  const seededFromEvent = useRef(false);
+  useEffect(() => {
+    if (!sourceEvent || seededFromEvent.current) return;
+    seededFromEvent.current = true;
+    setCustomerId(sourceEvent.customerId ?? '');
+    /* Unconditional, mirroring the draft loader below. Both fields already
+       default to empty, so branching here buys nothing but a cascading-render
+       lint error. */
+    setInternalNote([sourceEvent.note, sourceEvent.outcome].filter(Boolean).join('\n'));
+  }, [sourceEvent]);
+
   const loaded = useRef<string | null>(null);
   useEffect(() => {
     if (!draft || loaded.current === draft.id) return;
@@ -328,6 +358,10 @@ export default function NewRequestPage() {
       },
       now,
     );
+
+    /* Closes the loop on the calendar. The call stops being an open promise
+       the moment the work it produced exists. */
+    if (sourceEvent) linkEventToRequest(sourceEvent.id, result.id, now);
 
     toast.success(
       result.outOfArea

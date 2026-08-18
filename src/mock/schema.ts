@@ -387,6 +387,69 @@ export interface SlotHold {
   confirmed?: boolean;
 }
 
+/* -------------------------------------------------------- calendar events */
+
+/**
+ * What goes on the calendar that is not a job.
+ *
+ * The calendar read `bookings` and `closures` and nothing else. So a promise
+ * made on the phone — "ich rufe Sie Dienstag zurück" — had nowhere to live but
+ * free text in a request's `internalNote`, with no date on it and no screen
+ * that would ever surface it again. That sentence is in the seed twice; neither
+ * copy is findable, and both are the kind of promise a small business loses
+ * work by forgetting.
+ *
+ * Deliberately not a `Booking`. A booking has an address to drive to, a price,
+ * an arrival window, a check-in and a contractor. A call has none of those, and
+ * folding one into the booking table would spend one of the two daily job slots
+ * (§1.2) on a five-minute phone call and put that call in the contractor's day.
+ */
+export type CalendarEventKind =
+  | 'contact-call'
+  /** Chasing something already in flight — a quote, an unpaid invoice. */
+  | 'follow-up'
+  /** On site, before quoting. The only kind that occupies the owner's day. */
+  | 'viewing';
+
+export type CalendarEventStatus =
+  | 'planned'
+  | 'done'
+  /** Rang, nobody picked up. Not `done`: it still has to happen. */
+  | 'noReply'
+  /** It became a request. `requestId` says which one — this is the deal path. */
+  | 'converted'
+  | 'cancelled';
+
+export interface CalendarEvent {
+  id: ID;
+  reference: string;
+  kind: CalendarEventKind;
+  title: string;
+  start: ISODate;
+  /** Minutes. */
+  duration: number;
+  status: CalendarEventStatus;
+  /**
+   * Set once the person on the other end is a customer. Someone who phoned
+   * once and has not booked anything is not one, and inventing a `Customer`
+   * record for every enquiry would fill /admin/kunden with people who are not
+   * customers yet.
+   */
+  customerId?: ID;
+  contactName?: string;
+  contactPhone?: string;
+  /** A viewing has an address. A call usually does not. */
+  propertyId?: ID;
+  note?: string;
+  /** Written after the fact — what actually came out of it. */
+  outcome?: string;
+  /** The request this turned into. */
+  requestId?: ID;
+  assigneeId?: ID;
+  createdAt: ISODate;
+  history: TimelineEvent[];
+}
+
 /* ------------------------------------------------------------ subscription */
 
 export type PlanTier = 'basic' | 'premium' | 'vip';

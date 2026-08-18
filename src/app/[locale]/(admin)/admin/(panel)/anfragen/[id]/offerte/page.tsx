@@ -10,13 +10,33 @@ import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
-import { Input, Select, Textarea } from '@/components/ui/field';
+import { NumberField, Select, Textarea } from '@/components/ui/field';
 import { nextSlots, startOfDay } from '@/mock/engines/availability';
 import { offerHours, offerSubtotal, offerTotal, offerDiscount } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { CalcMethod, OfferLine } from '@/mock/schema';
 import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
+
+/**
+ * `optional` and `selected` are two fields but one decision, and the builder
+ * only ever wrote the first of them. Every selectable line therefore left here
+ * pre-ticked and inside the headline price, so an extra could only be a
+ * discount the customer takes away — never an addition they choose. Three
+ * states, one control, both fields written together.
+ */
+type LineMode = 'fixed' | 'optionalOn' | 'optionalOff';
+
+const LINE_MODE_PATCH: Record<LineMode, Pick<OfferLine, 'optional' | 'selected'>> = {
+  fixed: { optional: false, selected: true },
+  optionalOn: { optional: true, selected: true },
+  optionalOff: { optional: true, selected: false },
+};
+
+function lineMode(line: OfferLine): LineMode {
+  if (!line.optional) return 'fixed';
+  return line.selected ? 'optionalOn' : 'optionalOff';
+}
 
 /**
  * Screen 54 — the one the whole product turns on.
@@ -57,6 +77,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const properties = useStore((s) => s.data.properties);
   const bookings = useStore((s) => s.data.bookings);
   const closures = useStore((s) => s.data.closures);
+  const events = useStore((s) => s.data.events);
   const holds = useStore((s) => s.holds);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const services = useStore((s) => s.services);
@@ -100,13 +121,18 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
         bookings,
         holds,
         closures,
+        /* An on-site viewing occupies the owner exactly as a job does, so a
+           slot proposed over one is a slot they cannot keep. Omitting this
+           was the difference between the engine knowing about viewings and
+           this panel knowing. */
+        events,
         properties,
         settings,
         now,
       },
       5,
     );
-  }, [request, offer, hours, properties, bookings, holds, closures, settings, now]);
+  }, [request, offer, hours, properties, bookings, holds, closures, events, settings, now]);
 
   // ⌘/Ctrl + Enter sends. The owner does this dozens of times a week.
   useEffect(() => {
@@ -155,7 +181,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
             <p className="mt-1 text-sm text-ink-secondary">{t('linesLead')}</p>
 
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-2xl border-collapse text-left">
+              <table className="w-full min-w-3xl border-collapse text-left">
                 <thead>
                   <tr className="border-b border-line">
                     <th scope="col" className="label-type py-2 pr-3 text-ink-tertiary">
@@ -173,8 +199,8 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                     <th scope="col" className="label-type w-24 py-2 pr-3 text-right text-ink-tertiary">
                       {t('colTotal')}
                     </th>
-                    <th scope="col" className="w-20 py-2 pr-3">
-                      <span className="sr-only">{t('optional')}</span>
+                    <th scope="col" className="label-type w-36 py-2 pr-3 text-ink-tertiary">
+                      {t('colOptional')}
                     </th>
                     <th scope="col" className="w-10 py-2" />
                   </tr>
@@ -235,22 +261,22 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                         <Money amount={line.quantity * line.unitPrice} />
                       </td>
                       <td className="py-1.5 pr-3">
-                        <label
-                          title={t('optionalHint')}
-                          className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-tertiary"
+                        <Select
+                          value={lineMode(line)}
+                          aria-label={t('colOptional')}
+                          onChange={(e) =>
+                            updateOfferLine(
+                              offer.id,
+                              line.id,
+                              LINE_MODE_PATCH[e.target.value as LineMode],
+                            )
+                          }
+                          className="h-9 border-transparent bg-transparent px-2 text-sm hover:border-line"
                         >
-                          <input
-                            type="checkbox"
-                            checked={line.optional}
-                            onChange={(e) =>
-                              updateOfferLine(offer.id, line.id, {
-                                optional: e.target.checked,
-                              })
-                            }
-                            className="size-3.5 accent-[var(--accent-solid)]"
-                          />
-                          {t('optional')}
-                        </label>
+                          <option value="fixed">{t('optionalFixed')}</option>
+                          <option value="optionalOn">{t('optionalOn')}</option>
+                          <option value="optionalOff">{t('optionalOff')}</option>
+                        </Select>
                       </td>
                       <td className="py-1.5 text-right">
                         <button
@@ -268,49 +294,60 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
               </table>
             </div>
 
-            <Button variant="ghost" size="sm" className="mt-3" onClick={() => addOfferLine(offer.id)}>
-              <Plus className="size-3.5" aria-hidden />
-              {t('addLine')}
-            </Button>
+            {/* The hint reads on touch now. It was a `title` on every row —
+                mouse only, and repeated once per line for the one reader who
+                could see it at all. */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+              <Button variant="ghost" size="sm" onClick={() => addOfferLine(offer.id)}>
+                <Plus className="size-3.5" aria-hidden />
+                {t('addLine')}
+              </Button>
+              <p className="max-w-[var(--measure)] text-xs text-ink-tertiary">
+                {t('optionalHint')}
+              </p>
+            </div>
           </section>
 
-          <section className="mt-10">
+          {/* Heading and controls on one line. As two rows this block held a
+              full-width heading over two short fields and the rest of the row
+              was empty — vertical space spent on nothing, on the screen whose
+              whole argument is that nothing is spent. */}
+          <section className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-3">
             <h2 className="display-type text-xl">{t('discountTitle')}</h2>
-            <div className="mt-4 flex flex-wrap items-end gap-3">
-              <label className="w-40">
-                <span className="sr-only">{t('discountTitle')}</span>
-                <Select
-                  value={offer.discountKind ?? 'none'}
-                  onChange={(e) =>
-                    updateOffer(offer.id, {
-                      discountKind:
-                        e.target.value === 'none'
-                          ? undefined
-                          : (e.target.value as 'percent' | 'amount'),
-                      discountValue: e.target.value === 'none' ? undefined : 0,
-                    })
-                  }
-                >
-                  <option value="none">{t('discountNone')}</option>
-                  <option value="percent">{t('discountPercent')}</option>
-                  <option value="amount">{t('discountAmount')}</option>
-                </Select>
-              </label>
-              {offer.discountKind && (
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  className="w-28"
-                  aria-label={t('discountTitle')}
-                  value={offer.discountValue ?? 0}
-                  onChange={(e) =>
-                    updateOffer(offer.id, { discountValue: Number(e.target.value) || 0 })
-                  }
-                />
-              )}
-            </div>
+            <label className="w-40">
+              <span className="sr-only">{t('discountTitle')}</span>
+              <Select
+                value={offer.discountKind ?? 'none'}
+                onChange={(e) =>
+                  updateOffer(offer.id, {
+                    discountKind:
+                      e.target.value === 'none'
+                        ? undefined
+                        : (e.target.value as 'percent' | 'amount'),
+                    discountValue: e.target.value === 'none' ? undefined : 0,
+                  })
+                }
+              >
+                <option value="none">{t('discountNone')}</option>
+                <option value="percent">{t('discountPercent')}</option>
+                <option value="amount">{t('discountAmount')}</option>
+              </Select>
+            </label>
+            {offer.discountKind && (
+              /* Was a raw <Input> with `Number(value) || 0` against a store that
+                 autosaves per keystroke: selecting "25" and pressing backspace
+                 to retype it wrote a 0 discount to the live quote in between.
+                 That is the exact bug NumberField exists for. */
+              <NumberField
+                className="w-28 text-right"
+                min={0}
+                aria-label={t('discountTitle')}
+                value={offer.discountValue ?? 0}
+                onCommit={(value) => updateOffer(offer.id, { discountValue: value })}
+              />
+            )}
             {plan && (
-              <p className="mt-3 text-sm text-status-success-fg">
+              <p className="basis-full text-sm text-status-success-fg">
                 {t('planDiscount', { percent: settings.planDiscounts[plan] })}
               </p>
             )}

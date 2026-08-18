@@ -124,8 +124,8 @@ export const adminDe = {
     colQuantity: 'Menge',
     colUnitPrice: 'Ansatz',
     colSum: 'Summe',
-    optional: 'Optional',
-    notSelected: 'Nicht gewählt',
+    optionalOn: 'Wählbar, an',
+    optionalOff: 'Wählbar, aus',
     subtotal: 'Zwischentotal',
     discount: 'Rabatt',
     total: 'Total',
@@ -485,8 +485,12 @@ export const adminDe = {
     calcHourly: 'Stunden',
     calcFlat: 'Pauschal',
     calcUnit: 'Stück',
-    optional: 'Wählbar',
-    optionalHint: 'Der Kunde kann diese Position ab- oder zuwählen.',
+    colOptional: 'Wählbar',
+    optionalFixed: 'Fix',
+    optionalOn: 'Wählbar, an',
+    optionalOff: 'Wählbar, aus',
+    optionalHint:
+      '«Wählbar» heisst: der Kunde entscheidet selbst. «An» steht schon im Betrag, «aus» kommt erst dazu, wenn er sie wählt — Preis und geplante Dauer bewegen sich mit.',
     addLine: 'Position hinzufügen',
     removeLine: 'Entfernen',
     newLineLabel: 'Neue Position',
@@ -535,6 +539,7 @@ export const adminDe = {
     channelWhatsapp: 'WhatsApp',
     channelHint: 'Die Offerte wird als Link versendet, in der Sprache des Kunden.',
     previewTitle: 'So sieht es der Kunde',
+    messageTitle: 'Begleittext',
     openPreview: 'Kundenansicht öffnen',
     send: 'Offerte senden',
     sending: 'Wird gesendet …',
@@ -690,6 +695,36 @@ export const adminDe = {
     emptyAgendaTitle: 'Keine kommenden Einsätze',
     emptyAgendaBody: 'Sobald eine Buchung bestätigt ist, erscheint sie hier.',
     weekTotal: '{count} Einsätze · {hours} Std.',
+
+    /* Die Legende. Der Kalender zeichnete in Woche und Monat jeden Eintrag in
+       derselben Akzentfarbe — neun Buchungszustände, drei Terminarten, Ferien
+       und eine reservierte Zeit, alle gleich. Eine Legende ohne Farben zu
+       erklären wäre sinnlos gewesen; beides gehört zusammen. */
+    legendTitle: 'Legende',
+    legendShow: 'Legende einblenden',
+    legendHide: 'Legende ausblenden',
+    legendJobs: 'Einsätze',
+    legendEvents: 'Termine ohne Einsatz',
+    legendOther: 'Übriges',
+    legendClosure: 'Betriebsferien',
+    legendHold: 'Reserviert, noch nicht unterschrieben',
+    legendHoldHint:
+      'Der Kunde hat 48 Stunden Zeit. Die Zeit ist blockiert, der Einsatz entsteht erst mit der Zahlung.',
+
+    addAction: 'Termin eintragen',
+    routeHint: 'Reihenfolge und Fahrzeit des Tages',
+
+    eventsTitle: 'Termine',
+    holdTitle: 'Reservierte Zeit',
+    closureTitle: 'Betriebsferien',
+    closureBody: 'In dieser Zeit wird nicht gearbeitet. Grund: {reason}.',
+
+    rowActions: 'Aktionen',
+    rowOpen: 'Einsatz öffnen',
+    rowReschedule: 'Verschieben',
+    rowAssign: 'Zuweisen',
+    rowCancel: 'Stornieren',
+    rowSettled: 'Abgeschlossen — nur noch lesbar',
   },
 
   map: {
@@ -708,7 +743,102 @@ export const adminDe = {
     nextDay: 'Nächster Tag',
     today: 'Heute',
     minutes: '{n} Min.',
-    routeAction: 'Route',
+    /* Hiess «Route» — ein Wort neben der Kalenderüberschrift, das nicht sagt,
+       was passiert, wenn man es drückt. Ein Reviewer fragte genau danach. */
+    routeAction: 'Tagesroute',
+  },
+
+  /* Der Kalender konnte nur Buchungen halten, und eine Buchung entstand nur
+     aus einer bezahlten Offerte. Alles dazwischen — der telefonisch vereinbarte
+     Einsatz, der zugesagte Rückruf, die Besichtigung vor der Offerte — hatte
+     keinen Platz. «Rückruf zugesagt» steht zweimal in den Demodaten, ohne
+     Datum, auf keinem Bildschirm wiederfindbar. */
+  newAppointment: {
+    back: 'Kalender',
+    title: 'Termin eintragen',
+    lead: 'Was steht an?',
+    kindLegend: 'Art',
+    kindJob: 'Einsatz',
+    kindJobHint: 'Arbeit beim Kunden. Ohne Offerte — für den Auftrag, der am Telefon zustande kommt.',
+    kindCall: 'Anruf oder Besichtigung',
+    kindCallHint: 'Rückruf, Nachfassen, Besichtigung. Zählt nicht gegen die zwei Einsätze pro Tag.',
+
+    customerLabel: 'Kunde',
+    customerPlaceholder: 'Kunde wählen',
+    customerNone: 'Noch kein Kunde — nur Name und Telefon',
+    propertyLabel: 'Objekt',
+    propertyPlaceholder: 'Objekt wählen',
+    serviceLabel: 'Leistung',
+    startLabel: 'Beginn',
+    durationLabel: 'Dauer',
+    durationHours: '{n} Std.',
+    durationMinutes: '{n} Min.',
+    assigneeLabel: 'Ausführung',
+    titleLabel: 'Betreff',
+    titlePlaceholder: 'Rückruf wegen Erdgeschoss',
+    contactNameLabel: 'Name',
+    contactPhoneLabel: 'Telefon',
+    eventKindLabel: 'Terminart',
+    noteLabel: 'Notiz',
+
+    submitJob: 'Einsatz eintragen',
+    submitEvent: 'Termin eintragen',
+    cancel: 'Abbrechen',
+
+    doneJob: 'Einsatz {reference} eingetragen.',
+    doneEvent: 'Termin eingetragen.',
+
+    /* Dieselbe Prüfung, die auch der Kunde bekommt. Eine Regel, um die das
+       Büro herumklicken kann, ist keine Regel — siehe /open-questions. */
+    blockedTitle: 'Dieser Tag geht nicht',
+    blockedClosedDay: 'Sonntag. Gearbeitet wird Montag bis Samstag.',
+    blockedClosurePeriod: 'In dieser Zeit sind Betriebsferien eingetragen.',
+    blockedTooSoon: 'Zu kurzfristig — es braucht {hours} Stunden Vorlauf.',
+    blockedAtCapacity: 'An diesem Tag stehen schon {max} Einsätze. Mehr trägt der Kalender nicht.',
+    blockedHint: 'Ferien und Tagesgrenze lassen sich in den Einstellungen ändern.',
+
+    noCustomersTitle: 'Noch kein Kunde erfasst',
+    noCustomersBody:
+      'Ein Einsatz braucht einen Kunden und ein Objekt. Erfassen Sie zuerst den Kunden — der Termin lässt sich danach in einem Zug eintragen.',
+    noCustomersAction: 'Kunde erfassen',
+  },
+
+  event: {
+    back: 'Kalender',
+    kindContactCall: 'Anruf',
+    kindFollowUp: 'Nachfassen',
+    kindViewing: 'Besichtigung',
+    whenTitle: 'Wann',
+    contactTitle: 'Kontakt',
+    noteTitle: 'Notiz',
+    outcomeTitle: 'Ergebnis',
+    outcomeLabel: 'Was ist herausgekommen?',
+    historyTitle: 'Verlauf',
+    actionsTitle: 'Aktionen',
+    customerLink: 'Kundenakte öffnen',
+    requestLink: 'Anfrage {reference} öffnen',
+
+    markDone: 'Als erledigt markieren',
+    markNoReply: 'Niemanden erreicht',
+    markNoReplyHint: 'Bleibt offen — nicht erreicht ist nicht erledigt.',
+    cancel: 'Termin absagen',
+    reopen: 'Wieder öffnen',
+    dismiss: 'Abbrechen',
+
+    /* Der eigentliche Zweck des Anrufs. Ohne diesen Weg endet das Gespräch,
+       das zu einem Auftrag geführt hat, als abgehakter Kalendereintrag — und
+       die Anfrage muss danach von Hand nochmal erfasst werden. */
+    convertTitle: 'Daraus wurde ein Auftrag',
+    convertBody:
+      'Erfassen Sie die Anfrage mit den Angaben aus dem Gespräch. Von dort geht es wie gewohnt weiter: Offerte schreiben, Termin, Zahlung.',
+    convertAction: 'Anfrage erfassen',
+    convertedNote: 'Aus diesem Termin ist Anfrage {reference} entstanden.',
+
+    doneToast: 'Als erledigt markiert.',
+    noReplyToast: 'Notiert — niemand erreicht.',
+    cancelToast: 'Termin abgesagt.',
+    reopenToast: 'Termin wieder offen.',
+    outcomeSaved: 'Ergebnis gespeichert.',
   },
 
   booking: {
@@ -741,8 +871,15 @@ export const adminDe = {
     cancelConfirmAction: 'Einsatz stornieren',
     cancelEvent: 'Einsatz storniert',
     cancelDone: 'Einsatz storniert.',
-    markNoAccess: 'Kein Zutritt erfassen',
-    noAccessHint: 'Erfasst {percent}% Gebühr, mit Foto und Zeitstempel.',
+    /* Hiess «Kein Zutritt erfassen». Ein Reviewer las das als zwei Dinge —
+       einen «Erfassen»-Knopf, der «keinen Zutritt/keine Aktion» hat. Wenn ein
+       Label so gelesen werden kann, ist es das Label, das falsch ist. */
+    markNoAccess: 'Kein Zutritt melden',
+    noAccessHint: 'Meldet {percent}% Gebühr, mit Foto und Zeitstempel.',
+    /* Die Knöpfe waren bei einem abgeschlossenen Einsatz deaktiviert und sagten
+       nicht warum — was von aussen wie ein toter Knopf aussieht. */
+    settledHint:
+      'Dieser Einsatz ist {state}. Verschieben, Zuweisen und Stornieren sind damit zu — der Verlauf unten bleibt lesbar.',
     noAccessConfirmTitle: 'Kein Zutritt erfassen?',
     noAccessConfirmBody:
       'Der Einsatz gilt als nicht erbracht und es werden {percent}% des Betrags verrechnet. Der Kunde erhält die Begründung mit Zeitstempel.',

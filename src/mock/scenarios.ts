@@ -1,6 +1,9 @@
 import type {
   Application,
   Booking,
+  CalendarEvent,
+  CalendarEventKind,
+  CalendarEventStatus,
   ChangeLogEntry,
   ClosurePeriod,
   Coupon,
@@ -78,6 +81,9 @@ export interface DataSet {
   reviews: Review[];
   photos: Photo[];
   closures: ClosurePeriod[];
+  /** Calls, follow-ups and viewings — everything on the calendar that is not
+      a job. See `CalendarEvent` for why they are not bookings. */
+  events: CalendarEvent[];
   team: TeamMember[];
   postings: JobPosting[];
   applications: Application[];
@@ -101,6 +107,7 @@ const EMPTY: DataSet = {
   reviews: [],
   photos: [],
   closures: [],
+  events: [],
   team: [],
   postings: [],
   applications: [],
@@ -139,6 +146,76 @@ const openDay = (from: Date, n: number) => {
   const out = days(from, n);
   return businessWeekday(out) === 7 ? days(out, 1) : out;
 };
+
+/**
+ * A calendar entry that is not a job.
+ *
+ * Written as a factory because every scenario needs a handful and they differ
+ * only in when, who and how it ended. The `history` is built from the status
+ * rather than passed in — a call marked `done` with an empty timeline is a
+ * record that claims an outcome nobody ever recorded, and the detail screen
+ * would print an empty list under "Verlauf".
+ */
+function calendarEvent(
+  now: Date,
+  input: {
+    id: string;
+    ref: string;
+    kind: CalendarEventKind;
+    title: string;
+    /** Offset in open days from today; negative for the past. */
+    inDays: number;
+    hour: number;
+    minute?: number;
+    duration?: number;
+    status?: CalendarEventStatus;
+    customerId?: string;
+    contactName?: string;
+    contactPhone?: string;
+    propertyId?: string;
+    note?: string;
+    outcome?: string;
+    requestId?: string;
+    createdDaysAgo?: number;
+  },
+): CalendarEvent {
+  const status = input.status ?? 'planned';
+  const start = at(openDay(now, input.inDays), input.hour, input.minute ?? 0);
+  const createdAt = days(now, -(input.createdDaysAgo ?? Math.max(1, input.inDays + 2)));
+
+  const history: CalendarEvent['history'] = [
+    { at: iso(createdAt), kind: 'created', label: 'Eingetragen' },
+  ];
+  if (status === 'done') {
+    history.push({ at: iso(start), kind: 'done', label: 'Erledigt' });
+  } else if (status === 'noReply') {
+    history.push({ at: iso(start), kind: 'noReply', label: 'Niemand erreicht' });
+  } else if (status === 'cancelled') {
+    history.push({ at: iso(start), kind: 'cancelled', label: 'Abgesagt' });
+  } else if (status === 'converted') {
+    history.push({ at: iso(start), kind: 'converted', label: 'Anfrage entstanden' });
+  }
+
+  return {
+    id: input.id,
+    reference: input.ref,
+    kind: input.kind,
+    title: input.title,
+    start: iso(start),
+    duration: input.duration ?? 30,
+    status,
+    customerId: input.customerId,
+    contactName: input.contactName,
+    contactPhone: input.contactPhone,
+    propertyId: input.propertyId,
+    note: input.note,
+    outcome: input.outcome,
+    requestId: input.requestId,
+    assigneeId: 'tm_owner',
+    createdAt: iso(createdAt),
+    history,
+  };
+}
 
 /** The owner. One person — this is the whole company at launch. */
 function owner(now: Date): TeamMember {
@@ -784,6 +861,80 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /*
+   * The calls.
+   *
+   * Two of the request records in this seed carry "Rückruf zugesagt" in an
+   * internal note — a promise with no date on it, in a field no screen sorts
+   * by. Those two are the reason this entity exists, so the seed now keeps the
+   * promise somewhere it can be seen: `cev_draft` is the callback for the
+   * half-taken call in `req_q_draft`, and `cev_converted` is the one that
+   * already turned into work.
+   */
+  const events: CalendarEvent[] = [
+    calendarEvent(now, {
+      id: 'cev_today',
+      ref: 'K-400',
+      kind: 'contact-call',
+      title: 'Rückruf Erdgeschoss-Preis',
+      inDays: 0,
+      hour: 11,
+      customerId: 'cus_m3',
+      note: 'Wollte den Preis fürs Erdgeschoss. Fläche war am Telefon noch unklar.',
+      createdDaysAgo: 1,
+    }),
+    calendarEvent(now, {
+      id: 'cev_draft',
+      ref: 'K-401',
+      kind: 'follow-up',
+      title: 'Fläche nachfragen — Entwurf A-2490',
+      inDays: 1,
+      hour: 9,
+      duration: 15,
+      customerId: 'cus_m3',
+      note: 'Entwurf liegt in der Warteschlange, es fehlt nur die Fläche.',
+    }),
+    /* A first job is worth looking at before it is priced. The only kind that
+       blocks a slot — see `occupiesSlot`. */
+    calendarEvent(now, {
+      id: 'cev_viewing',
+      ref: 'K-402',
+      kind: 'viewing',
+      title: 'Besichtigung vor Offerte',
+      inDays: 2,
+      hour: 16,
+      duration: 45,
+      customerId: 'cus_m8',
+      propertyId: 'prp_m8',
+      note: 'Storenkasten anschauen, bevor die Offerte rausgeht.',
+    }),
+    /* The deal path, already walked. Without one seeded record carrying it,
+       `converted` would be a state only reachable by doing the whole flow. */
+    calendarEvent(now, {
+      id: 'cev_converted',
+      ref: 'K-403',
+      kind: 'contact-call',
+      title: 'Anruf Umzugsreinigung',
+      inDays: -3,
+      hour: 10,
+      status: 'converted',
+      customerId: 'cus_m5',
+      outcome: 'Umzug per Ende Monat, Wohnung 4.5 Zimmer. Offerte zugesagt.',
+      requestId: 'req_q_offer',
+    }),
+    calendarEvent(now, {
+      id: 'cev_noreply',
+      ref: 'K-404',
+      kind: 'follow-up',
+      title: 'Offerte A-2494 nachfassen',
+      inDays: -1,
+      hour: 14,
+      status: 'noReply',
+      customerId: 'cus_m5',
+      note: 'Zweiter Versuch. Danach schriftlich.',
+    }),
+  ];
+
   return {
     ...EMPTY,
     customers: [...customers, ...extraCustomers(now)],
@@ -791,6 +942,7 @@ function baseData(now: Date): DataSet {
     requests: [...queue, ...quoteRequests, ...requests],
     offers: [...offers, ...quoteOffers],
     bookings: [...bookings, ...quoteBookings],
+    events,
     payments,
     subscriptions,
     invoices,
@@ -2351,6 +2503,90 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     },
   ];
 
+  const stateEvents: CalendarEvent[] = [
+    calendarEvent(now, {
+      id: 'cev_s_planned',
+      ref: 'K-500',
+      kind: 'contact-call',
+      title: 'Rückruf — geplant',
+      inDays: 1,
+      hour: 10,
+      customerId: 'cus_1',
+    }),
+    calendarEvent(now, {
+      id: 'cev_s_done',
+      ref: 'K-501',
+      kind: 'contact-call',
+      title: 'Rückruf — erledigt',
+      inDays: -2,
+      hour: 11,
+      status: 'done',
+      customerId: 'cus_2',
+      outcome: 'Termin auf Donnerstag verschoben, Bestätigung ist raus.',
+    }),
+    calendarEvent(now, {
+      id: 'cev_s_noreply',
+      ref: 'K-502',
+      kind: 'follow-up',
+      title: 'Nachfassen — niemand erreicht',
+      inDays: -1,
+      hour: 15,
+      status: 'noReply',
+      customerId: 'cus_5',
+    }),
+    calendarEvent(now, {
+      id: 'cev_s_converted',
+      ref: 'K-503',
+      kind: 'contact-call',
+      title: 'Anruf — daraus wurde eine Anfrage',
+      inDays: -4,
+      hour: 9,
+      status: 'converted',
+      customerId: 'cus_5',
+      outcome: 'Grundreinigung vor Übergabe. Anfrage erfasst.',
+      requestId: 'req_s_new',
+    }),
+    calendarEvent(now, {
+      id: 'cev_s_cancelled',
+      ref: 'K-504',
+      kind: 'viewing',
+      title: 'Besichtigung — abgesagt',
+      inDays: -1,
+      hour: 13,
+      duration: 45,
+      status: 'cancelled',
+      customerId: 'cus_6',
+      propertyId: 'prp_6',
+    }),
+    /* The one without a customer record. A person who has phoned once is not
+       a customer, and the detail screen has to render a bare name and number
+       rather than a broken link. */
+    calendarEvent(now, {
+      id: 'cev_s_lead',
+      ref: 'K-505',
+      kind: 'contact-call',
+      title: 'Neue Interessentin',
+      inDays: 2,
+      hour: 8,
+      contactName: 'Petra Lüthi',
+      contactPhone: '+41 79 604 18 22',
+      note: 'Über die Website angerufen, will einen Preisrahmen für 3.5 Zimmer.',
+    }),
+    /* On site, and therefore blocking. This is the record that proves
+       `occupiesSlot` does something — the picker refuses this window. */
+    calendarEvent(now, {
+      id: 'cev_s_viewing',
+      ref: 'K-506',
+      kind: 'viewing',
+      title: 'Besichtigung Büro',
+      inDays: 3,
+      hour: 14,
+      duration: 60,
+      customerId: 'cus_4',
+      propertyId: 'prp_4',
+    }),
+  ];
+
   return {
     ...data,
     customers,
@@ -2361,6 +2597,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     requests: [...matrixRequests, ...requests, ...data.requests],
     offers: [...matrixOffers, ...offers],
     bookings: [...matrixBookings, ...bookings],
+    /* Every CalendarEventStatus, and every kind, at once — the whole point of
+       this scenario. Without it `cancelled` and `noReply` would be colours in
+       the legend with no record anywhere carrying them, which is precisely the
+       "declared but unreachable" failure /flows exists to track. */
+    events: [...stateEvents, ...data.events],
     subscriptions,
     invoices: [...matrixInvoices, ...invoices],
     reviews,
@@ -2507,9 +2748,89 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
         })),
       );
 
+      /*
+       * A busy week that the calendar can actually show.
+       *
+       * This scenario added twenty-four requests and not one booking, so the
+       * screen named for being under load opened on four jobs: the week grid
+       * was mostly white space, the month view had a handful of dots, and the
+       * route screen — whose entire subject is ordering a day with several
+       * stops in it — drew a single stop and a total drive of zero.
+       *
+       * Two jobs a day is the ceiling (§1.2), so a full fortnight is exactly
+       * that: two a day, alternating households so consecutive stops are
+       * genuinely apart, with the statuses a real fortnight carries — finished
+       * behind, running today, booked ahead.
+       */
+      const BUSY_SERVICES_JOB: ServiceSlug[] = [
+        'unterhaltsreinigung',
+        'einmalreinigung',
+        'fensterreinigung',
+        'bueroreinigung',
+        'grundreinigung',
+        'umzugsreinigung',
+      ];
+      const busyBookings: Booking[] = Array.from({ length: 28 }, (_, i) => {
+        const offset = Math.floor(i / 2) - 7;
+        const second = i % 2 === 1;
+        const day = openDay(now, offset);
+        const household = (i % 11) + 1;
+        const past = offset < 0;
+        const duration = second ? 180 : 240;
+        return {
+          id: `bkg_bz_${i}`,
+          reference: `B-12${String(10 + i).padStart(2, '0')}`,
+          customerId: `cus_m${household}`,
+          propertyId: `prp_m${household}`,
+          serviceSlug: BUSY_SERVICES_JOB[i % BUSY_SERVICES_JOB.length]!,
+          start: iso(at(day, second ? 14 : 8, second ? 30 : 0)),
+          duration,
+          arrivalWindow: 60,
+          assigneeId: 'tm_owner',
+          /* Behind us it is finished, ahead of us it is booked. A fortnight
+             where every job reads "scheduled" would make the past look like a
+             backlog nobody has done. */
+          status: past ? (i % 5 === 0 ? 'invoiced' : 'completed') : 'scheduled',
+          photoIds: [],
+          history: [
+            {
+              at: iso(days(day, -6)),
+              kind: 'created',
+              label: i % 3 === 0 ? 'Abo-Termin geplant' : 'Gebucht und bezahlt',
+            },
+            ...(past
+              ? [{ at: iso(at(day, second ? 17 : 12)), kind: 'checkOut', label: 'Ausgecheckt' }]
+              : []),
+          ],
+        } satisfies Booking;
+      });
+
+      /* Calls between the jobs, which is what a busy week actually looks like
+         — the phone does not stop because the calendar is full. */
+      const busyEvents: CalendarEvent[] = Array.from({ length: 9 }, (_, i) =>
+        calendarEvent(now, {
+          id: `cev_bz_${i}`,
+          ref: `K-42${i}`,
+          kind: i % 3 === 0 ? 'follow-up' : 'contact-call',
+          title:
+            i % 3 === 0
+              ? 'Offerte nachfassen'
+              : i % 3 === 1
+                ? 'Rückruf Termin verschieben'
+                : 'Anfrage am Telefon',
+          inDays: i - 3,
+          hour: i % 2 === 0 ? 12 : 17,
+          duration: 15,
+          customerId: `cus_m${(i % 11) + 1}`,
+          status: i - 3 < 0 ? (i % 2 === 0 ? 'done' : 'noReply') : 'planned',
+        }),
+      );
+
       return {
         ...data,
         requests: [...data.requests, ...extra],
+        bookings: [...data.bookings, ...busyBookings],
+        events: [...data.events, ...busyEvents],
         reviews,
         photos: [...data.photos, ...consented],
       };
@@ -2590,6 +2911,27 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
             duration: 180,
             subscriptionId: undefined,
           },
+        ],
+        /* A viewing wedged into the same overloaded day.
+
+           The conflict banner reads travel time between two *jobs*; this is the
+           other half of the same squeeze, and the one the picker has to honour
+           when a quote is written against this day. Without a record like it,
+           `occupiesSlot` was a rule with nothing anywhere exercising it. */
+        events: [
+          ...data.events,
+          calendarEvent(now, {
+            id: 'cev_cf_viewing',
+            ref: 'K-450',
+            kind: 'viewing',
+            title: 'Besichtigung dazwischen',
+            inDays: 0,
+            hour: 12,
+            duration: 45,
+            customerId: 'cus_m2',
+            propertyId: 'prp_m2',
+            note: 'Zugesagt, bevor der zweite Einsatz am selben Tag stand.',
+          }),
         ],
         /* Two requests asking for the day that is already double-booked, one at
            each end of the lake. Quoting either of them is where the travel

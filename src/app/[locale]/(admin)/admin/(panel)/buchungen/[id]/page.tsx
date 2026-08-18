@@ -27,10 +27,28 @@ const ACCESS_LABELS: Record<string, string> = {
 };
 
 /** Screen 63 — one booking, and everything that can be done to it. */
-export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BookingDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  /**
+   * Which panel to open on arrival.
+   *
+   * The calendar's row menu offers reschedule, assign and cancel directly. It
+   * could not perform them there — a confirmation panel inside a dropdown is a
+   * dialog inside a menu, and a second copy of each action is how the two
+   * screens start disagreeing about what cancelling does. So the menu links
+   * here and says which panel it meant, and there is still exactly one
+   * implementation of every action.
+   */
+  searchParams: Promise<{ action?: string }>;
+}) {
   const { id } = use(params);
+  const { action } = use(searchParams);
   const t = useTranslations('admin.booking');
   const rt = useTranslations('admin.request');
+  const statusT = useTranslations('status.booking');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const hydrated = useHydrated();
@@ -47,9 +65,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const now = useNow();
 
   const [revealed, setRevealed] = useState(false);
-  const [assigning, setAssigning] = useState(false);
-  const [rescheduling, setRescheduling] = useState(false);
-  const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(null);
+  const [assigning, setAssigning] = useState(() => action === 'assign');
+  const [rescheduling, setRescheduling] = useState(() => action === 'reschedule');
+  const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(() =>
+    action === 'cancel' ? 'cancel' : action === 'noAccess' ? 'noAccess' : null,
+  );
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -334,6 +354,17 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
           <div>
             <h2 className="label-type text-ink-tertiary">{t('actionsTitle')}</h2>
+            {/*
+              Every action below is disabled once the job is settled, and until
+              now none of them said so. A review of this screen read the greyed
+              strip as broken rather than closed — which is the correct reading
+              of a control that refuses without giving a reason.
+            */}
+            {settled && (
+              <p className="mt-3 rounded-[var(--radius-sm)] bg-sunken p-3 text-sm text-ink-secondary">
+                {t('settledHint', { state: statusT(booking.status) })}
+              </p>
+            )}
             <div className="mt-3 space-y-2">
               {rescheduling ? (
                 <form

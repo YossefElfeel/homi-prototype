@@ -11,6 +11,9 @@ import type {
   ApplicationDraft,
   ApplicationStatus,
   Booking,
+  CalendarEvent,
+  CalendarEventKind,
+  CalendarEventStatus,
   Customer,
   CustomerMessage,
   ID,
@@ -36,7 +39,12 @@ import type {
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
-import { createHold, type Slot } from './engines/availability';
+import {
+  createHold,
+  dayBlockReason,
+  type DayBlockReason,
+  type Slot,
+} from './engines/availability';
 import { CONFIRMED_HOLD_HOURS, offerCoverage } from '@/lib/offer-facts';
 import { buildOfferLines, canReissue, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
@@ -84,8 +92,13 @@ Marco Brunner`;
    `message`. A store persisted under 9 can hold the bug itself — an offer whose
    covering note was destroyed by a customer's change request — and re-seeding
    is the only way to get that text back. Leaving it would show the corrected
-   screen still printing a complaint under "Covering note". */
-const SCHEMA_VERSION = 10;
+   screen still printing a complaint under "Covering note".
+
+   11: `DataSet` gained `events` — the calls, follow-ups and viewings the
+   calendar had no way to hold. A store persisted under 10 has no such array
+   at all, and every calendar view would read `undefined.filter` on first
+   paint. This one is not a preference; it is a crash. */
+const SCHEMA_VERSION = 11;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -93,6 +106,21 @@ const SCHEMA_VERSION = 10;
  * the same 30 days.
  */
 const INVOICE_TERM_DAYS = 30;
+
+/**
+ * What each close-out writes into a calendar entry's timeline.
+ *
+ * German, like every other seeded and store-written label in this file: the
+ * timeline is data, not UI text, and translating it at write time would freeze
+ * whichever language the owner happened to be using into the record.
+ */
+const EVENT_STATUS_EVENT: Record<CalendarEventStatus, string> = {
+  planned: 'Wieder geöffnet',
+  done: 'Erledigt',
+  noReply: 'Niemand erreicht',
+  converted: 'Anfrage entstanden',
+  cancelled: 'Abgesagt',
+};
 
 /**
  * Swiss QR-bill reference, schematic — the real one is a 27-digit number with
@@ -417,6 +445,68 @@ interface StoreState {
   /** §17.2 — the catalogue is editable, and edits reach the site immediately. */
   setServices: (services: Service[]) => void;
   setAddOns: (addOns: AddOn[]) => void;
+  /* ---- the calendar's own entries (screens 58a, 63a) ----
+     A booking could only ever come out of a paid quote, and the calendar could
+     only ever show bookings. Between those two facts sat everything the owner
+     actually does with a day: a job taken over the phone, a callback promised,
+     a viewing before quoting. The seed says so out loud — "Rückruf zugesagt"
+     is written into two internalNote fields, with no date and no screen that
+     would ever show it again. */
+
+  /**
+   * A job the owner entered directly, with no quote behind it.
+   *
+   * /admin/buchungen has printed a "Manuell" source label since it was built,
+   * for a kind of booking nothing in the app could produce. This is what makes
+   * that label true. Refuses the same things the customer-facing picker
+   * refuses — the daily ceiling, the notice period, closures — because a rule
+   * the office can walk around is not a rule.
+   */
+  createManualBooking: (
+    input: {
+      customerId: ID;
+      propertyId: ID;
+      serviceSlug: ServiceSlug;
+      start: ISODate;
+      /** Minutes. */
+      duration: number;
+      assigneeId?: ID;
+      note?: string;
+    },
+    now: Date,
+  ) => { id: ID; reference: string } | { error: 'blocked'; reason: DayBlockReason };
+
+  createCalendarEvent: (
+    input: {
+      kind: CalendarEventKind;
+      title: string;
+      start: ISODate;
+      duration: number;
+      customerId?: ID;
+      contactName?: string;
+      contactPhone?: string;
+      propertyId?: ID;
+      note?: string;
+      assigneeId?: ID;
+    },
+    now: Date,
+  ) => ID;
+  /** Every close-out goes through here so the timeline records who and when. */
+  setCalendarEventStatus: (
+    id: ID,
+    status: CalendarEventStatus,
+    now: Date,
+    outcome?: string,
+  ) => void;
+  updateCalendarEvent: (id: ID, patch: Partial<CalendarEvent>) => void;
+  /**
+   * The deal path: the call produced work, so it becomes a request and stops
+   * being a thing to do. Marks the event `converted` and keeps the link both
+   * ways — without it the call would sit on the calendar as an open promise
+   * that has in fact already been kept.
+   */
+  linkEventToRequest: (id: ID, requestId: ID, now: Date) => void;
+
   patchData: (patch: Partial<DataSet>) => void;
   addHold: (hold: SlotHold) => void;
   releaseHold: (id: string) => void;
@@ -2163,6 +2253,162 @@ export const useStore = create<StoreState>()(
           entityId: 'addons',
           summary: 'Zusatzleistungen bearbeitet',
           coalesce: true,
+        });
+      },
+
+      createManualBooking: (input, now) => {
+        const s = get();
+        const start = new Date(input.start);
+
+        /*
+         * The same gate the customer meets, deliberately.
+         *
+         * It is tempting to let the office override — they are on the phone
+         * with the person, they know why this Tuesday matters. But
+         * `maxJobsPerDay` is two because that is how much cleaning one person
+         * can do, and a third job entered by hand does not create a third
+         * person. The override the owner actually needs is to move a closure
+         * or raise the ceiling in settings, and both of those already exist.
+         */
+        const blocked = dayBlockReason(start, {
+          bookings: s.data.bookings,
+          closures: s.data.closures,
+          settings: s.settings,
+          now,
+        });
+        if (blocked) return { error: 'blocked' as const, reason: blocked };
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        const reference = `B-${1050 + s.data.bookings.length}`;
+        const id = `bkg_m_${s.data.bookings.length}_${stamp}`;
+
+        const booking: Booking = {
+          id,
+          reference,
+          customerId: input.customerId,
+          propertyId: input.propertyId,
+          serviceSlug: input.serviceSlug,
+          start: input.start,
+          duration: input.duration,
+          arrivalWindow: arrivalWindowMinutes(input.duration / 60),
+          assigneeId: input.assigneeId,
+          status: 'scheduled',
+          photoIds: [],
+          history: [
+            {
+              at: now.toISOString(),
+              kind: 'created',
+              /* Says where it came from. A job with no quote behind it has no
+                 amount and no signature, and six weeks later the difference
+                 between "booked and paid" and this one is the whole answer to
+                 "why is there no invoice". */
+              label: input.note?.trim()
+                ? `Von Hand erfasst — ${input.note.trim()}`
+                : 'Von Hand erfasst',
+            },
+          ],
+        };
+
+        set({ data: { ...s.data, bookings: [booking, ...s.data.bookings] } });
+        get().logChange({
+          entity: 'booking',
+          entityId: id,
+          summary: `Einsatz von Hand erfasst: ${reference}`,
+        });
+        return { id, reference };
+      },
+
+      createCalendarEvent: (input, now) => {
+        const s = get();
+        const stamp = now.getTime().toString(36).slice(-4);
+        const id = `cev_${s.data.events.length}_${stamp}`;
+        const reference = `K-${(400 + s.data.events.length).toString()}`;
+
+        const event: CalendarEvent = {
+          id,
+          reference,
+          kind: input.kind,
+          title: input.title.trim(),
+          start: input.start,
+          duration: input.duration,
+          status: 'planned',
+          customerId: input.customerId,
+          contactName: input.contactName?.trim() || undefined,
+          contactPhone: input.contactPhone?.trim() || undefined,
+          propertyId: input.propertyId,
+          note: input.note?.trim() || undefined,
+          assigneeId: input.assigneeId,
+          createdAt: now.toISOString(),
+          history: [{ at: now.toISOString(), kind: 'created', label: 'Eingetragen' }],
+        };
+
+        set({ data: { ...s.data, events: [event, ...s.data.events] } });
+        get().logChange({
+          entity: 'event',
+          entityId: id,
+          summary: `Kalendereintrag angelegt: ${reference} — ${event.title}`,
+        });
+        return id;
+      },
+
+      setCalendarEventStatus: (id, status, now, outcome) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            events: s.data.events.map((e) =>
+              e.id !== id
+                ? e
+                : {
+                    ...e,
+                    status,
+                    outcome: outcome?.trim() || e.outcome,
+                    history: [
+                      ...e.history,
+                      {
+                        at: now.toISOString(),
+                        kind: status,
+                        label: EVENT_STATUS_EVENT[status],
+                      },
+                    ],
+                  },
+            ),
+          },
+        })),
+
+      updateCalendarEvent: (id, patch) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            events: s.data.events.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+          },
+        })),
+
+      linkEventToRequest: (id, requestId, now) => {
+        const s = get();
+        const request = s.data.requests.find((r) => r.id === requestId);
+        if (!request) return;
+
+        set({
+          data: {
+            ...s.data,
+            events: s.data.events.map((e) =>
+              e.id !== id
+                ? e
+                : {
+                    ...e,
+                    status: 'converted' as const,
+                    requestId,
+                    history: [
+                      ...e.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'converted',
+                        label: `Anfrage ${request.reference} entstanden`,
+                      },
+                    ],
+                  },
+            ),
+          },
         });
       },
 

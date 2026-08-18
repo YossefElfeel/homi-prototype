@@ -108,6 +108,13 @@ export const en: Messages = {
       closed: 'Closed',
       cancelled: 'Cancelled',
     },
+    calendarEvent: {
+      planned: 'Planned',
+      done: 'Done',
+      noReply: 'No reply',
+      converted: 'Became a request',
+      cancelled: 'Called off',
+    },
     subscription: {
       active: 'Active',
       pastDue: 'Payment overdue',

@@ -65,6 +65,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   const subscriptions = useStore((s) => s.data.subscriptions);
   const credits = useStore((s) => s.data.credits);
   const closures = useStore((s) => s.data.closures);
+  const events = useStore((s) => s.data.events);
   const holds = useStore((s) => s.holds);
   const holdOfferSlot = useStore((s) => s.holdOfferSlot);
   const proposeOfferSlots = useStore((s) => s.proposeOfferSlots);
@@ -86,11 +87,14 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
       // A customer must not be blocked by their own hold.
       holds: holds.filter((h) => h.offerId !== data.offer.id),
       closures,
+      /* A viewing the office booked is time the owner is standing somewhere
+         else. Without this the picker offers it and the day double-books. */
+      events,
       properties,
       settings,
       now,
     });
-  }, [data, now, duration, bookings, holds, closures, properties, settings]);
+  }, [data, now, duration, bookings, holds, closures, events, properties, settings]);
 
   if (!hydrated) return <div className="p-gutter text-ink-tertiary">…</div>;
   if (!data) return null;
