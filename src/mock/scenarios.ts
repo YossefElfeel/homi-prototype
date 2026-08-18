@@ -2637,7 +2637,11 @@ export function seedHolds(data: DataSet, now: Date): SlotHold[] {
 export function buildScenario(name: ScenarioName, now: Date): DataSet {
   switch (name) {
     case 'fresh':
-      // Launch day. One person, no customers, no reviews, nothing booked.
+      /* Launch day. One person, no customers, no reviews, nothing booked — and
+         deliberately no calendar entries either. The empty calendar is the
+         deliverable here, not a gap: it is the only place the day, week, month
+         and agenda empty states can be seen, and "Termin eintragen" is the
+         action that fills it. Seeding a call would take that away. */
       return { ...EMPTY, team: [owner(now)] };
 
     case 'busy': {
@@ -2866,12 +2870,68 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
         queueRequest(now, { id: 'req_ov_4', ref: 'A-2524', n: 10, service: 'unterhaltsreinigung', status: 'inReview', agedHours: 268, intent: 'premium' }),
       ];
 
+      /*
+       * Chasing.
+       *
+       * A business owed money spends its week on the phone, and this scenario
+       * had the debt without the chasing — an overdue invoice, a past-due plan
+       * and a calendar that looked like a quiet week. Two of these go
+       * unanswered on purpose: people who owe money are the people who stop
+       * picking up, which is exactly why `noReply` is not `done`.
+       */
+      const chasing: CalendarEvent[] = [
+        calendarEvent(now, {
+          id: 'cev_ov_1',
+          ref: 'K-460',
+          kind: 'follow-up',
+          title: 'Rechnung RE-2026-0044 — zweite Mahnung besprechen',
+          inDays: 0,
+          hour: 9,
+          customerId: 'cus_2',
+          note: '14 Tage überfällig. Vor der Mahnung anrufen, nicht danach.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_ov_2',
+          ref: 'K-461',
+          kind: 'follow-up',
+          title: 'Abo-Zahlung fehlgeschlagen — Karte erneuern',
+          inDays: -1,
+          hour: 16,
+          status: 'noReply',
+          customerId: 'cus_1',
+          note: 'Einzug abgelehnt. Ohne neue Karte pausiert der nächste Termin.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_ov_3',
+          ref: 'K-462',
+          kind: 'follow-up',
+          title: 'Anfrage A-2524 — 11 Tage ohne Antwort',
+          inDays: -2,
+          hour: 11,
+          status: 'noReply',
+          customerId: 'cus_m10',
+          note: 'Dritter Versuch. Danach schriftlich schliessen.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_ov_4',
+          ref: 'K-463',
+          kind: 'contact-call',
+          title: 'Zahlungsplan angeboten',
+          inDays: -4,
+          hour: 14,
+          status: 'done',
+          customerId: 'cus_2',
+          outcome: 'Zahlt in zwei Raten, erste Rate Ende Monat. Schriftlich bestätigt.',
+        }),
+      ];
+
       return {
         ...data,
         requests: [...lateRequests, ...data.requests],
         // Appended, not replaced: the point of this scenario is an overdue
         // invoice sitting next to normal ones, not a world with only one.
         invoices: [...invoices, ...data.invoices],
+        events: [...chasing, ...data.events],
         subscriptions: data.subscriptions.map((s) => ({ ...s, status: 'pastDue' as const })),
       };
     }
@@ -2891,7 +2951,70 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
         queueRequest(now, { id: 'req_aw_3', ref: 'A-2533', n: 5, service: 'fensterreinigung', status: 'new', agedHours: 96 }),
         queueRequest(now, { id: 'req_aw_4', ref: 'A-2534', n: 3, service: 'grundreinigung', status: 'inReview', agedHours: 140, internal: 'Gesehen, kann erst nach den Ferien beantwortet werden.' }),
       ];
-      return { ...data, requests: [...duringAbsence, ...data.requests] };
+      /*
+       * What a closure does to the calls.
+       *
+       * The closure runs day 2 → day 12, so nothing is placed inside it — a
+       * callback scheduled during the holiday would be the seed contradicting
+       * the scenario it belongs to. What actually happens is the other three
+       * things: promises made before leaving, promises parked until the
+       * return, and the one appointment the holiday ran over.
+       */
+      const aroundAbsence: CalendarEvent[] = [
+        calendarEvent(now, {
+          id: 'cev_aw_1',
+          ref: 'K-470',
+          kind: 'contact-call',
+          title: 'Vor den Ferien: Termine bestätigen',
+          inDays: 1,
+          hour: 8,
+          customerId: 'cus_1',
+          note: 'Letzter Arbeitstag. Abo-Termin im Ferienfenster verschieben.',
+        }),
+        /* The one the holiday ran over. `cancelled` had no record outside
+           `states` — this is the case it exists for. */
+        calendarEvent(now, {
+          id: 'cev_aw_2',
+          ref: 'K-471',
+          kind: 'viewing',
+          title: 'Besichtigung — fällt in die Betriebsferien',
+          inDays: 5,
+          hour: 10,
+          duration: 45,
+          status: 'cancelled',
+          customerId: 'cus_m5',
+          propertyId: 'prp_m5',
+          note: 'Vor den Ferien zugesagt, danach neu abgemacht.',
+          createdDaysAgo: 9,
+        }),
+        calendarEvent(now, {
+          id: 'cev_aw_3',
+          ref: 'K-472',
+          kind: 'follow-up',
+          title: 'Nach der Rückkehr: A-2531 beantworten',
+          inDays: 13,
+          hour: 9,
+          customerId: 'cus_m1',
+          note: 'Wartet seit dem ersten Ferientag. Zuerst anrufen, dann offerieren.',
+          createdDaysAgo: 1,
+        }),
+        calendarEvent(now, {
+          id: 'cev_aw_4',
+          ref: 'K-473',
+          kind: 'follow-up',
+          title: 'Nach der Rückkehr: A-2533 beantworten',
+          inDays: 13,
+          hour: 10,
+          customerId: 'cus_m5',
+          createdDaysAgo: 1,
+        }),
+      ];
+
+      return {
+        ...data,
+        requests: [...duringAbsence, ...data.requests],
+        events: [...aroundAbsence, ...data.events],
+      };
     }
 
     case 'conflict': {
@@ -2945,8 +3068,72 @@ export function buildScenario(name: ScenarioName, now: Date): DataSet {
       };
     }
 
-    case 'hiring':
-      return withHiring(baseData(now), now);
+    case 'hiring': {
+      const data = withHiring(baseData(now), now);
+      /*
+       * Interviews.
+       *
+       * The hiring track staged applications, a posting and a conversion, and
+       * the step between reading a CV and offering a contract — talking to the
+       * person — happened nowhere. These carry `contactName`/`contactPhone`
+       * rather than a `customerId`: an applicant is not a customer, and
+       * inventing a customer record to hold a phone number would put them in
+       * /admin/kunden, which is wrong in a way that is hard to undo.
+       */
+      const interviews: CalendarEvent[] = [
+        calendarEvent(now, {
+          id: 'cev_hr_1',
+          ref: 'K-480',
+          kind: 'contact-call',
+          title: 'Erstgespräch Elena Ferreira',
+          inDays: 1,
+          hour: 15,
+          duration: 45,
+          contactName: 'Elena Ferreira',
+          contactPhone: '+41 78 000 00 11',
+          note: 'Bewerbung app_1. Arbeitsbewilligung und Verfügbarkeit klären.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_hr_2',
+          ref: 'K-481',
+          kind: 'contact-call',
+          title: 'Referenz prüfen — Frau Hunziker',
+          inDays: 2,
+          hour: 11,
+          duration: 15,
+          contactName: 'Frau Hunziker',
+          contactPhone: '+41 79 000 00 12',
+          note: 'Referenz zu Elena Ferreira.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_hr_3',
+          ref: 'K-482',
+          kind: 'contact-call',
+          title: 'Erstgespräch Dritan Krasniqi',
+          inDays: -2,
+          hour: 14,
+          duration: 45,
+          status: 'done',
+          contactName: 'Dritan Krasniqi',
+          contactPhone: '+41 78 000 00 13',
+          outcome: 'Erfahren, Auto vorhanden, kann ab nächstem Monat. Weiter zur zweiten Runde.',
+        }),
+        calendarEvent(now, {
+          id: 'cev_hr_4',
+          ref: 'K-483',
+          kind: 'contact-call',
+          title: 'Absage besprechen — Amara Diallo',
+          inDays: -1,
+          hour: 17,
+          duration: 15,
+          status: 'noReply',
+          contactName: 'Amara Diallo',
+          contactPhone: '+41 78 000 00 17',
+          note: 'Absage lieber am Telefon als per Mail.',
+        }),
+      ];
+      return { ...data, events: [...interviews, ...data.events] };
+    }
 
     /* Stacked on hiring rather than on baseData: the applications track
        already carries all four ApplicationStatus values, and staging them a
