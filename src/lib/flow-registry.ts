@@ -159,14 +159,14 @@ export const FLOWS: Flow[] = [
         'Der Block zeigte Zeiten ohne zu sagen, woher sie kommen — «sucht das System oder der Mensch?» hatte auf dem Bildschirm keine Antwort. Öffnungszeiten und Vorlaufzeit lesen ihre Werte aus den Einstellungen, damit der Text nicht von der Engine abdriften kann',
       ),
       added(
-        'Vorlage einsetzen',
+        'Vorlage einsetzen oder direkt senden',
         '/admin/nachrichten',
-        'Elf Vorlagen lagen in den Einstellungen, genau eine wurde je gelesen. Setzt in der Sprache des Kunden ein und lässt Platzhalter stehen',
+        'Der Wähler setzte nur ein und liess {name} stehen, weil nichts die Platzhalter auflöste. Aufgelöst wird jetzt gegen den Datensatz auf dem Bildschirm — was aufgeht, darf mit einem Klick raus, was nicht aufgeht, sperrt den Direktversand',
       ),
       added(
         'Vorlage im Offert-Builder',
         '/admin/anfragen/req_1/offerte',
-        'Screen 48 bekam den Vorlagen-Wähler, das Begleitschreiben nicht — dabei geht genau dieser Text mit jeder einzelnen Offerte raus',
+        'Bot genau eine fest verdrahtete Option, weshalb «Offerte läuft ab» im ganzen Produkt keinen erreichbaren Weg hatte. Liest jetzt den Bereich Offerten',
       ),
       added(
         'Wählbare Position: an oder aus vorwählen',
@@ -417,8 +417,70 @@ export const FLOWS: Flow[] = [
         'Wird beim Lesen aus dem Fälligkeitsdatum abgeleitet, nicht gespeichert — richtig so, sonst bräuchte es einen nächtlichen Lauf',
       ),
       open(
+        'Rückerstattung',
+        'Bewusst auf die nächste Welle geschoben. Bis jetzt war sie gar nicht baubar: eine bezahlte Rechnung hatte keinen `Payment`-Datensatz, also gab es nichts, worauf sich eine Erstattung beziehen könnte. Den gibt es seit dieser Welle — `refunded` steht in `PaymentStatus` und in der Statusfarbtabelle, und die Offerten-Seite zeigt ihn bereits für eine Offert-Zahlung. Für eine Rechnung führt noch kein Knopf dahin',
+      ),
+      open(
         'Zahlung im Abo fehlgeschlagen (pastDue)',
         'Nur in den Demodaten vorhanden. Es gibt keinen Abrechnungslauf, der einen fehlgeschlagenen Einzug erzeugen könnte — den zu erfinden, hiesse Verhalten zu behaupten, das der Prototyp nicht hat',
+      ),
+    ],
+  },
+  {
+    id: 'templates',
+    de: 'Textvorlagen',
+    en: 'Message templates',
+    actors: ['owner'],
+    entries: [
+      ok('Vorlagen-Übersicht', '/admin/vorlagen'),
+      added(
+        'Neue Vorlage',
+        '/admin/vorlagen/neu',
+        'Die elf Vorlagen waren ein geschlossener Union-Typ. Eine zwölfte anzulegen war nicht ungebaut, sondern unmöglich — und «Pricing List» aus dem Briefing hatte deshalb nirgends Platz',
+      ),
+      added(
+        'Aus einem Wähler heraus',
+        '/admin/rechnungen',
+        'Jeder Wähler verlinkt auf die Verwaltung, damit «diese Vorlage taugt nicht» dort endet, wo man sie ändert',
+      ),
+    ],
+    actions: [
+      added(
+        'Suchen und filtern',
+        '/admin/vorlagen',
+        'Bei elf Zeilen eine Bequemlichkeit, bei dreissig die einzige Art, etwas zu finden',
+      ),
+      added('Bearbeiten in vier Sprachen', '/admin/vorlagen/tpl_offer_sent'),
+      added(
+        'Standardvorlage bestimmen',
+        '/admin/vorlagen',
+        'Ein Anlass kann mehrere Vorlagen haben. Welche automatisch rausgeht, ist eine Entscheidung — sie wird gesetzt, nicht geraten',
+      ),
+      added(
+        'Löschen mit Rückfrage',
+        '/admin/vorlagen',
+        'Drei verschiedene Rückfragen, je nachdem was kaputtgehen könnte: eine gewöhnliche, eine die nach der Nachfolgerin fragt, und eine die sagt, dass der Originaltext wiederhergestellt wird',
+      ),
+    ],
+    exits: [
+      added(
+        'Vorlage steht in den Wählern',
+        '/admin/nachrichten',
+        'Der Bereich der Vorlage bestimmt, welcher Wähler sie anbietet — dieselbe Tabelle, die die Verwendungs-Liste im Editor füllt',
+      ),
+      added(
+        'Vorlage geht automatisch raus',
+        '/admin/vorlagen',
+        'Nur mit Anlass und nur als Standardvorlage. Ohne Anlass ist sie ausschliesslich von Hand wählbar',
+      ),
+      added(
+        'Gelöscht — Anlass sendet weiter',
+        '/admin/vorlagen',
+        'Die einzige Zusicherung, die das Löschen einschränkt: ein Anlass steht nie ohne Text da. Beim Löschen der letzten Vorlage kommt der Originaltext zurück',
+      ),
+      open(
+        'Automatischer Versand selbst',
+        'Es gibt keinen Job, der «Offerte läuft ab» zum Ablaufdatum verschickt. Der Prototyp hat keinen Scheduler, und einen zu behaupten hiesse, Verhalten zu zeigen, das nicht existiert — die Vorlagen sind vorhanden und von Hand sendbar',
       ),
     ],
   },

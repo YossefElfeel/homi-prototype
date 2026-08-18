@@ -12,14 +12,24 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Input, Textarea } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money, formatChf } from '@/components/ui/money';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { TemplatePicker } from '@/components/admin/template-picker';
+import { INVOICE_METHODS, invoicePayment } from '@/lib/payment-methods';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { Invoice } from '@/mock/schema';
+import type { Invoice, PaymentMethod } from '@/mock/schema';
 
 const total = (invoice: Invoice) =>
   invoice.lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
@@ -110,8 +120,28 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     }, 900);
   }
 
+  /* The covering note goes into the customer's own message thread, keyed by
+     the invoice reference, so it lands beside everything else about this
+     invoice rather than in a mailbox nobody in the product can see. */
+  function postNote(body: string) {
+    const text = body.trim();
+    if (!text) return;
+    sendMessage(
+      {
+        customerId: invoice!.customerId,
+        subject: invoice!.reference,
+        body: text,
+        from: 'homivaro',
+      },
+      now,
+    );
+    setNote('');
+    toast.success(t('messageSent'));
+  }
+
   function markPaid() {
-    markInvoicePaid(invoice!.id, now);
+    markInvoicePaid(invoice!.id, now, method);
+    setPaying(false);
     toast.success(t('markPaidDone'));
   }
 
@@ -430,6 +460,51 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
         <p className="mt-3 text-xs text-ink-tertiary">{t('qrNote')}</p>
+      </section>
+
+      <section className="mt-app-section">
+        <h2 className="display-type text-xl">{t('messageTitle')}</h2>
+        <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+          {t('messageLead')}
+        </p>
+
+        {/*
+          The customer's language, not the admin's: an invoice note is read by
+          the person being billed. `amount` and `dueDate` come from this invoice,
+          which is what lets the picker offer one-click sending — a template
+          whose placeholders all resolve has nothing left for a human to fill in.
+        */}
+        <TemplatePicker
+          className="mt-4"
+          flow="invoices"
+          locale={customer.language}
+          vars={{
+            name: `${customer.firstName} ${customer.lastName}`,
+            reference: invoice.reference,
+            invoiceNumber: invoice.reference,
+            amount: formatChf(total(invoice), locale),
+            dueDate: format.dateTime(new Date(invoice.dueAt), 'full'),
+          }}
+          hasDraft={Boolean(note.trim())}
+          onInsert={(message) => setNote(message.body)}
+          onSend={(message) => postNote(message.body)}
+        />
+
+        <Field label={t('messageLabel')} hint={t('messageThread', { reference: invoice.reference })} className="mt-5">
+          {(props) => (
+            <Textarea
+              {...props}
+              className="min-h-28"
+              placeholder={t('messagePlaceholder')}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          )}
+        </Field>
+        <Button className="mt-3" disabled={!note.trim()} onClick={() => postNote(note)}>
+          <Send className="size-4" aria-hidden />
+          {t('messageSend')}
+        </Button>
       </section>
 
       <div className="mt-app-section space-y-4">

@@ -11,30 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Select, Textarea } from '@/components/ui/field';
+import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
+import { TemplatePicker } from '@/components/admin/template-picker';
 import { elapsed } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { MessageTemplateKey } from '@/mock/schema';
 import { cn } from '@/lib/cn';
-
-/* The order screen 79 lists them in — the sequence of a job, so the one you
-   want is where you expect it rather than alphabetised. */
-const TEMPLATE_KEYS: MessageTemplateKey[] = [
-  'request-received',
-  'offer-sent',
-  'offer-reminder',
-  'booking-confirmed',
-  'appointment-reminder',
-  'on-the-way',
-  'job-done',
-  'invoice-sent',
-  'payment-reminder',
-  'cancellation',
-  'review-request',
-];
 
 /**
  * The admin half of screen 48 — new.
@@ -55,13 +39,8 @@ export default function AdminMessagesPage() {
   const now = useNow();
   const hydrated = useHydrated();
 
-  /* Reusing the labels screen 79 already carries, rather than a second list
-     that would drift from it the first time an event is renamed. */
-  const templateEvent = useTranslations('admin.templates.events');
-
   const messages = useStore((s) => s.data.messages);
   const customers = useStore((s) => s.data.customers);
-  const settings = useStore((s) => s.settings);
   const sendMessage = useStore((s) => s.sendMessage);
   const markThreadRead = useStore((s) => s.markThreadRead);
 
@@ -129,15 +108,16 @@ export default function AdminMessagesPage() {
     markThreadRead(customerId, subject);
   }
 
+  function post(customerId: string, subject: string, body: string) {
+    sendMessage({ customerId, subject, body, from: 'homivaro' }, now);
+  }
+
   function reply() {
     if (!open) return;
     const body = (drafts[open.key] ?? '').trim();
     if (!body) return;
 
-    sendMessage(
-      { customerId: open.customerId, subject: open.subject, body, from: 'homivaro' },
-      now,
-    );
+    post(open.customerId, open.subject, body);
     setDrafts((d) => ({ ...d, [open.key]: '' }));
     toast.success(t('sent'));
   }
@@ -274,48 +254,26 @@ export default function AdminMessagesPage() {
 
                 <div className="border-t border-line-subtle p-card">
                   {/*
-                    Eleven templates sit in settings and exactly one — the quote
-                    mail — was ever read by anything. Whoever replied here
-                    retyped, in the customer's language, what screen 79 already
-                    holds. The picker inserts rather than sends: placeholders
-                    stay visible, because a half-filled `{name}` going out is
-                    worse than typing the sentence again.
+                    Eleven templates sat in settings and exactly one — the quote
+                    mail — was ever read. Whoever replied here retyped, in the
+                    customer's language, what screen 79 already held. The picker
+                    is shared now, so this screen cannot drift from the invoice
+                    and quote ones; and because the thread knows who it is with
+                    and what it references, {name} and {reference} resolve, which
+                    is what makes sending without editing safe rather than
+                    reckless.
                   */}
-                  <Field label={t('templateLabel')} hint={t('templateHint')}>
-                    {(props) => (
-                      <Select
-                        {...props}
-                        value=""
-                        className="max-w-sm"
-                        onChange={(e) => {
-                          const key = e.target.value as MessageTemplateKey;
-                          if (!key) return;
-                          const current = drafts[open.key] ?? '';
-                          if (current.trim() && !window.confirm(t('templateOverwrite'))) {
-                            return;
-                          }
-                          const customerLocale =
-                            customers.find((c) => c.id === open.customerId)?.language ?? 'de';
-                          /* §20.6 — German is the fallback, so a template with
-                             no text in the customer's language still sends
-                             something rather than an empty box. */
-                          const body =
-                            settings.messageTemplates[key][customerLocale] ??
-                            settings.messageTemplates[key].de ??
-                            '';
-                          setDrafts((d) => ({ ...d, [open.key]: body }));
-                          toast.success(t('templateInserted'));
-                        }}
-                      >
-                        <option value="">{t('templatePlaceholder')}</option>
-                        {TEMPLATE_KEYS.map((key) => (
-                          <option key={key} value={key}>
-                            {templateEvent(key)}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
+                  <TemplatePicker
+                    locale={
+                      customers.find((c) => c.id === open.customerId)?.language ?? 'de'
+                    }
+                    vars={{ name: nameOf(open.customerId), reference: open.subject }}
+                    hasDraft={Boolean((drafts[open.key] ?? '').trim())}
+                    onInsert={(message) =>
+                      setDrafts((d) => ({ ...d, [open.key]: message.body }))
+                    }
+                    onSend={(message) => post(open.customerId, open.subject, message.body)}
+                  />
 
                   <Field label={t('replyLabel')} className="mt-4">
                     {(props) => (

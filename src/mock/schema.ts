@@ -825,6 +825,78 @@ export type MessageTemplateKey =
   | 'cancellation'
   | 'review-request';
 
+/**
+ * Which part of the product a template belongs to.
+ *
+ * The brief asked for categories by purpose — "Send Quote", "Send Invoice",
+ * "Pricing List". Purpose alone would have left the other half of the brief
+ * unanswered: it says nothing about *where* a template is used, so an admin
+ * would still have to guess which screen offers it. Filing by flow answers both
+ * at once, because the flow a template belongs to is the flow whose screen
+ * offers it. Purpose finer than the flow — a reminder versus a first send — is
+ * a `tag`, which the admin adds without a schema change.
+ */
+export type TemplateFlow =
+  | 'requests'
+  | 'quotes'
+  | 'bookings'
+  | 'invoices'
+  | 'reviews'
+  | 'general';
+
+export const TEMPLATE_FLOWS: TemplateFlow[] = [
+  'requests',
+  'quotes',
+  'bookings',
+  'invoices',
+  'reviews',
+  'general',
+];
+
+export type TemplateChannel = 'email' | 'sms';
+
+/**
+ * §15 — one message the business sends, in every language it sends it in.
+ *
+ * This was a `Record<MessageTemplateKey, …>` of bare strings: eleven fixed
+ * slots, no name, no subject, and the channel table written into screen 79's
+ * component file where nothing else could read it. That shape made three of the
+ * things the brief asks for impossible rather than merely missing — you cannot
+ * add a twelfth template to a closed union, you cannot delete one, and you
+ * cannot show a subject line that was never stored.
+ *
+ * `event` is what keeps the automatic sends working through all of that. It is
+ * the *link* to a trigger rather than the identity of the row, so one event can
+ * own several templates and the admin can delete any single one of them. The
+ * only thing the store still enforces is that an event never ends up with none
+ * — see `deleteTemplate`.
+ */
+export interface MessageTemplate {
+  id: ID;
+  /**
+   * The automatic send this template can serve. Absent means manual only: it
+   * appears in the pickers and never fires on its own.
+   */
+  event?: MessageTemplateKey;
+  flow: TemplateFlow;
+  /** Free labels the admin adds. Filtering reads these alongside `flow`. */
+  tags: string[];
+  /**
+   * Per locale like the body, and for the same reason: a subject in the wrong
+   * language is as wrong as a body in the wrong language. The pickers read it
+   * as the template's name, so this doubles as the label — a separate `name`
+   * would be a second thing to keep in sync with it.
+   */
+  subject: Partial<Record<Locale, string>>;
+  body: Partial<Record<Locale, string>>;
+  channels: TemplateChannel[];
+  /**
+   * Among the templates sharing an `event`, the one an automatic send uses.
+   * Meaningless without `event`, and the store keeps exactly one per event.
+   */
+  isDefault: boolean;
+}
+
 export interface Settings {
   hourlyRate: number;
   minimumHours: number;
@@ -859,12 +931,12 @@ export interface Settings {
   hasLiabilityInsurance: boolean;
   applicationRetentionMonths: number;
   /**
-   * §15 — the automatic messages, per event and language.
+   * §15 — every message the business sends, automatic or picked by hand.
    *
    * French and Italian are deliberately absent rather than copied from German.
    * §20.6 makes German the fallback, so an untranslated message still sends;
    * modelling the gap as missing keys is what lets the templates screen count
    * it and the language switcher expose it.
    */
-  messageTemplates: Record<MessageTemplateKey, Partial<Record<Locale, string>>>;
+  messageTemplates: MessageTemplate[];
 }

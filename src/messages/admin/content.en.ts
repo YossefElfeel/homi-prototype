@@ -130,19 +130,75 @@ export const adminContentEn: typeof adminContentDe = {
 
   templates: {
     title: 'Message templates',
-    lead: 'The texts that go out automatically — in four languages.',
-    colEvent: 'Event',
+    lead: 'Every text we send — automatically, or picked by hand.',
+    searchLabel: 'Search',
+    searchPlaceholder: 'Subject, text or tag',
+    filterFlow: 'Area',
+    filterTag: 'Tag',
+    filterAll: 'All',
+    newAction: 'New template',
+    colSubject: 'Subject',
+    colFlow: 'Area',
     colChannels: 'Channels',
     colLanguages: 'Languages',
     complete: 'Complete',
     missing: '{n} missing',
     editAction: 'Edit',
+    deleteAction: 'Delete',
+    untitled: 'No subject',
+    automatic: 'Automatic',
+    automaticOn: 'Sends automatically on: {event}',
+    manual: 'Manual only',
+    standard: 'Default',
+    makeStandard: 'Make default',
+    standardDone: 'This template is what goes out automatically from now on.',
+    count: '{n} of {total} templates',
     fallbackNote: 'Where a language is missing, the German text is sent.',
     channelEmail: 'Email',
     channelSms: 'SMS',
+    smsWarning: 'Over {limit} characters — bills as two SMS.',
     placeholderNote: 'Placeholders in curly braces are replaced when the message is sent.',
     emptyForLocale: 'No text — the German version is sent instead.',
-    selectPrompt: 'Pick an event on the left.',
+    emptyTitle: 'No template found',
+    emptyBody:
+      'The search or the filters rule out every template. Clear the filters, or create a new template.',
+    emptyAction: 'Clear filters',
+
+    deleteTitle: 'Delete this template?',
+    deleteBody: 'The text is gone afterwards. This cannot be undone.',
+    deleteConfirm: 'Delete for good',
+    deleteCancel: 'Keep it',
+    deleteReplaceTitle: 'Delete the default template?',
+    deleteReplaceBody:
+      'This is what goes out automatically on "{event}". Pick the template that takes over.',
+    deleteReplaceLabel: 'Takes over from now on',
+    deleteLastTitle: 'Delete the last template for "{event}"?',
+    deleteLastBody:
+      'No template would be left for this event. So that "{event}" keeps sending, we restore the original text — your edits to it are lost.',
+    deleteLastConfirm: 'Delete and restore the original',
+    deleteDone: 'Template deleted.',
+    restoreDone: 'Template deleted — original text restored.',
+
+    usageTitle: 'Used in',
+    usageNote: 'This template is offered in the pickers on these screens.',
+    usage: {
+      messages: 'Messages',
+      quote: 'Quotes',
+      invoice: 'Invoices',
+      booking: 'Jobs',
+      review: 'Reviews',
+      request: 'Requests',
+    },
+
+    flows: {
+      requests: 'Requests',
+      quotes: 'Quotes',
+      bookings: 'Jobs',
+      invoices: 'Invoices',
+      reviews: 'Reviews',
+      general: 'General',
+    },
+
     events: {
       'request-received': 'Request received',
       'offer-sent': 'Quote sent',
@@ -157,6 +213,56 @@ export const adminContentEn: typeof adminContentDe = {
       'review-request': 'Review request',
     },
   },
+
+  template: {
+    back: 'Back to templates',
+    newTitle: 'New template',
+    saveAction: 'Save',
+    savedDone: 'Template saved.',
+    createdDone: 'Template created.',
+
+    flowLabel: 'Area',
+    flowHint:
+      'Decides which pickers offer this template — not just how the list is sorted.',
+    eventLabel: 'Automatic event',
+    eventNone: 'None — pick by hand only',
+    eventHint:
+      'With an event, this template can be sent automatically. Without one, it only appears in the pickers.',
+    channelsLabel: 'Channels',
+    tagsLabel: 'Tags',
+    tagsHint: 'Separate with commas. They become filters on the overview.',
+    subjectLabel: 'Subject',
+    bodyLabel: 'Text',
+    subjectMissing: 'Without a subject the template has no name in the picker.',
+
+    placeholderTitle: 'Placeholders',
+    placeholderNote:
+      'Replaced with the real values on send. Anything we do not know keeps its braces and blocks direct sending.',
+    placeholderInsert: 'Insert',
+
+    requiredTitle: 'German text missing',
+    requiredBody:
+      'German is the fallback language (§20.6). With no German text this template has nothing to send in three of the four languages.',
+  },
+
+  templatePicker: {
+    label: 'Template',
+    placeholder: 'Choose a template …',
+    empty: 'No template exists for this area yet.',
+    manage: 'Manage templates',
+    previewTitle: 'Preview',
+    subjectLabel: 'Subject',
+    sendDirect: 'Send as is',
+    editFirst: 'Edit before sending',
+    insertDone: 'Template inserted — check the text before sending.',
+    sentDone: 'Message sent.',
+    overwrite: 'The text you started will be replaced. Continue?',
+    unresolvedTitle: 'Cannot send as is',
+    unresolvedBody:
+      'We have no value here for {fields}. The placeholder would reach the customer as it stands — fill it in before sending.',
+    resolvedNote: 'Every placeholder is filled.',
+  },
+
 
   settings: {
     title: 'Settings',

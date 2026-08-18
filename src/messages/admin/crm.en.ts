@@ -423,9 +423,24 @@ export const adminCrmEn: typeof adminCrmDe = {
     linePlaceholder: 'Description',
     removeLine: 'Remove line',
     sentDone: 'Invoice sent.',
+    messageTitle: 'Message to the customer',
+    messageLead:
+      'The invoice used to go out without a word. The "Invoice sent" and "Payment reminder" templates sat in settings and nothing read them.',
+    messageLabel: 'Text',
+    messagePlaceholder: 'Pick a template or write your own …',
+    messageSend: 'Send message',
+    messageSent: 'Message sent to the customer.',
+    messageThread: 'Appears in the message thread under {reference}.',
     markPaid: 'Mark as paid',
+    /* Previously a button with no question attached. It wrote the status and
+       nothing else, so "how was this one paid?" had no answer afterwards —
+       the first thing asked when a refund comes up. */
+    markPaidTitle: 'Record the payment',
+    markPaidLead: '{reference} for {amount}. How did the money arrive?',
+    markPaidMethod: 'Method',
     markPaidDone: 'Invoice recorded as paid.',
     paidOn: 'Paid on {date}',
+    paidVia: 'Paid on {date} by {method}.',
     createTitle: 'Create an invoice',
     createLead: 'For a completed job — the lines come from the accepted quote.',
     createAction: 'Create invoice',

@@ -19,6 +19,7 @@ import type {
   ID,
   Invoice,
   InvoiceLine,
+  MessageTemplate,
   JobPosting,
   TeamMember,
   Offer,
@@ -38,6 +39,7 @@ import type {
   ISODate,
 } from './schema';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
+import { defaultFor, planDelete, textFor } from '@/lib/templates';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -103,8 +105,14 @@ Marco Brunner`;
    12: `CustomerStatus` gained `blocked` and `Customer` gained `archivedAt`.
    A store persisted under 11 has neither, so the customer list's archive tab
    would be permanently empty and the block action would have nothing to
-   undo — which reads as a dead control rather than an empty state. */
-const SCHEMA_VERSION = 12;
+   undo — which reads as a dead control rather than an empty state.
+
+   13: `Settings.messageTemplates` went from a keyed object to an array, so
+   templates can be added and deleted. This is the crash kind again, and a
+   worse one than 11: a store persisted under 12 holds an object, and every
+   `.filter` in `lib/templates.ts` reads `undefined` on it — which takes down
+   the templates screen, both message pickers and the quote builder at once. */
+const SCHEMA_VERSION = 13;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -455,6 +463,30 @@ interface StoreState {
   setDateOverride: (iso: string | null) => void;
   setCurrentCustomer: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
+
+  /* ---- message templates (screen 79) ----
+     The eleven texts were a fixed Record, so the screen could edit them and
+     nothing else. Adding a twelfth, deleting one, or having two versions of
+     the quote mail were all impossible — not unbuilt, impossible. */
+  addTemplate: (template: MessageTemplate) => void;
+  updateTemplate: (id: ID, patch: Partial<MessageTemplate>) => void;
+  /**
+   * Delete, with the one invariant that matters kept: an event that sends
+   * automatically never ends up with no text.
+   *
+   * `replacementId` is the template that takes over as default when the one
+   * being deleted held that job. The screen makes the admin choose it, rather
+   * than picking silently here, because "which of these two goes out from now
+   * on" is a business decision and the store guessing it is how the wrong mail
+   * ships for a month before anyone notices.
+   *
+   * Deleting the last template of an event restores the seeded text instead of
+   * leaving the event mute. That is a real deletion — the admin's edits are
+   * gone — and the confirm step names it before it happens.
+   */
+  deleteTemplate: (id: ID, replacementId?: ID) => void;
+  /** Promote one template of an event over its siblings. */
+  setDefaultTemplate: (id: ID) => void;
   /** §17.2 — the catalogue is editable, and edits reach the site immediately. */
   setServices: (services: Service[]) => void;
   setAddOns: (addOns: AddOn[]) => void;
@@ -993,13 +1025,17 @@ export const useStore = create<StoreState>()(
           version: 1,
           lines,
           // §17.2 — the quote opens with whatever screen 79 currently holds,
-          // in the customer's language, falling back to German (§20.6).
-          message:
-            s.settings.messageTemplates['offer-sent'][
-              s.data.customers.find((c) => c.id === request.customerId)?.language ?? 'de'
-            ] ??
-            s.settings.messageTemplates['offer-sent'].de ??
-            DEFAULT_OFFER_MESSAGE,
+          // in the customer's language, falling back to German (§20.6). Reading
+          // the event's *default* rather than a fixed key is what lets an admin
+          // keep two covering letters and switch which one new quotes open with.
+          message: (() => {
+            const template = defaultFor(s.settings.messageTemplates, 'offer-sent');
+            const language =
+              s.data.customers.find((c) => c.id === request.customerId)?.language ?? 'de';
+            return template
+              ? textFor(template.body, language) || DEFAULT_OFFER_MESSAGE
+              : DEFAULT_OFFER_MESSAGE;
+          })(),
           status: 'draft',
           estimatedHours,
         };
@@ -2273,6 +2309,82 @@ export const useStore = create<StoreState>()(
         });
       },
 
+      addTemplate: (template) => {
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            messageTemplates: [...s.settings.messageTemplates, template],
+          },
+        }));
+        get().logChange({
+          entity: 'template',
+          entityId: template.id,
+          summary: `Vorlage "${textFor(template.subject, 'de') || template.id}" angelegt`,
+        });
+      },
+
+      updateTemplate: (id, patch) => {
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            messageTemplates: s.settings.messageTemplates.map((t) =>
+              t.id === id ? { ...t, ...patch } : t,
+            ),
+          },
+        }));
+        const next = get().settings.messageTemplates.find((t) => t.id === id);
+        get().logChange({
+          entity: 'template',
+          entityId: id,
+          summary: `Vorlage "${next ? textFor(next.subject, 'de') || id : id}" bearbeitet`,
+          /* The editor autosaves like every other settings screen, so without
+             this the log would carry one entry per keystroke. */
+          coalesce: true,
+        });
+      },
+
+      deleteTemplate: (id, replacementId) => {
+        const s = get();
+        const plan = planDelete(
+          s.settings.messageTemplates,
+          id,
+          SEED_SETTINGS.messageTemplates,
+          replacementId,
+        );
+        if (plan.kind === 'missing') return;
+
+        set({ settings: { ...s.settings, messageTemplates: plan.next } });
+
+        const label = textFor(plan.removed.subject, 'de') || id;
+        const summary =
+          plan.kind === 'restore'
+            ? `Vorlage "${label}" gelöscht — Originaltext wiederhergestellt, damit der Anlass weiterhin versendet`
+            : plan.kind === 'promote'
+              ? `Vorlage "${label}" gelöscht — "${textFor(plan.heir.subject, 'de') || plan.heir.id}" ist neu die Standardvorlage`
+              : `Vorlage "${label}" gelöscht`;
+
+        get().logChange({ entity: 'template', entityId: id, summary });
+      },
+
+      setDefaultTemplate: (id) => {
+        const s = get();
+        const chosen = s.settings.messageTemplates.find((t) => t.id === id);
+        if (!chosen?.event) return;
+        set({
+          settings: {
+            ...s.settings,
+            messageTemplates: s.settings.messageTemplates.map((t) =>
+              t.event === chosen.event ? { ...t, isDefault: t.id === id } : t,
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'template',
+          entityId: id,
+          summary: `"${textFor(chosen.subject, 'de') || id}" ist neu die Standardvorlage`,
+        });
+      },
+
       setServices: (services) => {
         set({ services });
         get().logChange({
@@ -2491,7 +2603,16 @@ export const useStore = create<StoreState>()(
           ...current,
           ...saved,
           data: { ...current.data, ...(saved.data ?? {}) },
-          settings: { ...current.settings, ...(saved.settings ?? {}) },
+          settings: {
+            ...current.settings,
+            ...(saved.settings ?? {}),
+            /* Shape guard, not a missing-key guard. `messageTemplates` is the
+               first field whose *type* changed, and spreading a stale object
+               over the array would satisfy TypeScript and crash at runtime. */
+            messageTemplates: Array.isArray(saved.settings?.messageTemplates)
+              ? saved.settings.messageTemplates
+              : current.settings.messageTemplates,
+          },
           demo: { ...current.demo, ...(saved.demo ?? {}) },
           draft: { ...current.draft, ...(saved.draft ?? {}) },
           applicationDraft: {

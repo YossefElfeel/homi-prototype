@@ -381,7 +381,12 @@ export const TRACKS: Track[] = [
       ], 'A critical review cannot be published without a reply'),
       done('79', 'Textvorlagen', 'Message templates', '/admin/vorlagen', [
         'translation gap',
-      ]),
+        'empty',
+      ], 'Suche, Filter nach Bereich und Schlagwort, und pro Zeile, ob die Vorlage automatisch rausgeht'),
+      done('79a', 'Vorlage bearbeiten', 'Edit template', '/admin/vorlagen/neu', [
+        'new',
+        'translation gap',
+      ], 'Zeigt, in welchen Bereichen die Vorlage angeboten wird — aus derselben Tabelle, die die Wähler lesen'),
       done('80', 'Einstellungen — Gebiete', 'Settings — regions', '/admin/einstellungen'),
       done('81', 'Einstellungen — Zeiten', 'Settings — hours & closures', '/admin/einstellungen', [
         'closure period',

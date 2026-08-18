@@ -1,171 +1,357 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Info, Mail, MessageSquare } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
+import { Mail, MessageSquare, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 
-import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
-import { Field, Textarea } from '@/components/ui/field';
+import { Link, useRouter } from '@/i18n/navigation';
+import { routing, type Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { DataView, type Column } from '@/components/ui/data-view';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Field, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
-import { SaveIndicator } from '@/components/ui/save-indicator';
+import {
+  RowActions,
+  RowAction,
+  RowActionButton,
+} from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { Toolbar } from '@/components/ui/toolbar';
 import { useHydrated, useStore } from '@/mock/store';
-import type { MessageTemplateKey } from '@/mock/schema';
-import { cn } from '@/lib/cn';
-
-type Channel = 'email' | 'sms';
-
-/** §15 — which channels each event goes out on. */
-const EVENTS: { key: MessageTemplateKey; channels: Channel[] }[] = [
-  { key: 'request-received', channels: ['email'] },
-  { key: 'offer-sent', channels: ['email', 'sms'] },
-  { key: 'offer-reminder', channels: ['email'] },
-  { key: 'booking-confirmed', channels: ['email', 'sms'] },
-  { key: 'appointment-reminder', channels: ['sms'] },
-  { key: 'on-the-way', channels: ['sms'] },
-  { key: 'job-done', channels: ['email'] },
-  { key: 'invoice-sent', channels: ['email'] },
-  { key: 'payment-reminder', channels: ['email'] },
-  { key: 'cancellation', channels: ['email', 'sms'] },
-  { key: 'review-request', channels: ['email'] },
-];
+import type { MessageTemplate, TemplateFlow } from '@/mock/schema';
+import { TEMPLATE_FLOWS } from '@/mock/schema';
+import {
+  allTags,
+  filledLocales,
+  planDelete,
+  searchTemplates,
+  templateLabel,
+} from '@/lib/templates';
+import { SEED_SETTINGS } from '@/mock/seed';
 
 /**
  * Screen 79 — message templates.
  *
- * All four languages are edited on one screen rather than behind a language
- * switcher, for the same reason as the service editor: German is the fallback,
- * so a missing translation sends successfully and never complains. The count in
- * the list is the only thing that surfaces it.
+ * Was a two-column editor over eleven fixed slots: a nav on the left, four
+ * textareas on the right, and no way to add, remove or find anything. That
+ * shape answered exactly one of the five things the brief asks for. Worse, it
+ * hid the question an admin actually arrives with — not "what does the quote
+ * mail say" but "which of these goes out when I send an invoice, and where do I
+ * pick it". A list with search, filters and a visible default answers that; a
+ * nav of eleven fixed labels cannot.
+ *
+ * Editing moved to `/admin/vorlagen/[id]`, following the coupon screens. The
+ * list stopped being an editor the moment a template could be deleted: a
+ * destructive action needs a confirm step, and a confirm step needs somewhere
+ * to put the question — which an inline four-textarea panel does not have.
  */
 export default function AdminTemplatesPage() {
   const t = useTranslations('admin.templates');
-  const appT = useTranslations('app');
+  const locale = useLocale() as Locale;
+  const router = useRouter();
   const hydrated = useHydrated();
 
-  const settings = useStore((s) => s.settings);
-  const updateSettings = useStore((s) => s.updateSettings);
-  const [selected, setSelected] = useState<MessageTemplateKey>('offer-sent');
+  const templates = useStore((s) => s.settings.messageTemplates);
+  const deleteTemplate = useStore((s) => s.deleteTemplate);
+  const setDefaultTemplate = useStore((s) => s.setDefaultTemplate);
+
+  const [query, setQuery] = useState('');
+  const [flow, setFlow] = useState<TemplateFlow | 'all'>('all');
+  const [tag, setTag] = useState('');
+  /* The template awaiting confirmation, plus the heir the admin picked for it.
+     Held here rather than in ConfirmPanel so reading this file tells you the
+     screen has a confirm step — the house rule for that component. */
+  const [doomed, setDoomed] = useState<MessageTemplate | null>(null);
+  const [heirId, setHeirId] = useState('');
+
+  const tags = useMemo(() => allTags(templates), [templates]);
+  const filtered = useMemo(
+    () => searchTemplates(templates, locale, { query, flow, tag }),
+    [templates, locale, query, flow, tag],
+  );
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const templates = settings.messageTemplates;
-  const filled = (key: MessageTemplateKey) =>
-    routing.locales.filter((l) => (templates[key][l] ?? '').trim().length > 0).length;
+  const eventLabel = (key: string) => t(`events.${key}` as 'events.offer-sent');
+  const flowLabel = (f: TemplateFlow) => t(`flows.${f}` as 'flows.quotes');
 
-  function setText(key: MessageTemplateKey, locale: Locale, value: string) {
-    updateSettings({
-      messageTemplates: {
-        ...templates,
-        [key]: { ...templates[key], [locale]: value },
-      },
-    });
+  /* Which of the three delete conversations this is — asked of the same
+     function the store will run, so the dialog cannot promise one outcome
+     while the store performs another. */
+  const siblings = doomed?.event
+    ? templates.filter((x) => x.event === doomed.event && x.id !== doomed.id)
+    : [];
+  const deleteKind = doomed
+    ? planDelete(templates, doomed.id, SEED_SETTINGS.messageTemplates, heirId || undefined).kind
+    : 'missing';
+
+  function confirmDelete() {
+    if (!doomed) return;
+    deleteTemplate(doomed.id, heirId || undefined);
+    toast.success(deleteKind === 'restore' ? t('restoreDone') : t('deleteDone'));
+    setDoomed(null);
+    setHeirId('');
   }
+
+  function promote(template: MessageTemplate) {
+    setDefaultTemplate(template.id);
+    toast.success(t('standardDone'));
+  }
+
+  const columns: Column<MessageTemplate>[] = [
+    {
+      key: 'subject',
+      header: t('colSubject'),
+      primary: true,
+      sortBy: (x) => templateLabel(x, locale, ''),
+      cell: (x) => (
+        <span>
+          <span className="block font-medium">
+            {templateLabel(x, locale, t('untitled'))}
+          </span>
+          {/* What the row is *for*, in the row. The old nav said "Offerte
+              versendet" and left "does this one actually go out?" to be
+              answered by opening it. */}
+          <span className="mt-1 block text-xs text-ink-tertiary">
+            {x.event ? t('automaticOn', { event: eventLabel(x.event) }) : t('manual')}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'flow',
+      header: t('colFlow'),
+      sortBy: (x) => x.flow,
+      cell: (x) => (
+        <span className="flex flex-wrap items-center gap-1">
+          <Chip tone="accent">{flowLabel(x.flow)}</Chip>
+          {x.tags.map((one) => (
+            <Chip key={one}>{one}</Chip>
+          ))}
+        </span>
+      ),
+    },
+    {
+      key: 'channels',
+      header: t('colChannels'),
+      tableOnly: true,
+      cell: (x) => (
+        <span className="flex items-center gap-2 text-xs text-ink-tertiary">
+          {x.channels.includes('email') && (
+            <span className="inline-flex items-center gap-1">
+              <Mail className="size-3" aria-hidden />
+              {t('channelEmail')}
+            </span>
+          )}
+          {x.channels.includes('sms') && (
+            <span className="inline-flex items-center gap-1">
+              <MessageSquare className="size-3" aria-hidden />
+              {t('channelSms')}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'languages',
+      header: t('colLanguages'),
+      align: 'end',
+      sortBy: (x) => filledLocales(x, routing.locales),
+      cell: (x) => {
+        const filled = filledLocales(x, routing.locales);
+        const complete = filled === routing.locales.length;
+        return (
+          <Chip tone={complete ? 'neutral' : 'warning'}>
+            {complete
+              ? t('complete')
+              : t('missing', { n: routing.locales.length - filled })}
+          </Chip>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
+      trailing: true,
+      align: 'end',
+      cell: (x) => (
+        <RowActions>
+          {/* Only an event can have a default, and promoting the one that
+              already holds the job is a control that does nothing. */}
+          {x.event && !x.isDefault && (
+            <RowActionButton label={t('makeStandard')} onClick={() => promote(x)}>
+              <Star className="size-4" aria-hidden />
+            </RowActionButton>
+          )}
+          <RowAction label={t('editAction')} href={`/admin/vorlagen/${x.id}`}>
+            <Pencil className="size-4" aria-hidden />
+          </RowAction>
+          <RowActionButton
+            label={t('deleteAction')}
+            tone="danger"
+            onClick={() => {
+              setDoomed(x);
+              setHeirId('');
+            }}
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </RowActionButton>
+        </RowActions>
+      ),
+    },
+  ];
 
   return (
     <div>
-      {/* Four languages × nine events, all autosaving in silence. */}
       <PageHeader
         title={t('title')}
         lead={t('lead')}
         actions={
-          <SaveIndicator
-            signal={templates}
-            savingLabel={appT('saving')}
-            savedLabel={appT('saved')}
+          <Button asChild>
+            <Link href="/admin/vorlagen/neu">
+              <Plus className="size-4" aria-hidden />
+              {t('newAction')}
+            </Link>
+          </Button>
+        }
+      />
+
+      {doomed && (
+        <ConfirmPanel
+          className="mb-app"
+          title={
+            deleteKind === 'restore'
+              ? t('deleteLastTitle', { event: eventLabel(doomed.event ?? '') })
+              : deleteKind === 'promote'
+                ? t('deleteReplaceTitle')
+                : t('deleteTitle')
+          }
+          body={
+            deleteKind === 'restore'
+              ? t('deleteLastBody', { event: eventLabel(doomed.event ?? '') })
+              : deleteKind === 'promote'
+                ? t('deleteReplaceBody', { event: eventLabel(doomed.event ?? '') })
+                : t('deleteBody')
+          }
+          action={
+            deleteKind === 'restore' ? t('deleteLastConfirm') : t('deleteConfirm')
+          }
+          dismiss={t('deleteCancel')}
+          /* Which template inherits the automatic send is a business decision,
+             so it is asked here rather than guessed in the store. */
+          disabled={deleteKind === 'promote' && !heirId}
+          onConfirm={confirmDelete}
+          onDismiss={() => {
+            setDoomed(null);
+            setHeirId('');
+          }}
+        >
+          {deleteKind === 'promote' && (
+            <Field label={t('deleteReplaceLabel')} className="max-w-sm">
+              {(props) => (
+                <Select
+                  {...props}
+                  dense
+                  value={heirId}
+                  onChange={(e) => setHeirId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {siblings.map((one) => (
+                    <option key={one.id} value={one.id}>
+                      {templateLabel(one, locale, t('untitled'))}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
+        </ConfirmPanel>
+      )}
+
+      <Toolbar
+        search={{
+          value: query,
+          onChange: setQuery,
+          label: t('searchLabel'),
+          placeholder: t('searchPlaceholder'),
+        }}
+        count={t('count', { n: filtered.length, total: templates.length })}
+        filters={
+          <>
+            <Field label={t('filterFlow')} className="min-w-44">
+              {(props) => (
+                <Select
+                  {...props}
+                  dense
+                  value={flow}
+                  onChange={(e) => setFlow(e.target.value as TemplateFlow | 'all')}
+                >
+                  <option value="all">{t('filterAll')}</option>
+                  {TEMPLATE_FLOWS.map((one) => (
+                    <option key={one} value={one}>
+                      {flowLabel(one)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            {/* Only offered once a tag exists — an empty filter is a control
+                that cannot change anything. */}
+            {tags.length > 0 && (
+              <Field label={t('filterTag')} className="min-w-44">
+                {(props) => (
+                  <Select
+                    {...props}
+                    dense
+                    value={tag}
+                    onChange={(e) => setTag(e.target.value)}
+                  >
+                    <option value="">{t('filterAll')}</option>
+                    {tags.map((one) => (
+                      <option key={one} value={one}>
+                        {one}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            )}
+          </>
+        }
+      />
+
+      <DataView
+        items={filtered}
+        columns={columns}
+        getKey={(x) => x.id}
+        onSelect={(x) => router.push(`/admin/vorlagen/${x.id}`)}
+        caption={t('title')}
+        empty={
+          <EmptyState
+            title={t('emptyTitle')}
+            body={t('emptyBody')}
+            headingLevel={2}
+            action={
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setQuery('');
+                  setFlow('all');
+                  setTag('');
+                }}
+              >
+                {t('emptyAction')}
+              </Button>
+            }
           />
         }
       />
 
-      <div className="gap-app grid lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-        <nav aria-label={t('title')}>
-          <ul className="border-t border-line-subtle">
-            {EVENTS.map(({ key, channels }) => {
-              const complete = filled(key) === routing.locales.length;
-              const active = key === selected;
-              return (
-                <li key={key} className="border-b border-line-subtle">
-                  <button
-                    type="button"
-                    onClick={() => setSelected(key)}
-                    aria-current={active ? 'true' : undefined}
-                    className={cn(
-                      'flex w-full items-start justify-between gap-3 px-3 py-3.5 text-start transition-colors',
-                      active ? 'bg-sunken' : 'hover:bg-sunken',
-                    )}
-                  >
-                    <span>
-                      <span className="block font-medium">
-                        {t(`events.${key}` as 'events.offer-sent')}
-                      </span>
-                      <span className="mt-1 flex items-center gap-2 text-xs text-ink-tertiary">
-                        {channels.includes('email') && (
-                          <span className="inline-flex items-center gap-1">
-                            <Mail className="size-3" aria-hidden />
-                            {t('channelEmail')}
-                          </span>
-                        )}
-                        {channels.includes('sms') && (
-                          <span className="inline-flex items-center gap-1">
-                            <MessageSquare className="size-3" aria-hidden />
-                            {t('channelSms')}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        'mt-0.5 shrink-0 rounded-sm border px-1.5 py-0.5 text-xs',
-                        complete
-                          ? 'border-status-neutral-line bg-status-neutral text-status-neutral-fg'
-                          : 'border-status-warning-line bg-status-warning text-status-warning-fg',
-                      )}
-                    >
-                      {complete
-                        ? t('complete')
-                        : t('missing', { n: routing.locales.length - filled(key) })}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <section>
-          <h2 className="display-type text-xl">
-            {t(`events.${selected}` as 'events.offer-sent')}
-          </h2>
-          <p className="mt-2 flex items-start gap-2 text-sm text-ink-secondary">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {t('placeholderNote')}
-          </p>
-
-          <div className="mt-6 space-y-5">
-            {routing.locales.map((l) => {
-              const value = templates[selected][l] ?? '';
-              return (
-                <Field
-                  key={l}
-                  label={LOCALE_LABELS[l]}
-                  hint={value.trim() ? undefined : t('emptyForLocale')}
-                >
-                  {(props) => (
-                    <Textarea
-                      rows={value.trim() ? 7 : 3}
-                      value={value}
-                      onChange={(e) => setText(selected, l, e.target.value)}
-                      {...props}
-                    />
-                  )}
-                </Field>
-              );
-            })}
-          </div>
-
-          <p className="mt-6 text-sm text-ink-tertiary">{t('fallbackNote')}</p>
-        </section>
-      </div>
+      <p className="mt-6 text-sm text-ink-tertiary">{t('fallbackNote')}</p>
     </div>
   );
 }
