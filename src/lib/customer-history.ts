@@ -7,6 +7,7 @@ import type {
   Offer,
   Service,
   ServiceRequest,
+  Plan,
   Subscription,
 } from '@/mock/schema';
 
@@ -62,6 +63,7 @@ export interface HistorySources {
   bookings: Booking[];
   invoices: Invoice[];
   subscriptions: Subscription[];
+  plans: Plan[];
   services: Service[];
   locale: Locale;
 }
@@ -79,13 +81,19 @@ const serviceName = (slug: string, services: Service[], locale: Locale) =>
  */
 export function invoiceSubject(
   invoice: Invoice,
-  { bookings, subscriptions, services, locale }: HistorySources,
+  { bookings, subscriptions, plans, services, locale }: HistorySources,
 ): string {
   const booking = bookings.find((b) => b.id === invoice.bookingId);
   if (booking) return serviceName(booking.serviceSlug, services, locale);
 
+  /* The service a plan invoice is for lives on the plan now, not on the
+     subscription — one place, so retitling a plan cannot leave old invoices
+     describing themselves differently from the plan they paid for. */
   const subscription = subscriptions.find((s) => s.id === invoice.subscriptionId);
-  if (subscription) return serviceName(subscription.serviceSlug, services, locale);
+  if (subscription) {
+    const plan = plans.find((x) => x.id === subscription.planId);
+    if (plan) return plan.name[locale];
+  }
 
   return invoice.lines[0]?.label ?? '—';
 }

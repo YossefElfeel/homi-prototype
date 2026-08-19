@@ -71,6 +71,7 @@ export default function BookingDetailPage({
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const patchData = useStore((s) => s.patchData);
+  const approveBooking = useStore((s) => s.approveBooking);
   const now = useNow();
 
   /*
@@ -163,10 +164,7 @@ export default function BookingDetailPage({
           <Button
             className="mt-4"
             onClick={() => {
-              patchBooking(
-                { status: 'completed' },
-                { kind: 'approved', label: t('approveEvent') },
-              );
+              approveBooking(booking.id, t('approveEvent'), now);
               toast.success(t('approveDone'));
             }}
           >

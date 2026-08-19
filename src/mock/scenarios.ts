@@ -12,6 +12,7 @@ import type {
   JobPosting,
   KeyLogEntry,
   CustomerMessage,
+  ID,
   PackageCredit,
   Offer,
   Payment,
@@ -331,6 +332,37 @@ function baseData(now: Date): DataSet {
       access: { method: 'customer-present', contactPhone: '+41 79 000 00 02' },
     },
     {
+      /*
+       * The demo customer's office.
+       *
+       * Every seeded customer had exactly one address, so "which property is
+       * this plan for?" was a question the data could not make anyone ask.
+       * cus_2 now holds two plans on two addresses — a flat and an office, on
+       * different services — which is the case the property line on screen 43
+       * exists for.
+       */
+      id: 'prp_2b',
+      customerId: 'cus_2',
+      label: 'Büro Seestrasse',
+      street: 'Seestrasse 104',
+      postcode: '8706',
+      city: 'Meilen',
+      kind: 'office',
+      area: 140,
+      rooms: 5,
+      bathrooms: 2,
+      floor: 1,
+      hasElevator: true,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: {
+        method: 'other-person',
+        personName: 'Empfang Seestrasse 104',
+        personPhone: '+41 44 000 00 12',
+        personRelation: 'Empfang im Erdgeschoss',
+      },
+    },
+    {
       id: 'prp_3',
       customerId: 'cus_3',
       label: 'Alte Wohnung',
@@ -417,7 +449,7 @@ function baseData(now: Date): DataSet {
       customerNote: 'Weekly would be ideal. Invoice must go to the company address.',
       status: 'new',
       createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * 3)),
-      subscriptionIntent: 'premium',
+      planIntent: 'pln_premium',
     },
     {
       id: 'req_3',
@@ -524,14 +556,68 @@ function baseData(now: Date): DataSet {
       reference: 'S-0012',
       customerId: 'cus_1',
       propertyId: 'prp_1',
-      plan: 'premium',
-      serviceSlug: 'unterhaltsreinigung',
+      planId: 'pln_premium',
       startDate: iso(days(now, -60)),
-      commitmentEndsAt: iso(days(now, 305)),
+      endDate: iso(days(now, 305)),
       status: 'active',
-      skipsUsedThisMonth: 0,
-      lastChargedAt: iso(days(now, -8)),
-      nextChargeAt: iso(days(now, 22)),
+      visitsUsed: 8,
+      invoiceId: 'inv_plan_1',
+      renewalCount: 0,
+      history: [
+        { at: iso(days(now, -60)), kind: 'started', label: 'Abo gestartet — Premium' },
+        { at: iso(days(now, -60)), kind: 'paid', label: 'Bezahlt — RE-0060' },
+        { at: iso(days(now, -18)), kind: 'skipped', label: 'Einsatz ausgesetzt' },
+      ],
+    },
+    {
+      /*
+       * The demo account's own plan.
+       *
+       * `initialDemo` has always claimed cus_2 is "the only seeded customer
+       * with a request, a subscription, an invoice and an hour credit at
+       * once", and the subscription was the one part that was not true — the
+       * only seeded plan belonged to cus_1. So the plan screen every reviewer
+       * opens first showed its empty state.
+       */
+      id: 'sub_2',
+      reference: 'S-0013',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      planId: 'pln_basic',
+      startDate: iso(days(now, -400)),
+      endDate: iso(days(now, 330)),
+      status: 'active',
+      visitsUsed: 3,
+      invoiceId: 'inv_plan_2',
+      /* Bought a second time — this is what the renewal count on screen 70
+         reads, and it is why the term runs past the first year's end. */
+      renewalCount: 1,
+      history: [
+        { at: iso(days(now, -400)), kind: 'started', label: 'Abo gestartet — Basic' },
+        { at: iso(days(now, -400)), kind: 'paid', label: 'Bezahlt — RE-0058' },
+        { at: iso(days(now, -35)), kind: 'renewed', label: 'Verlängert um 12 Monate' },
+        { at: iso(days(now, -35)), kind: 'paid', label: 'Bezahlt — RE-0059' },
+      ],
+    },
+    {
+      /* The same customer, a different address, a different service — and a
+         plan that is no longer on sale. Retiring a product left this year
+         alone, which is the whole point of `Plan.active`. */
+      id: 'sub_3',
+      reference: 'S-0014',
+      customerId: 'cus_2',
+      propertyId: 'prp_2b',
+      planId: 'pln_buero',
+      startDate: iso(days(now, -90)),
+      endDate: iso(days(now, 275)),
+      status: 'active',
+      visitsUsed: 11,
+      invoiceId: 'inv_plan_3',
+      renewalCount: 0,
+      history: [
+        { at: iso(days(now, -90)), kind: 'started', label: 'Abo gestartet — Büro Kompakt' },
+        { at: iso(days(now, -90)), kind: 'paid', label: 'Bezahlt — RE-0061' },
+      ],
     },
   ];
 
@@ -621,6 +707,65 @@ function baseData(now: Date): DataSet {
       dueAt: iso(days(now, 25)),
       qrReference: '21 00000 00003 13947 14300 09008',
     },
+    /*
+     * The four invoices that paid for the seeded plans.
+     *
+     * A plan is bought outright, so each of these is a single line for the
+     * whole term rather than a monthly charge — and each carries the
+     * `subscriptionId` that makes "payment history" on screen 70 something
+     * that can be read rather than promised. RE-0058 and RE-0059 are the same
+     * plan bought twice, which is what its renewal count counts.
+     */
+    {
+      id: 'inv_plan_2',
+      reference: 'RE-2025-0058',
+      customerId: 'cus_2',
+      subscriptionId: 'sub_2',
+      lines: [{ label: 'Abo Basic — 26 Einsätze, 12 Monate', quantity: 1, unitPrice: 3440 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -400)),
+      dueAt: iso(days(now, -400)),
+      paidAt: iso(days(now, -400)),
+      qrReference: '21 00000 00003 13947 14300 09058',
+    },
+    {
+      id: 'inv_plan_2r',
+      reference: 'RE-2026-0059',
+      customerId: 'cus_2',
+      subscriptionId: 'sub_2',
+      lines: [{ label: 'Abo Basic — Verlängerung 12 Monate', quantity: 1, unitPrice: 3440 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -35)),
+      dueAt: iso(days(now, -35)),
+      paidAt: iso(days(now, -35)),
+      qrReference: '21 00000 00003 13947 14300 09059',
+    },
+    {
+      id: 'inv_plan_1',
+      reference: 'RE-2026-0060',
+      customerId: 'cus_1',
+      subscriptionId: 'sub_1',
+      lines: [{ label: 'Abo Premium — 52 Einsätze, 12 Monate', quantity: 1, unitPrice: 6500 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -60)),
+      dueAt: iso(days(now, -60)),
+      paidAt: iso(days(now, -60)),
+      qrReference: '21 00000 00003 13947 14300 09060',
+    },
+    {
+      id: 'inv_plan_3',
+      reference: 'RE-2026-0062',
+      customerId: 'cus_2',
+      subscriptionId: 'sub_3',
+      lines: [
+        { label: 'Abo Büro Kompakt — 12 Einsätze, 12 Monate', quantity: 1, unitPrice: 1980 },
+      ],
+      status: 'paid',
+      issuedAt: iso(days(now, -90)),
+      dueAt: iso(days(now, -90)),
+      paidAt: iso(days(now, -90)),
+      qrReference: '21 00000 00003 13947 14300 09062',
+    },
   ];
 
   const changeLog: ChangeLogEntry[] = [
@@ -672,6 +817,24 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /*
+   * Nine conversations, not one.
+   *
+   * The screen groups by reference, orders by newest message, chips the
+   * threads where the customer wrote last, and searches by name or reference —
+   * and the seed handed it one thread the office had already closed. The chip,
+   * the search box and the sort all rendered against a single row, so none of
+   * them could look wrong on screen no matter how wrong they were.
+   *
+   * What these stage: a first message nobody has answered, a thread that ran
+   * to six turns, French and English alongside German, and subjects that are
+   * not all A-… — a job, a quote and an invoice each start conversations of
+   * their own, and the customer never restates which one they mean.
+   *
+   * Every subject below is a reference that exists elsewhere in this seed. A
+   * thread hanging off a reference no screen can open reads fine in the list
+   * and dead-ends the moment somebody follows it.
+   */
   const messages: CustomerMessage[] = [
     {
       id: 'msg_1',
@@ -718,7 +881,7 @@ function baseData(now: Date): DataSet {
    */
   const queue: ServiceRequest[] = [
     queueRequest(now, { id: 'req_q_draft', ref: 'A-2490', n: 3, service: 'einmalreinigung', status: 'draft', agedHours: 30, note: undefined, internal: 'Angerufen, Fläche noch unklar. Rückruf abgemacht.' }),
-    queueRequest(now, { id: 'req_q_new1', ref: 'A-2491', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 5, intent: 'basic' }),
+    queueRequest(now, { id: 'req_q_new1', ref: 'A-2491', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 5, intent: 'pln_basic' }),
     queueRequest(now, { id: 'req_q_new2', ref: 'A-2492', n: 8, service: 'fensterreinigung', status: 'new', agedHours: 20, preferredInDays: 9 }),
     /* One day past the promise — the row the red deadline state exists for. */
     queueRequest(now, { id: 'req_q_late', ref: 'A-2493', n: 6, service: 'grundreinigung', status: 'inReview', agedHours: 52 }),
@@ -748,7 +911,7 @@ function baseData(now: Date): DataSet {
   const quoteRequests: ServiceRequest[] = [
     queueRequest(now, { id: 'req_q_propose', ref: 'A-2501', n: 8, service: 'fensterreinigung', status: 'offerSent', agedDays: 2, note: 'Erstauftrag — Storenkasten bitte mitnehmen.' }),
     queueRequest(now, { id: 'req_q_confirm', ref: 'A-2502', n: 7, service: 'bueroreinigung', status: 'offerSent', agedDays: 4 }),
-    queueRequest(now, { id: 'req_q_recurring', ref: 'A-2503', n: 6, service: 'unterhaltsreinigung', status: 'offerSent', agedDays: 3, intent: 'premium' }),
+    queueRequest(now, { id: 'req_q_recurring', ref: 'A-2503', n: 6, service: 'unterhaltsreinigung', status: 'offerSent', agedDays: 3, intent: 'pln_premium' }),
     queueRequest(now, { id: 'req_q_refund', ref: 'A-2504', n: 11, service: 'bueroreinigung', status: 'accepted', agedDays: 16, internal: 'Termin abgesagt, Betrag zurückerstattet.' }),
     /* cus_2 rather than a household: the package that covers it is theirs. */
     {
@@ -790,7 +953,7 @@ function baseData(now: Date): DataSet {
       createdAt: iso(days(now, -1)),
       openedAt: iso(days(now, -1)),
       respondedAt: iso(days(now, -1)),
-      subscriptionIntent: 'premium',
+      planIntent: 'pln_premium',
     },
   ];
 
@@ -907,6 +1070,45 @@ function baseData(now: Date): DataSet {
    * that does.
    */
   const payments: Payment[] = [
+    /* What actually settled each plan invoice. Without these the payment
+       history on screen 70 could say when a plan was paid but not how, which
+       is the one thing the office is asked on the phone. */
+    {
+      id: 'pay_plan_2',
+      invoiceId: 'inv_plan_2',
+      amount: 3440,
+      method: 'card',
+      at: iso(days(now, -400)),
+      status: 'succeeded',
+      gatewayRef: 'mock_CD058',
+    },
+    {
+      id: 'pay_plan_2r',
+      invoiceId: 'inv_plan_2r',
+      amount: 3440,
+      method: 'card',
+      at: iso(days(now, -35)),
+      status: 'succeeded',
+      gatewayRef: 'mock_CD059',
+    },
+    {
+      id: 'pay_plan_1',
+      invoiceId: 'inv_plan_1',
+      amount: 6500,
+      method: 'twint',
+      at: iso(days(now, -60)),
+      status: 'succeeded',
+      gatewayRef: 'mock_TW060',
+    },
+    {
+      id: 'pay_plan_3',
+      invoiceId: 'inv_plan_3',
+      amount: 1980,
+      method: 'qr-bill',
+      at: iso(days(now, -90)),
+      status: 'succeeded',
+      gatewayRef: 'mock_QR062',
+    },
     {
       id: 'pay_paid',
       offerId: 'off_paid',
@@ -1727,7 +1929,7 @@ function queueRequest(
     agedDays?: number;
     note?: string;
     internal?: string;
-    intent?: 'basic' | 'premium' | 'vip';
+    intent?: ID;
     preferredInDays?: number;
   },
 ): ServiceRequest {
@@ -1757,7 +1959,7 @@ function queueRequest(
     createdAt,
     openedAt: read ? createdAt : undefined,
     respondedAt: read && input.agedDays != null ? iso(days(now, -Math.max(1, input.agedDays - 1))) : undefined,
-    subscriptionIntent: input.intent,
+    planIntent: input.intent,
   };
 }
 
@@ -1921,7 +2123,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       createdAt: iso(days(now, -3)),
       openedAt: iso(days(now, -3)),
       respondedAt: iso(days(now, -3)),
-      subscriptionIntent: 'basic', // "plan wanted" in the type column
+      planIntent: 'pln_basic', // "plan wanted" in the type column
     },
     {
       id: 'req_s_revision',
@@ -2105,7 +2307,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         respondedAt: settled ? iso(days(now, -Math.max(1, settledDays - 1))) : undefined,
         /* Regular cleaning is the plan service, so that is where an intent
            belongs — it drives the "plan wanted" value in the type column. */
-        subscriptionIntent: slug === 'unterhaltsreinigung' ? 'basic' : undefined,
+        planIntent: slug === 'unterhaltsreinigung' ? 'pln_basic' : undefined,
       };
       matrixRequests.push(request);
 
@@ -2441,66 +2643,64 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     },
   ];
 
-  /* All five SubscriptionStatus values. `pastDue` and `cancelled` have no path
-     that reaches them in the app — /flows says so — which is exactly why they
-     have to exist in data, or screen 70 has states no reviewer can open. */
+  /* All four SubscriptionStatus values. `paused`, `expired` and `cancelled`
+     are all reachable from a screen now — this set exists so a reviewer can
+     open each without first having to produce it. */
   const subscriptions: Subscription[] = [
     ...data.subscriptions,
     {
-      id: 'sub_s_pastdue',
-      reference: 'S-0021',
-      customerId: 'cus_5',
-      propertyId: 'prp_5',
-      plan: 'basic',
-      serviceSlug: 'unterhaltsreinigung',
-      startDate: iso(days(now, -200)),
-      commitmentEndsAt: iso(days(now, 165)),
-      status: 'pastDue',
-      skipsUsedThisMonth: 0,
-      lastChargedAt: iso(days(now, -38)),
-      nextChargeAt: iso(days(now, -8)),
-    },
-    {
       id: 'sub_s_paused',
       reference: 'S-0022',
-      customerId: 'cus_2',
-      propertyId: 'prp_2',
-      plan: 'basic',
-      serviceSlug: 'unterhaltsreinigung',
+      customerId: 'cus_5',
+      propertyId: 'prp_5',
+      planId: 'pln_basic',
       startDate: iso(days(now, -120)),
-      commitmentEndsAt: iso(days(now, 245)),
+      endDate: iso(days(now, 245)),
       status: 'paused',
-      skipsUsedThisMonth: 2,
-      lastChargedAt: iso(days(now, -20)),
-      nextChargeAt: iso(days(now, 10)),
+      visitsUsed: 6,
+      renewalCount: 0,
+      history: [
+        { at: iso(days(now, -120)), kind: 'started', label: 'Abo gestartet — Basic' },
+        { at: iso(days(now, -9)), kind: 'paused', label: 'Abo pausiert' },
+      ],
     },
     {
-      id: 'sub_s_pending',
+      /* Ran its full year out with visits still on it. The screen has to say
+         so plainly — eleven unused visits is the number an argument starts
+         over, and hiding it does not make it go away. */
+      id: 'sub_s_expired',
       reference: 'S-0023',
       customerId: 'cus_3',
       propertyId: 'prp_3',
-      plan: 'vip',
-      serviceSlug: 'unterhaltsreinigung',
-      startDate: iso(days(now, -300)),
-      commitmentEndsAt: iso(days(now, 65)),
-      status: 'cancellationPending',
-      skipsUsedThisMonth: 1,
-      cancellationRequestedAt: iso(days(now, -4)),
-      lastChargedAt: iso(days(now, -12)),
-      nextChargeAt: iso(days(now, 18)),
+      planId: 'pln_vip',
+      startDate: iso(days(now, -400)),
+      endDate: iso(days(now, -35)),
+      status: 'expired',
+      visitsUsed: 93,
+      renewalCount: 0,
+      history: [
+        { at: iso(days(now, -400)), kind: 'started', label: 'Abo gestartet — VIP' },
+        { at: iso(days(now, -35)), kind: 'expired', label: 'Laufzeit abgelaufen' },
+      ],
     },
     {
+      /* Cancelled inside the window and refunded — the exit the office is
+         allowed to take, and the only one that returns money. */
       id: 'sub_s_cancelled',
       reference: 'S-0024',
       customerId: 'cus_6',
       propertyId: 'prp_6',
-      plan: 'basic',
-      serviceSlug: 'unterhaltsreinigung',
-      startDate: iso(days(now, -420)),
-      commitmentEndsAt: iso(days(now, -55)),
+      planId: 'pln_basic',
+      startDate: iso(days(now, -20)),
+      endDate: iso(days(now, 345)),
       status: 'cancelled',
-      skipsUsedThisMonth: 0,
-      lastChargedAt: iso(days(now, -85)),
+      visitsUsed: 0,
+      renewalCount: 0,
+      cancelledAt: iso(days(now, -12)),
+      history: [
+        { at: iso(days(now, -20)), kind: 'started', label: 'Abo gestartet — Basic' },
+        { at: iso(days(now, -12)), kind: 'cancelled', label: 'Gekündigt und erstattet' },
+      ],
     },
   ];
 
@@ -2638,8 +2838,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     },
   ];
 
-  /* Threads for the template picker to answer into — one unread from the
-     customer, one the office already replied to. */
+  /* Two more on top of the base set, both on records only this scenario
+     carries: the disputed invoice and the request cus_5 is waiting on. */
   const messages: CustomerMessage[] = [
     ...data.messages,
     {
@@ -2899,7 +3099,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           service: BUSY_SERVICES[i % BUSY_SERVICES.length]!,
           status: i % 3 === 0 ? 'inReview' : 'new',
           agedHours,
-          intent: i % 7 === 0 ? 'basic' : undefined,
+          intent: i % 7 === 0 ? 'pln_basic' : undefined,
           preferredInDays: i % 4 === 0 ? undefined : 4 + (i % 10),
         }),
       );
@@ -3082,7 +3282,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
         queueRequest(now, { id: 'req_ov_1', ref: 'A-2521', n: 2, service: 'grundreinigung', status: 'new', agedHours: 74 }),
         queueRequest(now, { id: 'req_ov_2', ref: 'A-2522', n: 7, service: 'bueroreinigung', status: 'inReview', agedHours: 122 }),
         queueRequest(now, { id: 'req_ov_3', ref: 'A-2523', n: 6, service: 'umzugsreinigung', status: 'new', agedHours: 196, preferredInDays: 3 }),
-        queueRequest(now, { id: 'req_ov_4', ref: 'A-2524', n: 10, service: 'unterhaltsreinigung', status: 'inReview', agedHours: 268, intent: 'premium' }),
+        queueRequest(now, { id: 'req_ov_4', ref: 'A-2524', n: 10, service: 'unterhaltsreinigung', status: 'inReview', agedHours: 268, intent: 'pln_premium' }),
       ];
 
       /*
@@ -3147,7 +3347,11 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
         // invoice sitting next to normal ones, not a world with only one.
         invoices: [...invoices, ...data.invoices],
         events: [...chasing, ...data.events],
-        subscriptions: data.subscriptions.map((s) => ({ ...s, status: 'pastDue' as const })),
+        /* The plans are deliberately untouched. A plan is paid once and in
+           full, so it cannot fall behind — what is overdue in this scenario is
+           invoices, and forcing every subscription into an arrears state was
+           only ever possible while the model pretended they were billed
+           monthly. */
       };
     }
 

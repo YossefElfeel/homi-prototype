@@ -60,10 +60,12 @@ export function Toolbar({
 
         The search box is what absorbs the slack. It used to be capped at
         `lg:max-w-sm`, which was right when this row carried eight controls and
-        wrong everywhere else: on /admin/nachrichten, which has no filters at
-        all, the cap left a 24rem search box sitting in a card twice that wide
-        with nothing beside it. The filters keep their natural width, so a wide
-        panel grows the one control that has any use for the room.
+        wrong everywhere else: on a panel carrying search and nothing else, the
+        cap left a 24rem box sitting in a card twice that wide with nothing
+        beside it. The filters keep their natural width, so a wide panel grows
+        the one control that has any use for the room — and a narrow one, like
+        the thread list on /admin/nachrichten, wraps its filters underneath
+        rather than crushing the search.
       */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 [&>label]:inline-flex [&>label]:min-w-44 [&>label]:flex-col">
         {search && (

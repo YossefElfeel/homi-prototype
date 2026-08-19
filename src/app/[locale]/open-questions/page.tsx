@@ -111,6 +111,30 @@ const ENTRIES: Entry[] = [
     state: 'overridden',
   },
   {
+    ref: '§11.1',
+    question: 'Is a plan a monthly charge or a package bought up front?',
+    decision:
+      'OVERRIDDEN: a package, paid once. The whole model read as a monthly subscription — a discount percentage, a next-charge date, a notice period, a minimum term — and the business confirmed the opposite: one payment at sign-up buys a fixed number of visits, usable for a year. Everything followed from that. Plans became a real entity the office can add, price, retire and hide (they were three string literals). Visits are counted, so a plan can run out before its term does. pastDue and cancellationPending were removed as unreachable and expired added. The consequence to confirm: at the seeded rhythms a year of weekly cleaning is a four-figure sum payable on the day, which is a large amount to ask for in one instalment — the alternative is smaller packages, and that is a business decision, not a design one.',
+    screens: '4, 43, 69, 69a, 70, 70a',
+    state: 'overridden',
+  },
+  {
+    ref: '§11.4',
+    question: 'When can a plan be cancelled, and is it refunded?',
+    decision:
+      'A fixed window from the purchase date — 14 days by default, editable on screen 82 — and only while no visit has taken place. Inside it the plan is undone and the full amount refunded; outside it the plan stands and the visits stay usable to the end of the term. This replaces a one-month notice period, which described the monthly product. The rule lives in the store rather than only in a disabled button, so no URL walks past it.',
+    screens: '43, 70, 70a, 82',
+    state: 'decided',
+  },
+  {
+    ref: '§11.5',
+    question: 'What happens when the year ends?',
+    decision:
+      'It expires and the customer renews it themselves, in one click, which raises an invoice. Nothing is charged automatically — the prototype has no billing run, and inventing one would claim behaviour it does not have. Expiry is derived from the end date when the record is read rather than stored, for the same reason: a stored flag would be wrong every morning until someone opened the page. Unused visits lapse with the term, and both the customer screen and the panel say so in as many words rather than letting it be discovered.',
+    screens: '43, 70a',
+    state: 'decided',
+  },
+  {
     ref: '§21.6',
     question: 'Package credit in visits or hours?',
     decision:
@@ -121,9 +145,10 @@ const ENTRIES: Entry[] = [
   {
     ref: '§21.7',
     question: 'Changing plan mid-commitment?',
-    decision: 'Upgrade takes effect immediately; downgrade at the start of the next cycle.',
-    screens: '43, 70',
-    state: 'decided',
+    decision:
+      'PARTLY OPEN. The rule stands — upgrade immediately, downgrade from the next term — and the customer can now see the larger plans and ask for one, which they previously could not do at all. What is not built is the money: on a package bought up front, an upgrade has to credit the visits already paid for, and nobody has said how that is calculated. So the request reaches the office and the adjustment is made by hand. Building the formula would mean inventing a number the business has not confirmed.',
+    screens: '43, 70a',
+    state: 'open',
   },
   {
     ref: '§21.9',
@@ -163,6 +188,14 @@ const ENTRIES: Entry[] = [
     decision:
       'Derived from the pricing rules plus the four columns of the duration matrix — the documents never list them together. Editable from the admin services screen.',
     screens: '2, 3, 13, 73',
+    state: 'decided',
+  },
+  {
+    ref: '§18',
+    question: 'Does the admin panel need a footer?',
+    decision:
+      'No, and it is not an oversight. The panel is a tool, not a page: every route is a working surface with a sidebar that already carries the account, and a footer would take vertical room from tables that need it while repeating links nobody reaches for mid-task. The legal pages the marketing footer carries are a visitor obligation, not an internal one. Recorded here rather than left as a silent absence, so it does not get re-asked every review.',
+    screens: '51–86',
     state: 'decided',
   },
   {

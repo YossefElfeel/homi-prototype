@@ -336,8 +336,12 @@ export const adminContentDe = {
     ruleLate: 'Danach verrechnet',
     ruleNoAccess: 'Kein Zutritt',
     subscriptionTitle: 'Abo',
-    ruleCommitment: 'Mindestlaufzeit',
-    ruleNotice: 'Kündigungsfrist',
+    ruleCancellation: 'Widerrufsfrist',
+    ruleCancellationHint:
+      'So lange nach dem Kauf darf ein Abo storniert und erstattet werden — solange kein Einsatz stattgefunden hat.',
+    days: 'Tage',
+    subscriptionMoved:
+      'Laufzeit und Rabatt stehen jetzt beim einzelnen Abo, nicht mehr hier: zwei Abos dürfen sich in beidem unterscheiden. Was hier steht, gilt für alle.',
     ruleSkips: 'Freie Aussetzer pro Monat',
     insuranceTitle: 'Betriebshaftpflicht',
     insuranceLabel: 'Gültige Betriebshaftpflicht vorhanden',

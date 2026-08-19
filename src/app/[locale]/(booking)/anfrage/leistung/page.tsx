@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Check, Info } from 'lucide-react';
 
 import type { Locale } from '@/i18n/routing';
-import type { PlanTier } from '@/mock/schema';
 import { Money } from '@/components/ui/money';
 import { Field, Input } from '@/components/ui/field';
 import { BookingStep } from '@/components/booking/booking-step';
@@ -13,8 +12,6 @@ import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid'
 import { durationRange } from '@/mock/engines/pricing';
 import { useHydrated, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
-
-const PLANS: PlanTier[] = ['basic', 'premium', 'vip'];
 
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
 export default function ServiceStep({
@@ -28,7 +25,14 @@ export default function ServiceStep({
   const hydrated = useHydrated();
   const draft = useStore((s) => s.draft);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
   const updateDraft = useStore((s) => s.updateDraft);
+
+  /* A link to a plan is only honoured while that plan is still on sale. A
+     retired one arriving from a stale bookmark or a printed flyer would
+     otherwise start a wizard for a product the payment step then refuses. */
+  const sellable = (id: string | undefined) =>
+    Boolean(id && plans.some((x) => x.id === id && x.active));
 
   /**
    * Whether to announce the prefill. Derived once from the params themselves
@@ -39,7 +43,7 @@ export default function ServiceStep({
     () =>
       Boolean(leistung && services.some((s) => s.slug === leistung && s.active)) ||
       Boolean(plz && /^\d{4}$/.test(plz)) ||
-      Boolean(abo && PLANS.includes(abo as PlanTier)),
+      sellable(abo),
   );
   const applied = useRef(false);
 
@@ -70,12 +74,13 @@ export default function ServiceStep({
     if (plz && /^\d{4}$/.test(plz) && draft.property.postcode === '') {
       patch.property = { ...draft.property, postcode: plz };
     }
-    if (abo && PLANS.includes(abo as PlanTier) && draft.subscriptionIntent === null) {
-      patch.subscriptionIntent = abo as PlanTier;
+    if (sellable(abo) && draft.planIntent === null) {
+      patch.planIntent = abo;
     }
 
     if (Object.keys(patch).length > 0) updateDraft(patch);
-  }, [hydrated, leistung, abo, plz, services, draft.property, draft.subscriptionIntent, updateDraft]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, leistung, abo, plz, services, plans, draft.property, draft.planIntent, updateDraft]);
 
   const selected = services.find((s) => s.slug === draft.serviceSlug);
   const needsWindows = selected?.slug === 'fensterreinigung';

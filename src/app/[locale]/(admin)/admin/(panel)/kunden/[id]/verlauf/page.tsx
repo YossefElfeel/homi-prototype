@@ -68,6 +68,7 @@ export default function CustomerHistoryPage({
   const invoices = useStore((s) => s.data.invoices);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
 
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | HistoryKind>('all');
@@ -82,10 +83,11 @@ export default function CustomerHistoryPage({
         bookings,
         invoices,
         subscriptions,
+        plans,
         services,
         locale,
       }),
-    [id, requests, offers, bookings, invoices, subscriptions, services, locale],
+    [id, requests, offers, bookings, invoices, subscriptions, plans, services, locale],
   );
 
   const filtered = useMemo(() => {

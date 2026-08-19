@@ -65,6 +65,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const data = useOffer(id);
   const settings = useStore((s) => s.settings);
   const subscriptions = useStore((s) => s.data.subscriptions);
+  const plans = useStore((s) => s.plans);
   const credits = useStore((s) => s.data.credits);
   const payOffer = useStore((s) => s.payOffer);
 
@@ -85,7 +86,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
    * gateway is not softened here, it is *absent*: there is nothing to pay, so
    * there is nothing to pay with.
    */
-  const coverage = offerCoverage(offer, request, subscriptions, credits, now);
+  const coverage = offerCoverage(offer, request, subscriptions, plans, credits, now);
   const covered = coverage.kind !== 'payable';
 
   function pay() {

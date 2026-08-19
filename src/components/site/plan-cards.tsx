@@ -1,39 +1,57 @@
+'use client';
+
 import { Check } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
+import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { SEED_SETTINGS } from '@/mock/seed';
-import type { PlanTier } from '@/mock/schema';
+import { Money } from '@/components/ui/money';
+import { planRhythm } from '@/lib/offer-facts';
+import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
-const PLANS: { tier: PlanTier; freqKey: 'freqBasic' | 'freqPremium' | 'freqVip' }[] = [
-  { tier: 'basic', freqKey: 'freqBasic' },
-  { tier: 'premium', freqKey: 'freqPremium' },
-  { tier: 'vip', freqKey: 'freqVip' },
-];
-
-const LABELS: Record<PlanTier, string> = {
-  basic: 'Basic',
-  premium: 'Premium',
-  vip: 'VIP',
-};
-
 /**
- * Plan cards. Premium is marked as the sensible default rather than the most
- * expensive one — a "recommended" badge on the top tier reads as a sales
- * tactic, and this audience discounts it.
+ * The plans, as the visitor sees them.
+ *
+ * This used to be a hardcoded array of three tiers reading a discount out of
+ * `SEED_SETTINGS` — a frozen import, not the store. So the marketing page was
+ * unreachable from the panel twice over: an admin could not change what it
+ * said, and could not stop it saying it. Retiring a plan left it advertised,
+ * and the brief's question about who controls visibility had no answer because
+ * nobody did.
+ *
+ * `visibleOnSite` is the filter, and it is a plan's own flag rather than a list
+ * kept here.
  */
 export function PlanCards({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('site.plans');
+  const rhythmT = useTranslations('admin.rhythm');
+  const locale = useLocale() as Locale;
+  const plans = useStore((s) => s.plans);
+
+  const shown = plans
+    .filter((p) => p.active && p.visibleOnSite)
+    .sort((a, b) => a.order - b.order);
+
+  if (shown.length === 0) return null;
 
   return (
-    <ul className="grid gap-5 lg:grid-cols-3">
-      {PLANS.map(({ tier, freqKey }) => {
-        const featured = tier === 'premium';
+    <ul className={cn('grid gap-5', shown.length > 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2')}>
+      {shown.map((plan, index) => {
+        /*
+         * The middle one, not the dearest one.
+         *
+         * A "recommended" badge on the top tier reads as a sales tactic and
+         * this audience discounts it. Picking it by position rather than by
+         * name is what lets the office add or retire a plan without the badge
+         * ending up on nothing.
+         */
+        const featured = shown.length > 1 && index === Math.floor((shown.length - 1) / 2);
+
         return (
           <li
-            key={tier}
+            key={plan.id}
             className={cn(
               'surface-card relative flex flex-col p-7',
               featured && 'border-line-strong',
@@ -45,48 +63,38 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
               </span>
             )}
 
-            <h3 className="display-type text-2xl">{LABELS[tier]}</h3>
-            <p className="mt-1.5 text-ink-secondary">{t(freqKey)}</p>
+            <h3 className="display-type text-2xl">{plan.name[locale]}</h3>
+            <p className="mt-1.5 text-ink-secondary">{rhythmT(planRhythm(plan))}</p>
 
             <p data-numeric className="mt-6 text-4xl">
-              −{SEED_SETTINGS.planDiscounts[tier]}
-              <span className="text-2xl">%</span>
+              <Money amount={plan.price} />
             </p>
-            <p className="mt-1 text-sm text-ink-tertiary">{t('rowDiscount')}</p>
+            {/* The term, immediately under the price and not in a footnote.
+                This is a year paid in one go — the single most consequential
+                fact on the card, and the one a reader will assume is monthly
+                unless told otherwise. */}
+            <p className="mt-1 text-sm text-ink-tertiary">
+              {t('priceNote', { months: plan.validityMonths, visits: plan.includedVisits })}
+            </p>
 
-            {!compact && (
+            {!compact && plan.features.length > 0 && (
               <ul className="mt-6 space-y-2.5 border-t border-line-subtle pt-6 text-sm">
-                <Feature>
-                  {t('rowPriority')}: {tier === 'basic' ? t('priorityNo') : t('priorityYes')}
-                </Feature>
-                <Feature>
-                  {t('rowSameTeam')}: {tier === 'vip' ? t('sameTeamAlways') : t('priorityNo')}
-                </Feature>
-                <Feature>
-                  {t('rowSkips')}: {t('skips')}
-                </Feature>
-                <Feature>
-                  {t('rowCommitment')}: {t('commitment')}
-                </Feature>
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
+                    <span className="text-ink-secondary">{feature[locale] || feature.de}</span>
+                  </li>
+                ))}
               </ul>
             )}
 
             <div className="mt-7 flex-1" />
             <Button asChild block variant={featured ? 'primary' : 'secondary'}>
-              <Link href={`/anfrage?abo=${tier}`}>{t('cta')}</Link>
+              <Link href={`/anfrage?abo=${plan.id}`}>{t('cta')}</Link>
             </Button>
           </li>
         );
       })}
     </ul>
-  );
-}
-
-function Feature({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex gap-2.5">
-      <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
-      <span className="text-ink-secondary">{children}</span>
-    </li>
   );
 }

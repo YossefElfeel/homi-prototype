@@ -434,21 +434,24 @@ export default function AdminSettingsPage({
 
           <div>
             <h2 className="display-type text-xl">{t('subscriptionTitle')}</h2>
+            {/*
+              The term length and the plan discount used to be edited here, and
+              they are gone rather than moved: both are properties of a *plan*
+              now, and two plans are allowed to differ on either. Editing them
+              globally would have quietly rewritten every plan at once.
+
+              What remains here is the one rule that is a promise the business
+              makes once rather than per product.
+            */}
+            <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-tertiary">
+              {t('subscriptionMoved')}
+            </p>
             <div className="mt-5 grid gap-5 sm:grid-cols-3">
-              <Field label={`${t('ruleCommitment')} (${t('months')})`}>
+              <Field label={`${t('ruleCancellation')} (${t('days')})`} hint={t('ruleCancellationHint')}>
                 {(props) => (
                   <NumberField
-                    value={settings.subscriptionCommitmentMonths}
-                    onCommit={(v) => updateSettings({ subscriptionCommitmentMonths: v })}
-                    {...props}
-                  />
-                )}
-              </Field>
-              <Field label={`${t('ruleNotice')} (${t('months')})`}>
-                {(props) => (
-                  <NumberField
-                    value={settings.subscriptionNoticeMonths}
-                    onCommit={(v) => updateSettings({ subscriptionNoticeMonths: v })}
+                    value={settings.planCancellationDays}
+                    onCommit={(v) => updateSettings({ planCancellationDays: v })}
                     {...props}
                   />
                 )}

@@ -1,235 +1,277 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { useFormatter } from '@/i18n/format';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, Search, Tags } from 'lucide-react';
 
-import { useRouter } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Select } from '@/components/ui/field';
-import { addDays, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
-import { PLAN_RHYTHM } from '@/lib/offer-facts';
+import { Select } from '@/components/ui/field';
+import { Money } from '@/components/ui/money';
+import { PageHeader } from '@/components/ui/page-header';
+import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { Switch } from '@/components/ui/switch';
+import { Toolbar } from '@/components/ui/toolbar';
+import { planRhythm } from '@/lib/offer-facts';
+import { activeSubscriberCount } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { PlanTier, Subscription } from '@/mock/schema';
+import type { Plan, ServiceSlug } from '@/mock/schema';
 
-/** Screen 69 — plans, their payment state and the next visit. */
-export default function SubscriptionsPage() {
-  const t = useTranslations('admin.subscriptions');
-  /* Was a local `FREQUENCY` map of hardcoded German, and an identical one sat
-     in the detail screen. Two places both claiming how often a plan is
-     visited disagree eventually — and neither of them translated, on a panel
-     that ships in four languages. */
+/**
+ * Screen 69 — the plans, as products.
+ *
+ * This list used to be the *subscribers*: one row per customer, and its only
+ * "Add" opened a form that signed somebody up. There was nowhere to see what a
+ * plan was, and nothing that could have been shown if there were — a plan was
+ * three string literals in a union type. So the questions the office actually
+ * has of this screen ("what do we sell, for how much, and is it still on
+ * offer?") had no screen at all, and the one it did have could not be searched
+ * or filtered.
+ *
+ * The subscribers moved one level in, to the plan they belong to, which is
+ * where "who is on this?" is asked from.
+ */
+export default function PlansPage() {
+  const t = useTranslations('admin.plans');
   const rhythmT = useTranslations('admin.rhythm');
-  const format = useFormatter();
-  const router = useRouter();
+  const locale = useLocale() as Locale;
   const now = useNow();
   const hydrated = useHydrated();
 
-  const subscriptions = useStore((s) => s.data.subscriptions);
-  const customers = useStore((s) => s.data.customers);
-  const bookings = useStore((s) => s.data.bookings);
-  const properties = useStore((s) => s.data.properties);
+  const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
-  const patchData = useStore((s) => s.patchData);
-  const locale = useLocale() as Locale;
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const setPlanActive = useStore((s) => s.setPlanActive);
 
-  const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState('');
+  /*
+   * The brief asks for a "Plan Type" filter. On this model the thing that
+   * separates one plan from another is the service its visits are drawn
+   * against — an office plan and a home plan are not variations of one
+   * product, they are two — so that is what the filter filters.
+   */
+  const [service, setService] = useState<'all' | ServiceSlug>('all');
+  const [status, setStatus] = useState<'all' | 'active' | 'retired'>('all');
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return plans
+      .filter((p) => (service === 'all' ? true : p.serviceSlug === service))
+      .filter((p) =>
+        status === 'all' ? true : status === 'active' ? p.active : !p.active,
+      )
+      .filter((p) =>
+        q
+          ? [p.name.de, p.name.en, p.reference, p.description[locale]]
+              .join(' ')
+              .toLowerCase()
+              .includes(q)
+          : true,
+      )
+      .sort((a, b) => a.order - b.order);
+  }, [plans, query, service, status, locale]);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
-  const eligibleCustomers = customers.filter((c) =>
-    properties.some((p) => p.customerId === c.id),
-  );
+  const filtering = status !== 'all' || service !== 'all' || Boolean(query.trim());
+  const serviceName = (slug: ServiceSlug) =>
+    services.find((s) => s.slug === slug)?.name[locale] ?? slug;
 
-  const nextVisit = (sub: Subscription) => {
-    for (let i = 0; i < 30; i += 1) {
-      const jobs = bookingsOnDay(addDays(startOfDay(now), i), bookings).filter(
-        (b) => b.subscriptionId === sub.id,
-      );
-      if (jobs[0]) return new Date(jobs[0].start);
-    }
-    return null;
-  };
+  function toggle(plan: Plan) {
+    setPlanActive(plan.id, !plan.active);
+    toast.success(
+      t(plan.active ? 'retiredDone' : 'activatedDone', { name: plan.name[locale] }),
+    );
+  }
 
-  const columns: Column<Subscription>[] = [
+  const columns: Column<Plan>[] = [
     {
-      key: 'customer',
-      header: t('colCustomer'),
+      key: 'name',
+      header: t('colName'),
       primary: true,
-      cell: (s) => {
-        const c = customers.find((x) => x.id === s.customerId);
-        return c ? `${c.firstName} ${c.lastName}` : '—';
-      },
+      sortBy: (p) => p.order,
+      cell: (p) => (
+        <Link
+          href={`/admin/abos/${p.id}`}
+          className="rounded-[var(--radius-xs)] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+        >
+          {p.name[locale]}
+          <span data-numeric className="ms-2 text-sm font-normal text-ink-tertiary">
+            {p.reference}
+          </span>
+        </Link>
+      ),
     },
     {
+      key: 'service',
+      header: t('colService'),
+      cell: (p) => <span className="text-ink-secondary">{serviceName(p.serviceSlug)}</span>,
+    },
+    {
+      key: 'visits',
+      header: t('colVisits'),
+      align: 'end',
+      sortBy: (p) => p.includedVisits,
+      cell: (p) => (
+        <span className="text-ink-secondary">
+          <span data-numeric>{p.includedVisits}</span>
+          <span className="block text-sm text-ink-tertiary">
+            {rhythmT(planRhythm(p))}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'price',
+      header: t('colPrice'),
+      align: 'end',
+      sortBy: (p) => p.price,
+      /* The term is on the price rather than in a footnote. "CHF 3'440" beside
+         a row saying 26 visits reads as the price of a visit to anyone
+         skim-reading, and that is a factor of twenty-six. */
+      cell: (p) => (
+        <span>
+          <Money amount={p.price} />
+          <span className="block text-sm text-ink-tertiary">
+            {t('perTerm', { months: p.validityMonths })}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'subscribers',
+      header: t('colSubscribers'),
+      align: 'end',
+      sortBy: (p) => activeSubscriberCount(p.id, subscriptions, now),
+      cell: (p) => (
+        <span data-numeric className="text-ink-secondary">
+          {activeSubscriberCount(p.id, subscriptions, now)}
+        </span>
+      ),
+    },
+    {
+      /*
+       * Last, and a switch rather than a badge, for the same reason the
+       * customer list settled on one: active and retired are the two ends of
+       * one control, and reporting the state next to a menu that changes it
+       * somewhere else makes the reader hunt.
+       *
+       * The site flag is not a second switch here. It only means anything for
+       * an active plan, and two toggles in one cell is how you turn off the
+       * wrong one.
+       */
       key: 'status',
       header: t('colStatus'),
       trailing: true,
-      cell: (s) => <StatusBadge entity="subscription" state={s.status} size="sm" />,
-    },
-    {
-      key: 'plan',
-      header: t('colPlan'),
-      cell: (s) => <span className="capitalize">{s.plan}</span>,
-    },
-    {
-      key: 'frequency',
-      header: t('colFrequency'),
-      cell: (s) => <span className="text-ink-secondary">{rhythmT(PLAN_RHYTHM[s.plan])}</span>,
-    },
-    {
-      key: 'next',
-      header: t('colNextVisit'),
-      cell: (s) => {
-        const next = nextVisit(s);
-        return (
-          <span data-numeric className="text-ink-secondary">
-            {next ? format.dateTime(next, 'short') : '—'}
+      cell: (p) => (
+        <span className="inline-flex items-center gap-2">
+          <Switch
+            checked={p.active}
+            onCheckedChange={() => toggle(p)}
+            aria-label={t('toggleLabel', { name: p.name[locale] })}
+          />
+          <span className="text-sm text-ink-secondary">
+            {t(p.active ? 'active' : 'retired')}
           </span>
-        );
-      },
-    },
-    {
-      key: 'payment',
-      header: t('colPayment'),
-      align: 'end',
-      cell: (s) => (
-        <span data-numeric className="text-sm text-ink-tertiary">
-          {s.nextChargeAt ? format.dateTime(new Date(s.nextChargeAt), 'short') : '—'}
+          {p.active && !p.visibleOnSite && <Chip tone="warning">{t('hidden')}</Chip>}
         </span>
       ),
     },
   ];
 
+  const addButton = (
+    <Button asChild>
+      <Link href="/admin/abos/neu">
+        <Plus className="size-4" aria-hidden />
+        {t('addAction')}
+      </Link>
+    </Button>
+  );
+
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="display-type text-3xl">{t('title')}</h1>
-        <div className="text-right">
-          <Button size="sm" disabled={adding} onClick={() => setAdding(true)}>
-            <Plus className="size-3.5" aria-hidden />
-            {t('addAction')}
-          </Button>
-          <p className="mt-1.5 max-w-56 text-xs text-ink-tertiary">{t('addHint')}</p>
-        </div>
-      </div>
+      <PageHeader title={t('title')} lead={t('lead')} actions={addButton} />
 
-      {adding && (
-        <form
-          className="surface-card mt-8 p-6 text-left"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = new FormData(e.currentTarget);
-            const customerId = String(form.get('customerId') ?? '');
-            const property = properties.find((p) => p.customerId === customerId);
-            if (!customerId || !property) return;
-
-            // Length first: `now` only ticks every 30s, so a bare timestamp
-            // collides for two plans added in one sitting.
-            const id = `sub_${subscriptions.length}_${now.getTime().toString(36).slice(-4)}`;
-            const year = new Date(now);
-            year.setFullYear(year.getFullYear() + 1);
-            const nextCharge = new Date(now);
-            nextCharge.setMonth(nextCharge.getMonth() + 1);
-
-            patchData({
-              subscriptions: [
-                ...subscriptions,
-                {
-                  id,
-                  reference: `AB-${String(subscriptions.length + 1).padStart(4, '0')}`,
-                  customerId,
-                  propertyId: property.id,
-                  plan: String(form.get('plan') ?? 'basic') as PlanTier,
-                  serviceSlug: String(form.get('serviceSlug') ?? '') as Subscription['serviceSlug'],
-                  startDate: now.toISOString(),
-                  commitmentEndsAt: year.toISOString(),
-                  status: 'active',
-                  skipsUsedThisMonth: 0,
-                  nextChargeAt: nextCharge.toISOString(),
-                },
-              ],
-            });
-            setAdding(false);
-            toast.success(t('addDone'));
-            router.push(`/admin/abos/${id}`);
-          }}
-        >
-          <h2 className="display-type text-xl">{t('newTitle')}</h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-3">
-            <Field label={t('colCustomer')}>
-              {(props) => (
-                <Select {...props} name="customerId" required defaultValue="">
-                  <option value="" disabled>
-                    {t('newCustomerPlaceholder')}
+      <Toolbar
+        search={{
+          value: query,
+          onChange: setQuery,
+          label: t('searchLabel'),
+          placeholder: t('searchPlaceholder'),
+          clearLabel: t('searchClear'),
+        }}
+        filters={
+          <>
+            <label>
+              <span className="label-type mb-1 text-ink-tertiary">{t('colService')}</span>
+              <Select
+                dense
+                value={service}
+                onChange={(e) => setService(e.target.value as typeof service)}
+              >
+                <option value="all">{t('filterAllServices')}</option>
+                {services.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name[locale]}
                   </option>
-                  {/*
-                    Only customers who have a property. A plan needs one, and
-                    offering a customer who has none would let the form submit
-                    into silence — the exact failure this wave exists to remove.
-                  */}
-                  {eligibleCustomers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-            <Field label={t('colPlan')}>
-              {(props) => (
-                <Select {...props} name="plan" defaultValue="basic">
-                  {(['basic', 'premium', 'vip'] as PlanTier[]).map((tier) => (
-                    <option key={tier} value={tier}>
-                      {tier} — {rhythmT(PLAN_RHYTHM[tier])}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-            <Field label={t('newService')}>
-              {(props) => (
-                <Select {...props} name="serviceSlug" required defaultValue="">
-                  <option value="" disabled>
-                    {t('newServicePlaceholder')}
-                  </option>
-                  {services.map((service) => (
-                    <option key={service.slug} value={service.slug}>
-                      {service.name[locale]}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-          </div>
-          <p className="mt-4 text-sm text-ink-tertiary">
-            {eligibleCustomers.length === 0 ? t('newNoCustomers') : t('newPropertyNote')}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button type="submit" disabled={eligibleCustomers.length === 0}>
-              {t('newSave')}
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
-              {t('dismiss')}
-            </Button>
-          </div>
-        </form>
-      )}
+                ))}
+              </Select>
+            </label>
+            <label>
+              <span className="label-type mb-1 text-ink-tertiary">{t('colStatus')}</span>
+              <Select
+                dense
+                value={status}
+                onChange={(e) => setStatus(e.target.value as typeof status)}
+              >
+                <option value="all">{t('filterAllStatus')}</option>
+                <option value="active">{t('active')}</option>
+                <option value="retired">{t('retired')}</option>
+              </Select>
+            </label>
+          </>
+        }
+        count={t('count', { shown: filtered.length, total: plans.length })}
+      />
 
       <DataView
-        className="mt-8"
-        items={subscriptions}
+        items={filtered}
         columns={columns}
-        getKey={(s) => s.id}
-        onSelect={(s) => router.push(`/admin/abos/${s.id}`)}
+        getKey={(p) => p.id}
         caption={t('title')}
-        empty={<EmptyState icon={RefreshCw} title={t('emptyTitle')} body={t('emptyBody')} />}
+        defaultSort={{ key: 'name', dir: 'asc' }}
+        rowActions={(p) => (
+          <RowActions>
+            <RowAction href={`/admin/abos/${p.id}`} label={t('rowView')}>
+              <ActionIcon.open aria-hidden />
+            </RowAction>
+            <RowAction href={`/admin/abos/${p.id}/bearbeiten`} label={t('rowEdit')}>
+              <ActionIcon.edit aria-hidden />
+            </RowAction>
+          </RowActions>
+        )}
+        empty={
+          filtering ? (
+            <EmptyState
+              icon={Search}
+              title={t('searchEmptyTitle')}
+              body={query ? t('searchEmptyBody', { query }) : t('filterEmptyBody')}
+            />
+          ) : (
+            <EmptyState
+              icon={Tags}
+              title={t('emptyTitle')}
+              body={t('emptyBody')}
+              action={addButton}
+            />
+          )
+        }
       />
     </div>
   );

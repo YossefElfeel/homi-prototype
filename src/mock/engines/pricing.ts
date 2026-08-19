@@ -13,7 +13,6 @@
 import type {
   AddOn,
   DurationProfile,
-  PlanTier,
   Service,
   Settings,
   ServiceSlug,
@@ -79,7 +78,14 @@ export interface EstimateInput {
   start?: Date;
   travelKm?: number;
   /** Applied discounts. */
-  plan?: PlanTier;
+  /**
+   * The discount the customer's plan earns on work *outside* the package, as a
+   * percentage. It arrives as a number rather than a plan id because pricing
+   * has no business resolving plans: which plan applies, and whether this job
+   * is inside the package or beyond it, is decided by `offerCoverage` — and a
+   * job inside the package is not quoted at all.
+   */
+  planDiscountPercent?: number;
   couponPercent?: number;
   couponAmount?: number;
 }
@@ -270,7 +276,7 @@ export function priceEstimate(input: EstimateInput, settings: Settings): Estimat
   const subtotal = round(lines.reduce((s, l) => s + l.total, 0));
 
   // §20.2 — a plan discount and a coupon never stack; the larger one wins.
-  const planPercent = input.plan ? settings.planDiscounts[input.plan] : 0;
+  const planPercent = input.planDiscountPercent ?? 0;
   const planDiscount = round((subtotal * planPercent) / 100);
   const couponDiscount = input.couponPercent
     ? round((subtotal * input.couponPercent) / 100)

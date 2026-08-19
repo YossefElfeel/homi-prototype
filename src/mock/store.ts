@@ -26,8 +26,9 @@ import type {
   OfferLine,
   Payment,
   PaymentMethod,
-  PlanTier,
+  Plan,
   PreferredTime,
+  Subscription,
   Property,
   RequestDraft,
   SavedMethodKind,
@@ -38,8 +39,9 @@ import type {
   SlotHold,
   ISODate,
 } from './schema';
-import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
+import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
+import { cancelBlock, type CancelBlock } from '@/lib/plan-facts';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -111,8 +113,19 @@ Marco Brunner`;
    templates can be added and deleted. This is the crash kind again, and a
    worse one than 11: a store persisted under 12 holds an object, and every
    `.filter` in `lib/templates.ts` reads `undefined` on it — which takes down
-   the templates screen, both message pickers and the quote builder at once. */
-const SCHEMA_VERSION = 14;
+   the templates screen, both message pickers and the quote builder at once.
+
+   15: The plan model was rebuilt end to end. `Subscription` lost `plan`,
+   `serviceSlug`, `commitmentEndsAt`, `skipsUsedThisMonth`, `lastChargedAt`,
+   `nextChargeAt` and `cancellationRequestedAt`, and gained `planId`,
+   `endDate`, `visitsUsed`, `renewalCount` and `history`; the store gained a
+   `plans` slice that did not exist; `Settings` lost `planDiscounts` and both
+   subscription-term fields. This is the crash kind and the worst of them: a
+   store persisted under 14 holds subscriptions with no `planId`, so
+   `plans.find(...)` returns undefined on every plan screen, `history` is
+   `undefined` where `skipsUsedThisMonth` counts it, and the customer's own
+   plan page reads `undefined.filter` on first paint. */
+const SCHEMA_VERSION = 15;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -184,7 +197,7 @@ export function emptyDraft(): RequestDraft {
     contact: { firstName: '', lastName: '', email: '', phone: '', language: 'de' },
     acceptedTerms: false,
     acceptedPrivacy: false,
-    subscriptionIntent: null,
+    planIntent: null,
     updatedAt: null,
   };
 }
@@ -219,6 +232,13 @@ interface StoreState {
   settings: Settings;
   services: Service[];
   addOns: AddOn[];
+  /*
+   * Catalogue, not scenario data. A plan is a product the office sells — it
+   * outlives any one dataset, the same way services and add-ons do, and putting
+   * it in `DataSet` would mean switching demo scenario silently rewrote the
+   * price list.
+   */
+  plans: Plan[];
   holds: SlotHold[];
   demo: DemoState;
   draft: RequestDraft;
@@ -272,7 +292,7 @@ interface StoreState {
       preferred: PreferredTime;
       customerNote?: string;
       internalNote?: string;
-      subscriptionIntent?: PlanTier | null;
+      planIntent?: ID | null;
       /**
        * A call that ended before the answers did. `RequestStatus` has carried
        * `draft` since the first wave — labelled, coloured, and written by
@@ -439,15 +459,50 @@ interface StoreState {
   removePaymentMethod: (id: ID) => void;
   setDefaultPaymentMethod: (id: ID) => void;
 
-  /* ---- subscriptions (screens 43 + 70) ----
-     Both ends wrote different fields for the same act: the customer's cancel
-     set only cancellationRequestedAt while the panel reads status, so a
-     cancellation never appeared in admin. And "skip" only incremented a
-     counter — no visit was ever actually skipped. */
-  resumeSubscription: (id: ID) => void;
-  /** Moves the next visit past the coming one and cancels its booking. */
+  /* ---- plans, the catalogue (screens 69, 69a, 70) ----
+     There was no catalogue. `PlanTier` was three string literals, so a plan
+     could not be added, renamed, repriced or retired without a deploy — and
+     "Add Plan" had nothing to add to. */
+  createPlan: (
+    input: Omit<Plan, 'id' | 'reference' | 'order'>,
+    now: Date,
+  ) => ID;
+  updatePlan: (id: ID, patch: Partial<Plan>) => void;
+  /** Stops it being sold. Leaves every existing subscriber untouched. */
+  setPlanActive: (id: ID, active: boolean) => void;
+  setPlanVisible: (id: ID, visibleOnSite: boolean) => void;
+
+  /* ---- plans, the subscribers (screens 43 + 70) ---- */
+  /**
+   * Opens a plan against a paid quote. Returns null if the plan is retired or
+   * the property already holds one — both are refusals, not silent no-ops.
+   */
+  openSubscription: (
+    input: { customerId: ID; propertyId: ID; planId: ID; method: PaymentMethod },
+    now: Date,
+  ) => ID | null;
+  /** Buys another term. Returns the id of the invoice raised for it. */
+  renewSubscription: (id: ID, now: Date) => ID | null;
+  pauseSubscription: (id: ID, now: Date) => void;
+  resumeSubscription: (id: ID, now: Date) => void;
+  /** Cancels the coming visit and records the skip against the allowance. */
   skipNextVisit: (id: ID, now: Date) => void;
-  requestCancellation: (id: ID, now: Date) => void;
+  /**
+   * Accepts a finished job — and spends the plan visit it used, if it used one.
+   *
+   * The approval itself was a `patchData` on the booking screen, which was
+   * fine while nothing else depended on it. A plan counts visits now, and
+   * "a visit is spent when the office accepts the job" is a rule about the
+   * business, not about that screen: left there, the plan would still read
+   * zero used after a year of work booked from anywhere else.
+   */
+  approveBooking: (id: ID, label: string, now: Date) => void;
+  /**
+   * Cancels and refunds, or returns why it may not be. The caller gets the
+   * reason rather than a boolean because "already used" and "window closed"
+   * are different things to tell a customer.
+   */
+  cancelSubscription: (id: ID, now: Date) => CancelBlock | null;
 
   /* ---- reviews (screens 46 + 78) ---- */
   submitReview: (
@@ -489,6 +544,15 @@ interface StoreState {
    * priced.
    */
   markRequestOpened: (id: ID, now: Date) => void;
+  /**
+   * Which end of the thread has read it has to be said, not assumed.
+   *
+   * This took no `side` and always wrote `readByCustomer`, and its only caller
+   * was the *admin* screen — so the owner opening a thread cleared the unread
+   * badge in the customer's own sidebar for messages the customer had never
+   * seen. A parameter the caller must fill is what stops that being a typo
+   * away from coming back.
+   */
   markThreadRead: (customerId: ID, subject: string) => void;
 
   setRole: (role: DemoRole) => void;
@@ -648,6 +712,7 @@ export const useStore = create<StoreState>()(
       settings: SEED_SETTINGS,
       services: SEED_SERVICES,
       addOns: SEED_ADDONS,
+      plans: SEED_PLANS,
       holds: seedHolds(INITIAL_DATA, new Date()),
       demo: initialDemo(),
       draft: emptyDraft(),
@@ -759,7 +824,7 @@ export const useStore = create<StoreState>()(
           customerNote: draft.customerNote || undefined,
           status: 'new',
           createdAt: now.toISOString(),
-          subscriptionIntent: draft.subscriptionIntent ?? undefined,
+          planIntent: draft.planIntent ?? undefined,
         };
 
         set({
@@ -910,7 +975,7 @@ export const useStore = create<StoreState>()(
           /* A draft has not been opened, because it has not arrived. Stamping
              it would start the response clock against a note to self. */
           openedAt: input.asDraft ? undefined : now.toISOString(),
-          subscriptionIntent: input.subscriptionIntent ?? undefined,
+          planIntent: input.planIntent ?? undefined,
         };
 
         set({ data: { ...s.data, requests: [request, ...s.data.requests] } });
@@ -1417,6 +1482,7 @@ export const useStore = create<StoreState>()(
           offer,
           request,
           s.data.subscriptions,
+          s.plans,
           s.data.credits,
           now,
         );
@@ -1506,6 +1572,29 @@ export const useStore = create<StoreState>()(
           // The hold has done its job; releasing it frees the slot record.
           holds: s.holds.filter((h) => h.offerId !== offerId),
         });
+
+        /*
+         * The plan the customer actually asked for, opened now that the quote
+         * behind it is paid.
+         *
+         * After the `set` above rather than inside it, because
+         * `openSubscription` writes an invoice and a payment of its own and
+         * needs to read the state this call just produced. Deliberately last:
+         * if the plan is retired between the quote going out and the customer
+         * paying, the booking still stands — refusing the job because a product
+         * was withdrawn would punish them for our timing.
+         */
+        if (request.planIntent && outcome === 'succeeded') {
+          get().openSubscription(
+            {
+              customerId: request.customerId,
+              propertyId: request.propertyId,
+              planId: request.planIntent,
+              method,
+            },
+            now,
+          );
+        }
 
         return { bookingReference: reference };
       },
@@ -2160,12 +2249,325 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      resumeSubscription: (id) =>
+      /* ---- plans, the catalogue side ---- */
+
+      createPlan: (input, now) => {
+        const s = get();
+        const id = `pln_${now.getTime().toString(36).slice(-5)}`;
+        const plan: Plan = {
+          ...input,
+          id,
+          reference: `P-${String(s.plans.length + 1).padStart(3, '0')}`,
+          order: s.plans.length + 1,
+        };
+        set({ plans: [...s.plans, plan] });
+        get().logChange({
+          entity: 'plan',
+          entityId: id,
+          summary: `Abo ${plan.name.de} angelegt`,
+        });
+        return id;
+      },
+
+      updatePlan: (id, patch) =>
+        set((s) => ({ plans: s.plans.map((plan) => (plan.id === id ? { ...plan, ...patch } : plan)) })),
+
+      /**
+       * Retiring a plan stops it being sold. It does not touch anybody holding
+       * one.
+       *
+       * That distinction is the whole reason `active` is a flag rather than a
+       * delete: a plan is a year somebody paid for up front, and taking the
+       * product off the price list cannot reach backwards into it. The
+       * subscribers keep their visits, and the plan keeps existing so their
+       * screens still have something to name.
+       */
+      setPlanActive: (id, active) => {
+        set((s) => ({
+          plans: s.plans.map((plan) =>
+            plan.id !== id
+              ? plan
+              : {
+                  ...plan,
+                  active,
+                  // A plan nobody can buy has no business advertising itself.
+                  visibleOnSite: active ? plan.visibleOnSite : false,
+                },
+          ),
+        }));
+        const plan = get().plans.find((x) => x.id === id);
+        get().logChange({
+          entity: 'plan',
+          entityId: id,
+          summary: `Abo ${plan?.name.de ?? id} ${active ? 'aktiviert' : 'deaktiviert'}`,
+        });
+      },
+
+      setPlanVisible: (id, visibleOnSite) =>
+        set((s) => ({
+          plans: s.plans.map((plan) =>
+            /* An inactive plan cannot be put back on the site without being
+               reactivated first — otherwise the marketing page advertises
+               something the booking flow then refuses to sell. */
+            plan.id !== id ? plan : { ...plan, visibleOnSite: visibleOnSite && plan.active },
+          ),
+        })),
+
+      /* ---- plans, the subscriber side ---- */
+
+      /**
+       * Opens the plan an accepted quote was signed for.
+       *
+       * This is the join that was missing. A visitor picked a plan on the
+       * marketing page, the wizard carried it as far as `planIntent` on the
+       * request, the quote applied its discount — and then nothing. No code
+       * path anywhere created a `Subscription` except the panel's own manual
+       * form, so every customer who signed up for a plan on the site ended up
+       * without one, and the office found out when they phoned.
+       *
+       * The invoice is written here too rather than left for later. A plan is
+       * paid in one go at sign-up, so the money and the record arrive together;
+       * an invoice raised afterwards by hand is an invoice that can be
+       * forgotten, and `Invoice.subscriptionId` existed on the model and was
+       * read in two places without anything ever writing it.
+       */
+      openSubscription: ({ customerId, propertyId, planId, method }, now) => {
+        const s = get();
+        const plan = s.plans.find((x) => x.id === planId);
+        if (!plan || !plan.active) return null;
+
+        /* One plan per property. A second one on the same address would give
+           two packages the same visits to argue over, and neither the customer
+           screen nor coverage could say which one a job came out of. */
+        const existing = s.data.subscriptions.find(
+          (x) =>
+            x.propertyId === propertyId &&
+            x.status !== 'cancelled' &&
+            new Date(x.endDate) > now,
+        );
+        if (existing) return null;
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        const id = `sub_${stamp}`;
+        const end = new Date(now);
+        end.setMonth(end.getMonth() + plan.validityMonths);
+
+        const seq = 52 + s.data.invoices.length;
+        const invoice: Invoice = {
+          id: `inv_${stamp}`,
+          reference: `RE-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
+          customerId,
+          subscriptionId: id,
+          lines: [
+            {
+              label: `Abo ${plan.name.de} — ${plan.includedVisits} Einsätze, ${plan.validityMonths} Monate`,
+              quantity: 1,
+              unitPrice: plan.price,
+            },
+          ],
+          /* Paid, not draft. The plan only opens once the money is in — see
+             `payOffer`, which is the only caller — so an invoice sitting in
+             draft would describe a payment that has already happened. */
+          status: 'paid',
+          issuedAt: now.toISOString(),
+          dueAt: now.toISOString(),
+          paidAt: now.toISOString(),
+          qrReference: buildQrReference(seq),
+        };
+
+        const payment: Payment = {
+          id: `pay_${stamp}P`,
+          invoiceId: invoice.id,
+          amount: plan.price,
+          method,
+          at: now.toISOString(),
+          status: 'succeeded',
+          gatewayRef: `mock_${stamp}P`,
+        };
+
+        const subscription: Subscription = {
+          id,
+          reference: `S-${String(1000 + s.data.subscriptions.length + 15).slice(-4)}`,
+          customerId,
+          propertyId,
+          planId,
+          startDate: now.toISOString(),
+          endDate: end.toISOString(),
+          status: 'active',
+          visitsUsed: 0,
+          invoiceId: invoice.id,
+          renewalCount: 0,
+          history: [
+            { at: now.toISOString(), kind: 'started', label: `Abo gestartet — ${plan.name.de}` },
+            { at: now.toISOString(), kind: 'paid', label: `Bezahlt — ${invoice.reference}` },
+          ],
+        };
+
+        set({
+          data: {
+            ...s.data,
+            subscriptions: [subscription, ...s.data.subscriptions],
+            invoices: [invoice, ...s.data.invoices],
+            payments: [...s.data.payments, payment],
+          },
+        });
+        get().logChange({
+          entity: 'subscription',
+          entityId: id,
+          summary: `Abo ${subscription.reference} eröffnet — ${plan.name.de}`,
+        });
+        return id;
+      },
+
+      /**
+       * Buys the same package again for another term.
+       *
+       * The visits reset because a new package was bought, and `renewalCount`
+       * goes up because that is the number screen 70 is asked for. Deliberately
+       * not automatic: nothing here charges a card on a schedule, and inventing
+       * a renewal the customer never agreed to would be worse than making them
+       * press a button.
+       */
+      renewSubscription: (id, now) => {
+        const s = get();
+        const subscription = s.data.subscriptions.find((x) => x.id === id);
+        const plan = subscription && s.plans.find((x) => x.id === subscription.planId);
+        if (!subscription || !plan || !plan.active) return null;
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        const end = new Date(now);
+        end.setMonth(end.getMonth() + plan.validityMonths);
+
+        const seq = 52 + s.data.invoices.length;
+        const invoice: Invoice = {
+          id: `inv_${stamp}R`,
+          reference: `RE-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
+          customerId: subscription.customerId,
+          subscriptionId: id,
+          lines: [
+            {
+              label: `Abo ${plan.name.de} — Verlängerung ${plan.validityMonths} Monate`,
+              quantity: 1,
+              unitPrice: plan.price,
+            },
+          ],
+          /* Sent, not paid: a renewal is a bill the customer still has to
+             settle. The first term is different because it is paid at
+             checkout — this one has nobody standing at a card reader. */
+          status: 'sent',
+          issuedAt: now.toISOString(),
+          dueAt: now.toISOString(),
+          qrReference: buildQrReference(seq),
+        };
+
+        set({
+          data: {
+            ...s.data,
+            invoices: [invoice, ...s.data.invoices],
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id !== id
+                ? x
+                : {
+                    ...x,
+                    status: 'active' as const,
+                    startDate: now.toISOString(),
+                    endDate: end.toISOString(),
+                    visitsUsed: 0,
+                    invoiceId: invoice.id,
+                    renewalCount: x.renewalCount + 1,
+                    history: [
+                      ...x.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'renewed',
+                        label: `Verlängert um ${plan.validityMonths} Monate`,
+                      },
+                      { at: now.toISOString(), kind: 'invoiced', label: `Rechnung ${invoice.reference}` },
+                    ],
+                  },
+            ),
+          },
+        });
+        return invoice.id;
+      },
+
+      approveBooking: (id, label, now) =>
+        set((s) => {
+          const booking = s.data.bookings.find((b) => b.id === id);
+          if (!booking) return s;
+
+          return {
+            data: {
+              ...s.data,
+              bookings: s.data.bookings.map((b) =>
+                b.id !== id
+                  ? b
+                  : {
+                      ...b,
+                      status: 'completed' as const,
+                      history: [...b.history, { at: now.toISOString(), kind: 'approved', label }],
+                    },
+              ),
+              /* Only a job that actually came out of a plan spends one of its
+                 visits. A job the same customer paid for separately at the same
+                 address does not, which is why this keys off the booking's own
+                 `subscriptionId` rather than looking one up by address. */
+              subscriptions: !booking.subscriptionId
+                ? s.data.subscriptions
+                : s.data.subscriptions.map((x) =>
+                    x.id !== booking.subscriptionId
+                      ? x
+                      : {
+                          ...x,
+                          visitsUsed: x.visitsUsed + 1,
+                          history: [
+                            ...x.history,
+                            {
+                              at: now.toISOString(),
+                              kind: 'visitUsed',
+                              label: `Einsatz ${booking.reference} angerechnet`,
+                            },
+                          ],
+                        },
+                  ),
+            },
+          };
+        }),
+
+      pauseSubscription: (id, now) =>
         set((s) => ({
           data: {
             ...s.data,
-            subscriptions: s.data.subscriptions.map((sub) =>
-              sub.id === id ? { ...sub, status: 'active' as const } : sub,
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id !== id
+                ? x
+                : {
+                    ...x,
+                    status: 'paused' as const,
+                    history: [
+                      ...x.history,
+                      { at: now.toISOString(), kind: 'paused', label: 'Abo pausiert' },
+                    ],
+                  },
+            ),
+          },
+        })),
+
+      resumeSubscription: (id, now) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id !== id
+                ? x
+                : {
+                    ...x,
+                    status: 'active' as const,
+                    history: [
+                      ...x.history,
+                      { at: now.toISOString(), kind: 'resumed', label: 'Abo fortgesetzt' },
+                    ],
+                  },
             ),
           },
         })),
@@ -2173,21 +2575,24 @@ export const useStore = create<StoreState>()(
       /**
        * §11 — a free skip has to skip something.
        *
-       * Both the customer screen and the panel only did
-       * `skipsUsedThisMonth + 1`: the counter moved, the visit did not, and
-       * the booking stayed in the calendar. So the team still turned up at a
-       * job the customer believed they had skipped.
+       * Both ends only ever did `skipsUsedThisMonth + 1`: the counter moved,
+       * the visit did not, and the booking stayed in the calendar — so the team
+       * still turned up at a job the customer believed they had skipped.
+       *
+       * The booking it picks is now restricted to this plan's own. It used to
+       * take the customer's next scheduled job at that address whatever it
+       * was, which on an address holding a plan *and* a one-off booking
+       * cancelled the one-off — a paid job, silently, using a free plan skip.
        */
       skipNextVisit: (id, now) =>
         set((s) => {
-          const subscription = s.data.subscriptions.find((sub) => sub.id === id);
+          const subscription = s.data.subscriptions.find((x) => x.id === id);
           if (!subscription) return s;
 
           const next = s.data.bookings
             .filter(
               (b) =>
-                b.customerId === subscription.customerId &&
-                b.propertyId === subscription.propertyId &&
+                b.subscriptionId === subscription.id &&
                 b.status === 'scheduled' &&
                 new Date(b.start) > now,
             )
@@ -2196,10 +2601,22 @@ export const useStore = create<StoreState>()(
           return {
             data: {
               ...s.data,
-              subscriptions: s.data.subscriptions.map((sub) =>
-                sub.id !== id
-                  ? sub
-                  : { ...sub, skipsUsedThisMonth: sub.skipsUsedThisMonth + 1 },
+              subscriptions: s.data.subscriptions.map((x) =>
+                x.id !== id
+                  ? x
+                  : {
+                      ...x,
+                      history: [
+                        ...x.history,
+                        {
+                          at: now.toISOString(),
+                          kind: 'skipped',
+                          label: next
+                            ? `Einsatz ${next.reference} ausgesetzt`
+                            : 'Nächster Einsatz ausgesetzt',
+                        },
+                      ],
+                    },
               ),
               bookings: next
                 ? s.data.bookings.map((b) =>
@@ -2224,28 +2641,80 @@ export const useStore = create<StoreState>()(
         }),
 
       /**
-       * The customer wrote `cancellationRequestedAt` and nothing else, while
-       * the panel gates its banner and its "settled" check on
-       * `status === 'cancellationPending'`. A cancellation therefore never
-       * reached the owner: the plan kept reading "active" and every admin
-       * action stayed enabled. The panel's own cancel already set both — this
-       * is that behaviour, in one place, for both ends.
+       * Cancels a plan and gives the money back — or refuses, and says why.
+       *
+       * The old pair of actions modelled a notice period: the customer filed a
+       * cancellation, the plan sat in `cancellationPending`, and the term ran
+       * out anyway. That describes a monthly subscription. This one is a year
+       * bought outright, so there is nothing to give notice *of*: either it is
+       * untouched and inside the cooling-off window, in which case it is undone
+       * completely, or it is not, in which case it stands.
+       *
+       * The guard lives here and not only in the button. Both ends call this,
+       * and a rule that only exists in a disabled attribute is a rule a URL
+       * walks past.
        */
-      requestCancellation: (id, now) =>
-        set((s) => ({
+      cancelSubscription: (id, now) => {
+        const s = get();
+        const subscription = s.data.subscriptions.find((x) => x.id === id);
+        if (!subscription) return 'notActive';
+
+        const block = cancelBlock(subscription, s.settings, now);
+        if (block) return block;
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        /* The payment that settled the term, refunded rather than deleted.
+           §20.2 keeps the failed and the succeeded attempt side by side; a
+           refund is the same idea — what happened stays on the record. */
+        const paid = s.data.payments.find((x) => x.invoiceId === subscription.invoiceId);
+        const refund: Payment | null = paid
+          ? {
+              id: `pay_${stamp}X`,
+              invoiceId: paid.invoiceId,
+              amount: paid.amount,
+              method: paid.method,
+              at: now.toISOString(),
+              status: 'refunded',
+              gatewayRef: `mock_${stamp}X`,
+            }
+          : null;
+
+        set({
           data: {
             ...s.data,
-            subscriptions: s.data.subscriptions.map((sub) =>
-              sub.id !== id
-                ? sub
+            payments: refund ? [...s.data.payments, refund] : s.data.payments,
+            invoices: s.data.invoices.map((i) =>
+              i.id !== subscription.invoiceId
+                ? i
+                : { ...i, status: 'cancelled' as const, cancelReason: 'Abo storniert und erstattet' },
+            ),
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id !== id
+                ? x
                 : {
-                    ...sub,
-                    status: 'cancellationPending' as const,
-                    cancellationRequestedAt: now.toISOString(),
+                    ...x,
+                    status: 'cancelled' as const,
+                    cancelledAt: now.toISOString(),
+                    refundedPaymentId: refund?.id,
+                    history: [
+                      ...x.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'cancelled',
+                        label: refund ? 'Gekündigt und erstattet' : 'Gekündigt',
+                      },
+                    ],
                   },
             ),
           },
-        })),
+        });
+        get().logChange({
+          entity: 'subscription',
+          entityId: id,
+          summary: `Abo ${subscription.reference} storniert${refund ? ' und erstattet' : ''}`,
+        });
+        return null;
+      },
 
       submitReview: ({ bookingId, customerId, rating, text, publishConsent }, now) =>
         set((s) => ({
@@ -2358,8 +2827,8 @@ export const useStore = create<StoreState>()(
             from,
             body,
             at: now.toISOString(),
-            /* A message the company sends starts unread for the customer; one
-               the customer sends is, trivially, already read by them. */
+            /* Each side has trivially read what it just wrote itself, and has
+               not yet read what the other side just sent. */
             readByCustomer: from === 'customer',
           };
           return { data: { ...s.data, messages: [...s.data.messages, message] } };

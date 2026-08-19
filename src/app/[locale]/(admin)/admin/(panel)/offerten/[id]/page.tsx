@@ -39,6 +39,7 @@ import {
   offerPayment,
   offerRhythm,
 } from '@/lib/offer-facts';
+import { skipsLeft, visitsLeft } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { offerLineLabel } from '@/lib/offer-label';
 import type { Locale } from '@/i18n/routing';
@@ -64,7 +65,6 @@ export default function AdminOfferDetailPage({
   const listT = useTranslations('admin.offers');
   const methodLabel = useTranslations('status.method');
   const rhythmT = useTranslations('admin.rhythm');
-  const planT = useTranslations('admin.subscription.plans');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -81,6 +81,7 @@ export default function AdminOfferDetailPage({
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
   const addOns = useStore((s) => s.addOns);
   const reissueOffer = useStore((s) => s.reissueOffer);
   const confirmOfferSlot = useStore((s) => s.confirmOfferSlot);
@@ -115,10 +116,10 @@ export default function AdminOfferDetailPage({
   const left = daysLeft(offer, now);
   const discount = offerDiscount(offer);
 
-  const coverage = offerCoverage(offer, request, subscriptions, credits, now);
+  const coverage = offerCoverage(offer, request, subscriptions, plans, credits, now);
   const payment = offerPayment(offer.id, payments);
   const booking = offerBooking(offer.id, bookings);
-  const rhythm = offerRhythm(request);
+  const rhythm = offerRhythm(request, plans);
   /* Three dates in, none chosen — see `Offer.proposedSlots`. This is the only
      state on the whole screen that is waiting on the *owner* rather than on
      the customer, so it is the one thing that gets a panel rather than a row. */
@@ -528,41 +529,53 @@ export default function AdminOfferDetailPage({
                   description={t('coverageSubscriptionLead')}
                 />
                 {(() => {
-                  const plan = subscriptions.find((s) => s.id === coverage.sourceId);
-                  if (!plan) return null;
-                  const skipsLeft = Math.max(
-                    0,
-                    settings.monthlyFreeSkips - plan.skipsUsedThisMonth,
-                  );
+                  const subscription = subscriptions.find((s) => s.id === coverage.sourceId);
+                  const plan = subscription && plans.find((x) => x.id === subscription.planId);
+                  if (!subscription || !plan) return null;
                   return (
                     <>
                       <dl className="mt-3 space-y-2 text-sm">
                         <Row label={t('coveragePlan')}>
                           <Chip tone="accent" icon={Repeat}>
-                            {planT(plan.plan)}
+                            {plan.name[locale]}
                           </Chip>
                         </Row>
-                        <Row label={t('coverageNextCharge')}>
+                        {/*
+                          What is left, not what is next.
+
+                          This row said "next charge", which described the
+                          monthly product this used to be. A plan is bought once
+                          now, so the question actually asked on the phone is
+                          whether the package still has a visit in it — and that
+                          is the number deciding whether this job is covered at
+                          all or billable like any other.
+                        */}
+                        <Row label={t('coverageVisits')}>
                           <span data-numeric>
-                            {plan.nextChargeAt
-                              ? format.dateTime(new Date(plan.nextChargeAt), 'short')
-                              : '—'}
+                            {t('coverageVisitsValue', {
+                              left: visitsLeft(subscription, plan),
+                              total: plan.includedVisits,
+                            })}
                           </span>
                         </Row>
-                        {/* The one number on a plan that runs out. §11.2 gives
-                            a fixed allowance a month, and "can they skip the
-                            next one?" is asked on the phone. */}
+                        <Row label={t('coverageValidUntil')}>
+                          <span data-numeric>
+                            {format.dateTime(new Date(subscription.endDate), 'short')}
+                          </span>
+                        </Row>
                         <Row label={t('coverageSkips')}>
                           <span data-numeric>
                             {t('coverageSkipsValue', {
-                              left: skipsLeft,
+                              left: skipsLeft(subscription, settings, now),
                               total: settings.monthlyFreeSkips,
                             })}
                           </span>
                         </Row>
                       </dl>
                       <Button asChild block variant="secondary" className="mt-4">
-                        <Link href={`/admin/abos/${plan.id}`}>{t('coverageOpenPlan')}</Link>
+                        <Link href={`/admin/abos/${plan.id}/${subscription.id}`}>
+                          {t('coverageOpenPlan')}
+                        </Link>
                       </Button>
                     </>
                   );

@@ -329,8 +329,12 @@ export const adminContentEn: typeof adminContentDe = {
     ruleLate: 'Charged after that',
     ruleNoAccess: 'No access',
     subscriptionTitle: 'Plans',
-    ruleCommitment: 'Minimum term',
-    ruleNotice: 'Notice period',
+    ruleCancellation: 'Cooling-off period',
+    ruleCancellationHint:
+      'How long after buying a plan it may still be cancelled and refunded — as long as no visit has happened.',
+    days: 'Days',
+    subscriptionMoved:
+      'Term length and discount now live on the individual plan rather than here: two plans are allowed to differ on both. What stays here applies to all of them.',
     ruleSkips: 'Free skips per month',
     insuranceTitle: 'Business liability',
     insuranceLabel: 'A valid liability policy is in place',

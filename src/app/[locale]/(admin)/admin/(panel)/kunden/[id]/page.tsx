@@ -85,6 +85,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const paymentMethods = useStore((s) => s.data.paymentMethods);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
   const data = useStore((s) => s.data);
   const patchData = useStore((s) => s.patchData);
   const updateCustomer = useStore((s) => s.updateCustomer);
@@ -121,6 +122,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     bookings,
     invoices,
     subscriptions,
+    plans,
     services,
     locale,
   };
@@ -469,10 +471,12 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             <h2 className="label-type text-ink-tertiary">{t('subscriptionTitle')}</h2>
             {subscription ? (
               <Link
-                href={`/admin/abos/${subscription.id}`}
+                href={`/admin/abos/${subscription.planId}/${subscription.id}`}
                 className="mt-2 flex items-center justify-between gap-3"
               >
-                <span className="font-medium capitalize">{subscription.plan}</span>
+                <span className="font-medium">
+                  {plans.find((x) => x.id === subscription.planId)?.name[locale] ?? '—'}
+                </span>
                 <StatusBadge entity="subscription" state={subscription.status} size="sm" />
               </Link>
             ) : (

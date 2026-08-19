@@ -19,7 +19,9 @@ import {
 } from '../src/lib/offer-facts.ts';
 import { availabilityCalendar, startOfDay } from '../src/mock/engines/availability.ts';
 import { businessWeekday, zonedParts } from '../src/lib/business-time.ts';
-import { SEED_SETTINGS } from '../src/mock/seed.ts';
+import { SEED_PLANS, SEED_SETTINGS } from '../src/mock/seed.ts';
+import { SERVICE_SLUGS } from '../src/mock/schema.ts';
+import { planOf, subscriptionState, visitsLeft } from '../src/lib/plan-facts.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -163,7 +165,7 @@ for (const clock of CLOCKS) {
     /* ---------------------------------------------------- coverage */
     for (const o of d.offers) {
       const r = d.requests.find((x) => x.id === o.requestId);
-      const cov = offerCoverage(o, r, d.subscriptions, d.credits, clock);
+      const cov = offerCoverage(o, r, d.subscriptions, SEED_PLANS, d.credits, clock);
       if (cov.kind === 'package') {
         const credit = d.credits.find((c) => c.id === cov.sourceId)!;
         check(`${tag} ${o.reference} package actually covers it`,
@@ -185,7 +187,77 @@ for (const clock of CLOCKS) {
     if (off1) {
       const r = d.requests.find((x) => x.id === off1.requestId);
       check(`${tag} off_1 stays payable`,
-        offerCoverage(off1, r, d.subscriptions, d.credits, clock).kind === 'payable');
+        offerCoverage(off1, r, d.subscriptions, SEED_PLANS, d.credits, clock).kind === 'payable');
+    }
+
+    /* -------------------------------------------------------- plans */
+    for (const sub of d.subscriptions) {
+      const plan = planOf(sub, SEED_PLANS);
+      check(`${tag} ${sub.reference} points at a real plan`, Boolean(plan), sub.planId);
+      if (!plan) continue;
+
+      /* Over-spending a package is the failure the visit counter exists to
+         make visible, so the seed must never ship one already over. */
+      check(
+        `${tag} ${sub.reference} has not overspent its plan`,
+        sub.visitsUsed <= plan.includedVisits,
+        `${sub.visitsUsed} > ${plan.includedVisits}`,
+      );
+      check(`${tag} ${sub.reference} ends after it starts`, sub.endDate > sub.startDate);
+
+      /* A stored status that the derived one contradicts is the bug the
+         derivation was written to prevent: an "active" badge on a term that
+         ended last month. */
+      const state = subscriptionState(sub, clock);
+      check(
+        `${tag} ${sub.reference} stored status agrees with the clock`,
+        !(sub.status === 'active' && state === 'expired') || new Date(sub.endDate) <= clock,
+      );
+      check(
+        `${tag} ${sub.reference} visits left is never negative`,
+        visitsLeft(sub, plan) >= 0,
+      );
+
+      /* One plan per property — two live packages on one address would give
+         two of them the same visits to argue over. */
+      const sameProperty = d.subscriptions.filter(
+        (x) =>
+          x.propertyId === sub.propertyId &&
+          x.status !== 'cancelled' &&
+          new Date(x.endDate) > clock,
+      );
+      check(
+        `${tag} ${sub.propertyId} carries at most one live plan`,
+        sameProperty.length <= 1,
+        `${sameProperty.length}`,
+      );
+
+      const property = d.properties.find((x) => x.id === sub.propertyId);
+      check(
+        `${tag} ${sub.reference} property belongs to its customer`,
+        property?.customerId === sub.customerId,
+      );
+
+      /* The invoice a plan names has to exist and has to point back, or the
+         payment history on screen 70a is a promise the data cannot keep. */
+      if (sub.invoiceId) {
+        const invoice = d.invoices.find((i) => i.id === sub.invoiceId);
+        check(`${tag} ${sub.reference} invoice exists`, Boolean(invoice), sub.invoiceId);
+        check(
+          `${tag} ${sub.reference} invoice points back`,
+          invoice?.subscriptionId === sub.id,
+        );
+      }
+    }
+
+    for (const plan of SEED_PLANS) {
+      check(`${tag} ${plan.reference} sells a real service`,
+        (SERVICE_SLUGS as readonly string[]).includes(plan.serviceSlug), plan.serviceSlug);
+      check(`${tag} ${plan.reference} includes at least one visit`, plan.includedVisits > 0);
+      /* A retired plan on the marketing page advertises something the booking
+         flow then refuses to sell. */
+      check(`${tag} ${plan.reference} retired implies hidden`,
+        plan.active || !plan.visibleOnSite);
     }
 
     /* --------------------------------------------- office services */
@@ -202,10 +274,10 @@ for (const clock of CLOCKS) {
         .map((o) => {
           const r = d.requests.find((x) => x.id === o.requestId);
           return {
-            cov: offerCoverage(o, r, d.subscriptions, d.credits, clock).kind,
+            cov: offerCoverage(o, r, d.subscriptions, SEED_PLANS, d.credits, clock).kind,
             pay: offerPayment(o.id, d.payments)?.status,
             booking: Boolean(offerBooking(o.id, d.bookings)),
-            rhythm: offerRhythm(r),
+            rhythm: offerRhythm(r, SEED_PLANS),
             proposing: Boolean(o.proposedSlots?.length && !o.confirmedSlot),
             confirmed: Boolean(o.confirmedSlot),
           };
