@@ -230,7 +230,10 @@ export const SEED_ADDONS: AddOn[] = [
  * times over. The subject is the name and the email header at once.
  *
  * `tpl` fills the shape so a template that is only German-and-English does not
- * have to spell out two absent locales.
+ * have to spell out two absent locales. `fr` and `it` are opt-in per template
+ * rather than absent everywhere: with the gap universal, the templates screen
+ * could only ever render "2 fehlen" and its own "Vollständig" state was
+ * unreachable — a badge no data could produce.
  */
 function tpl(
   id: string,
@@ -239,8 +242,13 @@ function tpl(
     flow: TemplateFlow;
     tags: string[];
     channels: TemplateChannel[];
-    subject: { de: string; en: string };
-    body: { de: string; en: string };
+    subject: { de: string; en: string; fr?: string; it?: string };
+    body: { de: string; en: string; fr?: string; it?: string };
+    /**
+     * Left off for the second template on an event. Exactly one default per
+     * event is the store's invariant, so the seed has to respect it too.
+     */
+    isDefault?: boolean;
   },
 ): MessageTemplate {
   return {
@@ -251,10 +259,7 @@ function tpl(
     channels: input.channels,
     subject: input.subject,
     body: input.body,
-    /* Every seeded event ships exactly one template, so each is its own
-       default. A second template on the same event is something the admin
-       adds, and `addTemplate` leaves this false for it. */
-    isDefault: true,
+    isDefault: input.isDefault ?? true,
   };
 }
 
@@ -309,15 +314,26 @@ const SEED_TEMPLATES: MessageTemplate[] = [
       en: 'Hello {name}\n\nYour appointment is confirmed: {date}, arrival between {windowStart} and {windowEnd}. Reference {reference}.\n\nKind regards\nHomivaro',
     },
   }),
+  /* Complete in all four languages, unlike its neighbours. Short enough that
+     French and Italian could be written properly rather than guessed, and it is
+     the SMS that goes to every customer the day before — the one worth having in
+     the language they chose. */
   tpl('tpl_appointment_reminder', {
     event: 'appointment-reminder',
     flow: 'bookings',
     tags: ['Termin', 'Erinnerung'],
     channels: ['sms'],
-    subject: { de: 'Erinnerung an Ihren Termin', en: 'Appointment reminder' },
+    subject: {
+      de: 'Erinnerung an Ihren Termin',
+      en: 'Appointment reminder',
+      fr: 'Rappel de votre rendez-vous',
+      it: 'Promemoria del vostro appuntamento',
+    },
     body: {
       de: 'Erinnerung: morgen, {date}, Ankunft zwischen {windowStart} und {windowEnd}. Kostenlose Absage noch bis {freeUntil}.',
       en: 'Reminder: tomorrow, {date}, arrival between {windowStart} and {windowEnd}. Free cancellation until {freeUntil}.',
+      fr: 'Rappel : demain, {date}, arrivée entre {windowStart} et {windowEnd}. Annulation gratuite jusqu\'au {freeUntil}.',
+      it: 'Promemoria: domani, {date}, arrivo tra le {windowStart} e le {windowEnd}. Disdetta gratuita fino al {freeUntil}.',
     },
   }),
   tpl('tpl_on_the_way', {
@@ -325,10 +341,17 @@ const SEED_TEMPLATES: MessageTemplate[] = [
     flow: 'bookings',
     tags: ['Termin'],
     channels: ['sms'],
-    subject: { de: 'Wir sind unterwegs', en: 'On the way' },
+    subject: {
+      de: 'Wir sind unterwegs',
+      en: 'On the way',
+      fr: 'Nous sommes en route',
+      it: 'Siamo in arrivo',
+    },
     body: {
       de: '{member} ist unterwegs zu Ihnen und trifft voraussichtlich um {eta} ein.',
       en: '{member} is on the way and should arrive around {eta}.',
+      fr: '{member} est en route et devrait arriver vers {eta}.',
+      it: '{member} è in arrivo e dovrebbe essere da voi verso le {eta}.',
     },
   }),
   tpl('tpl_job_done', {
@@ -390,6 +413,84 @@ const SEED_TEMPLATES: MessageTemplate[] = [
     body: {
       de: 'Guten Tag {name}\n\nWaren Sie zufrieden? Eine kurze Rückmeldung hilft uns sehr: {link}\n\nFreundliche Grüsse\nHomivaro',
       en: 'Hello {name}\n\nWere you happy with the work? A short review helps us a great deal: {link}\n\nKind regards\nHomivaro',
+    },
+  }),
+  /*
+   * The three below are second templates on events that already have one, and
+   * they are the reason this list is not eleven rows of one.
+   *
+   * Without them every event owns exactly one template, and three things the
+   * product declares cannot happen: nothing can be promoted to default, the
+   * "delete the default and choose its heir" confirm has no heir to offer, and
+   * `isDefault` is a field whose false value never occurs. A flag that is always
+   * true is not a flag. They are also the realistic case — a business does not
+   * write one covering letter and use it for four years.
+   */
+  tpl('tpl_offer_sent_short', {
+    event: 'offer-sent',
+    flow: 'quotes',
+    tags: ['Offerte', 'Kurz'],
+    channels: ['email', 'sms'],
+    isDefault: false,
+    subject: { de: 'Ihre Offerte ist bereit', en: 'Your quote is ready' },
+    body: {
+      de: 'Guten Tag {name}\n\nOfferte: {link} — gültig bis {validUntil}.\n\nHomivaro',
+      en: 'Hello {name}\n\nQuote: {link} — valid until {validUntil}.\n\nHomivaro',
+    },
+  }),
+  /*
+   * Deliberately carries {link}, which the invoice screen has no value for: the
+   * customer's invoice page is not something that screen knows a URL to. So this
+   * is the template that demonstrates the block — preview shows {link} still in
+   * its braces, "Direkt senden" greys out, and editing is the only way on. It is
+   * the one seeded row that proves the gate is real rather than decorative.
+   */
+  tpl('tpl_payment_reminder_final', {
+    event: 'payment-reminder',
+    flow: 'invoices',
+    tags: ['Rechnung', 'Erinnerung', 'Letzte Mahnung'],
+    channels: ['email'],
+    isDefault: false,
+    subject: {
+      de: 'Letzte Erinnerung: Rechnung {invoiceNumber}',
+      en: 'Final reminder: invoice {invoiceNumber}',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nRechnung {invoiceNumber} über {amount} ist seit {dueDate} offen. Wir bitten Sie, den Betrag innert zehn Tagen zu begleichen: {link}\n\nBei Fragen zur Rechnung melden Sie sich bitte — eine Ratenzahlung lässt sich in der Regel einrichten.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nInvoice {invoiceNumber} for {amount} has been open since {dueDate}. Please settle it within ten days: {link}\n\nIf anything about the invoice is unclear, do get in touch — instalments can usually be arranged.\n\nKind regards\nHomivaro',
+    },
+  }),
+  tpl('tpl_booking_confirmed_subscription', {
+    event: 'booking-confirmed',
+    flow: 'bookings',
+    tags: ['Termin', 'Bestätigung', 'Abo'],
+    channels: ['email'],
+    isDefault: false,
+    subject: {
+      de: 'Ihr nächster Abo-Termin: {date}',
+      en: 'Your next plan visit: {date}',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nIhr nächster Termin im Abo: {date}, Ankunft zwischen {windowStart} und {windowEnd}.\n\nPasst der Termin nicht, können Sie ihn im Konto verschieben oder einmal pro Monat kostenlos aussetzen.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nYour next visit on the plan: {date}, arrival between {windowStart} and {windowEnd}.\n\nIf it does not suit, you can move it in your account, or skip once a month at no charge.\n\nKind regards\nHomivaro',
+    },
+  }),
+  /*
+   * A second manual-only template beside the price list, so filtering by the
+   * General area and by a tag both return more than a single row — a filter that
+   * can only ever return one thing does not show whether it works.
+   */
+  tpl('tpl_area_declined', {
+    flow: 'general',
+    tags: ['Absage', 'Gebiet'],
+    channels: ['email'],
+    subject: {
+      de: 'Leider ausserhalb unseres Einsatzgebiets',
+      en: 'Outside our service area, unfortunately',
+    },
+    body: {
+      de: 'Guten Tag {name}\n\nVielen Dank für Ihre Anfrage {reference}. Ihre Adresse liegt leider ausserhalb des Gebiets, das wir zuverlässig bedienen — wir sagen das lieber offen, als einen Termin zu versprechen, den wir nicht halten können.\n\nSollten wir das Gebiet erweitern, melden wir uns gerne.\n\nFreundliche Grüsse\nHomivaro',
+      en: 'Hello {name}\n\nThank you for request {reference}. Your address falls outside the area we can serve reliably — we would rather say so than promise a date we cannot keep.\n\nIf that changes, we will gladly be in touch.\n\nKind regards\nHomivaro',
     },
   }),
   /*
