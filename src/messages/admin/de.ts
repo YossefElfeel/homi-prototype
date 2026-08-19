@@ -102,7 +102,6 @@ export const adminDe = {
     statTomorrowLink: 'Morgen ansehen',
     statRenewalsHint: 'Nächste sieben Tage',
     statRenewalsLink: 'Abos öffnen',
-    outOfArea: 'Ausserhalb Gebiet',
   },
 
   /**
@@ -212,7 +211,6 @@ export const adminDe = {
     colRegion: 'Gebiet',
     colReceived: 'Eingegangen',
     colStatus: 'Status',
-    outOfArea: 'Ausserhalb Gebiet',
     colContact: 'Kontakt',
     colKind: 'Art',
     colDeadline: 'Frist',
@@ -230,9 +228,15 @@ export const adminDe = {
     filterService: 'Leistung',
     filterFrom: 'Von',
     filterTo: 'Bis',
-    filterOverdue: 'Nur überfällig',
     filterReset: 'Filter zurücksetzen',
-    overdueCount: '{n} überfällig',
+    /* «Nur überfällig» war ein Schalter zwischen den Filtern, die Zahl dazu
+       stand in der Ergebniszeile. Jetzt sind es zwei Ansichten mit der Zahl
+       am Reiter — der Schalter und das, worüber er entscheidet, an einem Ort. */
+    tabAll: 'Alle',
+    tabOverdue: 'Überfällig',
+    overdueEmptyTitle: 'Nichts überfällig',
+    overdueEmptyBody:
+      'Jede offene Anfrage liegt innerhalb der Antwortfrist. Wird eine überschritten, erscheint sie hier — und die Zahl am Reiter zählt mit.',
     /* Zeilenaktionen: vorher führte jede Zeile an genau einen Ort, und alles
        andere — Offerte schreiben, ablehnen, einen Entwurf wegwerfen — kostete
        den Umweg über die Detailseite. */
@@ -301,7 +305,7 @@ export const adminDe = {
     coverageInside: 'Im Einsatzgebiet — {region}.',
     coverageOutsideTitle: 'Ausserhalb des Einsatzgebiets',
     coverageOutsideBody:
-      '{postcode} liegt nicht in den acht Gemeinden. Die Anfrage lässt sich trotzdem erfassen — sie wird markiert, und die Anfahrt gehört in die Offerte.',
+      '{postcode} liegt nicht in den acht Gemeinden. Für diese Adresse lässt sich keine Anfrage erfassen — als Entwurf speichern geht, absenden nicht.',
     accessTitle: 'Zutritt',
     accessOnFile: 'Hinterlegt: {method}',
     accessNone: 'Nichts hinterlegt',
@@ -352,12 +356,12 @@ export const adminDe = {
     missingTitle: 'Es fehlt noch etwas',
     missingCustomer: 'Kunde',
     missingProperty: 'Objekt',
+    missingOutOfArea: 'Adresse ausserhalb des Einsatzgebiets',
     missingService: 'Leistung',
     save: 'Anfrage erfassen',
     saveAndQuote: 'Erfassen und Offerte schreiben',
     cancel: 'Abbrechen',
     done: 'Anfrage {reference} erfasst.',
-    doneOutOfArea: 'Anfrage {reference} erfasst — ausserhalb des Gebiets, bitte Anfahrt prüfen.',
     /* Ein Anruf endet nicht immer dort, wo das Formular fertig ist: «Ich frage
        meinen Mann und melde mich.» Ohne Entwurf blieb nur, den Rest zu
        erfinden oder das Getippte wegzuwerfen. */
@@ -562,7 +566,6 @@ export const adminDe = {
     title: 'Anfrage ablehnen',
     lead: 'Der Kunde erhält eine kurze Nachricht mit dem Grund. Das ist besser als keine Antwort.',
     reasonLabel: 'Grund',
-    reasonOutOfArea: 'Ausserhalb des Einsatzgebiets',
     reasonCapacity: 'Keine Kapazität im gewünschten Zeitraum',
     reasonScope: 'Leistung wird nicht angeboten',
     reasonOther: 'Anderer Grund',

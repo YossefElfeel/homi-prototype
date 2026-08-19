@@ -16,6 +16,7 @@ import { Input } from './field';
 export function Toolbar({
   search,
   filters,
+  views,
   count,
   actions,
   className,
@@ -28,6 +29,15 @@ export function Toolbar({
     clearLabel?: string;
   };
   filters?: React.ReactNode;
+  /**
+   * Which list you are looking at, as opposed to which rows survive a filter —
+   * a tab strip, normally. It shares the line under the search row with the
+   * count, because the two answer the same question from opposite ends: the
+   * tab says how many are in this view, the count says how many the filters
+   * left. Its own slot rather than part of `count`, which is a `<p>` and
+   * cannot legally hold a `role="tablist"` div.
+   */
+  views?: React.ReactNode;
   /** "12 of 40" — rendered by the caller so it can be translated properly. */
   count?: React.ReactNode;
   actions?: React.ReactNode;
@@ -81,16 +91,21 @@ export function Toolbar({
         {actions && <div className="ms-auto flex items-center gap-2">{actions}</div>}
       </div>
 
-      {count != null && (
-        <p
-          data-numeric
-          /* aria-live, because the count is the only confirmation that
-             typing in the search box changed anything. */
-          aria-live="polite"
-          className="mt-2 px-1 text-sm text-ink-tertiary"
-        >
-          {count}
-        </p>
+      {(views != null || count != null) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 px-1">
+          {views}
+          {count != null && (
+            <p
+              data-numeric
+              /* aria-live, because the count is the only confirmation that
+                 typing in the search box changed anything. */
+              aria-live="polite"
+              className="text-sm text-ink-tertiary"
+            >
+              {count}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
