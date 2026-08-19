@@ -112,7 +112,7 @@ Marco Brunner`;
    worse one than 11: a store persisted under 12 holds an object, and every
    `.filter` in `lib/templates.ts` reads `undefined` on it — which takes down
    the templates screen, both message pickers and the quote builder at once. */
-const SCHEMA_VERSION = 13;
+const SCHEMA_VERSION = 14;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -339,7 +339,12 @@ interface StoreState {
   proposeOfferSlots: (offerId: ID, starts: ISODate[]) => void;
   /** The office picks one of them, which is what turns it into a real hold. */
   confirmOfferSlot: (offerId: ID, start: ISODate, now: Date) => void;
-  signOffer: (offerId: ID, now: Date) => void;
+  /**
+   * §9.2 — the customer's half. Takes the drawn mark because the pad used to
+   * throw its own drawing away the moment it was submitted: what reached the
+   * store was a timestamp, so nothing downstream could show what was signed.
+   */
+  signOffer: (offerId: ID, signature: { name: string; path: string }, now: Date) => void;
   /** Mock gateway. `outcome` decides which of the two states we land in. */
   payOffer: (
     offerId: ID,
@@ -1212,6 +1217,16 @@ export const useStore = create<StoreState>()(
                       expiresAt: new Date(
                         now.getTime() + s.settings.offerValidityDays * 86_400_000,
                       ).toISOString(),
+                      /*
+                       * §9.2 — the company signs first, so a quote is never
+                       * in the customer's hands unsigned. Copied off settings
+                       * rather than read from it at render time: redrawing the
+                       * mark next year must not restate what was agreed today.
+                       */
+                      ownerSignature: {
+                        ...s.settings.ownerSignature,
+                        at: now.toISOString(),
+                      },
                     },
               ),
               requests: s.data.requests.map((r) =>
@@ -1348,12 +1363,23 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      signOffer: (offerId, now) =>
+      signOffer: (offerId, signature, now) =>
         set((s) => ({
           data: {
             ...s.data,
             offers: s.data.offers.map((offer) =>
-              offer.id === offerId ? { ...offer, signedAt: now.toISOString() } : offer,
+              offer.id === offerId
+                ? {
+                    ...offer,
+                    signedAt: now.toISOString(),
+                    customerSignature: {
+                      name: signature.name,
+                      role: 'Auftraggeber',
+                      path: signature.path,
+                      at: now.toISOString(),
+                    },
+                  }
+                : offer,
             ),
           },
         })),
@@ -1530,7 +1556,18 @@ export const useStore = create<StoreState>()(
                     expiresAt: new Date(
                       now.getTime() + s.settings.offerValidityDays * 86_400_000,
                     ).toISOString(),
+                    /*
+                     * A new version is a new contract, so both marks start
+                     * again: the customer's is cleared, and the company's is
+                     * restamped now rather than carried over from a document
+                     * with different numbers on it.
+                     */
                     signedAt: undefined,
+                    customerSignature: undefined,
+                    ownerSignature: {
+                      ...s.settings.ownerSignature,
+                      at: now.toISOString(),
+                    },
                   }
                 : o,
             ),

@@ -18,6 +18,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
+import { ContractDocument, SignatureSlot } from '@/components/offer/contract';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
@@ -73,6 +74,7 @@ export default function AdminOfferDetailPage({
   const offers = useStore((s) => s.data.offers);
   const requests = useStore((s) => s.data.requests);
   const customers = useStore((s) => s.data.customers);
+  const properties = useStore((s) => s.data.properties);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const credits = useStore((s) => s.data.credits);
   const payments = useStore((s) => s.data.payments);
@@ -106,6 +108,7 @@ export default function AdminOfferDetailPage({
 
   const request = requests.find((r) => r.id === offer.requestId);
   const customer = customers.find((c) => c.id === request?.customerId);
+  const property = properties.find((p) => p.id === request?.propertyId);
   const service = services.find((s) => s.slug === request?.serviceSlug);
   const expired = isExpired(offer, now);
   const left = daysLeft(offer, now);
@@ -308,6 +311,44 @@ export default function AdminOfferDetailPage({
               <p className="mt-3 max-w-[var(--measure)] whitespace-pre-line text-ink-secondary">
                 {offer.message}
               </p>
+            </Card>
+          )}
+
+          {/*
+            §9.2 — the owner's copy of what was agreed.
+
+            The panel could say a quote was «accepted» and show the timestamp,
+            and that was the whole record: no document, and nothing saying who
+            signed it. On a two-party contract the second question is the one
+            that matters, and it had no answer on any screen.
+          */}
+          {customer && property && service && (
+            <Card className="mt-app">
+              <CardHeader title={t('contractTitle')} description={t('contractLead')} divided />
+              <div className="mt-4 grid gap-6 sm:grid-cols-2">
+                <SignatureSlot
+                  caption={t('contractCompany')}
+                  signature={offer.ownerSignature}
+                  pending={t('contractCompanyPending')}
+                />
+                <SignatureSlot
+                  caption={t('contractCustomer')}
+                  signature={offer.customerSignature}
+                  pending={t('contractCustomerPending')}
+                />
+              </div>
+              {/* Bounded: the terms run long, and this screen is already a
+                  scroll. Present rather than prominent is the right weight —
+                  it is read when something is disputed, not every visit. */}
+              <div className="mt-6 max-h-72 overflow-y-auto border-t border-line-subtle pe-3 pt-4">
+                <ContractDocument
+                  offer={offer}
+                  customer={customer}
+                  property={property}
+                  service={service}
+                  slotStart={offer.confirmedSlot ? new Date(offer.confirmedSlot) : null}
+                />
+              </div>
             </Card>
           )}
         </div>

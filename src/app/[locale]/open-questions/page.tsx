@@ -66,9 +66,9 @@ const ENTRIES: Entry[] = [
     ref: '§9.2a',
     question: 'Does the quote need a contract document and a countersignature?',
     decision:
-      'OPEN, and deliberately not built. Today the customer signs a pad above three facts — service, date, amount — and the owner never signs anything. Whether Swiss practice here wants a full terms document on the same page, and whether the owner’s signature is a stored image applied automatically or a per-quote act, changes both the screen and when the booking becomes firm. Deferred by the client rather than decided.',
-    screens: '26',
-    state: 'open',
+      'Yes to both, and the order runs the other way from the one first assumed: the company signs first and the customer’s signature closes the agreement. So nothing waits on the owner after the customer has paid, and there is no state where money has changed hands against an unsigned contract. The terms are the published AGB rendered inside the document on screen 26 rather than a link beside it — the customer is signing a document, not three facts. The owner’s mark is stored once in settings and applied by sendOffer, and copied onto the offer rather than referenced, so redrawing it never restates a contract already closed. A new version is a new contract: both marks start again.',
+    screens: '26, 55, 57a, 80–82',
+    state: 'decided',
   },
   {
     ref: '§9.3a',

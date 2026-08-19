@@ -276,6 +276,22 @@ export const adminContentDe = {
     tabRegions: 'Gebiete',
     tabHours: 'Zeiten',
     tabFees: 'Gebühren & Regeln',
+    tabContract: 'Vertrag',
+    contractTitle: 'Unterschrift auf der Offerte',
+    contractLead:
+      'Jede Offerte geht unterschrieben raus — Ihre Unterschrift wird beim Versand gesetzt, der Kunde unterschreibt beim Annehmen. Hier steht, was dabei auf das Dokument kommt.',
+    signatureName: 'Name unter der Unterschrift',
+    signatureRole: 'Funktion',
+    signatureRoleHint: 'Steht neben dem Namen auf dem Vertrag.',
+    signatureCurrent: 'Aktuelle Unterschrift',
+    signatureRedraw: 'Neu unterschreiben',
+    signatureLabel: 'Hier unterschreiben',
+    signatureHint: 'Mit der Maus oder dem Finger.',
+    signatureClearLabel: 'Nochmals',
+    signatureSave: 'Unterschrift übernehmen',
+    signatureCancel: 'Abbrechen',
+    signatureNote:
+      'Gilt für Offerten, die ab jetzt versendet werden. Bereits unterschriebene Verträge behalten die Unterschrift, mit der sie geschlossen wurden.',
 
     regionsTitle: 'Einsatzgebiet',
     regionsLead:

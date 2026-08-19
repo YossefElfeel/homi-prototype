@@ -137,6 +137,13 @@ export const adminEn: typeof adminDe = {
     slotHint:
       'A confirmed date is held for 48 hours. The customer signs and pays after that.',
     slotConfirmed: 'Date confirmed for {date}.',
+    contractTitle: 'Agreement',
+    contractLead:
+      'Homivaro signs on sending, the customer on accepting. Both marks belong to this version of the quote.',
+    contractCompany: 'For Homivaro',
+    contractCustomer: 'Client',
+    contractCompanyPending: 'Applied when the quote is sent',
+    contractCustomerPending: 'Not signed yet',
   },
 
   messages: {
@@ -472,6 +479,8 @@ export const adminEn: typeof adminDe = {
     blockedBody:
       'No quote can be sent to {name}. The block can be lifted on the customer record.',
     messageTitle: 'Covering note',
+    signatureTitle: 'Goes out signed',
+    signatureEdit: 'Change the signature',
     openPreview: 'Open the customer view',
     send: 'Send the quote',
     sending: 'Sending …',

@@ -11,6 +11,7 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
+import { ContractDocument, SignatureSlot } from '@/components/offer/contract';
 import { OfferShell } from '@/components/offer/offer-shell';
 import { useOffer } from '@/components/offer/use-offer';
 import { addMinutes } from '@/mock/engines/availability';
@@ -28,6 +29,7 @@ import { useHydrated, useStore } from '@/mock/store';
 export default function ConfirmedPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('offer.confirmed');
+  const signT = useTranslations('offer.sign');
   const pt = useTranslations('account.property');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -59,7 +61,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const { offer, booking, property, service } = data;
+  const { offer, booking, customer, property, service } = data;
   const start = new Date(booking.start);
   const windowEnd = addMinutes(start, booking.arrivalWindow);
 
@@ -147,6 +149,42 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
           <p data-numeric className="mt-1.5 text-sm text-ink-secondary">
             {t('cancelBody')} ({settings.cancellationFreeHours} h)
           </p>
+        </section>
+
+        {/*
+          §9.2 — the customer's copy.
+
+          The agreement was signed one screen ago and then existed nowhere the
+          person who signed it could reach: the confirmation listed the date,
+          the address and the amount, which is a receipt, not a contract. It is
+          bounded and below the fold on purpose — this page is here to say the
+          job is booked, and the document is what you come back for.
+        */}
+        <section className="mt-10">
+          <h2 className="display-type text-xl">{signT('documentTitle')}</h2>
+          <div className="surface-card mt-4 p-5">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <SignatureSlot
+                caption={signT('companyCaption')}
+                signature={offer.ownerSignature}
+                pending={signT('companyPending')}
+              />
+              <SignatureSlot
+                caption={signT('customerCaption')}
+                signature={offer.customerSignature}
+                pending={signT('customerPending')}
+              />
+            </div>
+            <div className="mt-6 max-h-72 overflow-y-auto border-t border-line-subtle pe-3 pt-4">
+              <ContractDocument
+                offer={offer}
+                customer={customer}
+                property={property}
+                service={service}
+                slotStart={booking ? new Date(booking.start) : null}
+              />
+            </div>
+          </div>
         </section>
 
         <div className="mt-10 flex flex-wrap gap-3">

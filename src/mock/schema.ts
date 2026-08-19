@@ -293,6 +293,27 @@ export type OfferStatus =
   | 'rejected'
   | 'expired';
 
+/**
+ * One party's mark on a contract — §9.2.
+ *
+ * Stored as SVG path data rather than a raster, for two reasons that both
+ * showed up immediately. Ink drawn in the light theme is invisible in the dark
+ * one unless the mark can inherit `currentColor`, which a PNG cannot; and a
+ * contract is a document, so the mark has to survive being enlarged.
+ *
+ * `name` and `role` travel with it because a signature that only carries a
+ * timestamp does not say who signed — and on a two-party contract that is the
+ * whole question.
+ */
+export interface Signature {
+  name: string;
+  /** «Inhaber» / «Kundin» — which side of the agreement this is. */
+  role: string;
+  /** Path data in the 720×220 box both pads draw in. */
+  path: string;
+  at: ISODate;
+}
+
 export interface Offer {
   id: ID;
   reference: string;
@@ -320,6 +341,22 @@ export interface Offer {
   issuedAt?: ISODate;
   expiresAt?: ISODate;
   signedAt?: ISODate;
+  /**
+   * §9.2 — the company signs first, and the quote goes out already signed.
+   *
+   * `sendOffer` stamps this by copying `settings.ownerSignature`. Copied, not
+   * referenced: redrawing the stored mark has to change what the *next* quote
+   * carries and nothing about a contract already signed.
+   */
+  ownerSignature?: Signature;
+  /**
+   * Drawn on screen 26, and what closes the agreement.
+   *
+   * `signedAt` stays beside it: the lifecycle, the quote list and
+   * `offer-facts` all read that one timestamp, and this adds the mark rather
+   * than moving the milestone.
+   */
+  customerSignature?: Signature;
   /** Estimated hours the scheduler must fit, derived from the hourly lines. */
   estimatedHours: number;
   /**
@@ -935,6 +972,21 @@ export interface Settings {
    */
   hasLiabilityInsurance: boolean;
   applicationRetentionMonths: number;
+  /**
+   * §9.2 — the company's half of every contract, drawn once.
+   *
+   * The owner signs before the customer does, which makes the mark part of
+   * sending rather than a decision per quote: putting a drawing pad between
+   * the office and every send, for a mark that never varies, is how the pad
+   * becomes something to click through. So it lives here and `sendOffer`
+   * applies it.
+   */
+  ownerSignature: {
+    name: string;
+    role: string;
+    /** Path data in the 720×220 box the settings pad draws in. */
+    path: string;
+  };
   /**
    * §15 — every message the business sends, automatic or picked by hand.
    *

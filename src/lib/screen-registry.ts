@@ -173,7 +173,14 @@ export const TRACKS: Track[] = [
         ['picking', 'sent, waiting', 'confirmed'],
         'The first-job path: up to three dates, nothing blocked until the office picks one. off_propose opens waiting, off_confirm opens confirmed',
       ),
-      done('26', 'Unterschrift', 'E-signature', '/offerte/off_1/unterschrift', ['empty', 'signed']),
+      done(
+        '26',
+        'Vertrag unterschreiben',
+        'Sign the agreement',
+        '/offerte/off_1/unterschrift',
+        ['empty', 'signed'],
+        'The agreement is on the page, with Homivaro’s signature already on it — the quote left the office signed. Was three facts and a link to the terms',
+      ),
       done('27', 'Zahlung', 'Payment', '/offerte/off_1/zahlung', [
         'TWINT',
         'card',

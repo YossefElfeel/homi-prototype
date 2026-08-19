@@ -269,6 +269,22 @@ export const adminContentEn: typeof adminContentDe = {
     tabRegions: 'Areas',
     tabHours: 'Hours',
     tabFees: 'Fees & rules',
+    tabContract: 'Agreement',
+    contractTitle: 'Signature on the quote',
+    contractLead:
+      'Every quote goes out signed — yours is applied when it is sent, the customer signs on accepting. This is what lands on the document.',
+    signatureName: 'Name under the signature',
+    signatureRole: 'Role',
+    signatureRoleHint: 'Printed beside the name on the agreement.',
+    signatureCurrent: 'Current signature',
+    signatureRedraw: 'Sign again',
+    signatureLabel: 'Sign here',
+    signatureHint: 'With a mouse or a finger.',
+    signatureClearLabel: 'Start again',
+    signatureSave: 'Use this signature',
+    signatureCancel: 'Cancel',
+    signatureNote:
+      'Applies to quotes sent from now on. Agreements already signed keep the signature they were closed with.',
 
     regionsTitle: 'Service area',
     regionsLead:

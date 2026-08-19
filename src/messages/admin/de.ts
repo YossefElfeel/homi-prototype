@@ -157,6 +157,13 @@ export const adminDe = {
     slotHint:
       'Der bestätigte Termin ist 48 Stunden reserviert. Der Kunde unterschreibt und bezahlt danach.',
     slotConfirmed: 'Termin auf {date} bestätigt.',
+    contractTitle: 'Vertrag',
+    contractLead:
+      'Homivaro unterschreibt beim Versand, der Kunde beim Annehmen. Beide Unterschriften gehören zu dieser Version der Offerte.',
+    contractCompany: 'Für Homivaro',
+    contractCustomer: 'Auftraggeber',
+    contractCompanyPending: 'Wird beim Versand gesetzt',
+    contractCustomerPending: 'Noch nicht unterschrieben',
   },
 
   /**
@@ -550,6 +557,8 @@ export const adminDe = {
     blockedBody:
       'An {name} kann keine Offerte gesendet werden. Die Sperre lässt sich im Kundendatensatz aufheben.',
     messageTitle: 'Begleittext',
+    signatureTitle: 'Geht unterschrieben raus',
+    signatureEdit: 'Unterschrift ändern',
     openPreview: 'Kundenansicht öffnen',
     send: 'Offerte senden',
     sending: 'Wird gesendet …',
