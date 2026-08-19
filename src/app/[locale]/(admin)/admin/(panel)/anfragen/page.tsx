@@ -238,6 +238,16 @@ export default function RequestsPage() {
 
   const columns: Column<ServiceRequest>[] = [
     {
+      key: 'reference',
+      header: t('colReference'),
+      sortBy: (r) => r.reference,
+      cell: (r) => (
+        <span data-numeric className="text-ink-secondary">
+          {r.reference}
+        </span>
+      ),
+    },
+    {
       key: 'customer',
       header: t('colCustomer'),
       primary: true,
@@ -250,23 +260,6 @@ export default function RequestsPage() {
               {propertyOf(r.propertyId)?.postcode}
             </Chip>
           )}
-        </span>
-      ),
-    },
-    {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      sortBy: (r) => r.status,
-      cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
-    },
-    {
-      key: 'reference',
-      header: t('colReference'),
-      sortBy: (r) => r.reference,
-      cell: (r) => (
-        <span data-numeric className="text-ink-secondary">
-          {r.reference}
         </span>
       ),
     },
@@ -334,6 +327,13 @@ export default function RequestsPage() {
       tableOnly: true,
       sortBy: (r) => propertyOf(r.propertyId)?.city ?? '',
       cell: (r) => propertyOf(r.propertyId)?.city ?? '—',
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      sortBy: (r) => r.status,
+      cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
     },
     {
       key: 'received',
