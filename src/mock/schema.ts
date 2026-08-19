@@ -184,8 +184,13 @@ export interface ServiceRequest {
   customerNote?: string;
   internalNote?: string;
   status: RequestStatus;
-  /** True when the postcode falls outside the served list (§6). */
-  outOfArea: boolean;
+  /*
+   * `outOfArea` was here, and it is gone rather than kept and always false:
+   * §6 is now enforced at intake, so no path can write `true` — and a stored
+   * flag nothing can set is exactly the kind of lie the type system does not
+   * catch. The area is a property of the address, and `Property.postcode` is
+   * where it can still be checked against `settings.servedPostcodes`.
+   */
   createdAt: ISODate;
   openedAt?: ISODate;
   respondedAt?: ISODate;

@@ -74,10 +74,9 @@ export const bookingDe = {
     whyBody:
       'Aus diesen Angaben schätzen wir die Dauer. Nur die Dauer bestimmt den Preis — die Fläche selbst wird nicht verrechnet.',
     coverageInside: '{region} liegt in unserem Einsatzgebiet.',
-    coverageOutsideTitle: 'Ausserhalb des üblichen Einsatzgebiets',
+    coverageOutsideTitle: 'An dieser Adresse arbeiten wir nicht',
     coverageOutsideBody:
-      'Die PLZ {postcode} gehört nicht zu unseren acht Gemeinden. Sie können die Anfrage trotzdem senden — wir prüfen sie von Hand und melden uns. Eine allfällige Anfahrt weisen wir in der Offerte separat aus.',
-    coverageOutsideAction: 'Trotzdem senden und prüfen lassen',
+      'Die PLZ {postcode} gehört nicht zu unseren acht Gemeinden — für diese Adresse können wir keine Anfrage entgegennehmen. Haben Sie ein anderes Objekt im Gebiet, tragen Sie dieses ein.',
     coverageShowAreas: 'Einsatzgebiet ansehen',
   },
 
@@ -210,9 +209,6 @@ export const bookingDe = {
     activateHint: 'Mit einem Passwort sehen Sie Offerte, Termin und Rechnung jederzeit im Konto.',
     track: 'Anfrage verfolgen',
     home: 'Zur Startseite',
-    outOfAreaTitle: 'Ihre PLZ liegt ausserhalb des Einsatzgebiets',
-    outOfAreaBody:
-      'Wir haben die Anfrage trotzdem erhalten und prüfen sie von Hand. Die Antwort kann etwas länger dauern als 24 Stunden.',
   },
 
   errors: {

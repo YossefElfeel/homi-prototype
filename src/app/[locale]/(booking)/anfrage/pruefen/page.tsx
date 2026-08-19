@@ -80,8 +80,17 @@ export default function ReviewStep() {
   function submit() {
     setSending(true);
     window.setTimeout(() => {
-      const { reference, outOfArea } = submitDraft(now);
-      router.push(`/anfrage/gesendet?ref=${reference}${outOfArea ? '&aussergebiet=1' : ''}`);
+      const result = submitDraft(now);
+      /* Only reachable by opening this step's URL directly with an
+         out-of-area draft, which the wizard itself no longer produces. Back to
+         the postcode rather than an error: that step already says why, and it
+         is the only screen where the answer can be changed. */
+      if (!result) {
+        setSending(false);
+        router.push('/anfrage/objekt');
+        return;
+      }
+      router.push(`/anfrage/gesendet?ref=${result.reference}`);
     }, 800);
   }
 

@@ -70,10 +70,9 @@ export const bookingEn: typeof bookingDe = {
     whyBody:
       'We estimate the duration from these answers. Only the duration sets the price — the floor area itself is not billed.',
     coverageInside: '{region} is inside our service area.',
-    coverageOutsideTitle: 'Outside the usual service area',
+    coverageOutsideTitle: 'We do not work at this address',
     coverageOutsideBody:
-      'Postcode {postcode} is not one of our eight municipalities. You can still send the request — we review it by hand and get back to you. Any travel cost is shown separately in the quote.',
-    coverageOutsideAction: 'Send anyway for review',
+      'Postcode {postcode} is not one of our eight municipalities, so we cannot take a request for it. If you have another address inside the area, enter that one instead.',
     coverageShowAreas: 'See the service area',
   },
 
@@ -206,9 +205,6 @@ export const bookingEn: typeof bookingDe = {
     activateHint: 'With a password you can see the quote, the appointment and the invoice any time.',
     track: 'Track this request',
     home: 'Back to the home page',
-    outOfAreaTitle: 'Your postcode is outside the service area',
-    outOfAreaBody:
-      'We received the request anyway and will review it by hand. A reply may take a little longer than 24 hours.',
   },
 
   errors: {

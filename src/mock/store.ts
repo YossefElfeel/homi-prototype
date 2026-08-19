@@ -226,8 +226,12 @@ interface StoreState {
 
   updateDraft: (patch: Partial<RequestDraft>) => void;
   resetDraft: () => void;
-  /** Turns the draft into a request. Returns the reference for the receipt. */
-  submitDraft: (now: Date) => { reference: string; outOfArea: boolean };
+  /**
+   * Turns the draft into a request. Returns the reference for the receipt, or
+   * `null` when the address is outside the service area — the one case where
+   * there is no request to give a reference for.
+   */
+  submitDraft: (now: Date) => { reference: string } | null;
 
   /* ---- admin-side intake (screens 64 + 52) ----
      A customer could only ever come into being as a side effect of the public
@@ -278,7 +282,7 @@ interface StoreState {
       asDraft?: boolean;
     },
     now: Date,
-  ) => { id: ID; reference: string; outOfArea: boolean };
+  ) => { id: ID; reference: string } | null;
   /** Edits a request in place. Only ever used while it is still a draft. */
   updateRequest: (id: ID, patch: Partial<ServiceRequest>) => void;
   /** Draft → a real request in the queue. */
@@ -724,10 +728,16 @@ export const useStore = create<StoreState>()(
           properties = [...properties, property];
         }
 
+        /*
+         * The last gate, not the first. `/anfrage/objekt` already refuses to
+         * continue on an out-of-area postcode, but the wizard's later steps are
+         * addressable URLs and the draft survives a reload — so the rule has to
+         * hold in the one place every path goes through. Nothing is committed:
+         * the customer and property built above are still locals here.
+         */
         const postcode =
           properties.find((p) => p.id === propertyId)?.postcode ?? draft.property.postcode;
-        const coverage = checkCoverage(postcode, settings.servedPostcodes);
-        const outOfArea = coverage.state !== 'inside';
+        if (checkCoverage(postcode, settings.servedPostcodes).state !== 'inside') return null;
 
         const reference = `A-${(2500 + data.requests.length).toString()}`;
         const request: ServiceRequest = {
@@ -743,7 +753,6 @@ export const useStore = create<StoreState>()(
           photoIds: draft.photos.map((p) => p.id),
           customerNote: draft.customerNote || undefined,
           status: 'new',
-          outOfArea,
           createdAt: now.toISOString(),
           subscriptionIntent: draft.subscriptionIntent ?? undefined,
         };
@@ -773,7 +782,7 @@ export const useStore = create<StoreState>()(
           demo: { ...state.demo, currentCustomerId: customerId },
         });
 
-        return { reference, outOfArea };
+        return { reference };
       },
 
       /* ---------------------------------------------- admin-side intake ---- */
@@ -850,8 +859,20 @@ export const useStore = create<StoreState>()(
       createRequestForCustomer: (input, now) => {
         const s = get();
         const property = s.data.properties.find((p) => p.id === input.propertyId);
-        const coverage = checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes);
-        const outOfArea = coverage.state !== 'inside';
+        /*
+         * The phone is not an exception to the area. Intake used to record the
+         * request and mark it, which made the office the one path that could
+         * still put an unservable address into the queue — and the queue then
+         * had to carry a warning chip for a job nobody was ever going to do.
+         * A draft is exempt: it is a note taken mid-call, before the address
+         * is necessarily right, and the check runs again when it is submitted.
+         */
+        if (
+          !input.asDraft &&
+          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes).state !== 'inside'
+        ) {
+          return null;
+        }
 
         const id = `req_${s.data.requests.length}_${now.getTime().toString(36).slice(-4)}`;
         /* Same counter the wizard uses, so a phoned-in request and a
@@ -880,7 +901,6 @@ export const useStore = create<StoreState>()(
            * answered the moment it arrived.
            */
           status: input.asDraft ? 'draft' : 'inReview',
-          outOfArea,
           createdAt: now.toISOString(),
           /* A draft has not been opened, because it has not arrived. Stamping
              it would start the response clock against a note to self. */
@@ -896,7 +916,7 @@ export const useStore = create<StoreState>()(
             ? `Anfrage als Entwurf gespeichert: ${reference}`
             : `Anfrage telefonisch erfasst: ${reference}`,
         });
-        return { id, reference, outOfArea };
+        return { id, reference };
       },
 
       updateRequest: (id, patch) =>
@@ -911,6 +931,16 @@ export const useStore = create<StoreState>()(
         const s = get();
         const request = s.data.requests.find((r) => r.id === id);
         if (!request || request.status !== 'draft') return;
+
+        /* Where the draft's exemption ends. The address may have been half
+           written down when the call was taken; this is the moment it becomes
+           a request, so it is the moment the area has to hold. */
+        const property = s.data.properties.find((p) => p.id === request.propertyId);
+        if (
+          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes).state !== 'inside'
+        ) {
+          return;
+        }
 
         set({
           data: {

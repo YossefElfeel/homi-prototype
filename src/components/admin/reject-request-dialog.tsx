@@ -18,7 +18,13 @@ import { Field, Textarea } from '@/components/ui/field';
 import { useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
-const REASONS = ['reasonOutOfArea', 'reasonCapacity', 'reasonScope', 'reasonOther'] as const;
+/*
+ * `reasonOutOfArea` is gone with it. A request outside the eight municipalities
+ * cannot be created any more — the coverage check refuses it on the wizard and
+ * on the phone form — so offering "outside the area" as a decline reason on a
+ * request that exists would name a thing that can no longer be true of it.
+ */
+const REASONS = ['reasonCapacity', 'reasonScope', 'reasonOther'] as const;
 
 /**
  * Screen 56 — declining, with a reason. §4.1 requires the reason and, where
@@ -68,15 +74,11 @@ function Body({ id, onClose }: { id: string; onClose: () => void }) {
   const now = useNow();
 
   const requests = useStore((s) => s.data.requests);
-  const properties = useStore((s) => s.data.properties);
   const rejectRequest = useStore((s) => s.rejectRequest);
 
   const request = requests.find((r) => r.id === id);
-  const property = properties.find((p) => p.id === request?.propertyId);
 
-  const [reason, setReason] = useState<(typeof REASONS)[number]>(
-    request?.outOfArea ? 'reasonOutOfArea' : 'reasonCapacity',
-  );
+  const [reason, setReason] = useState<(typeof REASONS)[number]>('reasonCapacity');
   const [note, setNote] = useState('');
   const [suggestion, setSuggestion] = useState('');
   const [sending, setSending] = useState(false);
@@ -141,11 +143,6 @@ function Body({ id, onClose }: { id: string; onClose: () => void }) {
             </label>
           ))}
         </div>
-        {request.outOfArea && property && (
-          <p data-numeric className="mt-3 text-sm text-status-warning-fg">
-            {property.postcode} {property.city}
-          </p>
-        )}
       </fieldset>
 
       <Field label={t('noteLabel')} hint={t('noteHint')} className="mt-6">

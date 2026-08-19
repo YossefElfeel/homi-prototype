@@ -26,8 +26,12 @@ const KINDS: { value: PropertyKind; icon: typeof Home; key: 'kindApartment' | 'k
  * and interrupting the flow with a full screen to say "yes, we serve your
  * postcode" would be worse for everyone. All three of its states are built.
  *
- * Being outside the area never blocks the request (§20.1): it explains, and
- * offers to send it for manual review.
+ * Being outside the area ends the flow here. The step used to explain and then
+ * let the visitor continue anyway, which meant the wizard collected access
+ * codes, photos and a preferred date for an address the company does not
+ * serve, and the refusal arrived by email a day later. The postcode is the
+ * cheapest place to say no, and it is the only place where saying it costs the
+ * visitor nothing.
  */
 export default function PropertyStep() {
   const t = useTranslations('booking.property');
@@ -48,13 +52,26 @@ export default function PropertyStep() {
   const patch = (part: Partial<typeof p>) =>
     updateDraft({ property: { ...p, ...part }, propertyId: null });
 
-  const coverage = checkCoverage(p.postcode, settings.servedPostcodes);
   const usingSaved = Boolean(draft.propertyId);
+  const savedProperty = properties.find((x) => x.id === draft.propertyId);
+
+  /* A saved address goes through the same gate as a typed one. The check read
+     the form's postcode only, so picking a stored property skipped it — and a
+     stored property can sit outside the area, either because it was saved
+     before the rule or because the served list changed under it. */
+  const coverage = checkCoverage(
+    usingSaved ? (savedProperty?.postcode ?? '') : p.postcode,
+    settings.servedPostcodes,
+  );
 
   const complete = usingSaved || Boolean(p.street && p.postcode && p.city && p.area && p.rooms && p.bathrooms);
 
   return (
-    <BookingStep step="objekt" title={t('title')} canContinue={complete}>
+    <BookingStep
+      step="objekt"
+      title={t('title')}
+      canContinue={complete && coverage.state !== 'outside'}
+    >
       {saved.length > 0 && (
         <section className="mb-10">
           <h2 className="label-type text-ink-tertiary">{t('savedTitle')}</h2>
@@ -159,21 +176,6 @@ export default function PropertyStep() {
               <Check className="size-4 shrink-0" aria-hidden />
               {t('coverageInside', { region: coverage.region.name })}
             </p>
-          )}
-
-          {coverage.state === 'outside' && (
-            <div className="flex gap-3 border-l-2 border-rule bg-sunken p-4">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-              <div>
-                <h2 className="font-medium">{t('coverageOutsideTitle')}</h2>
-                <p className="mt-1.5 text-sm text-ink-secondary">
-                  {t('coverageOutsideBody', { postcode: coverage.postcode })}
-                </p>
-                <Button asChild variant="link" className="mt-2.5">
-                  <Link href="/gebiete/kuesnacht">{t('coverageShowAreas')}</Link>
-                </Button>
-              </div>
-            </div>
           )}
 
           <fieldset>
@@ -288,6 +290,25 @@ export default function PropertyStep() {
               checked={p.needsExtraEffort}
               onChange={(e) => patch({ needsExtraEffort: e.target.checked })}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Outside the area, so nothing below this matters — and it sits outside
+          the form block because a *saved* address can be outside too, and the
+          version nested in the form left that case with a dead Continue button
+          and no sentence explaining why. */}
+      {coverage.state === 'outside' && (
+        <div className="mt-8 flex gap-3 border-l-2 border-status-danger-fg bg-sunken p-4">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-status-danger-fg" aria-hidden />
+          <div>
+            <h2 className="font-medium">{t('coverageOutsideTitle')}</h2>
+            <p className="mt-1.5 text-sm text-ink-secondary">
+              {t('coverageOutsideBody', { postcode: coverage.postcode })}
+            </p>
+            <Button asChild variant="link" className="mt-2.5">
+              <Link href="/gebiete/kuesnacht">{t('coverageShowAreas')}</Link>
+            </Button>
           </div>
         </div>
       )}
