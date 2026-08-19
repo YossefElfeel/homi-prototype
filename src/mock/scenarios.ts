@@ -705,6 +705,31 @@ function baseData(now: Date): DataSet {
       openedAt: iso(days(now, -2)),
       respondedAt: iso(days(now, -1)),
     },
+    /*
+     * cus_1 on prp_1 with unterhaltsreinigung — the exact three fields sub_1
+     * matches on, so this quote comes out covered by the running plan.
+     *
+     * It is here because the quote detail draws a different card per coverage
+     * kind, and the plan card had nowhere to be seen: the only plan-covered
+     * quote in the whole seed lived in `states`, which is not the scenario
+     * anyone opens the panel on.
+     */
+    {
+      id: 'req_q_plan',
+      reference: 'A-2506',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'unterhaltsreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Diesmal bitte auch den Keller, wenn es die Zeit hergibt.',
+      status: 'offerSent',
+      createdAt: iso(days(now, -1)),
+      openedAt: iso(days(now, -1)),
+      respondedAt: iso(days(now, -1)),
+      subscriptionIntent: 'premium',
+    },
   ];
 
   const allProperties = [...properties, ...extraProperties()];
@@ -769,6 +794,9 @@ function baseData(now: Date): DataSet {
        is nothing to charge, and the payment step says so instead of asking for
        a card. */
     quoteFor('off_pkg', 'req_q_pkg', { issuedDaysAgo: 1, validDays: 14 }),
+    /* Covered by the plan rather than the balance: nothing to charge, and the
+       detail says which plan and how many skips are left on it. */
+    quoteFor('off_plan', 'req_q_plan', { issuedDaysAgo: 1, validDays: 14 }),
   ];
 
   const quoteBookings: Booking[] = [

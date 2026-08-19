@@ -144,8 +144,23 @@ export const adminDe = {
        das Geld da ist, und die kostete bisher den Umweg über die Rechnungen. */
     payment: 'Zahlung',
     paymentNone: 'Noch nicht bezahlt',
+    coverageTitle: 'Deckung',
+    coveragePackageLead:
+      'Dieser Einsatz wird aus dem gekauften Stundenpaket bezahlt, nicht neu verrechnet.',
+    coverageSubscriptionLead: 'Dieser Einsatz ist im laufenden Abo enthalten.',
+    coverageBalance: 'Guthaben vor diesem Einsatz',
+    coverageThisJob: 'Dieser Einsatz',
+    coverageAfter: 'Bleibt danach',
+    coverageMore:
+      '{n, plural, =0 {Reicht danach für keinen weiteren Einsatz dieser Grösse.} one {Reicht danach für einen weiteren Einsatz dieser Grösse.} other {Reicht danach für # weitere Einsätze dieser Grösse.}}',
+    coverageExpires: 'Guthaben verfällt',
+    coveragePlan: 'Abo',
+    coverageNextCharge: 'Nächste Belastung',
+    coverageSkips: 'Freie Aussetzer',
+    coverageSkipsValue: '{left} von {total} diesen Monat',
+    coverageOpenPlan: 'Abo öffnen',
+    hoursValue: '{n} Std.',
     paymentFailed: 'Fehlgeschlagen: {reason}',
-    coverage: 'Abgedeckt durch',
     bookingTitle: 'Daraus wurde',
     bookingOpen: 'Buchung öffnen',
     /* Ein Erstkunde schlägt drei Termine vor und wartet dann. Ohne dieses Feld
@@ -615,16 +630,15 @@ export const adminDe = {
     colReference: 'Referenz',
     colCustomer: 'Kunde',
     colService: 'Leistung',
-    colCoverage: 'Abgedeckt',
     colTotal: 'Betrag',
     colPayment: 'Zahlung',
+    colMethod: 'Zahlungsart',
+    filterService: 'Leistung',
     colValidity: 'Versendet / Gültig',
     colStatus: 'Status',
     version: 'V{n}',
     expiresIn: 'in {days} T.',
     expired: 'abgelaufen',
-    coveragePackage: 'Paket · {hours} Std. übrig',
-    coverageSubscription: 'Im Abo',
     paymentNotDue: 'Nichts offen',
     /* `method` stand hier und beschrieb etwas, das nicht dieser Liste gehört.
        Jetzt `status.method`, neben den Zahlungszuständen. */

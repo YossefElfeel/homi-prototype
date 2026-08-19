@@ -206,6 +206,13 @@ for (const clock of CLOCKS) {
         });
 
       check(`${tag} a package-covered quote exists`, states.some((s) => s.cov === 'package'));
+      /* The quote detail now draws a different card per coverage kind, so the
+         plan branch is a state a screen can be in — and a state no scenario
+         reaches is one nobody ever looks at. */
+      check(
+        `${tag} a plan-covered quote exists`,
+        states.some((s) => s.cov === 'subscription'),
+      );
       check(`${tag} a paid quote with a booking exists`,
         states.some((s) => s.pay === 'succeeded' && s.booking));
       check(`${tag} a failed payment exists`, states.some((s) => s.pay === 'failed'));
