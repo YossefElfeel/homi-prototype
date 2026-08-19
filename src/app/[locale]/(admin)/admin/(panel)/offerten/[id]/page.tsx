@@ -254,7 +254,7 @@ export default function AdminOfferDetailPage({
                           {offerLineLabel(line, services, addOns, locale)}
                           {line.optional && (
                             <Chip tone={line.selected ? 'accent' : 'neutral'}>
-                              {line.selected ? t('optional') : t('notSelected')}
+                              {line.selected ? t('optionalOn') : t('optionalOff')}
                             </Chip>
                           )}
                         </span>
