@@ -250,6 +250,10 @@ export const de = {
     pageNext: 'Weiter',
     pageLabel: 'Seitennavigation',
     pageSummary: '{from}–{to} von {total}',
+    /* Steht auch dann unter der Tabelle, wenn alles auf eine Seite passt:
+       es beantwortet «wie viel sehe ich hier», nicht nur «gibt es mehr». */
+    pagePerPage: '{n} Zeilen pro Seite',
+    rowActions: 'Aktionen',
     /* Für Bildschirme, die beim Tippen speichern. Ein Toast pro Tastendruck
        wäre Lärm; Stille war das Problem. */
     saving: 'Wird gespeichert …',

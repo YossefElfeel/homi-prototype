@@ -15,7 +15,6 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
-import { Pagination, paginate } from '@/components/ui/pagination';
 import {
   RowAction,
   RowActionButton,
@@ -32,8 +31,6 @@ import { deadlineFor, elapsed, overdueDays } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceRequest } from '@/mock/schema';
 import { cn } from '@/lib/cn';
-
-const PER_PAGE = 25;
 
 /** Statuses still waiting on us, and so the only ones that can breach §4.1. */
 const OPEN_STATES: readonly string[] = ['new', 'inReview'];
@@ -87,7 +84,6 @@ export default function RequestsPage() {
    */
   const [tab, setTab] = useState<'all' | 'overdue'>('all');
   const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
   /* Declining used to be a page. It is a decision made about a row while
      looking at the queue, so it happens over the queue — see the dialog. */
   const [rejecting, setRejecting] = useState<string | null>(null);
@@ -156,7 +152,6 @@ export default function RequestsPage() {
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const view = paginate(filtered, page, PER_PAGE);
   /* The tab is deliberately not in here. It picks which queue you are looking
      at; these pick which rows survive inside it — so an empty overdue tab has
      to say "nothing is late", not "no result for your filters", and «Filter
@@ -191,7 +186,6 @@ export default function RequestsPage() {
     setFrom('');
     setTo('');
     setQuery('');
-    setPage(1);
   }
 
   const addButton = (
@@ -227,10 +221,7 @@ export default function RequestsPage() {
           value={from}
           max={to || undefined}
           className="w-auto"
-          onChange={(e) => {
-            setFrom(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setFrom(e.target.value)}
         />
       </label>
       <label className="flex items-center gap-1.5 text-sm">
@@ -241,10 +232,7 @@ export default function RequestsPage() {
           value={to}
           min={from || undefined}
           className="w-auto"
-          onChange={(e) => {
-            setTo(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setTo(e.target.value)}
         />
       </label>
     </div>
@@ -396,9 +384,8 @@ export default function RequestsPage() {
   /* One list, rendered under whichever tab is open. Radix wants a panel per
      trigger, and the rows are the same rows — only `filtered` differs. */
   const list = (
-    <>
     <DataView
-      items={view.slice}
+      items={filtered}
       columns={columns}
       getKey={(r) => r.id}
       onSelect={(r) =>
@@ -522,21 +509,6 @@ export default function RequestsPage() {
         )
       }
     />
-
-    <Pagination
-      page={view.page}
-      pageCount={view.pageCount}
-      onPageChange={setPage}
-      label={appT('pageLabel')}
-      previousLabel={appT('pagePrevious')}
-      nextLabel={appT('pageNext')}
-      summary={appT('pageSummary', {
-        from: view.from,
-        to: view.to,
-        total: view.total,
-      })}
-    />
-    </>
   );
 
   return (
@@ -553,19 +525,12 @@ export default function RequestsPage() {
 
       <Tabs
         value={tab}
-        onValueChange={(v) => {
-          setTab(v as typeof tab);
-          /* Page 3 of the queue is not page 3 of what is late. */
-          setPage(1);
-        }}
+        onValueChange={(v) => setTab(v as typeof tab)}
       >
         <Toolbar
           search={{
             value: query,
-            onChange: (value) => {
-              setQuery(value);
-              setPage(1);
-            },
+            onChange: setQuery,
             label: t('search'),
             clearLabel: appT('clearSearch'),
           }}
@@ -606,10 +571,7 @@ export default function RequestsPage() {
                 <Select
                   dense
                   value={status}
-                  onChange={(e) => {
-                    setStatus(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => setStatus(e.target.value)}
                 >
                   <option value="all">
                     {t('filterStatus')}: {t('filterAll')}
@@ -629,10 +591,7 @@ export default function RequestsPage() {
                 <Select
                   dense
                   value={service}
-                  onChange={(e) => {
-                    setService(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => setService(e.target.value)}
                 >
                   <option value="all">
                     {t('filterService')}: {t('filterAll')}
@@ -650,10 +609,7 @@ export default function RequestsPage() {
                 <Select
                   dense
                   value={region}
-                  onChange={(e) => {
-                    setRegion(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => setRegion(e.target.value)}
                 >
                   <option value="all">
                     {t('filterRegion')}: {t('filterAll')}

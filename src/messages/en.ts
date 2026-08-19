@@ -241,6 +241,8 @@ export const en: Messages = {
     pageNext: 'Next',
     pageLabel: 'Pagination',
     pageSummary: '{from}–{to} of {total}',
+    pagePerPage: '{n} rows per page',
+    rowActions: 'Actions',
     saving: 'Saving …',
     saved: 'Saved',
   },
