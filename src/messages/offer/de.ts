@@ -139,18 +139,51 @@ export const offerDe = {
       '{date} ist für Sie reserviert. Die Reservation hält {hours} Stunden — danach unterschreiben und bezahlen Sie.',
   },
 
+  /*
+   * §9.2 — der Vertrag steht jetzt auf der Seite, auf der er unterschrieben
+   * wird. Vorher waren es drei Eckdaten und ein Link auf die AGB: drei
+   * Eckdaten prüft man, unterschreiben tut man ein Dokument.
+   */
+  contract: {
+    title: 'Dienstleistungsvertrag',
+    versionLabel: 'Version {n}',
+    partiesHeading: 'Vertragsparteien',
+    contractor: 'Auftragnehmerin',
+    client: 'Auftraggeber',
+    serviceHeading: 'Leistung und Termin',
+    serviceLabel: 'Leistung',
+    addressLabel: 'Einsatzort',
+    dateLabel: 'Termin',
+    dateOpen: 'Noch offen — wird vor der Zahlung festgelegt',
+    durationLabel: 'Geplante Dauer',
+    hours: '{n} Std.',
+    priceHeading: 'Vergütung',
+    discount: 'Rabatt',
+    subtotal: 'Zwischensumme',
+    total: 'Gesamtbetrag',
+    priceNote:
+      'Homivaro ist nicht mehrwertsteuerpflichtig. Der genannte Betrag ist der Endbetrag.',
+  },
+
   sign: {
-    title: 'Offerte unterschreiben',
-    lead: 'Mit Ihrer Unterschrift bestätigen Sie Leistung, Termin und Betrag.',
+    title: 'Vertrag unterschreiben',
+    lead: 'Homivaro hat bereits unterschrieben. Mit Ihrer Unterschrift ist der Vertrag geschlossen.',
     canvasLabel: 'Hier unterschreiben',
     canvasHint: 'Mit der Maus oder dem Finger.',
     clear: 'Nochmals',
     summaryService: 'Leistung',
     summaryDate: 'Termin',
     summaryAmount: 'Betrag',
-    confirm: 'Ich habe die Offerte gelesen und akzeptiere die AGB.',
+    confirm: 'Ich habe den Vertrag gelesen und akzeptiere ihn.',
     continue: 'Weiter zur Zahlung',
     required: 'Bitte unterschreiben Sie, um fortzufahren.',
+    documentTitle: 'Der Vertrag',
+    documentHint: 'Der ganze Text steht hier — scrollen Sie, um ihn zu lesen.',
+    signaturesTitle: 'Unterschriften',
+    companyCaption: 'Für Homivaro',
+    customerCaption: 'Auftraggeber',
+    companyPending: 'Wird beim Versand gesetzt',
+    customerPending: 'Ihre Unterschrift fehlt noch',
   },
 
   payment: {

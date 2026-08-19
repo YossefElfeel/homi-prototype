@@ -156,7 +156,21 @@ export const FLOWS: Flow[] = [
       ok('Positionen bearbeiten', '/admin/anfragen/req_1/offerte'),
       ok('Optionale Positionen an/aus', '/offerte/off_1', 'Preis und Dauer bewegen sich zusammen'),
       ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
-      ok('Unterschreiben', '/offerte/off_1/unterschrift'),
+      added(
+        'Vertrag lesen und unterschreiben',
+        '/offerte/off_1/unterschrift',
+        'Der Bildschirm zeigte drei Eckdaten und einen Link auf die AGB. Drei Eckdaten prüft man — unterschrieben wird ein Dokument, und das stand nirgends: nicht auf dem Bildschirm, nicht im Konto danach und auch nicht auf der Kopie des Inhabers',
+      ),
+      added(
+        'Homivaro unterschreibt zuerst',
+        '/admin/anfragen/req_1/offerte/senden',
+        'Die Offerte geht unterschrieben raus, die Unterschrift des Kunden schliesst den Vertrag. Gesetzt beim Versand aus den Einstellungen und auf die Offerte kopiert — eine neu gezeichnete Unterschrift ändert nie einen bereits geschlossenen Vertrag',
+      ),
+      added(
+        'Unterschrift hinterlegen',
+        '/admin/einstellungen?tab=contract',
+        'sendOffer las den Wert bereits; ohne diesen Bildschirm setzte die Anwendung eine Unterschrift unter jeden Vertrag, die der Inhaber weder sehen noch ändern konnte',
+      ),
       ok('Änderung anfragen', '/offerte/off_1/aenderung'),
       added(
         'Freie Zeiten: die fünf Regeln',

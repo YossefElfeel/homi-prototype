@@ -2718,7 +2718,53 @@ export function seedHolds(data: DataSet, now: Date): SlotHold[] {
     }));
 }
 
+/**
+ * §9.2 — a quote that left the office carries the company's signature, and a
+ * quote the customer accepted carries theirs.
+ *
+ * Applied here rather than typed onto forty offer literals, because the rule
+ * is what matters: `issuedAt` implies the company signed, `signedAt` implies
+ * the customer did. Writing it once is what stops the next scenario from
+ * quietly shipping an unsigned contract — `scripts/seed-test.mts` asserts the
+ * same two implications back.
+ */
+const CUSTOMER_MARK = [
+  'M 70 160 C 74 108 82 74 96 72 C 108 70 112 106 112 140 C 112 160 118 166 128 158 C 142 146 154 112 164 84 C 170 68 180 70 182 90 C 184 116 178 146 176 164',
+  'M 214 120 C 210 142 210 158 214 168 C 218 146 226 124 240 114 C 250 108 258 112 258 126 C 258 146 254 160 256 168 C 262 176 274 172 284 158 C 300 136 318 122 338 118 C 350 116 356 124 350 134 C 342 148 320 154 300 152 C 322 150 348 154 366 164',
+  'M 380 176 C 424 158 470 150 508 156',
+].join(' ');
+
+function seedSignatures(data: DataSet): DataSet {
+  const nameFor = (offer: Offer) => {
+    const request = data.requests.find((r) => r.id === offer.requestId);
+    const customer = data.customers.find((c) => c.id === request?.customerId);
+    return customer ? `${customer.firstName} ${customer.lastName}` : '—';
+  };
+
+  return {
+    ...data,
+    offers: data.offers.map((offer) => ({
+      ...offer,
+      ownerSignature: offer.issuedAt
+        ? { ...SEED_SETTINGS.ownerSignature, at: offer.issuedAt }
+        : undefined,
+      customerSignature: offer.signedAt
+        ? {
+            name: nameFor(offer),
+            role: 'Auftraggeber',
+            path: CUSTOMER_MARK,
+            at: offer.signedAt,
+          }
+        : undefined,
+    })),
+  };
+}
+
 export function buildScenario(name: ScenarioName, now: Date): DataSet {
+  return seedSignatures(rawScenario(name, now));
+}
+
+function rawScenario(name: ScenarioName, now: Date): DataSet {
   switch (name) {
     case 'fresh':
       /* Launch day. One person, no customers, no reviews, nothing booked — and

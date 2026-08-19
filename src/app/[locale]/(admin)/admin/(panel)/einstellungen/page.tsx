@@ -7,6 +7,8 @@ import { AlertTriangle, Info, Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Field, Input, Checkbox, NumberField } from '@/components/ui/field';
+import { SignatureMark } from '@/components/ui/signature-mark';
+import { SignaturePad } from '@/components/ui/signature-pad';
 import { PageHeader } from '@/components/ui/page-header';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SkeletonPage } from '@/components/ui/skeleton';
@@ -15,7 +17,7 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ClosurePeriod } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
-type Tab = 'regions' | 'hours' | 'fees';
+type Tab = 'regions' | 'hours' | 'fees' | 'contract';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 
@@ -48,8 +50,15 @@ export default function AdminSettingsPage({
   // The key register's locked state links straight to the insurance toggle,
   // which lives in the fees tab — without this it landed on the region editor.
   const [tab, setTab] = useState<Tab>(() =>
-    requestedTab === 'hours' || requestedTab === 'fees' ? requestedTab : 'regions',
+    requestedTab === 'hours' || requestedTab === 'fees' || requestedTab === 'contract'
+      ? requestedTab
+      : 'regions',
   );
+  /* Null while the stored mark stands. Non-null means a pad is open and this
+     is what has been drawn into it — the stored one is not touched until the
+     new mark is saved, so abandoning a redraw leaves every future contract
+     with the signature it already had. */
+  const [redrawn, setRedrawn] = useState<string | null>(null);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -57,6 +66,7 @@ export default function AdminSettingsPage({
     { id: 'regions', label: t('tabRegions') },
     { id: 'hours', label: t('tabHours') },
     { id: 'fees', label: t('tabFees') },
+    { id: 'contract', label: t('tabContract') },
   ];
 
   const toggleDay = (day: number) =>
@@ -471,6 +481,106 @@ export default function AdminSettingsPage({
                 updateSettings({ hasLiabilityInsurance: e.target.checked })
               }
             />
+          </div>
+        </section>
+      )}
+
+      {/*
+        §9.2 — the mark that goes on every quote.
+
+        It has to be *somewhere*: `sendOffer` reads it, so a signature stored
+        in settings that no screen can show or change is a value the panel
+        applies to contracts on the owner's behalf without ever admitting it
+        exists.
+      */}
+      {tab === 'contract' && (
+        <section className="mt-8 max-w-2xl">
+          <h2 className="display-type text-xl">{t('contractTitle')}</h2>
+          <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
+            {t('contractLead')}
+          </p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Field label={t('signatureName')}>
+              {(props) => (
+                <Input
+                  {...props}
+                  value={settings.ownerSignature.name}
+                  onChange={(e) =>
+                    updateSettings({
+                      ownerSignature: { ...settings.ownerSignature, name: e.target.value },
+                    })
+                  }
+                />
+              )}
+            </Field>
+            <Field label={t('signatureRole')} hint={t('signatureRoleHint')}>
+              {(props) => (
+                <Input
+                  {...props}
+                  value={settings.ownerSignature.role}
+                  onChange={(e) =>
+                    updateSettings({
+                      ownerSignature: { ...settings.ownerSignature, role: e.target.value },
+                    })
+                  }
+                />
+              )}
+            </Field>
+          </div>
+
+          <div className="mt-8">
+            <p className="label-type text-ink-tertiary">{t('signatureCurrent')}</p>
+            {redrawn === null ? (
+              <>
+                <div className="mt-3 rounded-[var(--radius-lg)] border border-line-subtle bg-page px-5 py-4">
+                  <SignatureMark
+                    path={settings.ownerSignature.path}
+                    label={settings.ownerSignature.name}
+                    className="text-ink"
+                  />
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => setRedrawn('')}
+                >
+                  {t('signatureRedraw')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <SignaturePad
+                  className="mt-3"
+                  label={t('signatureLabel')}
+                  hint={t('signatureHint')}
+                  clearLabel={t('signatureClearLabel')}
+                  onChange={setRedrawn}
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    disabled={!redrawn}
+                    onClick={() => {
+                      updateSettings({
+                        ownerSignature: { ...settings.ownerSignature, path: redrawn },
+                      });
+                      setRedrawn(null);
+                    }}
+                  >
+                    {t('signatureSave')}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setRedrawn(null)}>
+                    {t('signatureCancel')}
+                  </Button>
+                </div>
+              </>
+            )}
+            <p className="mt-4 flex gap-2 text-sm text-ink-tertiary">
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {t('signatureNote')}
+            </p>
           </div>
         </section>
       )}

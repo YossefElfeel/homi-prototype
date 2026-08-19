@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:seed": "npx --yes tsx@4 scripts/seed-test.mts",
-    "test:crm": "npx --yes tsx@4 scripts/crm-test.mts"
+    "test:crm": "npx --yes tsx@4 scripts/crm-test.mts",
+    "test:messages": "npx --yes tsx@4 scripts/message-test.mts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

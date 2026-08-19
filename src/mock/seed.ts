@@ -516,6 +516,24 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   },
 ];
 
+/**
+ * Marco Brunner's mark, as it would be after he drew it once in settings.
+ *
+ * Authored rather than captured, because the seed has to produce the same
+ * signature on every machine — a pad-drawn one would differ per reviewer and
+ * the screenshots in the brief would stop matching.
+ */
+const OWNER_SIGNATURE = {
+  name: 'Marco Brunner',
+  role: 'Inhaber',
+  path: [
+    'M 56 176 C 58 104 64 60 76 58 C 88 56 94 100 102 136 C 108 162 116 168 124 158 C 134 146 142 98 152 62 C 158 40 168 40 172 60 C 178 90 174 140 172 176',
+    'M 214 178 C 208 124 208 82 214 58 C 218 44 234 40 248 48 C 264 58 264 84 246 96 C 234 104 224 104 218 102 C 240 98 268 106 276 126 C 284 148 270 168 248 172 C 236 174 226 172 220 168',
+    'M 300 118 C 294 140 292 158 296 172 C 298 146 304 124 316 112 C 324 104 332 108 334 120 C 330 142 330 158 336 168 C 342 176 352 172 358 160 C 364 148 368 128 370 112 C 368 136 370 156 376 166 C 382 174 392 170 396 158 C 400 144 402 126 404 112 C 402 134 404 154 410 164 C 416 172 426 168 430 156 C 434 142 436 124 438 112 C 436 134 438 154 444 164 C 450 172 460 168 466 156 C 476 136 490 122 506 118 C 518 116 524 124 520 134 C 514 146 496 152 478 152',
+    'M 520 186 C 566 168 618 158 664 162',
+  ].join(' '),
+};
+
 export const SEED_SETTINGS: Settings = {
   hourlyRate: 49, // §5.1
   minimumHours: 2, // §5.1
@@ -544,5 +562,7 @@ export const SEED_SETTINGS: Settings = {
   // §21 item 12 — key holding stays locked until a policy exists.
   hasLiabilityInsurance: false,
   applicationRetentionMonths: 6, // revDSG
+  // §9.2 — drawn once on the settings screen, applied by `sendOffer`.
+  ownerSignature: OWNER_SIGNATURE,
   messageTemplates: SEED_TEMPLATES,
 };

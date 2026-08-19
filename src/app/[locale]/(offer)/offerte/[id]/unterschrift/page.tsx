@@ -1,15 +1,18 @@
 'use client';
 
-import { use, useRef, useState } from 'react';
+import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Money } from '@/components/ui/money';
 import { Checkbox } from '@/components/ui/field';
+import { SignaturePad } from '@/components/ui/signature-pad';
+import { ContractDocument, SignatureSlot } from '@/components/offer/contract';
 import { OfferShell } from '@/components/offer/offer-shell';
 import { HoldTimer } from '@/components/offer/hold-timer';
 import { useOffer } from '@/components/offer/use-offer';
@@ -22,8 +25,11 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
  * Distinct from §21 item 9, which removed signatures from *proof of work*. The
  * signature on the quote stays: it is what turns a price into an agreement.
  *
- * The three facts being signed for sit next to the pad, not above the fold
- * somewhere — nobody should have to scroll to check what they are agreeing to.
+ * What changed is what is being signed. This screen used to show three facts
+ * and a link to the terms, which is a summary — you check a summary, you sign
+ * a document. The agreement is on the page now, and the company's signature is
+ * already on it: the quote left the office signed, and this signature is the
+ * one that closes it.
  */
 export default function SignaturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -37,116 +43,98 @@ export default function SignaturePage({ params }: { params: Promise<{ id: string
   const data = useOffer(id);
   const signOffer = useStore((s) => s.signOffer);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-  const [hasSignature, setHasSignature] = useState(false);
+  /* The mark itself, as path data. The pad used to draw onto a canvas and
+     keep nothing, so what reached the store was a timestamp and the signature
+     was gone the moment the page unmounted. */
+  const [path, setPath] = useState('');
   const [accepted, setAccepted] = useState(false);
 
   if (!hydrated) return <div className="p-gutter text-ink-tertiary">…</div>;
   if (!data) return null;
-  const { offer, service, hold } = data;
+  const { offer, customer, property, service, hold } = data;
 
-  function point(event: React.PointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * canvas.width,
-      y: ((event.clientY - rect.top) / rect.height) * canvas.height,
-    };
-  }
-
-  function start(event: React.PointerEvent<HTMLCanvasElement>) {
-    const ctx = canvasRef.current!.getContext('2d')!;
-    const p = point(event);
-    ctx.strokeStyle = getComputedStyle(document.documentElement)
-      .getPropertyValue('--content-primary')
-      .trim();
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-    drawing.current = true;
-    canvasRef.current!.setPointerCapture(event.pointerId);
-  }
-
-  function move(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (!drawing.current) return;
-    const ctx = canvasRef.current!.getContext('2d')!;
-    const p = point(event);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    setHasSignature(true);
-  }
-
-  function end() {
-    drawing.current = false;
-  }
-
-  function clear() {
-    const canvas = canvasRef.current!;
-    canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
-    setHasSignature(false);
-  }
+  const slotStart = offer.confirmedSlot
+    ? new Date(offer.confirmedSlot)
+    : hold
+      ? new Date(hold.start)
+      : null;
 
   function proceed() {
-    signOffer(offer.id, now);
+    signOffer(
+      offer.id,
+      { name: `${customer.firstName} ${customer.lastName}`, path },
+      now,
+    );
     router.push(`/offerte/${offer.id}/zahlung`);
   }
 
   return (
     <OfferShell offer={offer} step="unterschrift">
       <div className="grid gap-10 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-8">
           <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">{t('title')}</h1>
           <p className="mt-4 max-w-[46ch] text-ink-secondary">{t('lead')}</p>
 
-          <div className="mt-8">
-            <p className="label-type text-ink-tertiary">{t('canvasLabel')}</p>
-            <canvas
-              ref={canvasRef}
-              width={720}
-              height={220}
-              onPointerDown={start}
-              onPointerMove={move}
-              onPointerUp={end}
-              onPointerLeave={end}
-              aria-label={t('canvasLabel')}
-              className="mt-2 w-full touch-none rounded-[var(--radius-lg)] border border-dashed border-line bg-card"
-              style={{ aspectRatio: '720 / 220' }}
-            />
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <p className="text-sm text-ink-tertiary">{t('canvasHint')}</p>
-              <Button variant="ghost" size="sm" onClick={clear} disabled={!hasSignature}>
-                <RotateCcw className="size-3.5" aria-hidden />
-                {t('clear')}
-              </Button>
-            </div>
-          </div>
+          <Card className="mt-8">
+            <CardHeader title={t('documentTitle')} description={t('documentHint')} divided />
+            <CardBody>
+              {/* Bounded and scrolled rather than run out to full length: the
+                  terms are long, and a page that ends four screens below the
+                  signature is a page nobody reaches the bottom of. */}
+              <div className="max-h-[28rem] overflow-y-auto pe-3">
+                <ContractDocument
+                  offer={offer}
+                  customer={customer}
+                  property={property}
+                  service={service}
+                  slotStart={slotStart}
+                />
+              </div>
+            </CardBody>
+          </Card>
 
-          <div className="mt-8">
-            <Checkbox
-              label={t('confirm')}
-              checked={accepted}
-              onChange={(e) => setAccepted(e.target.checked)}
-            />
-          </div>
+          <Card className="mt-6">
+            <CardHeader title={t('signaturesTitle')} />
+            <CardBody className="space-y-8">
+              {/* Company first, and stacked rather than side by side, because
+                  the order is the point: they signed, now you do. */}
+              <SignatureSlot
+                caption={t('companyCaption')}
+                signature={offer.ownerSignature}
+                pending={t('companyPending')}
+              />
 
-          <Button
-            size="lg"
-            className="mt-8"
-            onClick={proceed}
-            disabled={!hasSignature || !accepted}
-          >
-            {t('continue')}
-            <ArrowRight className="size-4" aria-hidden />
-          </Button>
-          {!hasSignature && (
-            <p className="mt-3 text-sm text-ink-tertiary">{t('required')}</p>
-          )}
+              <SignatureSlot caption={t('customerCaption')}>
+                <SignaturePad
+                  label={t('canvasLabel')}
+                  hint={t('canvasHint')}
+                  clearLabel={t('clear')}
+                  onChange={setPath}
+                />
+              </SignatureSlot>
+
+              <div>
+                <Checkbox
+                  label={t('confirm')}
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                />
+                <Button
+                  size="lg"
+                  className="mt-6"
+                  onClick={proceed}
+                  disabled={!path || !accepted}
+                >
+                  {t('continue')}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Button>
+                {!path && <p className="mt-3 text-sm text-ink-tertiary">{t('required')}</p>}
+              </div>
+            </CardBody>
+          </Card>
         </div>
 
-        <aside className="lg:col-span-5">
+        <aside className="lg:col-span-4">
           <div className="sticky top-6 space-y-5">
             {hold && <HoldTimer hold={hold} />}
             <dl className="surface-card divide-y divide-line-subtle p-6">
@@ -157,8 +145,8 @@ export default function SignaturePage({ params }: { params: Promise<{ id: string
               <div className="flex items-baseline justify-between gap-4 py-3">
                 <dt className="text-sm text-ink-secondary">{t('summaryDate')}</dt>
                 <dd data-numeric className="text-right">
-                  {hold
-                    ? `${format.dateTime(new Date(hold.start), 'dayMonth')}, ${format.dateTime(new Date(hold.start), 'time')}`
+                  {slotStart
+                    ? `${format.dateTime(slotStart, 'dayMonth')}, ${format.dateTime(slotStart, 'time')}`
                     : '—'}
                 </dd>
               </div>

@@ -81,6 +81,43 @@ for (const clock of CLOCKS) {
       check(`${tag} ${o.reference} has hours`, offerHours(o) > 0, String(offerHours(o)));
     }
 
+    /* -------------------------------------------------- signatures
+       §9.2 runs in one direction: the company signs on sending, the customer
+       signs on accepting. Both halves are derived in `seedSignatures` from
+       `issuedAt` and `signedAt`, so the implications are what to assert — a
+       scenario that hand-writes an offer past them would otherwise ship a
+       contract with nobody's name on it. */
+    for (const o of d.offers) {
+      check(
+        `${tag} ${o.reference} sent implies we signed`,
+        Boolean(o.issuedAt) === Boolean(o.ownerSignature),
+        `issued=${Boolean(o.issuedAt)} signed=${Boolean(o.ownerSignature)}`,
+      );
+      check(
+        `${tag} ${o.reference} accepted implies they signed`,
+        Boolean(o.signedAt) === Boolean(o.customerSignature),
+        `signedAt=${Boolean(o.signedAt)} mark=${Boolean(o.customerSignature)}`,
+      );
+      for (const [who, sig] of [
+        ['company', o.ownerSignature],
+        ['customer', o.customerSignature],
+      ] as const) {
+        if (!sig) continue;
+        check(`${tag} ${o.reference} ${who} mark has ink`, sig.path.trim().length > 0);
+        check(`${tag} ${o.reference} ${who} mark is named`, sig.name.trim().length > 0, sig.name);
+        check(`${tag} ${o.reference} ${who} mark has a role`, sig.role.trim().length > 0, sig.role);
+      }
+      /* The company cannot have signed after the customer: the quote goes out
+         signed, so its mark is never younger than the acceptance. */
+      if (o.ownerSignature && o.customerSignature) {
+        check(
+          `${tag} ${o.reference} we signed first`,
+          new Date(o.ownerSignature.at) <= new Date(o.customerSignature.at),
+          `${o.ownerSignature.at} → ${o.customerSignature.at}`,
+        );
+      }
+    }
+
     /* -------------------------------------------- proposed dates */
     for (const o of d.offers) {
       for (const s of o.proposedSlots ?? []) {

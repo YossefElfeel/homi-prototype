@@ -9,6 +9,7 @@ import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
+import { SignatureMark } from '@/components/ui/signature-mark';
 import { offerTotal } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -34,6 +35,7 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
   const offers = useStore((s) => s.data.offers);
   const customers = useStore((s) => s.data.customers);
   const services = useStore((s) => s.services);
+  const settings = useStore((s) => s.settings);
   const sendOffer = useStore((s) => s.sendOffer);
 
   const [channels, setChannels] = useState<string[]>(['channelEmail', 'channelWhatsapp']);
@@ -185,6 +187,28 @@ export default function SendOfferPage({ params }: { params: Promise<{ id: string
                 </p>
               </div>
             )}
+            {/*
+              §9.2 — the company signs first, and this is the moment it
+              happens. Sending used to be the one step where something was
+              added to the document without the screen saying so; the mark is
+              on the preview because the preview claims to be what goes out.
+            */}
+            <div className="mt-4 border-t border-line-subtle pt-3">
+              <h3 className="label-type text-ink-tertiary">{t('signatureTitle')}</h3>
+              <SignatureMark
+                path={settings.ownerSignature.path}
+                label={settings.ownerSignature.name}
+                className="mt-1 h-11 text-ink"
+              />
+              <p className="text-sm">
+                {settings.ownerSignature.name}
+                <span className="text-ink-tertiary"> · {settings.ownerSignature.role}</span>
+              </p>
+              <Button asChild variant="link" size="sm" className="mt-1">
+                <Link href="/admin/einstellungen?tab=contract">{t('signatureEdit')}</Link>
+              </Button>
+            </div>
+
             <Button asChild variant="link" className="mt-4">
               <Link href={`/offerte/${offer.id}`}>
                 <ExternalLink className="size-4" aria-hidden />
