@@ -14,7 +14,6 @@ import {
   MoreHorizontal,
   Phone,
   Plus,
-  UserPlus,
   X,
 } from 'lucide-react';
 
@@ -269,12 +268,6 @@ export default function CalendarPage({
                 <Link href={`/admin/buchungen/${booking.id}?action=reschedule`}>
                   <Clock className="size-4" aria-hidden />
                   {t('rowReschedule')}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/admin/buchungen/${booking.id}?action=assign`}>
-                  <UserPlus className="size-4" aria-hidden />
-                  {t('rowAssign')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
