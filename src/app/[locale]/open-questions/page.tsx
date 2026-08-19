@@ -63,6 +63,14 @@ const ENTRIES: Entry[] = [
     state: 'overridden',
   },
   {
+    ref: '§2a',
+    question: 'Does a booking need to be assignable after it is created?',
+    decision:
+      'Not today. Homivaro is one person, so every job is Marco’s: the booking screen carried an «Assigned to» line printing the same name on every record, and a «Zuweisen» panel whose select had one option in it. Both are gone, and the calendar’s row menu no longer offers a step that leads nowhere. `assigneeId` stays on the record and is still set when a job is created, because the hiring track exists to produce a second pair of hands — the day an application is accepted this screen needs the panel back, and this entry is the note that says so. Confirmed by the client: «no assigned to because it’s solo (one person)».',
+    screens: '63, 65',
+    state: 'decided',
+  },
+  {
     ref: '§9.2a',
     question: 'Does the quote need a contract document and a countersignature?',
     decision:

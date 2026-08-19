@@ -12,7 +12,6 @@ import {
   DoorClosed,
   Lock,
   User,
-  UserPlus,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -22,7 +21,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
-import { Field, Input, Select } from '@/components/ui/field';
+import { Field, Input } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
@@ -46,8 +45,8 @@ export default function BookingDetailPage({
   /**
    * Which panel to open on arrival.
    *
-   * The calendar's row menu offers reschedule, assign and cancel directly. It
-   * could not perform them there — a confirmation panel inside a dropdown is a
+   * The calendar's row menu offers reschedule and cancel directly. It could
+   * not perform them there — a confirmation panel inside a dropdown is a
    * dialog inside a menu, and a second copy of each action is how the two
    * screens start disagreeing about what cancelling does. So the menu links
    * here and says which panel it meant, and there is still exactly one
@@ -68,7 +67,6 @@ export default function BookingDetailPage({
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const offers = useStore((s) => s.data.offers);
-  const team = useStore((s) => s.data.team);
   const invoices = useStore((s) => s.data.invoices);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
@@ -84,7 +82,6 @@ export default function BookingDetailPage({
    * summaries; everything behind them opens when it is actually needed.
    */
   const [openSections, setOpenSections] = useState<string[]>(['slot']);
-  const [assigning, setAssigning] = useState(() => action === 'assign');
   const [rescheduling, setRescheduling] = useState(() => action === 'reschedule');
   const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(() =>
     action === 'cancel' ? 'cancel' : action === 'noAccess' ? 'noAccess' : null,
@@ -99,14 +96,10 @@ export default function BookingDetailPage({
   const property = properties.find((p) => p.id === booking.propertyId)!;
   const service = services.find((s) => s.slug === booking.serviceSlug)!;
   const offer = offers.find((o) => o.id === booking.offerId);
-  const assignee = team.find((m) => m.id === booking.assigneeId);
   const invoice = invoices.find((i) => i.bookingId === booking.id);
 
   const start = new Date(booking.start);
   const access = property.access;
-  const assigneeName = assignee
-    ? `${assignee.firstName} ${assignee.lastName}`
-    : t('unassigned');
 
   /**
    * Every action on this screen writes through here. The history entry is not
@@ -197,7 +190,14 @@ export default function BookingDetailPage({
                 </span>
               }
             >
-              <dl className="grid gap-5 sm:grid-cols-2">
+              {/*
+                Three facts, not four. «Ausführung» was here and is gone: this
+                is a one-person company, so every job is Marco's and a line
+                saying so on every booking is a column of the same name
+                repeated down the screen. `assigneeId` stays on the record and
+                is still set when a job is created — see /open-questions §2a.
+              */}
+              <dl className="grid gap-5 sm:grid-cols-3">
                 <div>
                   <dt className="label-type text-ink-tertiary">{t('whenTitle')}</dt>
                   <dd data-numeric className="mt-1.5">
@@ -217,16 +217,6 @@ export default function BookingDetailPage({
                   <dd data-numeric className="mt-1.5 text-lg">
                     {booking.duration / 60} Std.
                   </dd>
-                </div>
-                {/*
-                  Who is doing it is part of the plan for the day, not a card of
-                  its own — it was one line of text taking a whole surface, and
-                  the button under it is an action, so it has gone to where the
-                  actions are.
-                */}
-                <div>
-                  <dt className="label-type text-ink-tertiary">{t('assigneeTitle')}</dt>
-                  <dd className="mt-1.5 text-lg">{assigneeName}</dd>
                 </div>
               </dl>
             </CollapsibleSection>
@@ -402,61 +392,6 @@ export default function BookingDetailPage({
               </p>
             )}
             <div className="mt-3 space-y-2">
-              {assigning ? (
-                <div className="surface-card p-4">
-                  <Field label={t('assignLabel')}>
-                    {(props) => (
-                      <Select
-                        {...props}
-                        defaultValue={booking.assigneeId ?? ''}
-                        onChange={(e) => {
-                          const memberId = e.target.value;
-                          const member = team.find((m) => m.id === memberId);
-                          patchBooking(
-                            { assigneeId: memberId || undefined },
-                            {
-                              kind: 'assigned',
-                              label: member
-                                ? t('assignedTo', {
-                                    name: `${member.firstName} ${member.lastName}`,
-                                  })
-                                : t('unassigned'),
-                            },
-                          );
-                          setAssigning(false);
-                          toast.success(t('assignDone'));
-                        }}
-                      >
-                        <option value="">{t('unassigned')}</option>
-                        {team.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.firstName} {member.lastName}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-3"
-                    onClick={() => setAssigning(false)}
-                  >
-                    {t('dismiss')}
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="secondary"
-                  block
-                  disabled={settled}
-                  onClick={() => setAssigning(true)}
-                >
-                  <UserPlus className="size-4" aria-hidden />
-                  {t('assign')}
-                </Button>
-              )}
-
               {rescheduling ? (
                 <form
                   className="surface-card space-y-3 p-4"
