@@ -7,8 +7,6 @@ import {
   ArrowLeft,
   Building2,
   CalendarClock,
-  Eye,
-  EyeOff,
   FileText,
   Image as ImageIcon,
   KeyRound,
@@ -32,12 +30,12 @@ import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-se
 import { Lifecycle } from '@/components/ui/lifecycle';
 import { quoteStages } from '@/lib/quote-lifecycle';
 import { offerBooking, offerPayment } from '@/lib/offer-facts';
+import { SecretValue } from '@/components/ui/secret-value';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { estimateHours } from '@/mock/engines/pricing';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import { cn } from '@/lib/cn';
 
 const ACCESS_LABELS: Record<string, string> = {
   'customer-present': 'Kunde ist da',
@@ -108,7 +106,6 @@ export default function RequestDetailPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, id]);
 
-  const [revealed, setRevealed] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [rejecting, setRejecting] = useState(() => action === 'reject');
@@ -159,7 +156,6 @@ export default function RequestDetailPage({
   );
 
   const access = property.access;
-  const hasSecrets = Boolean(access?.boxCode || access?.alarmCode);
 
   function setInternalNote(note: string) {
     patchData({
@@ -445,39 +441,30 @@ export default function RequestDetailPage({
                 {t('accessLead')}
               </p>
 
-              {hasSecrets && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => setRevealed((v) => !v)}
-                >
-                  {revealed ? (
-                    <>
-                      <EyeOff className="size-3.5" aria-hidden />
-                      {t('accessHide')}
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="size-3.5" aria-hidden />
-                      {t('accessReveal')}
-                    </>
-                  )}
-                </Button>
-              )}
-
+              {/* The reveal is on each code now rather than one button over
+                  all of them — see `SecretValue`. Showing the alarm code
+                  should not also put the key-box code on a screen somebody is
+                  reading with the customer standing next to them. */}
               <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
                 <Row label="Methode">{access ? ACCESS_LABELS[access.method] : '—'}</Row>
                 {access?.keyLocation && <Row label="Ort">{access.keyLocation}</Row>}
                 {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
                 {access?.boxCode && (
                   <Row label="Code">
-                    <Secret value={access.boxCode} revealed={revealed} />
+                    <SecretValue
+                      value={access.boxCode}
+                      revealLabel={t('accessReveal')}
+                      hideLabel={t('accessHide')}
+                    />
                   </Row>
                 )}
                 {access?.alarmCode && (
                   <Row label="Alarmcode">
-                    <Secret value={access.alarmCode} revealed={revealed} />
+                    <SecretValue
+                      value={access.alarmCode}
+                      revealLabel={t('accessReveal')}
+                      hideLabel={t('accessHide')}
+                    />
                   </Row>
                 )}
                 {access?.personName && (
@@ -628,16 +615,4 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function Secret({ value, revealed }: { value: string; revealed: boolean }) {
-  return (
-    <span
-      data-numeric
-      className={cn(
-        'rounded-sm px-1.5 py-0.5',
-        revealed ? 'bg-status-warning text-status-warning-fg' : 'bg-sunken tracking-widest',
-      )}
-    >
-      {revealed ? value : '••••'}
-    </span>
-  );
-}
+

@@ -10,7 +10,13 @@
 
 import { SCENARIOS, buildScenario, seedHolds } from '../src/mock/scenarios.ts';
 import { offerHours, offerTotal } from '../src/mock/engines/offers.ts';
-import { offerCoverage, offerPayment, offerBooking, offerRhythm } from '../src/lib/offer-facts.ts';
+import {
+  bookingPaymentState,
+  offerCoverage,
+  offerPayment,
+  offerBooking,
+  offerRhythm,
+} from '../src/lib/offer-facts.ts';
 import { availabilityCalendar, startOfDay } from '../src/mock/engines/availability.ts';
 import { businessWeekday, zonedParts } from '../src/lib/business-time.ts';
 import { SEED_SETTINGS } from '../src/mock/seed.ts';
@@ -214,6 +220,21 @@ for (const clock of CLOCKS) {
       check(`${tag} a recurring quote exists`, states.some((s) => s.rhythm !== 'oneTime'));
       check(`${tag} a quote awaiting a date exists`, states.some((s) => s.proposing));
       check(`${tag} a quote with a confirmed date exists`, states.some((s) => s.confirmed));
+    }
+
+    /* --------------------------------------- money on a booking
+       The bookings list filters on this, and it is derived from two records
+       that are never both present — a job paid at the quote has no invoice,
+       one invoiced afterwards has no payment. A filter option that matches
+       nothing in the scenario a reviewer opens on reads as a broken filter
+       rather than an empty result. */
+    if (name !== 'fresh') {
+      const money = new Set(
+        d.bookings.map((b) => bookingPaymentState(b, d.payments, d.invoices)),
+      );
+      for (const want of ['paid', 'pending', 'unpaid', 'covered'] as const) {
+        check(`${tag} a ${want} booking exists`, money.has(want), [...money].join(','));
+      }
     }
 
     /* `fresh` is launch day and the empty states are the deliverable. */

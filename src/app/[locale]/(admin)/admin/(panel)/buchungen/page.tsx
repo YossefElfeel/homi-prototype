@@ -20,11 +20,21 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { CustomerLink } from '@/components/ui/record-link';
 import { Toolbar } from '@/components/ui/toolbar';
 import { offerTotal } from '@/mock/engines/offers';
-import { customerName } from '@/lib/offer-facts';
+import { bookingPaymentState, customerName } from '@/lib/offer-facts';
 import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Booking } from '@/mock/schema';
+import { cn } from '@/lib/cn';
+
+/**
+ * The four the derivation can return, in the order the money moves.
+ *
+ * «Covered» is on the list because a plan visit is neither paid nor owed for
+ * on its own — the monthly charge settled it — and a filter that had to file
+ * it under one of the other three would be wrong whichever it picked.
+ */
+const PAYMENT_STATES = ['paid', 'pending', 'unpaid', 'covered'] as const;
 
 /**
  * Bookings — new.
@@ -55,18 +65,26 @@ export default function BookingsPage() {
   const customers = useStore((s) => s.data.customers);
   const offers = useStore((s) => s.data.offers);
   const invoices = useStore((s) => s.data.invoices);
+  const payments = useStore((s) => s.data.payments);
   const services = useStore((s) => s.services);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
+  const [paid, setPaid] = useState('');
 
   const nameOf = (b: Booking) =>
     customerName(customers.find((c) => c.id === b.customerId));
+
+  const paymentOf = (b: Booking) => bookingPaymentState(b, payments, invoices);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return [...bookings]
       .filter((b) => !status || b.status === status)
+      /* The list had a status filter and no money filter, so "who still owes
+         us" — the question a Friday afternoon is made of — meant reading the
+         invoice column down the page and holding the count in your head. */
+      .filter((b) => !paid || paymentOf(b) === paid)
       .filter((b) => {
         if (!q) return true;
         const customer = customers.find((c) => c.id === b.customerId);
@@ -76,7 +94,8 @@ export default function BookingsPage() {
         );
       })
       .sort((a, b) => b.start.localeCompare(a.start));
-  }, [bookings, customers, query, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings, customers, invoices, payments, query, status, paid]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -165,6 +184,35 @@ export default function BookingsPage() {
       },
     },
     {
+      /*
+       * Derived rather than read off one record, because there is no single
+       * record to read: a job paid at the quote has no invoice, and one
+       * invoiced afterwards has no payment. Next to the invoice column so the
+       * two together say how the money came and where it got to.
+       */
+      key: 'paid',
+      header: t('colPaid'),
+      align: 'end',
+      tableOnly: true,
+      sortBy: (b) => paymentOf(b),
+      cell: (b) => {
+        const state = paymentOf(b);
+        return (
+          <span
+            className={cn(
+              'text-sm',
+              state === 'paid' && 'text-status-success-fg',
+              state === 'pending' && 'text-status-warning-fg',
+              state === 'unpaid' && 'text-status-danger-fg',
+              state === 'covered' && 'text-ink-tertiary',
+            )}
+          >
+            {t(`paid_${state}`)}
+          </span>
+        );
+      },
+    },
+    {
       key: 'invoice',
       header: t('colInvoice'),
       align: 'end',
@@ -200,26 +248,42 @@ export default function BookingsPage() {
           clearLabel: appT('clearSearch'),
         }}
         count={
-          query || status
+          query || status || paid
             ? appT('results', { shown: visible.length, total: bookings.length })
             : appT('resultsAll', { total: bookings.length })
         }
         filters={
-          <label className="min-w-40">
-            <span className="sr-only">{t('filterStatus')}</span>
-            {/* Options come from the status registry, so the filter and the
-                badge it filters can never read differently. */}
-            <Select dense value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">
-                {t('filterStatus')}: {t('filterAll')}
-              </option>
-              {statesOf('booking').map((state) => (
-                <option key={state} value={state}>
-                  {statusT(state)}
+          <>
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterStatus')}</span>
+              {/* Options come from the status registry, so the filter and the
+                  badge it filters can never read differently. */}
+              <Select dense value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="">
+                  {t('filterStatus')}: {t('filterAll')}
                 </option>
-              ))}
-            </Select>
-          </label>
+                {statesOf('booking').map((state) => (
+                  <option key={state} value={state}>
+                    {statusT(state)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterPaid')}</span>
+              <Select dense value={paid} onChange={(e) => setPaid(e.target.value)}>
+                <option value="">
+                  {t('filterPaid')}: {t('filterAll')}
+                </option>
+                {PAYMENT_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {t(`paid_${state}`)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
         }
       />
 

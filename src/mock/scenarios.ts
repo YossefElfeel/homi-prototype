@@ -465,6 +465,57 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       history: [{ at: iso(days(now, -3)), kind: 'created', label: 'Gebucht' }],
     },
+    /*
+     * Done, invoiced, and the money has not arrived — the only one of the four
+     * payment states the seed could not produce.
+     *
+     * Every other booking here is either paid at the quote, settled by the
+     * plan, or sitting on a draft invoice, so the bookings list could show a
+     * "Zahlung" filter with an option that matched nothing in the scenario a
+     * reviewer opens on. A filter whose option is always empty reads as a
+     * broken filter, not an empty result.
+     */
+    {
+      id: 'bkg_3',
+      reference: 'B-1048',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'fensterreinigung',
+      start: iso(at(days(now, -6), 13)),
+      duration: 120,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'invoiced',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -13)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -6)), kind: 'completed', label: 'Einsatz abgeschlossen' },
+        { at: iso(days(now, -5)), kind: 'invoiced', label: 'Rechnung versendet' },
+      ],
+    },
+    /*
+     * sub_1's next visit — the plan case with nothing owed on it.
+     *
+     * bkg_1 is the same plan and already carries a draft invoice, so before
+     * this every scenario built on `baseData` had a plan visit that read as
+     * money outstanding and none that read as settled by the monthly charge.
+     * That is the whole reason `covered` exists as a state.
+     */
+    {
+      id: 'bkg_4',
+      reference: 'B-1049',
+      customerId: 'cus_1',
+      propertyId: 'prp_1',
+      serviceSlug: 'unterhaltsreinigung',
+      subscriptionId: 'sub_1',
+      start: iso(at(days(now, 8), 9)),
+      duration: 300,
+      arrivalWindow: 120,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Abo-Termin geplant' }],
+    },
   ];
 
   const subscriptions: Subscription[] = [
@@ -558,6 +609,17 @@ function baseData(now: Date): DataSet {
       dueAt: iso(days(now, 4)),
       paidAt: iso(days(now, -19)),
       qrReference: '21 00000 00003 13947 14300 08994',
+    },
+    {
+      id: 'inv_sent',
+      reference: 'RE-2026-0049',
+      customerId: 'cus_2',
+      bookingId: 'bkg_3',
+      lines: [{ label: 'Fensterreinigung', quantity: 2, unitPrice: 49 }],
+      status: 'sent',
+      issuedAt: iso(days(now, -5)),
+      dueAt: iso(days(now, 25)),
+      qrReference: '21 00000 00003 13947 14300 09008',
     },
   ];
 

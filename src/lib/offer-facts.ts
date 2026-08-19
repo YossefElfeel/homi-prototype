@@ -17,6 +17,7 @@ import type {
   Booking,
   Customer,
   ID,
+  Invoice,
   Offer,
   PackageCredit,
   Payment,
@@ -127,6 +128,44 @@ export function offerPayment(offerId: ID, payments: Payment[]): Payment | undefi
 /** The job a paid quote turned into. */
 export function offerBooking(offerId: ID, bookings: Booking[]): Booking | undefined {
   return bookings.find((b) => b.offerId === offerId);
+}
+
+export type BookingPaymentState = 'paid' | 'pending' | 'unpaid' | 'covered';
+
+/**
+ * Where the money for one job stands — §10.
+ *
+ * Money reaches a booking by two different roads and a booking can be on
+ * either: a quote paid up front before the slot was confirmed, or an invoice
+ * raised after the work. The bookings list showed the invoice column only, so
+ * every job paid at the quote read as having no invoice — which is true, and
+ * says nothing about whether we were paid.
+ *
+ * `covered` is not a fourth colour for tidiness. A plan visit has no quote and
+ * no invoice of its own because the monthly charge already paid for it; filing
+ * it under "unpaid" would point the owner at money nobody owes, which is the
+ * same mistake `paymentNotDue` exists to prevent on the quotes list.
+ */
+export function bookingPaymentState(
+  booking: Booking,
+  payments: Payment[],
+  invoices: Invoice[],
+): BookingPaymentState {
+  const invoice = invoices.find((i) => i.bookingId === booking.id);
+  const payment = booking.offerId ? offerPayment(booking.offerId, payments) : undefined;
+
+  if (payment?.status === 'succeeded' || invoice?.status === 'paid') return 'paid';
+  if (
+    payment?.status === 'pending' ||
+    invoice?.status === 'sent' ||
+    invoice?.status === 'overdue'
+  ) {
+    return 'pending';
+  }
+  /* No quote and no invoice: the plan paid for it. A draft invoice is not this
+     — it means we have not asked yet, which is money still outstanding. */
+  if (!booking.offerId && !invoice) return 'covered';
+  return 'unpaid';
 }
 
 /* ------------------------------------------------------------- history */

@@ -4,21 +4,31 @@ import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, Check, DoorClosed, Eye, EyeOff, Lock, UserPlus } from 'lucide-react';
+import {
+  ArrowLeft,
+  Building2,
+  CalendarClock,
+  Check,
+  DoorClosed,
+  Lock,
+  User,
+  UserPlus,
+} from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
 import { Field, Input, Select } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
 import { offerTotal } from '@/mock/engines/offers';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import { cn } from '@/lib/cn';
 
 const ACCESS_LABELS: Record<string, string> = {
   'customer-present': 'Kunde ist da',
@@ -65,7 +75,15 @@ export default function BookingDetailPage({
   const patchData = useStore((s) => s.patchData);
   const now = useNow();
 
-  const [revealed, setRevealed] = useState(false);
+  /*
+   * The slot is open, the other two carry a summary while closed.
+   *
+   * Three cards of flat text — when, who, where — was most of the screen's
+   * height for facts that are read once on arrival and then not again. The
+   * name and the address are the two you keep glancing at, so they are the
+   * summaries; everything behind them opens when it is actually needed.
+   */
+  const [openSections, setOpenSections] = useState<string[]>(['slot']);
   const [assigning, setAssigning] = useState(() => action === 'assign');
   const [rescheduling, setRescheduling] = useState(() => action === 'reschedule');
   const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(() =>
@@ -86,7 +104,9 @@ export default function BookingDetailPage({
 
   const start = new Date(booking.start);
   const access = property.access;
-  const hasSecrets = Boolean(access?.boxCode || access?.alarmCode);
+  const assigneeName = assignee
+    ? `${assignee.firstName} ${assignee.lastName}`
+    : t('unassigned');
 
   /**
    * Every action on this screen writes through here. The history entry is not
@@ -164,29 +184,25 @@ export default function BookingDetailPage({
       )}
 
       <div className="mt-8 grid gap-10 lg:grid-cols-12">
-        {/*
-          The three blocks below were the only things on this screen not in
-          a card: a hairline grid with no heading at all, then two bare
-          sections whose titles floated on the page background while the
-          column beside them was cards the whole way down. Reading it, the
-          eye had to guess where the access details stopped and the history
-          started.
-
-          Same content, same order — one surface idiom, and each block now
-          has an edge that says where it ends.
-        */}
         <div className="space-y-6 lg:col-span-7">
-          <Card>
-            <CardHeader title={t('scheduleTitle')} />
-            <CardBody>
-              <dl className="grid gap-5 sm:grid-cols-3">
+          <h2 className="label-type text-ink-tertiary">{t('overviewTitle')}</h2>
+          <SectionGroup value={openSections} onValueChange={setOpenSections}>
+            <CollapsibleSection
+              value="slot"
+              icon={CalendarClock}
+              title={t('scheduleTitle')}
+              summary={
+                <span data-numeric>
+                  {format.dateTime(start, 'dayMonth')}, {format.dateTime(start, 'time')}
+                </span>
+              }
+            >
+              <dl className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <dt className="label-type text-ink-tertiary">{t('whenTitle')}</dt>
                   <dd data-numeric className="mt-1.5">
                     {format.dateTime(start, 'dayMonth')}
-                    <span className="block text-lg">
-                      {format.dateTime(start, 'time')}
-                    </span>
+                    <span className="block text-lg">{format.dateTime(start, 'time')}</span>
                   </dd>
                 </div>
                 <div>
@@ -202,35 +218,85 @@ export default function BookingDetailPage({
                     {booking.duration / 60} Std.
                   </dd>
                 </div>
+                {/*
+                  Who is doing it is part of the plan for the day, not a card of
+                  its own — it was one line of text taking a whole surface, and
+                  the button under it is an action, so it has gone to where the
+                  actions are.
+                */}
+                <div>
+                  <dt className="label-type text-ink-tertiary">{t('assigneeTitle')}</dt>
+                  <dd className="mt-1.5 text-lg">{assigneeName}</dd>
+                </div>
               </dl>
-            </CardBody>
-          </Card>
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              value="customer"
+              icon={User}
+              title={t('customerTitle')}
+              summary={`${customer.firstName} ${customer.lastName}`}
+            >
+              <dl className="divide-y divide-line-subtle border-t border-line-subtle">
+                <Row label={t('customerName')}>
+                  <Link
+                    href={`/admin/kunden/${customer.id}`}
+                    className="font-medium text-ink-accent hover:underline"
+                  >
+                    {customer.firstName} {customer.lastName}
+                  </Link>
+                </Row>
+                <Row label={t('customerPhone')}>
+                  <a
+                    href={`tel:${customer.phone.replace(/\s/g, '')}`}
+                    data-numeric
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {customer.phone}
+                  </a>
+                </Row>
+                <Row label={t('customerEmail')}>
+                  <a
+                    href={`mailto:${customer.email}`}
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {customer.email}
+                  </a>
+                </Row>
+              </dl>
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              value="property"
+              icon={Building2}
+              title={t('propertyTitle')}
+              summary={
+                <>
+                  {property.street}, <span data-numeric>{property.postcode}</span>{' '}
+                  {property.city}
+                </>
+              }
+            >
+              <dl className="divide-y divide-line-subtle border-t border-line-subtle">
+                <Row label={t('propertyAddress')}>
+                  <Link
+                    href={`/admin/objekte/${property.id}`}
+                    className="text-ink-accent hover:underline"
+                  >
+                    {property.street}, <span data-numeric>{property.postcode}</span>{' '}
+                    {property.city}
+                  </Link>
+                </Row>
+                <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
+                <Row label={t('propertyArea')}>
+                  <span data-numeric>{property.area} m²</span>
+                </Row>
+              </dl>
+            </CollapsibleSection>
+          </SectionGroup>
 
           <Card>
-            <CardHeader
-              title={t('accessTitle')}
-              actions={
-                hasSecrets && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setRevealed((v) => !v)}
-                  >
-                    {revealed ? (
-                      <>
-                        <EyeOff className="size-3.5" aria-hidden />
-                        {rt('accessHide')}
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="size-3.5" aria-hidden />
-                        {rt('accessReveal')}
-                      </>
-                    )}
-                  </Button>
-                )
-              }
-            />
+            <CardHeader title={t('accessTitle')} />
             <CardBody>
               {/* Inside a card the outer rules are the card's own edges, so
                   only the rules between the rows are left. */}
@@ -240,12 +306,20 @@ export default function BookingDetailPage({
                 {access?.boxLocation && <Row label="Kasten">{access.boxLocation}</Row>}
                 {access?.boxCode && (
                   <Row label="Code">
-                    <Secret value={access.boxCode} revealed={revealed} />
+                    <SecretValue
+                      value={access.boxCode}
+                      revealLabel={rt('accessReveal')}
+                      hideLabel={rt('accessHide')}
+                    />
                   </Row>
                 )}
                 {access?.alarmCode && (
                   <Row label="Alarmcode">
-                    <Secret value={access.alarmCode} revealed={revealed} />
+                    <SecretValue
+                      value={access.alarmCode}
+                      revealLabel={rt('accessReveal')}
+                      hideLabel={rt('accessHide')}
+                    />
                   </Row>
                 )}
               </dl>
@@ -281,107 +355,38 @@ export default function BookingDetailPage({
 
         <aside className="space-y-6 lg:col-span-5">
           {/*
-            This card used to be plain text. A job touches a customer, a
-            property, a quote and often an invoice — all four have detail
-            screens, and none of them was reachable from here.
+            What the job is worth and the two records that carry that money.
+            The customer and the property used to share this card; they are
+            facts about the job rather than about the money, and they are in
+            the overview now.
           */}
-          <div className="surface-card p-5">
-            <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
-            <Link
-              href={`/admin/kunden/${customer.id}`}
-              className="mt-2 block font-medium underline decoration-from-font underline-offset-4"
-            >
-              {customer.firstName} {customer.lastName}
-            </Link>
-            <p data-numeric className="text-sm text-ink-secondary">
-              {customer.phone}
-            </p>
-            <h3 className="label-type mt-5 text-ink-tertiary">{t('propertyTitle')}</h3>
-            <Link
-              href={`/admin/objekte/${property.id}`}
-              className="mt-1 block text-sm text-ink-secondary underline decoration-from-font underline-offset-4"
-            >
-              {property.street}, <span data-numeric>{property.postcode}</span>{' '}
-              {property.city}
-            </Link>
-            <p className="mt-1 text-sm text-ink-tertiary">{service.name[locale]}</p>
-
-            {offer && (
-              <>
-                <p className="mt-5 flex items-baseline justify-between gap-4 border-t border-line-subtle pt-4">
+          <Card>
+            <CardHeader title={t('moneyTitle')} />
+            <CardBody>
+              {offer ? (
+                <p className="flex items-baseline justify-between gap-4">
                   <span className="text-sm text-ink-secondary">{t('amountTitle')}</span>
                   <Money amount={offerTotal(offer)} emphasis="strong" />
                 </p>
-                <Link
-                  href={`/offerte/${offer.id}`}
-                  className="mt-2 block text-sm underline decoration-from-font underline-offset-4"
-                >
-                  {t('offerLink')}
-                </Link>
-              </>
-            )}
-
-            {invoice && (
-              <Link
-                href={`/admin/rechnungen/${invoice.id}`}
-                className="mt-2 block text-sm underline decoration-from-font underline-offset-4"
-              >
-                {t('invoiceLink', { reference: invoice.reference })}
-              </Link>
-            )}
-          </div>
-
-          <div className="surface-card p-5">
-            <h2 className="label-type text-ink-tertiary">{t('assigneeTitle')}</h2>
-            <p className="mt-2">
-              {assignee ? `${assignee.firstName} ${assignee.lastName}` : t('unassigned')}
-            </p>
-            {assigning ? (
-              <Field label={t('assignLabel')} className="mt-4">
-                {(props) => (
-                  <Select
-                    {...props}
-                    defaultValue={booking.assigneeId ?? ''}
-                    onChange={(e) => {
-                      const memberId = e.target.value;
-                      const member = team.find((m) => m.id === memberId);
-                      patchBooking(
-                        { assigneeId: memberId || undefined },
-                        {
-                          kind: 'assigned',
-                          label: member
-                            ? t('assignedTo', {
-                                name: `${member.firstName} ${member.lastName}`,
-                              })
-                            : t('unassigned'),
-                        },
-                      );
-                      setAssigning(false);
-                      toast.success(t('assignDone'));
-                    }}
-                  >
-                    <option value="">{t('unassigned')}</option>
-                    {team.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.firstName} {member.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-            ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="mt-4"
-                disabled={settled}
-                onClick={() => setAssigning(true)}
-              >
-                <UserPlus className="size-3.5" aria-hidden />
-                {t('assign')}
-              </Button>
-            )}
-          </div>
+              ) : (
+                /* A plan visit has no amount of its own — the monthly charge
+                   covers it, and printing a total here would count it twice. */
+                <p className="text-sm text-ink-secondary">{t('amountOnPlan')}</p>
+              )}
+              {offer && (
+                <Button asChild block variant="secondary" className="mt-4">
+                  <Link href={`/admin/offerten/${offer.id}`}>{t('offerLink')}</Link>
+                </Button>
+              )}
+              {invoice && (
+                <Button asChild block variant="secondary" className="mt-2">
+                  <Link href={`/admin/rechnungen/${invoice.id}`}>
+                    {t('invoiceLink', { reference: invoice.reference })}
+                  </Link>
+                </Button>
+              )}
+            </CardBody>
+          </Card>
 
           <div>
             <h2 className="label-type text-ink-tertiary">{t('actionsTitle')}</h2>
@@ -397,6 +402,61 @@ export default function BookingDetailPage({
               </p>
             )}
             <div className="mt-3 space-y-2">
+              {assigning ? (
+                <div className="surface-card p-4">
+                  <Field label={t('assignLabel')}>
+                    {(props) => (
+                      <Select
+                        {...props}
+                        defaultValue={booking.assigneeId ?? ''}
+                        onChange={(e) => {
+                          const memberId = e.target.value;
+                          const member = team.find((m) => m.id === memberId);
+                          patchBooking(
+                            { assigneeId: memberId || undefined },
+                            {
+                              kind: 'assigned',
+                              label: member
+                                ? t('assignedTo', {
+                                    name: `${member.firstName} ${member.lastName}`,
+                                  })
+                                : t('unassigned'),
+                            },
+                          );
+                          setAssigning(false);
+                          toast.success(t('assignDone'));
+                        }}
+                      >
+                        <option value="">{t('unassigned')}</option>
+                        {team.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => setAssigning(false)}
+                  >
+                    {t('dismiss')}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="secondary"
+                  block
+                  disabled={settled}
+                  onClick={() => setAssigning(true)}
+                >
+                  <UserPlus className="size-4" aria-hidden />
+                  {t('assign')}
+                </Button>
+              )}
+
               {rescheduling ? (
                 <form
                   className="surface-card space-y-3 p-4"
@@ -533,19 +593,5 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dt className="shrink-0 text-sm text-ink-tertiary">{label}</dt>
       <dd className="text-right">{children}</dd>
     </div>
-  );
-}
-
-function Secret({ value, revealed }: { value: string; revealed: boolean }) {
-  return (
-    <span
-      data-numeric
-      className={cn(
-        'rounded-sm px-1.5 py-0.5',
-        revealed ? 'bg-status-warning text-status-warning-fg' : 'bg-sunken tracking-widest',
-      )}
-    >
-      {revealed ? value : '••••'}
-    </span>
   );
 }
