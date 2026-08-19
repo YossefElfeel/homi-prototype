@@ -392,9 +392,18 @@ function baseData(now: Date): DataSet {
       photoIds: ['pho_1', 'pho_2'],
       customerNote:
         'Übergabe ist am 20., die Verwaltung ist streng. Backofen ist der kritische Punkt.',
-      status: 'new',
-      outOfArea: false,
-      createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * 19)),
+      /*
+       * `off_2` hangs off this request, was issued 20 days ago and ran out 6
+       * days ago — and the request said `new`. So screen 53 opened on a
+       * lifecycle that read "Eingegangen gestern → Offerte versendet vor 20
+       * Tagen", offered "Offerte schreiben" for a quote that had already been
+       * written, and offered "Ablehnen" on something the calendar had closed.
+       * The request ends where its quote ended.
+       */
+      status: 'expired',
+      createdAt: iso(days(now, -21)),
+      openedAt: iso(days(now, -20)),
+      respondedAt: iso(days(now, -20)),
     },
     {
       id: 'req_2',
@@ -407,7 +416,6 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       customerNote: 'Weekly would be ideal. Invoice must go to the company address.',
       status: 'new',
-      outOfArea: false,
       createdAt: iso(new Date(now.getTime() - 1000 * 60 * 60 * 3)),
       subscriptionIntent: 'premium',
     },
@@ -421,7 +429,6 @@ function baseData(now: Date): DataSet {
       preferred: { date: iso(days(now, 4)), band: 'afternoon', flexible: false },
       photoIds: [],
       status: 'offerSent',
-      outOfArea: false,
       createdAt: iso(days(now, -2)),
       openedAt: iso(days(now, -2)),
       respondedAt: iso(days(now, -2)),
@@ -656,7 +663,7 @@ function baseData(now: Date): DataSet {
     queueRequest(now, { id: 'req_q_offer', ref: 'A-2494', n: 5, service: 'umzugsreinigung', status: 'offerSent', agedDays: 3, preferredInDays: 12 }),
     queueRequest(now, { id: 'req_q_revision', ref: 'A-2495', n: 2, service: 'grundreinigung', status: 'revisionRequested', agedDays: 5, note: 'Können Sie die Fenster rausrechnen?' }),
     queueRequest(now, { id: 'req_q_accepted', ref: 'A-2496', n: 9, service: 'einmalreinigung', status: 'accepted', agedDays: 12 }),
-    queueRequest(now, { id: 'req_q_rejected', ref: 'A-2497', n: 12, service: 'einmalreinigung', status: 'rejected', agedDays: 8, internal: 'Abgelehnt: ausserhalb Gebiet, Anfahrt trägt sich nicht.' }),
+    queueRequest(now, { id: 'req_q_rejected', ref: 'A-2497', n: 12, service: 'einmalreinigung', status: 'rejected', agedDays: 8, internal: 'Abgelehnt: Termin nur am Sonntag möglich, das geht bei uns nicht.' }),
     queueRequest(now, { id: 'req_q_expired', ref: 'A-2498', n: 10, service: 'fensterreinigung', status: 'expired', agedDays: 38 }),
     queueRequest(now, { id: 'req_q_cancel', ref: 'A-2499', n: 4, service: 'bueroreinigung', status: 'cancelledByCustomer', agedDays: 6, internal: 'Zurückgezogen: intern gelöst.' }),
   ];
@@ -694,7 +701,6 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       customerNote: 'Die Fenster zur Seeseite, wenn möglich vor dem Wochenende.',
       status: 'offerSent',
-      outOfArea: false,
       createdAt: iso(days(now, -2)),
       openedAt: iso(days(now, -2)),
       respondedAt: iso(days(now, -1)),
@@ -1551,9 +1557,11 @@ const EXTRA_PEOPLE: {
     { n: 9, first: 'Élodie', last: 'Perret', lang: 'fr', phone: '+41 78 116 95 37', since: 47, street: 'Wiesenstrasse 11', postcode: '8700', city: 'Küsnacht', kind: 'apartment', area: 78, rooms: 3, baths: 1, floor: 4, lift: true },
     { n: 10, first: 'Giulia', last: 'Ferrari', lang: 'it', phone: '+41 76 350 78 14', since: 39, street: 'Rebbergweg 5', postcode: '8706', city: 'Meilen', kind: 'apartment', area: 96, rooms: 3.5, baths: 1, floor: 1, lift: false },
     { n: 11, first: 'Oliver', last: 'Hartmann', lang: 'en', phone: '+41 79 708 26 83', since: 28, street: 'Lindenhof 4', postcode: '8712', city: 'Stäfa', kind: 'office', area: 140, rooms: 5, baths: 2, floor: 0, lift: false },
-    /* Outside the eight municipalities. §20.1 lets the request through and
-       flags it — the list has a chip for exactly this, and it needs a row. */
-  { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Militärstrasse 76', postcode: '8004', city: 'Zürich', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
+    /* Was 8004 Zürich, staging the out-of-area chip on the queue. The area is
+       a gate now, so that household could not have a request at all — and the
+       row it was there to fill still has to exist, which is why it moved into
+       the eight rather than being deleted. */
+  { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Seehaldenstrasse 12', postcode: '8132', city: 'Egg', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
 ];
 
 const extraCustomers = (now: Date): Customer[] =>
@@ -1633,7 +1641,6 @@ function queueRequest(
     preferredInDays?: number;
   },
 ): ServiceRequest {
-  const p = EXTRA_PEOPLE.find((x) => x.n === input.n)!;
   const createdAt =
     input.agedHours != null
       ? iso(new Date(now.getTime() - input.agedHours * 3_600_000))
@@ -1657,7 +1664,6 @@ function queueRequest(
     customerNote: input.note ?? SERVICE_NOTES[input.service],
     internalNote: input.internal,
     status: input.status,
-    outOfArea: p.postcode === '8004',
     createdAt,
     openedAt: read ? createdAt : undefined,
     respondedAt: read && input.agedDays != null ? iso(days(now, -Math.max(1, input.agedDays - 1))) : undefined,
@@ -1712,12 +1718,14 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     {
       id: 'prp_6',
       customerId: 'cus_6',
-      /* Outside the eight municipalities on purpose — §20.1 lets the request
-         through and flags it, and the list has a chip for exactly this. */
-      label: 'Wohnung Zürich',
-      street: 'Langstrasse 140',
-      postcode: '8004',
-      city: 'Zürich',
+      /* Was Langstrasse 140, 8004 Zürich — deliberately outside the eight, to
+         give `req_s_rejected` an out-of-area reason. The area is refused at
+         intake now, so a request against this address could not exist and the
+         matrix would have been staging an impossible row. */
+      label: 'Wohnung Meilen',
+      street: 'Dorfstrasse 24',
+      postcode: '8706',
+      city: 'Meilen',
       kind: 'apartment',
       area: 68,
       rooms: 2.5,
@@ -1754,7 +1762,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       /* No openedAt: a draft has not arrived, so no clock has started. The
          deadline column has to print "—" here, not a breach. */
       status: 'draft',
-      outOfArea: false,
       createdAt: hours(50),
     },
     {
@@ -1769,7 +1776,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       customerNote: 'Sprossenfenster, teilweise sehr hoch.',
       status: 'new',
-      outOfArea: false,
       createdAt: hours(6), // inside the window
     },
     {
@@ -1783,7 +1789,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       customerNote: 'Wohnung war lange vermietet, ist ziemlich mitgenommen.',
       status: 'new',
-      outOfArea: true, // 8004 — outside the eight municipalities
       createdAt: hours(50), // one full day late
     },
     {
@@ -1797,7 +1802,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       preferred: { flexible: true },
       photoIds: [],
       status: 'inReview',
-      outOfArea: true,
       createdAt: hours(150), // five days late — sorts to the top
       openedAt: hours(149),
     },
@@ -1811,7 +1815,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       preferred: { flexible: true },
       photoIds: [],
       status: 'inReview',
-      outOfArea: false,
       createdAt: hours(20), // comes due today
       openedAt: hours(19),
     },
@@ -1825,7 +1828,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       preferred: { date: iso(days(now, 11)), band: 'midday', flexible: false },
       photoIds: [],
       status: 'offerSent',
-      outOfArea: false,
       createdAt: iso(days(now, -3)),
       openedAt: iso(days(now, -3)),
       respondedAt: iso(days(now, -3)),
@@ -1842,7 +1844,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       customerNote: 'Können Sie die Fenster rausrechnen? Der Rest passt.',
       status: 'revisionRequested',
-      outOfArea: false,
       createdAt: iso(days(now, -5)),
       openedAt: iso(days(now, -5)),
       respondedAt: iso(days(now, -4)),
@@ -1857,7 +1858,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       preferred: { date: iso(days(now, -6)), band: 'morning', flexible: false },
       photoIds: [],
       status: 'accepted',
-      outOfArea: false,
       createdAt: iso(days(now, -12)),
       openedAt: iso(days(now, -12)),
       respondedAt: iso(days(now, -11)),
@@ -1874,9 +1874,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: [],
       preferred: { flexible: true },
       photoIds: [],
-      internalNote: 'Abgelehnt: ausserhalb Gebiet und Anfahrt trägt sich nicht.',
+      internalNote: 'Abgelehnt: in dieser Woche keine Kapazität mehr frei.',
       status: 'rejected',
-      outOfArea: true,
       createdAt: iso(days(now, -9)),
       openedAt: iso(days(now, -9)),
       respondedAt: iso(days(now, -8)),
@@ -1892,7 +1891,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       preferred: { flexible: true },
       photoIds: [],
       status: 'expired',
-      outOfArea: false,
       createdAt: iso(days(now, -40)),
       openedAt: iso(days(now, -40)),
       respondedAt: iso(days(now, -39)),
@@ -1908,7 +1906,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       internalNote: 'Zurückgezogen durch den Kunden: anders gelöst.',
       status: 'cancelledByCustomer',
-      outOfArea: false,
       createdAt: iso(days(now, -7)),
       openedAt: iso(days(now, -7)),
       respondedAt: iso(days(now, -6)),
@@ -1924,7 +1921,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       internalNote: 'Storniert durch uns: Objekt verkauft, Übergabe abgesagt.',
       status: 'cancelledByCompany',
-      outOfArea: false,
       createdAt: iso(days(now, -10)),
       openedAt: iso(days(now, -10)),
       respondedAt: iso(days(now, -2)),
@@ -2014,7 +2010,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
                   ? 'Storniert durch uns.'
                   : undefined,
         status,
-        outOfArea: property.postcode === '8004',
         createdAt,
         openedAt,
         respondedAt: settled ? iso(days(now, -Math.max(1, settledDays - 1))) : undefined,

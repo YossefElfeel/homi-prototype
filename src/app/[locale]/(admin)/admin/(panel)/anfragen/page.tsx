@@ -4,13 +4,12 @@ import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { AlertTriangle, Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -24,6 +23,7 @@ import {
   RowActionsDivider,
 } from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toolbar } from '@/components/ui/toolbar';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { ActionIcon } from '@/lib/action-icons';
@@ -48,10 +48,11 @@ const OPEN_STATES: readonly string[] = ['new', 'inReview'];
  * which means changing the promise re-prioritises the whole list instead of
  * only what arrives after the change.
  *
- * The filters are the five questions actually asked of this screen — status,
- * service, area, date range, and "what is late" — and each narrows the count in
- * the toolbar, so a filter that matched nothing reads as a filter rather than
- * as a broken screen.
+ * "What is late" is a tab rather than a filter, because it is a different
+ * queue and not a narrower one — see `tab` below. The filters underneath it
+ * are the four questions asked of whichever queue is open: status, service,
+ * area and date range. Each narrows the count in the toolbar, so a filter that
+ * matched nothing reads as a filter rather than as a broken screen.
  */
 export default function RequestsPage() {
   const t = useTranslations('admin.requests');
@@ -77,7 +78,14 @@ export default function RequestsPage() {
   const [region, setRegion] = useState('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  /*
+   * "Which of these is late" is a view of the queue, not a filter on it. As a
+   * toggle among the selects it read as one more narrowing — and the count it
+   * answers sat somewhere else entirely, in the result line under the toolbar,
+   * so the number and the switch that acts on it never appeared together. Two
+   * tabs put them in the same control, the way /admin/kunden already does.
+   */
+  const [tab, setTab] = useState<'all' | 'overdue'>('all');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   /* Declining used to be a page. It is a decision made about a row while
@@ -113,7 +121,7 @@ export default function RequestsPage() {
       )
       .filter((r) => (fromKey ? r.createdAt.slice(0, 10) >= fromKey : true))
       .filter((r) => (toKey ? r.createdAt.slice(0, 10) <= toKey : true))
-      .filter((r) => (overdueOnly ? lateDays(r) > 0 : true))
+      .filter((r) => (tab === 'overdue' ? lateDays(r) > 0 : true))
       .filter((r) => {
         if (!q) return true;
         const c = customerOf(r.customerId);
@@ -140,7 +148,7 @@ export default function RequestsPage() {
     region,
     from,
     to,
-    overdueOnly,
+    tab,
     query,
     settings.responseTimeHours,
     now,
@@ -149,16 +157,23 @@ export default function RequestsPage() {
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const view = paginate(filtered, page, PER_PAGE);
+  /* The tab is deliberately not in here. It picks which queue you are looking
+     at; these pick which rows survive inside it — so an empty overdue tab has
+     to say "nothing is late", not "no result for your filters", and «Filter
+     zurücksetzen» must not silently move you back to the other tab. */
   const filtering =
     Boolean(query) ||
     status !== 'all' ||
     service !== 'all' ||
     region !== 'all' ||
     Boolean(from) ||
-    Boolean(to) ||
-    overdueOnly;
+    Boolean(to);
 
   const overdueTotal = requests.filter((r) => lateDays(r) > 0).length;
+  /* "3 von 18" has to count against the tab you are in, not the whole queue —
+     on the overdue tab the queue total is not a denominator anything on screen
+     adds up to. */
+  const tabTotal = tab === 'overdue' ? overdueTotal : requests.length;
 
   /** One-off, plan wanted, or already on a plan — §3 prices these apart. */
   const kindOf = (r: ServiceRequest) => {
@@ -175,7 +190,6 @@ export default function RequestsPage() {
     setRegion('all');
     setFrom('');
     setTo('');
-    setOverdueOnly(false);
     setQuery('');
     setPage(1);
   }
@@ -252,16 +266,12 @@ export default function RequestsPage() {
       header: t('colCustomer'),
       primary: true,
       sortBy: (r) => nameOf(r.customerId),
-      cell: (r) => (
-        <span className="flex flex-wrap items-center gap-2">
-          {nameOf(r.customerId)}
-          {r.outOfArea && (
-            <Chip tone="warning" icon={AlertTriangle} title={t('outOfArea')}>
-              {propertyOf(r.propertyId)?.postcode}
-            </Chip>
-          )}
-        </span>
-      ),
+      /* The name, and nothing beside it. It used to carry a warning chip with
+         the postcode whenever the request was out of area — a flag on the
+         *person* for something about the address, on a queue where such a
+         request can no longer arrive: the coverage check now refuses it at
+         intake, on both the public wizard and the phone form. */
+      cell: (r) => nameOf(r.customerId),
     },
     {
       /* The office rings back far more often than it writes. Having the number
@@ -383,6 +393,152 @@ export default function RequestsPage() {
     },
   ];
 
+  /* One list, rendered under whichever tab is open. Radix wants a panel per
+     trigger, and the rows are the same rows — only `filtered` differs. */
+  const list = (
+    <>
+    <DataView
+      items={view.slice}
+      columns={columns}
+      getKey={(r) => r.id}
+      onSelect={(r) =>
+        /* A draft opens where it was left, not on a detail screen that would
+           show a half-filled record as if it were a real request. */
+        router.push(
+          r.status === 'draft'
+            ? `/admin/anfragen/neu?draft=${r.id}`
+            : `/admin/anfragen/${r.id}`,
+        )
+      }
+      caption={t('title')}
+      /*
+       * Every way out of a row is on the row — including the two that end it.
+       * They were behind a menu, which cost two clicks and a guess about what
+       * the menu held.
+       *
+       * What keeps "decline" from being a mis-click away from "open": it is
+       * last, behind a divider, and it turns red under the pointer. Neither
+       * one fires on the spot either — decline opens a dialog that asks for
+       * a reason, discard asks first.
+       */
+      rowActions={(r) => {
+        const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
+        const answerable = r.status === 'new' || r.status === 'inReview';
+        const draft = r.status === 'draft';
+
+        return (
+          <RowActions>
+            {draft ? (
+              <>
+                <RowAction
+                  href={`/admin/anfragen/neu?draft=${r.id}`}
+                  label={t('rowContinue')}
+                >
+                  <ActionIcon.edit aria-hidden />
+                </RowAction>
+                <RowActionsDivider />
+                <RowActionButton
+                  tone="danger"
+                  label={t('rowDiscard')}
+                  onClick={() => {
+                    /* A draft has no quote, booking or invoice hanging off
+                       it, which is the only reason a straight delete is
+                       safe here. The store guards the same rule. */
+                    if (!window.confirm(t('rowDiscardConfirm'))) return;
+                    discardRequestDraft(r.id);
+                    toast.success(t('rowDiscardDone'));
+                  }}
+                >
+                  <ActionIcon.delete aria-hidden />
+                </RowActionButton>
+              </>
+            ) : (
+              <>
+                <RowAction href={`/admin/anfragen/${r.id}`} label={t('rowOpen')}>
+                  <ActionIcon.open aria-hidden />
+                </RowAction>
+                {answerable && (
+                  <RowAction
+                    href={`/admin/anfragen/${r.id}/offerte`}
+                    label={t('rowQuote')}
+                  >
+                    <ActionIcon.sendOffer aria-hidden />
+                  </RowAction>
+                )}
+                {offer && (
+                  <RowAction
+                    href={`/admin/offerten/${offer.id}`}
+                    label={t('rowOffer')}
+                  >
+                    <ActionIcon.offer aria-hidden />
+                  </RowAction>
+                )}
+                {answerable && (
+                  <>
+                    <RowActionsDivider />
+                    <RowActionButton
+                      onClick={() => setRejecting(r.id)}
+                      label={t('rowReject')}
+                      tone="danger"
+                    >
+                      <ActionIcon.decline aria-hidden />
+                    </RowActionButton>
+                  </>
+                )}
+              </>
+            )}
+          </RowActions>
+        );
+      }}
+      empty={
+        filtering ? (
+          <EmptyState
+            icon={Search}
+            title={t('searchEmptyTitle')}
+            body={t('searchEmptyBody', { query: query || '—' })}
+            action={
+              <Button variant="secondary" onClick={reset}>
+                {t('filterReset')}
+              </Button>
+            }
+          />
+        ) : tab === 'overdue' ? (
+          /* Nothing late is the good outcome, and the queue's own empty state
+             would have called it the bad one — "Noch keine Anfragen" on a
+             screen listing eighteen of them. It offers the way back to the
+             full queue rather than "record a request", because the answer to
+             an empty overdue tab is not to create work. */
+          <EmptyState
+            title={t('overdueEmptyTitle')}
+            body={t('overdueEmptyBody')}
+            action={
+              <Button variant="secondary" onClick={() => setTab('all')}>
+                {t('tabAll')}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState title={t('emptyTitle')} body={t('emptyBody')} action={addButton} />
+        )
+      }
+    />
+
+    <Pagination
+      page={view.page}
+      pageCount={view.pageCount}
+      onPageChange={setPage}
+      label={appT('pageLabel')}
+      previousLabel={appT('pagePrevious')}
+      nextLabel={appT('pageNext')}
+      summary={appT('pageSummary', {
+        from: view.from,
+        to: view.to,
+        total: view.total,
+      })}
+    />
+    </>
+  );
+
   return (
     <div>
       <PageHeader
@@ -395,248 +551,141 @@ export default function RequestsPage() {
         }
       />
 
-      <Toolbar
-        search={{
-          value: query,
-          onChange: (value) => {
-            setQuery(value);
-            setPage(1);
-          },
-          label: t('search'),
-          clearLabel: appT('clearSearch'),
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v as typeof tab);
+          /* Page 3 of the queue is not page 3 of what is late. */
+          setPage(1);
         }}
-        count={
-          <>
-            {filtering
-              ? appT('results', { shown: filtered.length, total: requests.length })
-              : appT('resultsAll', { total: requests.length })}
-            {/* The overdue count stays visible whatever the filter says — it is
-                the one number this screen exists to keep at zero. */}
-            {overdueTotal > 0 && (
-              <span className="ms-3 font-medium text-status-danger-fg">
-                {t('overdueCount', { n: overdueTotal })}
-              </span>
-            )}
-          </>
-        }
-        filters={
-          <>
-            <label className="min-w-36">
-              <span className="sr-only">{t('filterStatus')}</span>
-              <Select
-                dense
-                value={status}
-                onChange={(e) => {
-                  setStatus(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">
-                  {t('filterStatus')}: {t('filterAll')}
-                </option>
-                {/* Labels come from the status registry, not the enum — the
-                    filter and the badge it filters must read identically. */}
-                {statesOf('request').map((state) => (
-                  <option key={state} value={state}>
-                    {statusLabel(state)}
+      >
+        <Toolbar
+          search={{
+            value: query,
+            onChange: (value) => {
+              setQuery(value);
+              setPage(1);
+            },
+            label: t('search'),
+            clearLabel: appT('clearSearch'),
+          }}
+          /* Where "18 Einträge" used to sit on its own. That line restated a
+             total the tabs now carry, and the overdue count was appended to it
+             in red — a number the screen exists to keep at zero, printed three
+             centimetres from the only control that acts on it. */
+          views={
+            <TabsList className="p-0.5">
+              <TabsTrigger value="all" className="h-8 gap-1.5 px-2.5 py-0">
+                {t('tabAll')}
+                <span data-numeric className="text-ink-tertiary">
+                  {requests.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="overdue" className="h-8 gap-1.5 px-2.5 py-0">
+                {t('tabOverdue')}
+                {overdueTotal > 0 && (
+                  <span data-numeric className="font-medium text-status-danger-fg">
+                    {overdueTotal}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          }
+          /* Only while filtering. Unfiltered it read "18 Einträge" beside a tab
+             already saying 18; under a filter it is the one thing on screen
+             that confirms the search box did anything, so it stays. */
+          count={
+            filtering
+              ? appT('results', { shown: filtered.length, total: tabTotal })
+              : null
+          }
+          filters={
+            <>
+              <label className="min-w-36">
+                <span className="sr-only">{t('filterStatus')}</span>
+                <Select
+                  dense
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">
+                    {t('filterStatus')}: {t('filterAll')}
                   </option>
-                ))}
-              </Select>
-            </label>
-
-            <label className="min-w-36">
-              <span className="sr-only">{t('filterService')}</span>
-              <Select
-                dense
-                value={service}
-                onChange={(e) => {
-                  setService(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">
-                  {t('filterService')}: {t('filterAll')}
-                </option>
-                {services.map((s) => (
-                  <option key={s.slug} value={s.slug}>
-                    {s.name[locale]}
+                  {/* Labels come from the status registry, not the enum — the
+                      filter and the badge it filters must read identically. */}
+                  {statesOf('request').map((state) => (
+                    <option key={state} value={state}>
+                      {statusLabel(state)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+  
+              <label className="min-w-36">
+                <span className="sr-only">{t('filterService')}</span>
+                <Select
+                  dense
+                  value={service}
+                  onChange={(e) => {
+                    setService(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">
+                    {t('filterService')}: {t('filterAll')}
                   </option>
-                ))}
-              </Select>
-            </label>
-
-            <label className="min-w-36">
-              <span className="sr-only">{t('filterRegion')}</span>
-              <Select
-                dense
-                value={region}
-                onChange={(e) => {
-                  setRegion(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">
-                  {t('filterRegion')}: {t('filterAll')}
-                </option>
-                {SERVED_REGIONS.map((r) => (
-                  <option key={r.postcode} value={r.postcode}>
-                    {r.name}
+                  {services.map((s) => (
+                    <option key={s.slug} value={s.slug}>
+                      {s.name[locale]}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+  
+              <label className="min-w-36">
+                <span className="sr-only">{t('filterRegion')}</span>
+                <Select
+                  dense
+                  value={region}
+                  onChange={(e) => {
+                    setRegion(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">
+                    {t('filterRegion')}: {t('filterAll')}
                   </option>
-                ))}
-              </Select>
-            </label>
-
-            {/* Where the two date inputs used to be — the one filter that
-                answers "which of these is the work", next to the three that
-                answer "which of these are they", rather than trailing the
-                row on its own. */}
-            <Button
-              size="sm"
-              variant={overdueOnly ? 'quiet' : 'ghost'}
-              aria-pressed={overdueOnly}
-              onClick={() => {
-                setOverdueOnly((v) => !v);
-                setPage(1);
-              }}
-            >
-              <AlertTriangle className="size-3.5" aria-hidden />
-              {t('filterOverdue')}
-            </Button>
-
-            {filtering && (
-              <Button size="sm" variant="ghost" onClick={reset}>
-                <X className="size-3.5" aria-hidden />
-                {t('filterReset')}
-              </Button>
-            )}
-          </>
-        }
-      />
-
-      <DataView
-        items={view.slice}
-        columns={columns}
-        getKey={(r) => r.id}
-        onSelect={(r) =>
-          /* A draft opens where it was left, not on a detail screen that would
-             show a half-filled record as if it were a real request. */
-          router.push(
-            r.status === 'draft'
-              ? `/admin/anfragen/neu?draft=${r.id}`
-              : `/admin/anfragen/${r.id}`,
-          )
-        }
-        caption={t('title')}
-        /*
-         * Every way out of a row is on the row — including the two that end it.
-         * They were behind a menu, which cost two clicks and a guess about what
-         * the menu held.
-         *
-         * What keeps "decline" from being a mis-click away from "open": it is
-         * last, behind a divider, and it turns red under the pointer. Neither
-         * one fires on the spot either — decline opens a dialog that asks for
-         * a reason, discard asks first.
-         */
-        rowActions={(r) => {
-          const offer = offers.find((o) => o.requestId === r.id && o.status !== 'draft');
-          const answerable = r.status === 'new' || r.status === 'inReview';
-          const draft = r.status === 'draft';
-
-          return (
-            <RowActions>
-              {draft ? (
-                <>
-                  <RowAction
-                    href={`/admin/anfragen/neu?draft=${r.id}`}
-                    label={t('rowContinue')}
-                  >
-                    <ActionIcon.edit aria-hidden />
-                  </RowAction>
-                  <RowActionsDivider />
-                  <RowActionButton
-                    tone="danger"
-                    label={t('rowDiscard')}
-                    onClick={() => {
-                      /* A draft has no quote, booking or invoice hanging off
-                         it, which is the only reason a straight delete is
-                         safe here. The store guards the same rule. */
-                      if (!window.confirm(t('rowDiscardConfirm'))) return;
-                      discardRequestDraft(r.id);
-                      toast.success(t('rowDiscardDone'));
-                    }}
-                  >
-                    <ActionIcon.delete aria-hidden />
-                  </RowActionButton>
-                </>
-              ) : (
-                <>
-                  <RowAction href={`/admin/anfragen/${r.id}`} label={t('rowOpen')}>
-                    <ActionIcon.open aria-hidden />
-                  </RowAction>
-                  {answerable && (
-                    <RowAction
-                      href={`/admin/anfragen/${r.id}/offerte`}
-                      label={t('rowQuote')}
-                    >
-                      <ActionIcon.sendOffer aria-hidden />
-                    </RowAction>
-                  )}
-                  {offer && (
-                    <RowAction
-                      href={`/admin/offerten/${offer.id}`}
-                      label={t('rowOffer')}
-                    >
-                      <ActionIcon.offer aria-hidden />
-                    </RowAction>
-                  )}
-                  {answerable && (
-                    <>
-                      <RowActionsDivider />
-                      <RowActionButton
-                        onClick={() => setRejecting(r.id)}
-                        label={t('rowReject')}
-                        tone="danger"
-                      >
-                        <ActionIcon.decline aria-hidden />
-                      </RowActionButton>
-                    </>
-                  )}
-                </>
-              )}
-            </RowActions>
-          );
-        }}
-        empty={
-          filtering ? (
-            <EmptyState
-              icon={Search}
-              title={t('searchEmptyTitle')}
-              body={t('searchEmptyBody', { query: query || '—' })}
-              action={
-                <Button variant="secondary" onClick={reset}>
+                  {SERVED_REGIONS.map((r) => (
+                    <option key={r.postcode} value={r.postcode}>
+                      {r.name}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+  
+              {filtering && (
+                <Button size="sm" variant="ghost" onClick={reset}>
+                  <X className="size-3.5" aria-hidden />
                   {t('filterReset')}
                 </Button>
-              }
-            />
-          ) : (
-            <EmptyState title={t('emptyTitle')} body={t('emptyBody')} action={addButton} />
-          )
-        }
-      />
+              )}
+            </>
+          }
+        />
 
-      <Pagination
-        page={view.page}
-        pageCount={view.pageCount}
-        onPageChange={setPage}
-        label={appT('pageLabel')}
-        previousLabel={appT('pagePrevious')}
-        nextLabel={appT('pageNext')}
-        summary={appT('pageSummary', {
-          from: view.from,
-          to: view.to,
-          total: view.total,
-        })}
-      />
+        {/* `mt-app` off both panels: the Toolbar already carries `mb-app`, and
+            stacking the two put a double gap between the filter row and the
+            first row of the table. */}
+        <TabsContent value="all" className="mt-0">
+          {list}
+        </TabsContent>
+        <TabsContent value="overdue" className="mt-0">
+          {list}
+        </TabsContent>
+      </Tabs>
 
       <RejectRequestDialog requestId={rejecting} onClose={() => setRejecting(null)} />
     </div>

@@ -35,9 +35,18 @@ export type CoverageResult =
   | { state: 'outside'; postcode: string };
 
 /**
- * §20.1: an out-of-area postcode does not block the request. It shows a clear
- * message and still lets the visitor submit for manual review — the admin
- * inbox flags it, and travel cost can be added to the quote.
+ * The area check is a gate, not a label.
+ *
+ * It used to mark and wave through: an out-of-area postcode still produced a
+ * request, the queue flagged it, and the office declined it by hand. That put
+ * the "no" three screens and a working day after the point where it was
+ * already known, and the visitor spent the wait believing an answer was
+ * coming. `outside` now stops the flow where the postcode is typed, so nobody
+ * is told no about a request that was never taken.
+ *
+ * `invalid` is deliberately not a refusal — a half-typed postcode is not an
+ * address outside the area, and treating it as one would reject people
+ * mid-keystroke.
  */
 export function checkCoverage(postcode: string, served: string[]): CoverageResult {
   const trimmed = postcode.trim();

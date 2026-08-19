@@ -210,9 +210,6 @@ export default function AdminDashboard() {
                       >
                         {request.reference}
                       </RecordLink>
-                      {request.outOfArea && (
-                        <StatusChip>{property?.postcode}</StatusChip>
-                      )}
                     </p>
                     <p className="mt-1 text-sm text-ink-secondary">
                       {serviceName(request.serviceSlug)} · {property?.city}
@@ -345,14 +342,3 @@ export default function AdminDashboard() {
   );
 }
 
-/**
- * The out-of-area marker. Was a hand-typed class string here and, verbatim
- * again, on the requests list — the two had already been edited apart once.
- */
-function StatusChip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-[var(--radius-xs)] border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-2xs text-status-warning-fg">
-      {children}
-    </span>
-  );
-}

@@ -273,6 +273,10 @@ export default function NewRequestPage() {
   const missing = [
     !customerId && t('missingCustomer'),
     !propertyReady && t('missingProperty'),
+    /* Its own line rather than folded into `propertyReady`: everything else in
+       that list is an answer still to be typed, and this one is complete and
+       still refused. The office needs to read which of the two it is. */
+    propertyReady && coverage.state === 'outside' && t('missingOutOfArea'),
     !serviceReady && t('missingService'),
   ].filter(Boolean) as string[];
 
@@ -334,7 +338,6 @@ export default function NewRequestPage() {
         preferred,
         customerNote: customerNote.trim() || undefined,
         internalNote: internalNote.trim() || undefined,
-        outOfArea: coverage.state !== 'inside',
       });
       submitRequestDraft(draft.id, now);
       toast.success(t('done', { reference: draft.reference }));
@@ -359,15 +362,19 @@ export default function NewRequestPage() {
       now,
     );
 
+    /* The store refuses an out-of-area address, and `canSave` already says so
+       above the buttons — this is the belt to that pair of braces, so a rule
+       change in one place cannot leave the screen claiming a request exists. */
+    if (!result) {
+      toast.error(t('missingOutOfArea'));
+      return;
+    }
+
     /* Closes the loop on the calendar. The call stops being an open promise
        the moment the work it produced exists. */
     if (sourceEvent) linkEventToRequest(sourceEvent.id, result.id, now);
 
-    toast.success(
-      result.outOfArea
-        ? t('doneOutOfArea', { reference: result.reference })
-        : t('done', { reference: result.reference }),
-    );
+    toast.success(t('done', { reference: result.reference }));
     router.push(
       thenQuote ? `/admin/anfragen/${result.id}/offerte` : `/admin/anfragen/${result.id}`,
     );
@@ -418,6 +425,10 @@ export default function NewRequestPage() {
       },
       now,
     );
+    /* `asDraft` is exempt from the area check, so this branch is unreachable —
+       it is here because the signature cannot say "never null for a draft",
+       and a `!` would silently become a crash the day that changes. */
+    if (!result) return;
     toast.success(t('draftSaved', { reference: result.reference }));
     router.push('/admin/anfragen');
   }

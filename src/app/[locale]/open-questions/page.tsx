@@ -165,6 +165,14 @@ const ENTRIES: Entry[] = [
     screens: '10',
     state: 'open',
   },
+  {
+    ref: '§20.1',
+    question: 'Does an out-of-area postcode block the request, or only flag it?',
+    decision:
+      'OVERRIDDEN: it blocks. The specification says marked, not blocked — the request went through, the queue carried a warning chip on the customer’s name, and the office declined it by hand a working day later. So the answer was already known at the postcode field and the visitor spent the wait believing one was coming. The check is now a gate on screen 16, on the phone intake, and in the store, so no URL walks past it. A half-typed postcode is still not a refusal, and a draft taken mid-call is exempt until it is submitted. Consequence to confirm with the business: a job just past the boundary can no longer be taken by adding travel to the quote — the address has to be inside the eight, or the served list has to grow on screen 80.',
+    screens: '16, 22, 51, 52, 56, 64',
+    state: 'overridden',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

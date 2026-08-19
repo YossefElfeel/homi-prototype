@@ -187,6 +187,21 @@ export default function RequestDetailPage({
   const cancellable =
     request.status === 'offerSent' || request.status === 'revisionRequested';
 
+  /*
+   * A decline is an answer, so it needs a question still open. The button was
+   * the `else` of every other branch, which meant it was also what an already
+   * finished request offered: "Ablehnen" sat on an expired one, on a request
+   * the customer had withdrawn, and on one that was accepted. Pressing it
+   * there would have overwritten the real ending with `rejected` and lost how
+   * the request actually closed.
+   *
+   * It is `!answered` on purpose: that is the same test the queue's row action
+   * already used, and two screens disagreeing about whether a request can
+   * still be declined is how the row hides the button and the detail behind it
+   * keeps offering it.
+   */
+  const declinable = !answered;
+
   /* Read twice — once as the closed header's summary, once as the row inside.
      Deriving it once keeps the two from ever disagreeing. */
   const preferredSummary = request.preferred.flexible
@@ -275,12 +290,12 @@ export default function RequestDetailPage({
               <X className="size-4" aria-hidden />
               {t('cancelAction')}
             </Button>
-          ) : (
+          ) : declinable ? (
             <Button variant="danger" onClick={() => setRejecting(true)}>
               <X className="size-4" aria-hidden />
               {t('reject')}
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -589,8 +604,12 @@ export default function RequestDetailPage({
         </aside>
       </div>
 
+      {/* `?action=reject` is a link, and a link can be followed to a request
+          that has already ended. It opens the dialog on the same condition the
+          button appears under, so the deep link cannot reach a decline the
+          screen itself refuses to offer. */}
       <RejectRequestDialog
-        requestId={rejecting ? request.id : null}
+        requestId={rejecting && declinable ? request.id : null}
         onClose={() => setRejecting(false)}
       />
     </div>

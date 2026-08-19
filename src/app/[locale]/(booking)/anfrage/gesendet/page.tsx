@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Check, MessageCircle } from 'lucide-react';
+import { Check, MessageCircle } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,15 +13,16 @@ import { useStore } from '@/mock/store';
  *
  * Carries the two things someone needs the moment they let go of a request:
  * a reference they can quote, and a specific promise about when they will
- * hear back. Out-of-area requests say plainly that the answer may take longer
- * (§20.1) rather than letting the 24-hour promise quietly fail.
+ * hear back. It used to hedge that promise for out-of-area requests, because
+ * those still got sent; the coverage check on `/anfrage/objekt` stops them
+ * now, so everything that reaches this screen gets the plain 24 hours.
  */
 export default function SentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; aussergebiet?: string }>;
+  searchParams: Promise<{ ref?: string }>;
 }) {
-  const { ref, aussergebiet } = use(searchParams);
+  const { ref } = use(searchParams);
   const t = useTranslations('booking.sent');
   const rt = useTranslations('booking.review');
   const brand = useTranslations('brand');
@@ -52,16 +53,6 @@ export default function SentPage({
       <p className="mt-5 text-lg text-ink-secondary">
         {t('lead', { hours: settings.responseTimeHours, email })}
       </p>
-
-      {aussergebiet === '1' && (
-        <div className="mt-7 flex gap-3 border-l-2 border-rule bg-sunken p-5">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-          <div>
-            <h2 className="font-medium">{t('outOfAreaTitle')}</h2>
-            <p className="mt-1.5 text-sm text-ink-secondary">{t('outOfAreaBody')}</p>
-          </div>
-        </div>
-      )}
 
       <h2 className="label-type mt-12 text-ink-tertiary">{t('nextTitle')}</h2>
       <ol className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">

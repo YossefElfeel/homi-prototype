@@ -116,7 +116,7 @@ export const TRACKS: Track[] = [
         'Coverage check',
         '/anfrage/objekt',
         ['inside', 'outside', 'invalid'],
-        'Inline state on screen 15 rather than a page of its own — the spec allows this. Try 8700 (inside), 8001 (outside), 80 (invalid)',
+        'Inline state on screen 15 rather than a page of its own — the spec allows this. Try 8700 (inside), 8001 (outside), 80 (invalid). Outside is now a stop, not a warning: it blocks Continue and no request is created',
       ),
       done('17', 'Zusatzleistungen', 'Add-ons', '/anfrage/extras', ['none for this service']),
       done('18', 'Zutritt', 'Access method', '/anfrage/zutritt', [
@@ -231,8 +231,12 @@ export const TRACKS: Track[] = [
     screens: [
       done('50', 'Anmelden', 'Sign in', '/admin/anmelden', ['checking']),
       done('51', 'Start', 'Dashboard', '/admin', ['every block empty'], 'Load the “Tag 1 — alles leer” scenario to see all four empty at once'),
-      done('52', 'Anfragen', 'Requests', '/admin/anfragen', ['empty', 'no search result']),
-      done('53', 'Anfrage-Detail', 'Request detail', '/admin/anfragen/req_1', [
+      done('52', 'Anfragen', 'Requests', '/admin/anfragen', [
+        'empty',
+        'no search result',
+        'nothing overdue',
+      ]),
+      done('53', 'Anfrage-Detail', 'Request detail', '/admin/anfragen/req_2', [
         'codes masked',
         'codes revealed',
       ]),
@@ -240,11 +244,11 @@ export const TRACKS: Track[] = [
         '54',
         'Offerte erstellen',
         'Quote builder',
-        '/admin/anfragen/req_1/offerte',
+        '/admin/anfragen/req_2/offerte',
         ['draft', 'inline editing', 'availability panel'],
         'The screen the owner lives in. Two clicks to send, or ⌘/Ctrl+Enter for one — against a target of four',
       ),
-      done('55', 'Vorschau & senden', 'Preview & send', '/admin/anfragen/req_1/offerte/senden', [
+      done('55', 'Vorschau & senden', 'Preview & send', '/admin/anfragen/req_2/offerte/senden', [
         'sending',
         'sent',
       ]),
@@ -252,7 +256,7 @@ export const TRACKS: Track[] = [
         '56',
         'Anfrage ablehnen',
         'Decline request',
-        '/admin/anfragen/req_1?action=reject',
+        '/admin/anfragen/req_2?action=reject',
         ['sending'],
         'A dialog over the queue rather than a page of its own — the decision is made over the row it is about. The link opens the same dialog on the request',
       ),

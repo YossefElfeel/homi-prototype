@@ -89,7 +89,11 @@ export const FLOWS: Flow[] = [
       ),
     ],
     actions: [
-      ok('Gebietsprüfung', '/anfrage/objekt', '8700 innerhalb, 8001 ausserhalb, 80 ungültig'),
+      ok(
+        'Gebietsprüfung',
+        '/anfrage/objekt',
+        '8700 innerhalb, 8001 ausserhalb, 80 ungültig. «Ausserhalb» sperrt jetzt «Weiter» — auch bei einem gespeicherten Objekt',
+      ),
       ok('Preisrahmen live', '/anfrage/leistung', 'Rechnet ab Leistung + Fläche mit'),
       ok('Zutritt hinterlegen', '/anfrage/zutritt', 'Vier Methoden, Codes maskiert'),
       ok('Entwurf überlebt Neuladen', '/anfrage', '30 Tage, §20.1'),
@@ -101,7 +105,12 @@ export const FLOWS: Flow[] = [
       added(
         'Filtern nach Status, Leistung, Gebiet, Zeitraum',
         '/admin/anfragen',
-        'Plus «nur überfällig». Vorher nur Status und Gebiet',
+        'Vorher nur Status und Gebiet',
+      ),
+      added(
+        'Reiter «Alle» / «Überfällig»',
+        '/admin/anfragen',
+        'War ein Schalter «nur überfällig» zwischen den Filtern, und die Zahl dazu stand in der Ergebniszeile darunter — die Zahl und der Schalter, der sie öffnet, waren nie zusammen zu sehen. Beide Reiter tragen ihren Zählstand; «nichts überfällig» hat einen eigenen leeren Zustand, statt «noch keine Anfragen» zu behaupten',
       ),
       added(
         'Zeilenaktionen',
@@ -116,7 +125,11 @@ export const FLOWS: Flow[] = [
     ],
     exits: [
       ok('Gesendet', '/anfrage/gesendet'),
-      ok('Ausserhalb Gebiet — trotzdem gesendet', '/anfrage/pruefen', '§20.1: markiert, nicht blockiert'),
+      added(
+        'Ausserhalb Gebiet — gar nicht erst erfasst',
+        '/anfrage/objekt',
+        'War ein Ausgang: die Anfrage ging trotzdem raus, wurde markiert, und die Absage kam einen Arbeitstag später von Hand. Jetzt hält die Prüfung bei der PLZ — auf dem Wizard, im Telefonformular und im store, damit keine URL daran vorbeikommt',
+      ),
       added(
         'Zurückziehen',
         '/konto/anfragen/req_3',
@@ -124,12 +137,12 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Stornieren durch uns',
-        '/admin/anfragen/req_1',
+        '/admin/anfragen/req_3',
         'Ab «Offerte versendet» ist «Ablehnen» das falsche Wort. Schliesst die Offerte gleich mit',
       ),
       ok(
         'Ablehnen mit Begründung',
-        '/admin/anfragen/req_1?action=reject',
+        '/admin/anfragen/req_2?action=reject',
         '§4.1. Dialog über der Liste statt eigener Seite — die Absage wird dort entschieden, wo die Zeile steht',
       ),
     ],
@@ -140,7 +153,7 @@ export const FLOWS: Flow[] = [
     en: 'Quote & payment',
     actors: ['owner', 'customer'],
     entries: [
-      ok('Offerte schreiben', '/admin/anfragen/req_1/offerte', 'Zeilen vorbefüllt aus der Anfrage'),
+      ok('Offerte schreiben', '/admin/anfragen/req_2/offerte', 'Zeilen vorbefüllt aus der Anfrage'),
       added(
         'Direkt aus der Telefonerfassung',
         '/admin/anfragen/neu',
@@ -153,14 +166,14 @@ export const FLOWS: Flow[] = [
         '/admin/anfragen/req_2',
         'Der Status sprang erst im Offert-Builder auf «In Prüfung» — eine Bildschirmseite zu spät. Die Anfrage liess sich vollständig lesen, während sie «Neu» blieb, und der Kunde sah in seinem Konto weiterhin, dass niemand hineingeschaut hat',
       ),
-      ok('Positionen bearbeiten', '/admin/anfragen/req_1/offerte'),
+      ok('Positionen bearbeiten', '/admin/anfragen/req_2/offerte'),
       ok('Optionale Positionen an/aus', '/offerte/off_1', 'Preis und Dauer bewegen sich zusammen'),
       ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
       ok('Unterschreiben', '/offerte/off_1/unterschrift'),
       ok('Änderung anfragen', '/offerte/off_1/aenderung'),
       added(
         'Freie Zeiten: die fünf Regeln',
-        '/admin/anfragen/req_1/offerte',
+        '/admin/anfragen/req_2/offerte',
         'Der Block zeigte Zeiten ohne zu sagen, woher sie kommen — «sucht das System oder der Mensch?» hatte auf dem Bildschirm keine Antwort. Öffnungszeiten und Vorlaufzeit lesen ihre Werte aus den Einstellungen, damit der Text nicht von der Engine abdriften kann',
       ),
       added(
@@ -170,17 +183,17 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Vorlage im Offert-Builder',
-        '/admin/anfragen/req_1/offerte',
+        '/admin/anfragen/req_2/offerte',
         'Bot genau eine fest verdrahtete Option, weshalb «Offerte läuft ab» im ganzen Produkt keinen erreichbaren Weg hatte. Liest jetzt den Bereich Offerten',
       ),
       added(
         'Wählbare Position: an oder aus vorwählen',
-        '/admin/anfragen/req_1/offerte',
+        '/admin/anfragen/req_2/offerte',
         'Der Builder schrieb nur `optional`, nie `selected` — jede wählbare Position ging vorangekreuzt raus. Ein Extra konnte also nur ein Rabatt sein, den der Kunde wegnimmt, nie eine Leistung, die er dazunimmt',
       ),
       added(
         'Begleittext vor dem Senden lesen',
-        '/admin/anfragen/req_1/offerte/senden',
+        '/admin/anfragen/req_2/offerte/senden',
         'Die Karte hiess «So sieht es der Kunde» und liess genau den einen Teil weg, der von Hand geschrieben ist',
       ),
       added(
