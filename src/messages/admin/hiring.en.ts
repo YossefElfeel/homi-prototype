@@ -45,6 +45,8 @@ export const adminHiringEn: typeof adminHiringDe = {
 
     actionsTitle: 'Decision',
     startReview: 'Move to review',
+    restore: 'Undo the rejection',
+    restored: 'The application is back in review.',
     accept: 'Accept and create an account',
     reject: 'Turn down',
     rejectTitle: 'Turn down, with a reason',

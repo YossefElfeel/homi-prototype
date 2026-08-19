@@ -44,6 +44,8 @@ export const adminHiringDe = {
 
     actionsTitle: 'Entscheidung',
     startReview: 'In Prüfung nehmen',
+    restore: 'Absage zurücknehmen',
+    restored: 'Die Bewerbung liegt wieder in der Prüfung.',
     accept: 'Annehmen und Konto anlegen',
     reject: 'Absagen',
     rejectTitle: 'Absage mit Grund',

@@ -11,9 +11,12 @@ import {
   FileText,
   Mail,
   Phone,
+  RotateCcw,
   Trash2,
   UserCheck,
 } from 'lucide-react';
+
+import { toast } from 'sonner';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
@@ -337,7 +340,21 @@ export default function ApplicationDetailPage({
                 <UserCheck className="size-4" aria-hidden />
                 {t('accept')}
               </Button>
-              {application.status !== 'rejected' && (
+              {application.status === 'rejected' ? (
+                /* Accept was the only way out of a decline, which makes
+                   "undo the mis-click" and "hire this person" the same
+                   button. Back to the queue is its own answer. */
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setApplicationStatus(application.id, 'inReview');
+                    toast.success(t('restored'));
+                  }}
+                >
+                  <RotateCcw className="size-4" aria-hidden />
+                  {t('restore')}
+                </Button>
+              ) : (
                 <Button variant="quiet" onClick={() => setRejecting(true)}>
                   {t('reject')}
                 </Button>

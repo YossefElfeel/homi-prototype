@@ -381,6 +381,8 @@ export const adminDe = {
     received: 'Eingegangen',
     replyWithQuote: 'Mit Offerte antworten',
     reject: 'Ablehnen',
+    restore: 'Ablehnung zurücknehmen',
+    restored: 'Die Anfrage liegt wieder in der Warteschlange.',
     customerTitle: 'Kunde',
     call: 'Anrufen',
     whatsapp: 'WhatsApp',
