@@ -309,6 +309,21 @@ interface StoreState {
   removeOfferLine: (offerId: ID, lineId: ID) => void;
   sendOffer: (offerId: ID, now: Date) => void;
   rejectRequest: (requestId: ID, reason: string, now: Date) => void;
+  /**
+   * The way back out of a decline.
+   *
+   * §4.1 makes declining a real answer with a reason attached, which is why
+   * it is one click behind a dialog — but it was also one-way. A request
+   * declined by a mis-click was finished: "Offerte schreiben" turns itself
+   * off the moment a request counts as answered, and the only remaining
+   * button on the screen was Decline again. The moderation queue already
+   * had this exact control and this exact reason written beside it.
+   *
+   * Lands on `inReview`, not `new`: somebody has plainly seen this one.
+   * The reason stays in `internalNote` — it is the record of what happened,
+   * and the mistake is part of the record too.
+   */
+  restoreRequest: (requestId: ID) => void;
 
   /* ---- offer acceptance (screens 23–31) ---- */
   toggleOfferLine: (offerId: ID, lineId: ID) => void;
@@ -456,6 +471,15 @@ interface StoreState {
     },
     now: Date,
   ) => void;
+  /**
+   * `new` means nobody has looked. Reading the request is what stops that
+   * being true, so it is the request screen that says so — not the quote
+   * builder, which used to be the only writer. The office's own screen said
+   * "Neu" while somebody was sitting on it reading it, and the customer was
+   * told nobody had opened their request until a quote was already being
+   * priced.
+   */
+  markRequestOpened: (id: ID, now: Date) => void;
   markThreadRead: (customerId: ID, subject: string) => void;
 
   setRole: (role: DemoRole) => void;
@@ -1044,7 +1068,9 @@ export const useStore = create<StoreState>()(
           data: {
             ...s.data,
             offers: [offer, ...s.data.offers],
-            // Opening the builder counts as reading the request.
+            /* Screen 53 normally gets here first. This stays as the backstop
+               for the paths that skip it — the list writes a quote straight
+               from the row — so a priced request can never still read "Neu". */
             requests: s.data.requests.map((r) =>
               r.id === requestId && r.status === 'new'
                 ? { ...r, status: 'inReview' as const, openedAt: now.toISOString() }
@@ -1182,6 +1208,25 @@ export const useStore = create<StoreState>()(
                     internalNote: [r.internalNote, reason].filter(Boolean).join('\n'),
                   }
                 : r,
+            ),
+          },
+        })),
+
+      restoreRequest: (requestId) =>
+        set((s) => ({
+          data: {
+            ...s.data,
+            requests: s.data.requests.map((r) =>
+              r.id !== requestId || r.status !== 'rejected'
+                ? r
+                : {
+                    ...r,
+                    status: 'inReview' as const,
+                    /* The answer is withdrawn, so the response clock has to
+                       start running again — leaving the stamp would show a
+                       request that was answered and is still waiting. */
+                    respondedAt: undefined,
+                  },
             ),
           },
         })),
@@ -2251,6 +2296,25 @@ export const useStore = create<StoreState>()(
             readByCustomer: from === 'customer',
           };
           return { data: { ...s.data, messages: [...s.data.messages, message] } };
+        }),
+
+      markRequestOpened: (id, now) =>
+        set((s) => {
+          const request = s.data.requests.find((r) => r.id === id);
+          /* Only ever `new` → `inReview`. Re-stamping `openedAt` on every
+             visit would move the response clock every time the owner came
+             back to re-read something. */
+          if (!request || request.status !== 'new') return {};
+          return {
+            data: {
+              ...s.data,
+              requests: s.data.requests.map((r) =>
+                r.id !== id
+                  ? r
+                  : { ...r, status: 'inReview' as const, openedAt: now.toISOString() },
+              ),
+            },
+          };
         }),
 
       markThreadRead: (customerId, subject) =>

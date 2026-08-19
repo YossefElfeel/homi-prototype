@@ -334,6 +334,8 @@ export const adminEn: typeof adminDe = {
     received: 'Received',
     replyWithQuote: 'Reply with a quote',
     reject: 'Decline',
+    restore: 'Undo the decline',
+    restored: 'The request is back in the queue.',
     customerTitle: 'Customer',
     call: 'Call',
     whatsapp: 'WhatsApp',

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import {
@@ -16,6 +16,7 @@ import {
   Mail,
   MessageCircle,
   Phone,
+  RotateCcw,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -90,8 +91,22 @@ export default function RequestDetailPage({
   const data = useStore((s) => s.data);
 
   const cancelRequest = useStore((s) => s.cancelRequest);
+  const restoreRequest = useStore((s) => s.restoreRequest);
+  const markRequestOpened = useStore((s) => s.markRequestOpened);
   const holds = useStore((s) => s.holds);
   const now = useNow();
+
+  /*
+   * Opening this screen is the review. It used to be the quote builder that
+   * flipped the status, which is a screen further on — so a request could be
+   * read here, and here is where it still said "Neu".
+   */
+  useEffect(() => {
+    if (!hydrated) return;
+    markRequestOpened(id, now);
+    // Once per request. `now` ticks every 30s and would re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, id]);
 
   const [revealed, setRevealed] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -155,6 +170,13 @@ export default function RequestDetailPage({
   }
 
   const answered = request.status !== 'new' && request.status !== 'inReview';
+  /*
+   * `rejected` has two authors. `declineOffer` writes it when the *customer*
+   * turns a quote down, and that is not the office's decline to take back —
+   * the answer there is a new version, which the quote screen already offers.
+   * Only the office's own decline gets an undo here.
+   */
+  const officeDeclined = request.status === 'rejected' && offer?.status !== 'rejected';
 
   /*
    * Declining and cancelling are not the same act, and only one of them
@@ -234,7 +256,21 @@ export default function RequestDetailPage({
               {t('replyWithQuote')}
             </Link>
           </Button>
-          {cancellable ? (
+          {/* A decline was one-way: "Offerte schreiben" disables itself as
+              soon as a request counts as answered, so the screen left after
+              a mis-click offered exactly one thing — declining it again. */}
+          {officeDeclined ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                restoreRequest(request.id);
+                toast.success(t('restored'));
+              }}
+            >
+              <RotateCcw className="size-4" aria-hidden />
+              {t('restore')}
+            </Button>
+          ) : cancellable ? (
             <Button variant="danger" onClick={() => setCancelling(true)}>
               <X className="size-4" aria-hidden />
               {t('cancelAction')}

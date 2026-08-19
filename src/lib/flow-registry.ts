@@ -148,6 +148,11 @@ export const FLOWS: Flow[] = [
       ),
     ],
     actions: [
+      added(
+        'Gelesen heisst gelesen',
+        '/admin/anfragen/req_2',
+        'Der Status sprang erst im Offert-Builder auf «In Prüfung» — eine Bildschirmseite zu spät. Die Anfrage liess sich vollständig lesen, während sie «Neu» blieb, und der Kunde sah in seinem Konto weiterhin, dass niemand hineingeschaut hat',
+      ),
       ok('Positionen bearbeiten', '/admin/anfragen/req_1/offerte'),
       ok('Optionale Positionen an/aus', '/offerte/off_1', 'Preis und Dauer bewegen sich zusammen'),
       ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
@@ -195,6 +200,11 @@ export const FLOWS: Flow[] = [
       ),
     ],
     exits: [
+      added(
+        'Ablehnung zurücknehmen',
+        '/admin/anfragen/req_q_rejected',
+        'Ablehnen war eine Einbahnstrasse: «Offerte schreiben» schaltet sich ab, sobald eine Anfrage als beantwortet gilt, also blieb auf dem Bildschirm genau eine Handlung übrig — nochmal ablehnen. Gilt nur für die eigene Absage; hat der Kunde die Offerte abgelehnt, ist die neue Version die Antwort',
+      ),
       ok('Bezahlt und gebucht', '/offerte/off_1/bestaetigt'),
       ok('Zahlung fehlgeschlagen', '/offerte/off_1/zahlung', 'Reservierung läuft weiter oder ab'),
       ok('Abgelaufen, neu ausstellen', '/offerte/off_2'),
