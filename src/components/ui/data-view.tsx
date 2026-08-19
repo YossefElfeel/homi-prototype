@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { Pagination, paginate } from './pagination';
 import { SkeletonRows } from './skeleton';
 
 /**
@@ -74,6 +76,7 @@ export function DataView<T>({
   stickyHeader = true,
   surface = 'card',
   selection,
+  perPage = 10,
 }: {
   items: T[];
   columns: Column<T>[];
@@ -91,8 +94,8 @@ export function DataView<T>({
   /** Reserves the table's shape while the persisted store rehydrates. */
   loading?: boolean;
   /**
-   * Per-row actions. Use `RowActions` from `./row-actions` — icons in the
-   * table, icon-and-label on the card, and the same set in both.
+   * Per-row actions. Use `RowActions` from `./row-actions` — one menu button,
+   * the same items behind it in the table and on the card.
    */
   rowActions?: (item: T) => React.ReactNode;
   defaultSort?: SortState;
@@ -100,8 +103,28 @@ export function DataView<T>({
   /** `plain` for tables already inside a Card that owns the surface. */
   surface?: 'card' | 'plain';
   selection?: Selection;
+  /**
+   * Rows per page. Every list pages at ten unless it says otherwise, which is
+   * the point: a page size that changes per screen is a number nobody can
+   * carry from one table to the next.
+   */
+  perPage?: number;
 }) {
+  const t = useTranslations('app');
   const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
+  const [page, setPage] = useState(1);
+  /*
+   * The page follows the list back to the top whenever the list changes size —
+   * a filter that leaves four rows must not leave you looking at page three of
+   * them. Adjusted during render rather than in an effect: an effect paints the
+   * stale page first, and on a store-backed list that flash lands on every
+   * keystroke in the search box.
+   */
+  const [seenCount, setSeenCount] = useState(items.length);
+  if (seenCount !== items.length) {
+    setSeenCount(items.length);
+    setPage(1);
+  }
 
   const sorted = useMemo(() => {
     if (!sort) return items;
@@ -127,6 +150,10 @@ export function DataView<T>({
     });
   }, [items, columns, sort]);
 
+  /* Sort the whole list, then cut the page out of it. Sorting after the cut
+     would reorder ten rows and call that a sorted table. */
+  const view = paginate(sorted, page, perPage);
+
   if (loading) {
     return <SkeletonRows rows={5} className={className} />;
   }
@@ -139,7 +166,7 @@ export function DataView<T>({
   const hasTrailingCell = Boolean(onSelect || rowActions);
 
   const selectableKeys = selection
-    ? sorted
+    ? view.slice
         .map(getKey)
         .filter((key) => selection.isSelectable?.(key) ?? true)
     : [];
@@ -296,7 +323,7 @@ export function DataView<T>({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((item) => (
+            {view.slice.map((item) => (
               <tr
                 key={getKey(item)}
                 onClick={onSelect ? () => onSelect(item) : undefined}
@@ -392,7 +419,7 @@ export function DataView<T>({
 
       {/* Below lg: cards. Same columns, different shape — not a squeezed table. */}
       <ul className="space-y-3 lg:hidden">
-        {sorted.map((item) => {
+        {view.slice.map((item) => {
           const key = getKey(item);
           const content = (
             <>
@@ -453,7 +480,7 @@ export function DataView<T>({
                 />
               )}
               {rowActions && (
-                <div className="border-t border-line-subtle px-2 py-1.5">
+                <div className="flex justify-end border-t border-line-subtle px-2 py-1.5">
                   {rowActions(item)}
                 </div>
               )}
@@ -461,6 +488,21 @@ export function DataView<T>({
           );
         })}
       </ul>
+
+      <Pagination
+        page={view.page}
+        pageCount={view.pageCount}
+        onPageChange={setPage}
+        label={t('pageLabel')}
+        previousLabel={t('pagePrevious')}
+        nextLabel={t('pageNext')}
+        summary={t('pageSummary', {
+          from: view.from,
+          to: view.to,
+          total: view.total,
+        })}
+        note={t('pagePerPage', { n: perPage })}
+      />
     </div>
   );
 }

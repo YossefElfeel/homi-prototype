@@ -58,12 +58,16 @@ export function Toolbar({
         on the children here fixes all six at once instead of asking each to
         remember a rule it cannot enforce.
 
-        The search box took every spare pixel too (`flex-1` with no ceiling),
-        which shoved the filters against the far edge of a wide panel.
+        The search box is what absorbs the slack. It used to be capped at
+        `lg:max-w-sm`, which was right when this row carried eight controls and
+        wrong everywhere else: on /admin/nachrichten, which has no filters at
+        all, the cap left a 24rem search box sitting in a card twice that wide
+        with nothing beside it. The filters keep their natural width, so a wide
+        panel grows the one control that has any use for the room.
       */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 [&>label]:inline-flex [&>label]:min-w-44 [&>label]:flex-col">
         {search && (
-          <div className="relative min-w-56 flex-1 lg:max-w-sm">
+          <div className="relative min-w-56 flex-1">
             <Input
               type="search"
               dense
@@ -92,7 +96,7 @@ export function Toolbar({
       </div>
 
       {(views != null || count != null) && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 px-1">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-1">
           {views}
           {count != null && (
             <p

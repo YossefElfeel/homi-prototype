@@ -1,59 +1,72 @@
 'use client';
 
+import { MoreHorizontal } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/cn';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
 
 /**
- * A row's actions, on the row.
+ * A row's actions, behind one menu button.
  *
- * Every admin list hid them behind a `MoreHorizontal` menu, which costs two
- * clicks and — worse — a guess: nothing on the row said whether the menu held
- * one item or five, so the only way to find out whether a quote had become a
- * booking was to open it. Icons put the answer in the row.
+ * They were an inline icon strip, on the argument that a menu costs two clicks
+ * and hides how many actions a row has. What that argument left out is what
+ * the strip costs every other row: the actions column is as wide as the
+ * *busiest* row's strip, and a request with five of them set the width for a
+ * table where most rows have two. On a queue that is six columns of data, the
+ * strip was taking width from the data it exists to act on — and it grew every
+ * time a screen gained an action.
  *
- * Icon-only in the table, icon **and label** on the card below `lg`. That is
- * not a nicety: `title` is a pointer affordance and there is no pointer on a
- * phone, so an icon-only strip there is a row of unnamed buttons. The desk has
- * the tooltip and cannot spare the width; the card has the width and cannot
- * have the tooltip.
+ * A menu also gives the actions their names back. Icon-only in the table meant
+ * the label lived in `title`, which is a pointer affordance: on a phone the
+ * strip was a row of unnamed buttons, so the card rendering had to carry a
+ * second, text-bearing variant of every action. One menu is the same control
+ * with the same words on both, and the label is read rather than guessed.
  *
- * Which glyph goes on which action is a convention, not a per-screen choice,
- * because an icon strip is only readable once the same picture means the same
- * thing in every list. `Eye` opens the row's own record. Jumping to a related
- * one borrows that entity's sidebar glyph — `Inbox` for a request, `FileText`
- * for a quote, `CalendarCheck` for a booking, `Receipt` for an invoice — so a
- * row says what it is attached to without being opened. Anything that changes
- * something gets a glyph of its own and never one of those four: `FileText`
- * used to mean both "open the quote" and "write one", and `Receipt` meant a
- * quote in one table and an invoice in the next.
+ * Which glyph goes on which action is still a convention rather than a
+ * per-screen choice — see `lib/action-icons.ts`. The icon is now a hint beside
+ * the name instead of the whole message, but the same picture must still mean
+ * the same thing in every list.
  */
-export function RowActions({ children }: { children: React.ReactNode }) {
+export function RowActions({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  /** Overrides the trigger's accessible name. Defaults to «Aktionen». */
+  label?: string;
+}) {
+  const t = useTranslations('app');
+  const name = label ?? t('rowActions');
+
   return (
-    <span className="flex flex-wrap items-center justify-end gap-0.5 lg:flex-nowrap">
-      {children}
-    </span>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title={name}
+          aria-label={name}
+          className="ms-auto inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus data-[state=open]:bg-sunken data-[state=open]:text-ink"
+        >
+          <MoreHorizontal className="size-4" aria-hidden />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>{children}</DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-const BASE =
-  'inline-flex h-8 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus lg:w-8 lg:px-0 [&_svg]:size-4 [&_svg]:shrink-0';
-
-const TONES = {
-  default: 'text-ink-tertiary hover:bg-sunken hover:text-ink',
-  /*
-   * Declining and discarding sit in the same strip as "open this" now, so the
-   * only thing keeping a mis-aimed click from being an irreversible one is that
-   * they do not look like their neighbours. Red on hover rather than red at
-   * rest: a row of danger-coloured icons on every line reads as an alarm and
-   * stops being read at all.
-   */
-  danger: 'text-ink-tertiary hover:bg-status-danger hover:text-status-danger-fg',
-} as const;
-
 interface ActionProps {
-  /** Both the tooltip and the accessible name — an icon has no text of its own. */
+  /** The item's visible text — and so its accessible name. */
   label: string;
-  tone?: keyof typeof TONES;
+  tone?: 'default' | 'danger';
   className?: string;
   children: React.ReactNode;
 }
@@ -73,22 +86,23 @@ export function RowAction({
    */
   external?: boolean;
 }) {
-  const props = {
-    title: label,
-    'aria-label': label,
-    className: cn(BASE, TONES[tone], className),
-    children: (
-      <>
-        {children}
-        <Label>{label}</Label>
-      </>
-    ),
-  };
+  const body = (
+    <>
+      {children}
+      <span>{label}</span>
+    </>
+  );
 
-  return external ? (
-    <a href={href} target="_blank" rel="noreferrer" {...props} />
-  ) : (
-    <Link href={href} {...props} />
+  return (
+    <DropdownMenuItem asChild tone={tone} className={className}>
+      {external ? (
+        <a href={href} target="_blank" rel="noreferrer">
+          {body}
+        </a>
+      ) : (
+        <Link href={href}>{body}</Link>
+      )}
+    </DropdownMenuItem>
   );
 }
 
@@ -101,36 +115,33 @@ export function RowActionButton({
   children,
 }: ActionProps & { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={cn(BASE, TONES[tone], className)}
+    <DropdownMenuItem
+      tone={tone}
+      className={className}
+      /*
+       * Deferred by a tick rather than run inside `onSelect`.
+       *
+       * Radix closes the menu after this handler and returns focus to the
+       * trigger. Half these actions open a Dialog and the rest raise a
+       * `window.confirm` — both take focus, and both were taking it *before*
+       * the menu had finished handing it back, so the restore landed last and
+       * pulled focus out of the thing that had just opened. Letting the close
+       * complete first costs nothing visible and makes the order deterministic.
+       */
+      onSelect={() => setTimeout(onClick, 0)}
     >
       {children}
-      <Label>{label}</Label>
-    </button>
-  );
-}
-
-/* `aria-hidden`, because the button already carries the same text as its
-   accessible name — without this a screen reader on a phone reads it twice. */
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span aria-hidden className="lg:hidden">
-      {children}
-    </span>
+      <span>{label}</span>
+    </DropdownMenuItem>
   );
 }
 
 /**
- * A hairline before the destructive end of the strip.
+ * A hairline before the destructive end of the menu.
  *
- * The menu had `DropdownMenuSeparator` doing exactly this job. Dropping the
- * menu without carrying the separator across would leave "open the quote" and
- * "decline" as two adjacent identical grey squares.
+ * Without it "open the quote" and "decline" are two adjacent lines of the same
+ * weight, and the only thing marking the second as irreversible is its colour.
  */
-export function RowActionsDivider() {
-  return <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-line-subtle" />;
+export function RowActionsDivider({ className }: { className?: string }) {
+  return <DropdownMenuSeparator className={cn(className)} />;
 }
