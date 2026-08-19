@@ -9,7 +9,6 @@ import {
   CalendarClock,
   ExternalLink,
   FileText,
-  Package,
   RefreshCw,
   Repeat,
 } from 'lucide-react';
@@ -65,6 +64,7 @@ export default function AdminOfferDetailPage({
   const listT = useTranslations('admin.offers');
   const methodLabel = useTranslations('status.method');
   const rhythmT = useTranslations('admin.rhythm');
+  const planT = useTranslations('admin.subscription.plans');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -77,6 +77,7 @@ export default function AdminOfferDetailPage({
   const properties = useStore((s) => s.data.properties);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const credits = useStore((s) => s.data.credits);
+  const settings = useStore((s) => s.settings);
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
@@ -441,18 +442,6 @@ export default function AdminOfferDetailPage({
                   invoices list and matching by name and date.
                 */}
                 <div className="space-y-2 border-t border-line-subtle pt-3">
-                  {coverage.kind !== 'payable' && (
-                    <Row label={t('coverage')}>
-                      <Chip
-                        tone="accent"
-                        icon={coverage.kind === 'package' ? Package : Repeat}
-                      >
-                        {coverage.kind === 'package'
-                          ? listT('coveragePackage', { hours: coverage.hoursRemaining ?? 0 })
-                          : listT('coverageSubscription')}
-                      </Chip>
-                    </Row>
-                  )}
                   <Row label={t('payment')}>
                     {payment ? (
                       <span className="inline-flex items-center gap-2">
@@ -477,6 +466,109 @@ export default function AdminOfferDetailPage({
                 </div>
               </dl>
             </Card>
+
+            {/*
+              §11 — why this job is not being charged, and what is left.
+
+              The list carried a chip that said «Aus Paket» and a number of
+              hours, which answers "is this billable" and nothing else. The
+              questions the office actually has when a customer rings are the
+              next two: how much of what they bought is left, and does it
+              stretch to another visit. Both are arithmetic on data the store
+              already holds — and neither had anywhere to be shown, because a
+              table cell is not the place to do arithmetic out loud.
+            */}
+            {coverage.kind === 'package' && (
+              <Card>
+                <CardHeader
+                  title={t('coverageTitle')}
+                  description={t('coveragePackageLead')}
+                />
+                {(() => {
+                  const credit = credits.find((c) => c.id === coverage.sourceId);
+                  const jobHours = offerHours(offer);
+                  const left = coverage.hoursRemaining ?? 0;
+                  /* After this one, not before it: the balance on the screen
+                     while a quote is open is the balance the customer is
+                     about to spend from. */
+                  const after = Math.max(0, left - jobHours);
+                  const more = jobHours > 0 ? Math.floor(after / jobHours) : 0;
+                  return (
+                    <dl className="mt-3 space-y-2 text-sm">
+                      <Row label={t('coverageBalance')}>
+                        <span data-numeric>{t('hoursValue', { n: left })}</span>
+                      </Row>
+                      <Row label={t('coverageThisJob')}>
+                        <span data-numeric>−{t('hoursValue', { n: jobHours })}</span>
+                      </Row>
+                      <div className="flex items-baseline justify-between gap-4 border-t border-line-subtle pt-2">
+                        <dt className="shrink-0 font-medium">{t('coverageAfter')}</dt>
+                        <dd data-numeric className="text-right font-medium">
+                          {t('hoursValue', { n: after })}
+                        </dd>
+                      </div>
+                      <p className="text-ink-secondary">{t('coverageMore', { n: more })}</p>
+                      {credit && (
+                        <Row label={t('coverageExpires')}>
+                          <span data-numeric className="text-ink-tertiary">
+                            {format.dateTime(new Date(credit.expiresAt), 'short')}
+                          </span>
+                        </Row>
+                      )}
+                    </dl>
+                  );
+                })()}
+              </Card>
+            )}
+
+            {coverage.kind === 'subscription' && (
+              <Card>
+                <CardHeader
+                  title={t('coverageTitle')}
+                  description={t('coverageSubscriptionLead')}
+                />
+                {(() => {
+                  const plan = subscriptions.find((s) => s.id === coverage.sourceId);
+                  if (!plan) return null;
+                  const skipsLeft = Math.max(
+                    0,
+                    settings.monthlyFreeSkips - plan.skipsUsedThisMonth,
+                  );
+                  return (
+                    <>
+                      <dl className="mt-3 space-y-2 text-sm">
+                        <Row label={t('coveragePlan')}>
+                          <Chip tone="accent" icon={Repeat}>
+                            {planT(plan.plan)}
+                          </Chip>
+                        </Row>
+                        <Row label={t('coverageNextCharge')}>
+                          <span data-numeric>
+                            {plan.nextChargeAt
+                              ? format.dateTime(new Date(plan.nextChargeAt), 'short')
+                              : '—'}
+                          </span>
+                        </Row>
+                        {/* The one number on a plan that runs out. §11.2 gives
+                            a fixed allowance a month, and "can they skip the
+                            next one?" is asked on the phone. */}
+                        <Row label={t('coverageSkips')}>
+                          <span data-numeric>
+                            {t('coverageSkipsValue', {
+                              left: skipsLeft,
+                              total: settings.monthlyFreeSkips,
+                            })}
+                          </span>
+                        </Row>
+                      </dl>
+                      <Button asChild block variant="secondary" className="mt-4">
+                        <Link href={`/admin/abos/${plan.id}`}>{t('coverageOpenPlan')}</Link>
+                      </Button>
+                    </>
+                  );
+                })()}
+              </Card>
+            )}
 
             {/*
               A paid quote becomes a job, and until now the panel never said

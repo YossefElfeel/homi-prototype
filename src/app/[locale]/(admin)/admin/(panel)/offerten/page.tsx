@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { Package, Repeat, Search, X } from 'lucide-react';
+import { Repeat, Search, X } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -101,6 +101,7 @@ export default function OffersPage() {
 
   const [status, setStatus] = useState('all');
   const [payment, setPayment] = useState('all');
+  const [service, setService] = useState('all');
   const [query, setQuery] = useState('');
 
   const requestOf = (offer: Offer) => requests.find((r) => r.id === offer.requestId);
@@ -135,6 +136,11 @@ export default function OffersPage() {
     return all
       .filter((o) => (status === 'all' ? true : stateOf(o) === status))
       .filter((o) => (payment === 'all' ? true : paymentStateOf(o) === payment))
+      /* The service column has been on this list since it was rebuilt and had
+         no filter behind it, so "show me every window-cleaning quote" meant
+         reading 25 rows a page. It is the same question the requests queue
+         already answers about requests. */
+      .filter((o) => (service === 'all' ? true : requestOf(o)?.serviceSlug === service))
       .filter((o) => {
         if (!q) return true;
         const c = customerOf(o);
@@ -146,15 +152,29 @@ export default function OffersPage() {
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [all, requests, customers, payments, subscriptions, credits, status, payment, query, now]);
+  }, [
+    all,
+    requests,
+    customers,
+    payments,
+    subscriptions,
+    credits,
+    status,
+    payment,
+    service,
+    query,
+    now,
+  ]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const filtering = status !== 'all' || payment !== 'all' || Boolean(query);
+  const filtering =
+    status !== 'all' || payment !== 'all' || service !== 'all' || Boolean(query);
 
   function reset() {
     setStatus('all');
     setPayment('all');
+    setService('all');
     setQuery('');
   }
 
@@ -170,21 +190,6 @@ export default function OffersPage() {
           {o.version > 1 && <Chip tone="neutral">{t('version', { n: o.version })}</Chip>}
         </span>
       ),
-    },
-    {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      cell: (o) => {
-        const state = stateOf(o);
-        return (
-          <StatusBadge
-            entity="request"
-            state={state === 'sent' ? 'offerSent' : state}
-            size="sm"
-          />
-        );
-      },
     },
     {
       key: 'customer',
@@ -230,54 +235,69 @@ export default function OffersPage() {
       },
     },
     {
-      key: 'coverage',
-      header: t('colCoverage'),
-      tableOnly: true,
-      cell: (o) => {
-        const coverage = offerCoverage(o, requestOf(o), subscriptions, credits, now);
-        /* Payable is the norm, and a chip on every row saying "normal" is
-           noise that hides the two rows where it matters. */
-        if (coverage.kind === 'payable') {
-          return <span className="text-ink-tertiary">—</span>;
-        }
-        return (
-          <Chip tone="accent" icon={coverage.kind === 'package' ? Package : Repeat}>
-            {coverage.kind === 'package'
-              ? t('coveragePackage', { hours: coverage.hoursRemaining ?? 0 })
-              : t('coverageSubscription')}
-          </Chip>
-        );
-      },
-    },
-    {
       key: 'total',
       header: t('colTotal'),
       align: 'end',
       sortBy: (o) => offerTotal(o),
       cell: (o) => <Money amount={offerTotal(o)} />,
     },
+    /*
+     * Where the quote stands, then where the money stands, then how it was
+     * paid — the three read left to right as one sentence about this row.
+     * Status used to open the row and the coverage chip sat between the two
+     * halves of that sentence; coverage is now on the detail, where there is
+     * room to say what is left rather than only that something covers it.
+     */
     {
-      key: 'payment',
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      align: 'end',
+      cell: (o) => {
+        const state = stateOf(o);
+        return (
+          <StatusBadge
+            entity="request"
+            state={state === 'sent' ? 'offerSent' : state}
+            size="sm"
+          />
+        );
+      },
+    },
+    {
+      key: 'paymentStatus',
       header: t('colPayment'),
       align: 'end',
       cell: (o) => {
         const payment = offerPayment(o.id, payments);
-        if (!payment) {
-          const coverage = offerCoverage(o, requestOf(o), subscriptions, credits, now);
-          /* A covered job never produces a payment and never will. Leaving the
-             cell blank would read as "not paid yet" for a job that owes
-             nothing. */
-          return (
-            <span className="text-sm text-ink-tertiary">
-              {coverage.kind === 'payable' ? '—' : t('paymentNotDue')}
-            </span>
-          );
+        if (payment) {
+          return <StatusBadge entity="payment" state={payment.status} size="sm" />;
         }
+        const coverage = offerCoverage(o, requestOf(o), subscriptions, credits, now);
+        /* A covered job never produces a payment and never will. Leaving the
+           cell blank would read as "not paid yet" for a job that owes
+           nothing. */
         return (
-          <span className="flex flex-col items-end gap-1">
-            <StatusBadge entity="payment" state={payment.status} size="sm" />
-            <span className="text-xs text-ink-tertiary">{methodLabel(payment.method)}</span>
+          <span className="text-sm text-ink-tertiary">
+            {coverage.kind === 'payable' ? '—' : t('paymentNotDue')}
           </span>
+        );
+      },
+    },
+    {
+      /* Stacked under the badge before, at a size that made "TWINT" and "Karte"
+         read as a footnote to the status rather than an answer to "how did
+         they pay" — which is the question this column is asked when a payment
+         has to be traced. */
+      key: 'paymentMethod',
+      header: t('colMethod'),
+      align: 'end',
+      cell: (o) => {
+        const payment = offerPayment(o.id, payments);
+        return payment ? (
+          <span className="text-sm text-ink-secondary">{methodLabel(payment.method)}</span>
+        ) : (
+          <span className="text-sm text-ink-tertiary">—</span>
         );
       },
     },
@@ -359,6 +379,20 @@ export default function OffersPage() {
                       : state === 'none'
                         ? t('filterPaymentNone')
                         : paymentLabel(state)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="min-w-40">
+              <span className="sr-only">{t('filterService')}</span>
+              <Select dense value={service} onChange={(e) => setService(e.target.value)}>
+                <option value="all">
+                  {t('filterService')}: {t('filterAll')}
+                </option>
+                {services.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name[locale]}
                   </option>
                 ))}
               </Select>
