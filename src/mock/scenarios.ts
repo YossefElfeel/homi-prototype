@@ -835,6 +835,8 @@ function baseData(now: Date): DataSet {
    * thread hanging off a reference no screen can open reads fine in the list
    * and dead-ends the moment somebody follows it.
    */
+  const hoursAgo = (n: number) => iso(new Date(now.getTime() - n * 3_600_000));
+
   const messages: CustomerMessage[] = [
     {
       id: 'msg_1',
@@ -844,6 +846,7 @@ function baseData(now: Date): DataSet {
       body: 'Guten Tag Herr Widmer, vielen Dank für Ihre Anfrage. Die Offerte finden Sie in Ihrem Konto. Bei Fragen erreichen Sie mich direkt.',
       at: iso(days(now, -3)),
       readByCustomer: true,
+      readByAdmin: true,
     },
     {
       id: 'msg_2',
@@ -853,6 +856,7 @@ function baseData(now: Date): DataSet {
       body: 'Danke — passt der Termin auch eine Stunde später?',
       at: iso(days(now, -2)),
       readByCustomer: true,
+      readByAdmin: true,
     },
     {
       id: 'msg_3',
@@ -862,6 +866,235 @@ function baseData(now: Date): DataSet {
       body: 'Ja, das geht. Ich habe den Termin auf 09:00 verschoben und die Bestätigung angepasst.',
       at: iso(days(now, -2)),
       readByCustomer: false,
+      readByAdmin: true,
+    },
+
+    /* The demo account writes about more than its open request. Two threads on
+       one customer is what proves the list groups by reference — grouped by
+       person, these two would fold into each other. */
+    {
+      id: 'msg_inv_1',
+      customerId: 'cus_2',
+      subject: 'RE-2026-0048',
+      from: 'customer',
+      body: 'Können Sie mir diese Rechnung nochmals schicken? Ich finde sie in meinen Mails nicht mehr.',
+      at: hoursAgo(196),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_inv_2',
+      customerId: 'cus_2',
+      subject: 'RE-2026-0048',
+      from: 'homivaro',
+      body: 'Gerne. Sie liegt auch in Ihrem Konto unter «Rechnungen» — dort können Sie sie jederzeit als PDF herunterladen.',
+      at: hoursAgo(194),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+
+    /* Unanswered, three hours old, in English. The most useful thing this
+       screen can show its owner is a question nobody has replied to yet, and
+       the seed had not one. */
+    {
+      id: 'msg_en_1',
+      customerId: 'cus_4',
+      subject: 'A-2482',
+      from: 'customer',
+      body: 'One more thing on the office request: the invoice has to go to Whitfield & Partners, not to me personally. Is that a problem?',
+      at: hoursAgo(3),
+      readByCustomer: true,
+      readByAdmin: false,
+    },
+
+    /* The quote ran out before the handover did, and req_1 is `expired` — the
+       one thread where the answer is a new quote rather than a reply. */
+    {
+      id: 'msg_fr_1',
+      customerId: 'cus_3',
+      subject: 'A-2481',
+      from: 'homivaro',
+      body: 'Bonjour Madame Marchand\n\nvotre offre pour le nettoyage de fin de bail se trouve dans votre compte. Elle est valable quatorze jours.\n\nCordialement\nMarco Brunner',
+      at: iso(days(now, -20)),
+      readByCustomer: true,
+      readByAdmin: true,
+      attachments: [
+        { id: 'att_off_2481', name: 'Offerte-A-2481.pdf', kind: 'document', size: 214_000 },
+      ],
+    },
+    {
+      id: 'msg_fr_2',
+      customerId: 'cus_3',
+      subject: 'A-2481',
+      from: 'customer',
+      body: 'L’offre a expiré et la remise des clés est dans neuf jours. Pouvez-vous la refaire ? Le four reste le point critique.',
+      at: hoursAgo(5),
+      readByCustomer: true,
+      readByAdmin: false,
+    },
+
+    /* Six turns on one job. Every other thread here is two or three, and a
+       transcript that never gets long is one whose scrolling, spacing and
+       speaker alternation nobody has actually looked at. */
+    {
+      id: 'msg_abo_1',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'customer',
+      body: 'Guten Tag, ich habe den Code am Schlüsselkasten geändert. Nala ist wie immer zuhause.',
+      at: hoursAgo(148),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_abo_2',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'homivaro',
+      body: 'Danke für den Hinweis — den Code bitte nicht hier, sondern im Konto unter «Objekt» eintragen. Dort steht er maskiert und nur das Team sieht ihn.',
+      at: hoursAgo(146),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_abo_3',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'customer',
+      body: 'Erledigt. Und noch etwas: Können Sie beim nächsten Mal die Fenster im Wintergarten mitmachen?',
+      at: hoursAgo(101),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_abo_4',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'homivaro',
+      body: 'Fensterreinigung ist im Abo nicht enthalten, die müsste ich separat offerieren. Soll ich?',
+      at: hoursAgo(99),
+      readByCustomer: true,
+      readByAdmin: true,
+      attachments: [
+        { id: 'att_fenster', name: 'Preisliste-Fensterreinigung.pdf', kind: 'document', size: 96_400 },
+      ],
+    },
+    {
+      id: 'msg_abo_5',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'customer',
+      body: 'Ja, bitte — aber erst im Frühling.',
+      at: hoursAgo(74),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_abo_6',
+      customerId: 'cus_1',
+      subject: 'B-1043',
+      from: 'homivaro',
+      body: 'Notiert, ich melde mich im März dazu. Der Abo-Termin bleibt wie geplant.',
+      at: hoursAgo(72),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+
+    /* The declined card, from the customer's side. `pay_failed` sits in the
+       seed already and the person behind it had no way to say anything about
+       it — which is exactly when somebody writes instead of trying a third
+       time. */
+    {
+      id: 'msg_pay_1',
+      customerId: 'cus_m5',
+      subject: 'O-2494-1',
+      from: 'homivaro',
+      body: 'Guten Tag Frau Meier\n\ndie Offerte für die Umzugsreinigung ist unterwegs. Sobald die Zahlung durch ist, halten wir den Termin fest.\n\nFreundliche Grüsse\nMarco Brunner',
+      at: iso(days(now, -3)),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_pay_2',
+      customerId: 'cus_m5',
+      subject: 'O-2494-1',
+      from: 'customer',
+      body: 'Die Karte wurde zweimal abgelehnt, die Bank sagt es liege nicht an ihr. Geht auch eine Rechnung?',
+      at: hoursAgo(20),
+      readByCustomer: true,
+      readByAdmin: true,
+      attachments: [
+        { id: 'att_bank', name: 'Bank-Ablehnung.png', kind: 'image', size: 512_300 },
+      ],
+    },
+
+    /* Waiting on us, with the customer's own deadline in it. The chip says a
+       reply is owed; only the message says by when. */
+    {
+      id: 'msg_rev_1',
+      customerId: 'cus_m2',
+      subject: 'A-2495',
+      from: 'homivaro',
+      body: 'Guten Tag Herr Schoch, Ihre Anpassung ist angekommen. Ich rechne die Fenster raus und schicke die neue Offerte.',
+      at: iso(days(now, -4)),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_rev_2',
+      customerId: 'cus_m2',
+      subject: 'A-2495',
+      from: 'customer',
+      body: 'Gibt es dazu schon etwas Neues? Ich muss der Verwaltung bis Freitag zusagen.',
+      at: hoursAgo(30),
+      readByCustomer: true,
+      readByAdmin: false,
+    },
+
+    /* An office, asking the one thing offices ask. Answered, so it carries no
+       chip — the list needs both kinds to show the chip means anything. */
+    {
+      id: 'msg_buero_1',
+      customerId: 'cus_m7',
+      subject: 'A-2502',
+      from: 'customer',
+      body: 'Bei uns ist ab 18:00 niemand mehr im Haus. Geht die Reinigung auch nach Feierabend?',
+      at: hoursAgo(70),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_buero_2',
+      customerId: 'cus_m7',
+      subject: 'A-2502',
+      from: 'homivaro',
+      body: 'Ja, Büros reinigen wir regelmässig abends. Die Terminvorschläge habe ich entsprechend gesetzt.',
+      at: hoursAgo(68),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+
+    /* The refunded booking, in English. `bkg_off_refund` was cancelled and
+       paid back in the seed with nothing anywhere saying why. */
+    {
+      id: 'msg_ref_1',
+      customerId: 'cus_m11',
+      subject: 'B-1047',
+      from: 'customer',
+      body: 'We have to cancel the clean — the office move got pushed back a month. Can we have the payment returned?',
+      at: hoursAgo(96),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_ref_2',
+      customerId: 'cus_m11',
+      subject: 'B-1047',
+      from: 'homivaro',
+      body: 'Done — the full amount is on its way back to the card you paid with, it takes two to three working days. Just write when the new date is set.',
+      at: hoursAgo(94),
+      readByCustomer: true,
+      readByAdmin: true,
     },
   ];
 
@@ -2850,6 +3083,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       body: 'Guten Tag, passt der 11. auch am Nachmittag statt am Mittag?',
       at: iso(days(now, -1)),
       readByCustomer: true,
+      readByAdmin: false,
     },
     {
       id: 'msg_s_2',
@@ -2859,6 +3093,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       body: 'Ich bestreite diese Rechnung — es war niemand vor Ort.',
       at: iso(days(now, -2)),
       readByCustomer: true,
+      readByAdmin: true,
     },
     {
       id: 'msg_s_3',
@@ -2868,6 +3103,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       body: 'Guten Tag Herr Huber\n\nDer Einsatz ist mit Foto und Zeitstempel dokumentiert. Ich schicke Ihnen die Aufnahme gerne zu.\n\nFreundliche Grüsse\nMarco Brunner',
       at: iso(days(now, -2)),
       readByCustomer: false,
+      readByAdmin: true,
+      attachments: [
+        { id: 'att_einsatz', name: 'Einsatz-Kuechenzeile.jpg', kind: 'image', size: 1_840_000 },
+        { id: 'att_protokoll', name: 'Zeitprotokoll-RE-2026-0055.pdf', kind: 'document', size: 48_900 },
+      ],
     },
   ];
 

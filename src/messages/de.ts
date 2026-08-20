@@ -257,6 +257,20 @@ export const de = {
        wäre Lärm; Stille war das Problem. */
     saving: 'Wird gespeichert …',
     saved: 'Gespeichert',
+    /* Anhänge stehen an beiden Enden eines Gesprächs, im Panel und im
+       Kundenkonto — deshalb hier und nicht in `admin`. */
+    attachments: {
+      label: '{count, plural, one {# Anhang} other {# Anhänge}}',
+      attach: 'Datei anhängen',
+      uploading: 'Wird hochgeladen …',
+      /* Der Upload ist simuliert. Das hier zu verschweigen wäre genau an der
+         Stelle unehrlich, an der ein Prüfer es zuerst ausprobiert. */
+      mockNotice: 'Upload simuliert — JPG, PNG, WEBP oder PDF, bis 10 MB.',
+      errorType: 'Nur JPG, PNG, WEBP oder PDF.',
+      errorSize: '«{name}» ist grösser als {max} MB.',
+      staged: 'Vorbereitete Anhänge',
+      remove: '«{name}» entfernen',
+    },
   },
 
   /** Prototype-only control surface. Never part of the product. */

@@ -191,30 +191,32 @@ export const adminDe = {
     title: 'Nachrichten',
     lead: 'Nach Referenz gebündelt, nicht nach Datum — ein Auftrag ist ein Gespräch.',
     threads: 'Gespräche',
+    /* Zwei Zustände, zwei Wörter. «Ungelesen» hiess auf diesem Bildschirm
+       lange «der Kunde hat zuletzt geschrieben» — ein Gespräch, das der
+       Inhaber gelesen und bewusst auf morgen gelegt hatte, blieb damit für
+       immer ungelesen. */
     unread: 'Ungelesen',
+    waiting: 'Wartet auf Antwort',
     search: 'Nach Name oder Referenz suchen',
+    filterRead: 'Gelesen',
+    filterUnread: 'Ungelesen',
+    filterAll: 'Alle',
+    filterFrom: 'Von',
+    filterTo: 'Bis',
+    filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Nachrichten',
     emptyBody:
       'Sobald jemand aus dem Kundenkonto schreibt, erscheint das Gespräch hier.',
-    searchEmptyTitle: 'Kein Gespräch gefunden',
-    searchEmptyBody: 'Für «{query}» gibt es kein Gespräch.',
+    filterEmptyTitle: 'Kein Gespräch gefunden',
+    filterEmptyBody:
+      'Kein Gespräch passt zu Suche, Lesestatus und Zeitraum zusammen.',
+    /* Eine Nachricht darf aus einem Anhang allein bestehen. In der Liste
+       stünde sonst eine leere Zeile da, wo etwas angekommen ist. */
+    attachmentOnly: 'Nur ein Anhang',
     pickTitle: 'Gespräch auswählen',
     pickBody: 'Wählen Sie links ein Gespräch aus, um es zu lesen und zu antworten.',
     fromCustomer: 'Kunde',
     fromUs: 'Homivaro',
-    /* Elf Vorlagen liegen in den Einstellungen, und genau eine wurde je
-       benutzt — die Offerte. Wer hier antwortete, tippte jedes Mal neu, was
-       auf Screen 79 längst steht. */
-    templateLabel: 'Vorlage einsetzen',
-    templatePlaceholder: 'Vorlage wählen …',
-    templateHint:
-      /* `{"{"}` ist JSX-Escaping in einem reinen String — ICU liest die
-         Klammern als Platzhalter und wirft MALFORMED_ARGUMENT, was den
-         ganzen Bildschirm 48 beim Rendern abbrechen liess. In ICU wird eine
-         wörtliche Klammer mit einfachen Anführungszeichen geschützt. */
-      "Setzt den Text in der Sprache des Kunden ein. Platzhalter wie '{'name'}' bleiben stehen — bitte vor dem Senden ersetzen.",
-    templateOverwrite: 'Der angefangene Text wird ersetzt. Fortfahren?',
-    templateInserted: 'Vorlage eingesetzt.',
     replyLabel: 'Antwort',
     replyPlaceholder: 'Antwort schreiben …',
     send: 'Antworten',

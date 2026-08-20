@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { MessageAttachments } from '@/components/messages/message-attachments';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -120,7 +121,15 @@ export default function AccountMessagesPage() {
                         {format.dateTime(new Date(message.at), 'short')}
                       </span>
                     </p>
-                    <p className="mt-2 text-ink-secondary">{message.body}</p>
+                    {message.body && (
+                      <p className="mt-2 text-ink-secondary">{message.body}</p>
+                    )}
+                    {/* Read-only here. The customer receiving a file is the
+                        whole reason the office can send one; letting them send
+                        one back is a separate decision with its own storage
+                        and virus-scanning questions, and §22 has not answered
+                        them. */}
+                    <MessageAttachments attachments={message.attachments} />
                   </li>
                 ))}
               </ul>

@@ -656,6 +656,39 @@ export interface CustomerMessage {
   body: string;
   at: ISODate;
   readByCustomer: boolean;
+  /**
+   * The office's own read state — a different question from `readByCustomer`,
+   * and a different question again from who wrote last.
+   *
+   * The admin list had one chip reading «Ungelesen» that actually measured
+   * "the customer wrote last", so a thread the owner had read and deliberately
+   * parked until tomorrow stayed marked unread for ever, and one they had
+   * never opened but had auto-answered looked handled. Two states, two flags.
+   */
+  readByAdmin: boolean;
+  /** Absent and empty mean the same thing; nothing distinguishes them. */
+  attachments?: MessageAttachment[];
+}
+
+/**
+ * A file sent alongside a message.
+ *
+ * Deliberately not a `Photo`. A photo in this system is evidence about a job:
+ * it carries `visibleToCustomer` and `publishConsent` because §20.6 makes
+ * showing one to anybody a recorded decision. An attachment is the opposite —
+ * the office chose this file and put it in a thread addressed to one named
+ * customer, so "who may see it" was answered by the act of sending. Reusing
+ * `Photo` would have put a consent step in front of every reply that has an
+ * invoice stapled to it, and `Photo` cannot hold the PDF half of "files and
+ * images" at all.
+ */
+export interface MessageAttachment {
+  id: ID;
+  name: string;
+  /** An image gets a preview; anything else gets a row with its size. */
+  kind: 'image' | 'document';
+  /** Bytes. Shown before it is opened, which is the point of showing it. */
+  size: number;
 }
 
 /* ----------------------------------------------------------------- billing */

@@ -19,6 +19,7 @@ import type {
   ID,
   Invoice,
   InvoiceLine,
+  MessageAttachment,
   MessageTemplate,
   JobPosting,
   TeamMember,
@@ -124,8 +125,15 @@ Marco Brunner`;
    store persisted under 14 holds subscriptions with no `planId`, so
    `plans.find(...)` returns undefined on every plan screen, `history` is
    `undefined` where `skipsUsedThisMonth` counts it, and the customer's own
-   plan page reads `undefined.filter` on first paint. */
-const SCHEMA_VERSION = 15;
+   plan page reads `undefined.filter` on first paint.
+
+   16: `CustomerMessage` gained `readByAdmin` and `attachments`. Not the crash
+   kind — a blob from 15 reads `undefined`, which is falsy — but the flag's
+   only job is to tell read from unread, and a store carried over would open
+   the panel with every thread marked unread, including the ones the owner
+   answered themselves. A read state that is wrong on arrival is worse than
+   none, because the filter sitting above it still looks like it works. */
+const SCHEMA_VERSION = 16;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -532,6 +540,7 @@ interface StoreState {
       subject: string;
       body: string;
       from: CustomerMessage['from'];
+      attachments?: MessageAttachment[];
     },
     now: Date,
   ) => void;
@@ -553,7 +562,11 @@ interface StoreState {
    * seen. A parameter the caller must fill is what stops that being a typo
    * away from coming back.
    */
-  markThreadRead: (customerId: ID, subject: string) => void;
+  markThreadRead: (
+    customerId: ID,
+    subject: string,
+    side: 'customer' | 'admin',
+  ) => void;
 
   setRole: (role: DemoRole) => void;
   setScenario: (scenario: ScenarioName) => void;
@@ -2818,7 +2831,7 @@ export const useStore = create<StoreState>()(
        * no admin screen touched data.messages. A reply written here was
        * genuinely unanswerable.
        */
-      sendMessage: ({ customerId, subject, body, from }, now) =>
+      sendMessage: ({ customerId, subject, body, from, attachments }, now) =>
         set((s) => {
           const message: CustomerMessage = {
             id: `msg_${now.getTime().toString(36)}_${s.data.messages.length}`,
@@ -2830,6 +2843,8 @@ export const useStore = create<StoreState>()(
             /* Each side has trivially read what it just wrote itself, and has
                not yet read what the other side just sent. */
             readByCustomer: from === 'customer',
+            readByAdmin: from === 'homivaro',
+            attachments: attachments?.length ? attachments : undefined,
           };
           return { data: { ...s.data, messages: [...s.data.messages, message] } };
         }),
@@ -2853,13 +2868,13 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      markThreadRead: (customerId, subject) =>
+      markThreadRead: (customerId, subject, side) =>
         set((s) => ({
           data: {
             ...s.data,
             messages: s.data.messages.map((m) =>
               m.customerId === customerId && m.subject === subject
-                ? { ...m, readByCustomer: true }
+                ? { ...m, [side === 'admin' ? 'readByAdmin' : 'readByCustomer']: true }
                 : m,
             ),
           },

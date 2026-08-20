@@ -3,19 +3,21 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { MessageSquare, Search, Send } from 'lucide-react';
+import { MessageSquare, Search, Send, X } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import type { MessageAttachment } from '@/mock/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Textarea } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
-import { TemplatePicker } from '@/components/admin/template-picker';
+import { AttachmentPicker } from '@/components/messages/attachment-picker';
+import { MessageAttachments } from '@/components/messages/message-attachments';
 import { elapsed } from '@/lib/elapsed';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -31,7 +33,23 @@ import { cn } from '@/lib/cn';
  * Threaded by `subject` — the reference the conversation hangs off — for the
  * same reason the customer side is: a message about job B-1052 belongs with
  * job B-1052, not with whatever else arrived that afternoon.
+ *
+ * The reply is typed, not picked. The shared template picker stays on the
+ * quote and invoice screens, where the screen knows which flow it is in and
+ * therefore which template is the right one; a thread here can be about a
+ * request, a quote or an invoice, and a picker that cannot tell them apart
+ * offers the wrong text as readily as the right one.
+ *
+ * Two chips, not one. This screen shipped with a single chip reading
+ * «Ungelesen» that was computed from who wrote last, so the two questions an
+ * owner actually asks — "what have I not looked at" and "what still owes a
+ * reply" — had one answer between them. A thread read and deliberately parked
+ * until tomorrow stayed marked unread for ever. `readByAdmin` answers the
+ * first, who wrote last answers the second, and the filter above the list
+ * works off the first because that is what Read/Unread means everywhere else.
  */
+type ReadFilter = 'all' | 'unread' | 'read';
+
 export default function AdminMessagesPage() {
   const t = useTranslations('admin.messages');
   const appT = useTranslations('app');
@@ -45,10 +63,16 @@ export default function AdminMessagesPage() {
   const markThreadRead = useStore((s) => s.markThreadRead);
 
   const [query, setQuery] = useState('');
+  const [read, setRead] = useState<ReadFilter>('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);
-  /* Keyed by thread. One shared draft across threads is the bug the customer
-     side shipped with — typing in one wrote into all of them. */
+  /* Both keyed by thread. One shared draft across threads is the bug the
+     customer side shipped with — typing in one wrote into all of them — and an
+     attachment staged against the wrong conversation is the same mistake with
+     a file in it. */
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [staged, setStaged] = useState<Record<string, MessageAttachment[]>>({});
 
   const nameOf = (id: string) => {
     const c = customers.find((x) => x.id === id);
@@ -86,39 +110,75 @@ export default function AdminMessagesPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return threads;
-    return threads.filter(
-      (thread) =>
-        thread.subject.toLowerCase().includes(q) ||
-        nameOf(thread.customerId).toLowerCase().includes(q),
-    );
+    /* <input type="date"> gives YYYY-MM-DD and `at` is a full ISO string, so
+       comparing the first ten characters keeps the range on calendar days
+       instead of drifting by a timezone offset — the same rule the request
+       queue uses. The range is read against the thread's newest message,
+       because that is the date the row shows and the date it sorts by; a range
+       run against the opening message would hide a conversation that started
+       in March and is still live. */
+    const fromKey = from || null;
+    const toKey = to || null;
+
+    return threads
+      .filter((thread) => (read === 'all' ? true : isUnread(thread.items) === (read === 'unread')))
+      .filter((thread) => {
+        const day = (thread.items.at(-1)?.at ?? '').slice(0, 10);
+        return (!fromKey || day >= fromKey) && (!toKey || day <= toKey);
+      })
+      .filter(
+        (thread) =>
+          !q ||
+          thread.subject.toLowerCase().includes(q) ||
+          nameOf(thread.customerId).toLowerCase().includes(q),
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads, query, customers]);
+  }, [threads, query, read, from, to, customers]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const open = filtered.find((thread) => thread.key === openKey) ?? filtered[0] ?? null;
+  /*
+   * Resolved against every thread, not just the surviving ones.
+   *
+   * Opening an unread thread marks it read, which under the Unread filter
+   * drops it out of the list on the same click — and if `open` were read off
+   * the filtered set, the transcript would vanish from under whoever just
+   * clicked it. The list narrows; what you are reading stays put.
+   */
+  const open = threads.find((thread) => thread.key === openKey) ?? filtered[0] ?? null;
+  const filtering = Boolean(query || from || to || read !== 'all');
 
-  /* "Unread" here means unanswered: the customer wrote last. The
-     readByCustomer flag is the customer's side of the same conversation. */
-  const isWaiting = (items: typeof messages) => items.at(-1)?.from === 'customer';
+  const attachmentsFor = (key: string) => staged[key] ?? [];
+  const canSend = (key: string) =>
+    Boolean((drafts[key] ?? '').trim()) || attachmentsFor(key).length > 0;
+
+  function reset() {
+    setQuery('');
+    setRead('all');
+    setFrom('');
+    setTo('');
+  }
 
   function selectThread(key: string, customerId: string, subject: string) {
     setOpenKey(key);
-    markThreadRead(customerId, subject);
-  }
-
-  function post(customerId: string, subject: string, body: string) {
-    sendMessage({ customerId, subject, body, from: 'homivaro' }, now);
+    markThreadRead(customerId, subject, 'admin');
   }
 
   function reply() {
-    if (!open) return;
-    const body = (drafts[open.key] ?? '').trim();
-    if (!body) return;
+    if (!open || !canSend(open.key)) return;
 
-    post(open.customerId, open.subject, body);
+    sendMessage(
+      {
+        customerId: open.customerId,
+        subject: open.subject,
+        body: (drafts[open.key] ?? '').trim(),
+        from: 'homivaro',
+        attachments: attachmentsFor(open.key),
+      },
+      now,
+    );
     setDrafts((d) => ({ ...d, [open.key]: '' }));
+    setStaged((a) => ({ ...a, [open.key]: [] }));
     toast.success(t('sent'));
   }
 
@@ -147,14 +207,71 @@ export default function AdminMessagesPage() {
                 label: t('search'),
                 clearLabel: appT('clearSearch'),
               }}
+              count={appT('results', { shown: filtered.length, total: threads.length })}
+              filters={
+                <>
+                  <label className="min-w-36">
+                    <span className="sr-only">{t('filterRead')}</span>
+                    <Select
+                      dense
+                      value={read}
+                      onChange={(e) => setRead(e.target.value as ReadFilter)}
+                    >
+                      <option value="all">
+                        {t('filterRead')}: {t('filterAll')}
+                      </option>
+                      <option value="unread">{t('filterUnread')}</option>
+                      <option value="read">{t('filterRead')}</option>
+                    </Select>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 text-sm">
+                    <span className="text-ink-tertiary">{t('filterFrom')}</span>
+                    <Input
+                      dense
+                      type="date"
+                      value={from}
+                      max={to || undefined}
+                      className="w-auto"
+                      onChange={(e) => setFrom(e.target.value)}
+                    />
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm">
+                    <span className="text-ink-tertiary">{t('filterTo')}</span>
+                    <Input
+                      dense
+                      type="date"
+                      value={to}
+                      min={from || undefined}
+                      className="w-auto"
+                      onChange={(e) => setTo(e.target.value)}
+                    />
+                  </label>
+
+                  {filtering && (
+                    <Button size="sm" variant="ghost" onClick={reset}>
+                      <X className="size-3.5" aria-hidden />
+                      {t('filterReset')}
+                    </Button>
+                  )}
+                </>
+              }
             />
 
             {filtered.length === 0 ? (
+              /* The search-specific wording was the only empty state here, and
+                 it named a query that may well be blank now that a date range
+                 and a read filter can empty the list on their own. */
               <EmptyState
                 compact
                 icon={Search}
-                title={t('searchEmptyTitle')}
-                body={t('searchEmptyBody', { query })}
+                title={t('filterEmptyTitle')}
+                body={t('filterEmptyBody')}
+                action={
+                  <Button variant="secondary" onClick={reset}>
+                    {t('filterReset')}
+                  </Button>
+                }
               />
             ) : (
               <Card pad="none">
@@ -179,12 +296,22 @@ export default function AdminMessagesPage() {
                           )}
                         >
                           <span className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate font-medium">
+                            <span
+                              className={cn(
+                                'min-w-0 truncate',
+                                isUnread(thread.items) ? 'font-semibold' : 'font-medium',
+                              )}
+                            >
                               {nameOf(thread.customerId)}
                             </span>
-                            {isWaiting(thread.items) && (
-                              <Chip tone="info">{t('unread')}</Chip>
-                            )}
+                            <span className="flex shrink-0 items-center gap-1">
+                              {isUnread(thread.items) && (
+                                <Chip tone="info">{t('unread')}</Chip>
+                              )}
+                              {isWaiting(thread.items) && (
+                                <Chip tone="warning">{t('waiting')}</Chip>
+                              )}
+                            </span>
                           </span>
                           <span
                             data-numeric
@@ -194,7 +321,7 @@ export default function AdminMessagesPage() {
                           </span>
                           {last && (
                             <span className="mt-1 block truncate text-sm text-ink-secondary">
-                              {last.body}
+                              {last.body || t('attachmentOnly')}
                             </span>
                           )}
                         </button>
@@ -246,36 +373,17 @@ export default function AdminMessagesPage() {
                             })}
                           </span>
                         </p>
-                        <p className="mt-1 whitespace-pre-line">{message.body}</p>
+                        {message.body && (
+                          <p className="mt-1 whitespace-pre-line">{message.body}</p>
+                        )}
+                        <MessageAttachments attachments={message.attachments} />
                       </li>
                     );
                   })}
                 </ul>
 
                 <div className="border-t border-line-subtle p-card">
-                  {/*
-                    Eleven templates sat in settings and exactly one — the quote
-                    mail — was ever read. Whoever replied here retyped, in the
-                    customer's language, what screen 79 already held. The picker
-                    is shared now, so this screen cannot drift from the invoice
-                    and quote ones; and because the thread knows who it is with
-                    and what it references, {name} and {reference} resolve, which
-                    is what makes sending without editing safe rather than
-                    reckless.
-                  */}
-                  <TemplatePicker
-                    locale={
-                      customers.find((c) => c.id === open.customerId)?.language ?? 'de'
-                    }
-                    vars={{ name: nameOf(open.customerId), reference: open.subject }}
-                    hasDraft={Boolean((drafts[open.key] ?? '').trim())}
-                    onInsert={(message) =>
-                      setDrafts((d) => ({ ...d, [open.key]: message.body }))
-                    }
-                    onSend={(message) => post(open.customerId, open.subject, message.body)}
-                  />
-
-                  <Field label={t('replyLabel')} className="mt-4">
+                  <Field label={t('replyLabel')}>
                     {(props) => (
                       <Textarea
                         {...props}
@@ -289,11 +397,20 @@ export default function AdminMessagesPage() {
                       />
                     )}
                   </Field>
-                  <Button
+
+                  <AttachmentPicker
                     className="mt-3"
-                    onClick={reply}
-                    disabled={!(drafts[open.key] ?? '').trim()}
-                  >
+                    value={attachmentsFor(open.key)}
+                    onChange={(next) =>
+                      setStaged((a) => ({ ...a, [open.key]: next }))
+                    }
+                  />
+
+                  {/* A file with nothing typed is a real message — "here is the
+                      quote you asked for" — so the button follows either half.
+                      Requiring text would have made the picker unusable on its
+                      own without saying so. */}
+                  <Button className="mt-4" onClick={reply} disabled={!canSend(open.key)}>
                     <Send className="size-4" aria-hidden />
                     {t('send')}
                   </Button>
@@ -305,4 +422,20 @@ export default function AdminMessagesPage() {
       )}
     </div>
   );
+}
+
+/**
+ * Nobody in the office has opened this thread.
+ *
+ * Only the customer's messages count. Ours are read by definition — we wrote
+ * them — and counting them would mark every thread the owner replied to as
+ * unread the moment the reply landed.
+ */
+function isUnread(items: { from: string; readByAdmin: boolean }[]) {
+  return items.some((m) => m.from === 'customer' && !m.readByAdmin);
+}
+
+/** The customer wrote last, so a reply is owed — read or not. */
+function isWaiting(items: { from: string }[]) {
+  return items.at(-1)?.from === 'customer';
 }
