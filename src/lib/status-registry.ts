@@ -54,16 +54,21 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   /*
    * Calls, follow-ups and viewings.
    *
-   * `noReply` is warning rather than danger: nobody picking up is not a
+   * `pending` is warning rather than danger: nobody picking up is not a
    * failure, it is a thing that is still outstanding — the same weight as
-   * `rescheduled` on a booking, and for the same reason. `converted` is
-   * success because it is the outcome the call existed to produce.
+   * `rescheduled` on a booking, and for the same reason.
+   *
+   * `inProgress` was `converted` and coloured success, on the reasoning that
+   * a call becoming a request is the outcome the call existed to produce. It
+   * is progress: the request it opened still has to be quoted, booked and
+   * paid, and a green badge said that work was finished when it had just
+   * started.
    */
   calendarEvent: {
-    planned: 'info',
+    upcoming: 'info',
+    pending: 'warning',
+    inProgress: 'progress',
     done: 'success',
-    noReply: 'warning',
-    converted: 'success',
     cancelled: 'neutral',
   },
   // §4.3

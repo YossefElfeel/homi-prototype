@@ -10,6 +10,7 @@ import {
   Inbox,
   KeyRound,
   MapPin,
+  Plus,
   RefreshCw,
   Sun,
 } from 'lucide-react';
@@ -120,6 +121,21 @@ export default function AdminDashboard() {
       <PageHeader
         title={t('title', { name: member?.firstName ?? '' })}
         lead={t('lead')}
+        /*
+          The one thing the owner does on this screen that is not reading it.
+          Somebody phones while the start screen is open — which is most of the
+          day — and taking that down meant going to /admin/anfragen and finding
+          the button there. The screen listed five ways to *read* a request and
+          no way to make one.
+        */
+        actions={
+          <Button asChild>
+            <Link href="/admin/anfragen/neu">
+              <Plus className="size-4" aria-hidden />
+              {t('addRequest')}
+            </Link>
+          </Button>
+        }
       />
 
       <StatGrid>

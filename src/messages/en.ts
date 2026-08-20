@@ -109,10 +109,12 @@ export const en: Messages = {
       cancelled: 'Cancelled',
     },
     calendarEvent: {
-      planned: 'Planned',
+      upcoming: 'Upcoming',
       done: 'Done',
-      noReply: 'No reply',
-      converted: 'Became a request',
+      /* "No reply" described the call, not where it stands. Pending is where
+         it stands: somebody has to try again. */
+      pending: 'Pending',
+      inProgress: 'In progress',
       cancelled: 'Called off',
     },
     subscription: {

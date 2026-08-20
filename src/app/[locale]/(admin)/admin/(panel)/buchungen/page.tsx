@@ -36,6 +36,16 @@ import { cn } from '@/lib/cn';
  */
 const PAYMENT_STATES = ['paid', 'pending', 'unpaid', 'covered'] as const;
 
+/** A finished job is history — it can be read, not moved. Same list the
+    booking detail and the calendar's row menu close their actions on. */
+const SETTLED: Booking['status'][] = [
+  'completed',
+  'invoiced',
+  'closed',
+  'cancelled',
+  'noAccess',
+];
+
 /**
  * Bookings — new.
  *
@@ -338,6 +348,26 @@ export default function BookingsPage() {
               <RowAction href={`/admin/buchungen/${b.id}`} label={t('rowOpen')}>
                 <ActionIcon.open aria-hidden />
               </RowAction>
+              {/*
+                Moving a job is the one thing this list is opened to do that it
+                could not do. The calendar's row menu has offered it since it
+                gained one; here the only route was open the booking, find the
+                actions column, press Verschieben — three steps for the action
+                a customer is on the phone about.
+
+                Deep-links to the panel rather than reimplementing it, exactly
+                as the calendar menu does. Hidden once the job is settled: a
+                finished job cannot be moved, and an item that refuses is worse
+                than one that is not there.
+              */}
+              {!SETTLED.includes(b.status) && (
+                <RowAction
+                  href={`/admin/buchungen/${b.id}?action=reschedule`}
+                  label={t('rowReschedule')}
+                >
+                  <ActionIcon.reschedule aria-hidden />
+                </RowAction>
+              )}
               {offer && (
                 <RowAction
                   href={`/admin/offerten/${offer.id}`}

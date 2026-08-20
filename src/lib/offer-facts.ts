@@ -188,9 +188,17 @@ export function bookingPaymentState(
   ) {
     return 'pending';
   }
-  /* No quote and no invoice: the plan paid for it. A draft invoice is not this
-     — it means we have not asked yet, which is money still outstanding. */
-  if (!booking.offerId && !invoice) return 'covered';
+  /*
+   * The plan paid for it — and the plan has to be on the record for that to be
+   * true. This read "no quote and no invoice", which is not the same thing: a
+   * job entered by hand on the phone has neither either, and every one of them
+   * came out of this function labelled «Im Abo» — the bookings list telling
+   * the owner a monthly charge had settled a job no plan covers.
+   *
+   * A draft invoice is still not this: it means we have not asked yet, which
+   * is money outstanding.
+   */
+  if (booking.subscriptionId && !booking.offerId && !invoice) return 'covered';
   return 'unpaid';
 }
 

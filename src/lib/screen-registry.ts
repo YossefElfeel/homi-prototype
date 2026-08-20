@@ -303,7 +303,7 @@ export const TRACKS: Track[] = [
         'Calendar — day',
         '/admin/kalender',
         ['no jobs', 'travel conflict', 'closure period', 'held slot'],
-        'Legend, and the colours it explains, arrived together — week and month drew every entry in one accent tone. Day and agenda now show closures, which only week and month ever did',
+        'Every view is a card now, with the legend as the card beside it rather than a disclosure that pushed the grid off screen. One legend row per colour, not per state',
       ),
       done(
         '58a',
@@ -314,9 +314,15 @@ export const TRACKS: Track[] = [
         'Two things behind one button. The job half runs the same dayBlockReason the customer-facing picker runs, so the office cannot click around the daily ceiling',
       ),
       done('59', 'Kalender — Woche', 'Calendar — week', '/admin/kalender', ['closure period'], 'View switcher on the calendar — a calendar is one screen with four views, not four screens'),
-      done('60', 'Kalender — Monat', 'Calendar — month', '/admin/kalender', ['closure period']),
+      done(
+        '60',
+        'Kalender — Monat',
+        'Calendar — month',
+        '/admin/kalender',
+        ['closure period', 'more than three entries'],
+        'Draws the week grid\'s chips instead of coloured dots — a dot said something was on that day and never what',
+      ),
       done('61', 'Agenda', 'Agenda list', '/admin/kalender', ['empty']),
-      done('62', 'Routenkarte', 'Route map', '/admin/kalender/karte', ['empty day']),
       done(
         '63',
         'Buchungs-Detail',
@@ -330,8 +336,8 @@ export const TRACKS: Track[] = [
         'Termin-Detail',
         'Appointment detail',
         '/admin/kalender/cev_today',
-        ['planned', 'no reply', 'became a request'],
-        'The call that produced work becomes a request without being retyped. cev_converted opens on the closed loop, cev_noreply on the one still outstanding',
+        ['upcoming', 'pending', 'in progress'],
+        'The call that produced work becomes a request without being retyped, and the request card says what it will carry before you press. cev_converted opens on the closed loop, cev_noreply on the one still outstanding',
       ),
       done('64', 'Kunden', 'Customers', '/admin/kunden', [
         'empty',

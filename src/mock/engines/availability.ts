@@ -187,7 +187,7 @@ export function slotsForDay(day: Date, q: SlotQuery): Slot[] {
      collides with a job exactly as another job would. A phone call does not —
      see `occupiesSlot`. */
   const occupied = eventsOnDay(day, q.events ?? [])
-    .filter((e) => occupiesSlot(e.kind) && e.status !== 'done' && e.status !== 'noReply')
+    .filter((e) => occupiesSlot(e.kind) && e.status !== 'done' && e.status !== 'pending')
     .map((e) => ({
       start: new Date(e.start),
       end: addMinutes(new Date(e.start), e.duration),
