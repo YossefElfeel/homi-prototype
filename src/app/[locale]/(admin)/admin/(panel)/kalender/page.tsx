@@ -23,7 +23,12 @@ import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { addDays, detectRouteConflicts, startOfDay } from '@/mock/engines/availability';
+import {
+  addDays,
+  bookingsOnDay,
+  detectRouteConflicts,
+  startOfDay,
+} from '@/mock/engines/availability';
 import { businessWeekday, fromZoned, zonedParts } from '@/lib/business-time';
 import {
   calendarDay,
@@ -240,7 +245,29 @@ export default function CalendarPage({
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
-  const step = view === 'month' ? 30 : view === 'week' ? 7 : 1;
+  /**
+   * ‹ and ›, one view at a time.
+   *
+   * Month stepped by *thirty days*, which is not a month. It looked right most
+   * of the year and skipped February outright: from 31 January, +30 lands on
+   * 2 March, so the owner pressed "next" once and never saw the month in
+   * between. Thirty-one-day months drifted the cursor backwards a day at a
+   * time until an eleven-month year could double back on itself.
+   *
+   * Month now moves to the first of the neighbouring month — `fromZoned` takes
+   * month 0 and month 13 and normalises them into the year on either side, so
+   * December → January needs no special case. Landing on the 1st rather than
+   * keeping the day-of-month is deliberate: it is the only date guaranteed to
+   * exist in every month, and it is where a month view is looking anyway.
+   */
+  function shift(direction: -1 | 1) {
+    if (view !== 'month') {
+      setCursor(addDays(cursor, direction * (view === 'week' ? 7 : 1)));
+      return;
+    }
+    const p = zonedParts(cursor);
+    setCursor(fromZoned(p.year, p.month + direction, 1));
+  }
 
   /*
    * The legend, as a filter.
@@ -312,18 +339,30 @@ export default function CalendarPage({
     return t('holdTitle');
   };
 
+  /*
+   * One date shape for the whole strip.
+   *
+   * Day printed «Donnerstag, 20. August 2026» and week printed «Montag,
+   * 17. August – Samstag, 22. August» — two different date formats one click
+   * apart, and the week one dropped the year entirely, which is exactly the
+   * field you need when you have paged four months forward.
+   */
   const heading =
     view === 'month'
       ? format.dateTime(cursor, { month: 'long', year: 'numeric' })
       : view === 'week'
-        ? `${format.dateTime(weekStart, 'dayMonth')} – ${format.dateTime(addDays(weekStart, 5), 'dayMonth')}`
-        : format.dateTime(cursor, 'full');
+        ? `${format.dateTime(weekStart, 'dayDate')} – ${format.dateTime(addDays(weekStart, 5), 'dayDate')}`
+        : format.dateTime(cursor, 'dayDate');
 
-  const weekFull = Array.from({ length: 6 }, (_, i) =>
-    calendarDay(addDays(weekStart, i), source),
+  const weekDays = Array.from({ length: 6 }, (_, i) =>
+    onlyPicked(calendarDay(addDays(weekStart, i), source)),
   );
-  const weekDays = weekFull.map(onlyPicked);
-  const weekJobs = weekFull.flatMap((d) => d.entries.filter((e) => e.kind === 'booking'));
+  /* Off `bookingsOnDay`, not off the drawn entries. The grid draws closed jobs
+     now, and «6 Einsätze · 24 Std.» is a claim about the week's *work* — a job
+     that finished and was paid for a fortnight ago is not part of it. */
+  const weekJobs = Array.from({ length: 6 }, (_, i) =>
+    bookingsOnDay(addDays(weekStart, i), bookings),
+  ).flat();
 
   function EntryRow({ entry, time, until }: { entry: CalendarEntry; time: string; until: string }) {
     const Icon = entry.event ? EVENT_ICON[entry.event.kind] : entry.kind === 'hold' ? Clock : null;
@@ -461,7 +500,7 @@ export default function CalendarPage({
             variant="ghost"
             size="icon"
             aria-label={t('previous')}
-            onClick={() => setCursor(addDays(cursor, -step))}
+            onClick={() => shift(-1)}
           >
             <ChevronLeft className="size-4" aria-hidden />
           </Button>
@@ -472,7 +511,7 @@ export default function CalendarPage({
             variant="ghost"
             size="icon"
             aria-label={t('next')}
-            onClick={() => setCursor(addDays(cursor, step))}
+            onClick={() => shift(1)}
           >
             <ChevronRight className="size-4" aria-hidden />
           </Button>
@@ -568,7 +607,10 @@ export default function CalendarPage({
               <div className="p-card">
                 <p data-numeric className="label-type text-ink-tertiary">
                   {t('capacity', {
-                    used: todayFull.entries.filter((e) => e.kind === 'booking').length,
+                    /* The same question the scheduler asks, asked the same
+                       way — `todayFull.entries` would now count a job that
+                       closed months ago against today's ceiling. */
+                    used: bookingsOnDay(cursor, bookings).length,
                     max: settings.maxJobsPerDay,
                   })}
                 </p>
@@ -669,7 +711,7 @@ export default function CalendarPage({
               <p data-numeric className="border-t border-line-subtle p-card text-sm text-ink-tertiary">
                 {t('weekTotal', {
                   count: weekJobs.length,
-                  hours: weekJobs.reduce((sum, e) => sum + (e.booking?.duration ?? 0), 0) / 60,
+                  hours: weekJobs.reduce((sum, b) => sum + b.duration, 0) / 60,
                 })}
               </p>
             </Card>
@@ -884,24 +926,15 @@ export default function CalendarPage({
                 </ul>
               </div>
 
-              <div>
-                <p className="text-sm font-medium">{t('legendOther')}</p>
-                <ul className="-mx-2 mt-2 space-y-0.5">
-                  <Swatch
-                    tone="progress"
-                    label={t('legendHold')}
-                    pressed={filters.includes('hold')}
-                    onToggle={() => toggle('hold')}
-                  />
-                  <li className="flex items-start gap-2.5 px-2 py-1 text-sm">
-                    <span
-                      aria-hidden
-                      className="mt-1.5 size-2.5 shrink-0 rounded-full border border-line bg-sunken"
-                    />
-                    <span className="min-w-0">{t('legendClosure')}</span>
-                  </li>
-                </ul>
-              </div>
+              {/*
+                «Übriges» stood here — a reserved slot and a company holiday.
+                Both explain themselves in the grid without a swatch: a held
+                slot is the only dashed chip on the screen and carries the
+                words «Reservierte Zeit», and a closed day prints
+                «Betriebsferien» across the cell. A legend group exists to
+                decode a colour that says nothing on its own, and neither of
+                those two ever needed decoding.
+              */}
             </div>
           </Card>
         </aside>

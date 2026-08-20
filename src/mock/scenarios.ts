@@ -505,9 +505,26 @@ function baseData(now: Date): DataSet {
       duration: 180,
       arrivalWindow: 60,
       assigneeId: 'tm_owner',
-      status: 'scheduled',
+      /*
+       * The one moved job that belongs to the demo *account*.
+       *
+       * B-1050 already carried `rescheduled`, and it belongs to cus_m3 — a
+       * customer nobody can log in as. So the half of a reschedule that faces
+       * the customer (the notice in the bell, the note on the dashboard) had
+       * no seeded example at all: you could only see it by moving a job
+       * yourself and then switching roles.
+       */
+      status: 'rescheduled',
+      reschedule: { from: iso(at(days(now, 0), 8, 30)), at: iso(days(now, -1)) },
       photoIds: [],
-      history: [{ at: iso(days(now, -3)), kind: 'created', label: 'Gebucht' }],
+      history: [
+        { at: iso(days(now, -3)), kind: 'created', label: 'Gebucht' },
+        {
+          at: iso(days(now, -1)),
+          kind: 'rescheduled',
+          label: 'Verschoben auf morgen 08:30 — Ausfall im Team',
+        },
+      ],
     },
     /*
      * Done, invoiced, and the money has not arrived — the only one of the four
@@ -593,6 +610,9 @@ function baseData(now: Date): DataSet {
       arrivalWindow: 60,
       assigneeId: 'tm_owner',
       status: 'rescheduled',
+      /* The timeline said it moved; nothing said what it moved *from*, so the
+         note above the reschedule button had nothing to print. */
+      reschedule: { from: iso(at(openDay(now, 1), 9)), at: iso(days(now, -2)) },
       photoIds: [],
       history: [
         { at: iso(days(now, -9)), kind: 'created', label: 'Gebucht' },
@@ -694,16 +714,24 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m7',
       propertyId: 'prp_m7',
       serviceSlug: 'bueroreinigung',
-      start: iso(at(pastOpenDay(now, -30), 8)),
+      /*
+       * Was thirty days back, which put the only `closed` job outside the
+       * month grid the calendar opens on — so the legend's grey row explained
+       * a colour that was nowhere on the screen, and now that the row is also
+       * a filter it explained a filter that returned nothing. Thirteen days
+       * keeps the story (finished, invoiced, paid, closed) and puts it inside
+       * the month you are already looking at.
+       */
+      start: iso(at(pastOpenDay(now, -13), 8)),
       duration: 360,
       arrivalWindow: 120,
       assigneeId: 'tm_owner',
       status: 'closed',
       photoIds: [],
       history: [
-        { at: iso(days(now, -44)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(pastOpenDay(now, -30), 14)), kind: 'checkOut', label: 'Ausgecheckt' },
-        { at: iso(days(now, -29)), kind: 'closed', label: 'Abgeschlossen und bezahlt' },
+        { at: iso(days(now, -27)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(pastOpenDay(now, -13), 14)), kind: 'checkOut', label: 'Ausgecheckt' },
+        { at: iso(days(now, -12)), kind: 'closed', label: 'Abgeschlossen und bezahlt' },
       ],
     },
   ];
@@ -940,9 +968,9 @@ function baseData(now: Date): DataSet {
       bookingId: 'bkg_10',
       lines: [{ label: 'Büroreinigung', quantity: 6, unitPrice: 55 }],
       status: 'paid',
-      issuedAt: iso(days(now, -30)),
-      dueAt: iso(days(now, 0)),
-      paidAt: iso(days(now, -29)),
+      issuedAt: iso(days(now, -13)),
+      dueAt: iso(days(now, 17)),
+      paidAt: iso(days(now, -12)),
       qrReference: '21 00000 00003 13947 14300 09007',
     },
     /*
@@ -1103,6 +1131,25 @@ function baseData(now: Date): DataSet {
       from: 'homivaro',
       body: 'Ja, das geht. Ich habe den Termin auf 09:00 verschoben und die Bestätigung angepasst.',
       at: iso(days(now, -2)),
+      readByCustomer: false,
+      readByAdmin: true,
+    },
+
+    /*
+     * The notice B-1044's move sent.
+     *
+     * Unread on purpose: it is what puts a number on the bell in the account
+     * shell, which is the whole of "the customer was told" in this prototype.
+     * Keyed by the booking reference, so it lands in that job's thread rather
+     * than in the request thread above.
+     */
+    {
+      id: 'msg_moved_1044',
+      customerId: 'cus_2',
+      subject: 'B-1044',
+      from: 'homivaro',
+      body: 'Guten Tag Herr Widmer\n\nwir mussten Ihren Einsatz verschieben — statt heute um 08:30 kommen wir neu morgen um 08:30. Ein Kollege ist ausgefallen.\n\nPasst Ihnen der neue Termin nicht, antworten Sie einfach hier.\n\nFreundliche Grüsse\nHomivaro',
+      at: iso(days(now, -1)),
       readByCustomer: false,
       readByAdmin: true,
     },
@@ -1721,6 +1768,40 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m5',
       outcome: 'Umzug per Ende Monat, Wohnung 4.5 Zimmer. Offerte zugesagt.',
       requestId: 'req_q_offer',
+      createdDaysAgo: 7,
+    }),
+    /*
+     * `done` and `cancelled` had no seeded record between them.
+     *
+     * Both are rows in the legend, and the legend is a filter now — so two of
+     * its ten rows explained a colour the calendar never drew and, clicked,
+     * emptied the screen. A state the seed cannot produce is a state nobody
+     * reviews.
+     */
+    calendarEvent(now, {
+      id: 'cev_done',
+      ref: 'K-405',
+      kind: 'contact-call',
+      title: 'Rückruf Grundreinigung Küche',
+      inDays: -2,
+      hour: 15,
+      status: 'done',
+      customerId: 'cus_m6',
+      outcome: 'Alles besprochen, sie meldet sich nach den Ferien selbst.',
+      createdDaysAgo: 6,
+    }),
+    calendarEvent(now, {
+      id: 'cev_cancelled',
+      ref: 'K-406',
+      kind: 'viewing',
+      title: 'Besichtigung Attikawohnung',
+      inDays: -5,
+      hour: 10,
+      duration: 45,
+      status: 'cancelled',
+      customerId: 'cus_m11',
+      note: 'Kurzfristig abgesagt — Wohnung ist doch noch nicht leer.',
+      createdDaysAgo: 12,
     }),
     calendarEvent(now, {
       id: 'cev_noreply',

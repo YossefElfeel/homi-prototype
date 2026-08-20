@@ -113,6 +113,24 @@ export default function AccountDashboardPage() {
                 {nextProperty.street}, {nextProperty.city}
               </span>
             </p>
+            {/*
+              The date used to change under them. A rescheduled job looked
+              exactly like one that had always been on that day, so the only
+              way to find out we had moved it was to have remembered the old
+              date — and then to doubt yourself.
+            */}
+            {next.reschedule && (
+              <p
+                data-numeric
+                className="mt-4 rounded-[var(--radius-sm)] bg-status-info p-3 text-sm text-status-info-fg"
+              >
+                {t('movedNote', {
+                  from: format.dateTime(new Date(next.reschedule.from), 'full'),
+                  at: format.dateTime(new Date(next.reschedule.at), 'full'),
+                })}
+              </p>
+            )}
+
             <p className="mt-4 text-sm text-ink-tertiary">
               {t('cancelFreeUntil', { date: format.dateTime(freeUntil, 'full') })}
             </p>

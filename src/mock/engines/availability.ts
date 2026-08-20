@@ -138,18 +138,47 @@ export function occupiesSlot(kind: CalendarEventKind) {
 
 /** Everything on the calendar for a day that is not a job. Cancelled events
     are gone from the calendar — they are not a state the day has to show. */
-export function eventsOnDay(day: Date, events: CalendarEvent[]) {
+/*
+ * Two different questions, and they were answered by one function.
+ *
+ * "What still takes up room on Tuesday" is the scheduler's question, and it is
+ * right to drop a closed job and a called-off appointment: neither occupies
+ * anything any more. "What happened on Tuesday" is the calendar's, and there
+ * the same two are exactly what you came to look at.
+ *
+ * The calendar was reading the scheduler's answer, so a `closed` booking and a
+ * `cancelled` appointment were undrawable — on every view, in every month.
+ * Both have a row in the legend, which meant two of its rows had always
+ * explained a colour that could not appear; once the rows became filters, they
+ * became two buttons that empty the screen.
+ *
+ * Split rather than parameterised, because the two callers do not want the same
+ * thing on any axis and a boolean argument would read as "closed: true" at the
+ * call site without saying whose closed.
+ */
+function filedOn<T extends { start: string }>(day: Date, items: T[]): T[] {
   const d = startOfDay(day).getTime();
-  return events
-    .filter((e) => e.status !== 'cancelled' && startOfDay(new Date(e.start)).getTime() === d)
+  return items
+    .filter((x) => startOfDay(new Date(x.start)).getTime() === d)
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 }
 
+/** Everything filed under this day, whatever became of it — what a calendar draws. */
+export function eventsFiledOn(day: Date, events: CalendarEvent[]) {
+  return filedOn(day, events);
+}
+
+/** What still stands on this day — what the scheduler and the day's capacity count. */
+export function eventsOnDay(day: Date, events: CalendarEvent[]) {
+  return eventsFiledOn(day, events).filter((e) => e.status !== 'cancelled');
+}
+
+export function bookingsFiledOn(day: Date, bookings: Booking[]) {
+  return filedOn(day, bookings);
+}
+
 export function bookingsOnDay(day: Date, bookings: Booking[]) {
-  const d = startOfDay(day).getTime();
-  return bookings
-    .filter((b) => b.status !== 'closed' && startOfDay(new Date(b.start)).getTime() === d)
-    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  return bookingsFiledOn(day, bookings).filter((b) => b.status !== 'closed');
 }
 
 /* ---------------------------------------------------------------- travel */

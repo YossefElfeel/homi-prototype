@@ -19,9 +19,9 @@
 import type { Booking, CalendarEvent, ClosurePeriod, SlotHold } from '@/mock/schema';
 import {
   addMinutes,
-  bookingsOnDay,
+  bookingsFiledOn,
   closureFor,
-  eventsOnDay,
+  eventsFiledOn,
   startOfDay,
 } from '@/mock/engines/availability';
 import { statusTone, type StatusTone } from './status-registry';
@@ -79,7 +79,11 @@ export function calendarDay(day: Date, source: CalendarSource): CalendarDay {
   const closure = closureFor(day, source.closures);
 
   const entries: CalendarEntry[] = [
-    ...bookingsOnDay(day, source.bookings).map((booking): CalendarEntry => {
+    /* `…FiledOn`, not `…OnDay`: the second pair is the scheduler's, and it
+       drops a closed job and a called-off appointment because neither takes up
+       room any more. On a calendar that is not a filter, it is a blind spot —
+       two states the grid could not draw at all. */
+    ...bookingsFiledOn(day, source.bookings).map((booking): CalendarEntry => {
       const start = new Date(booking.start);
       return {
         id: booking.id,
@@ -91,7 +95,7 @@ export function calendarDay(day: Date, source: CalendarSource): CalendarDay {
         booking,
       };
     }),
-    ...eventsOnDay(day, source.events).map((event): CalendarEntry => {
+    ...eventsFiledOn(day, source.events).map((event): CalendarEntry => {
       const start = new Date(event.start);
       return {
         id: event.id,

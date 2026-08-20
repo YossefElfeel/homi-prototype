@@ -775,9 +775,9 @@ export const adminDe = {
       'In dieser Ansicht gibt es keinen Eintrag in der gewählten Farbe. Der Tag kann trotzdem voll sein.',
     legendJobs: 'Einsätze',
     legendEvents: 'Termine ohne Einsatz',
-    legendOther: 'Übriges',
-    legendClosure: 'Betriebsferien',
-    legendHold: 'Reserviert, noch nicht unterschrieben',
+    /* «Übriges» ist weg — eine reservierte Zeit und Betriebsferien erklären
+       sich im Raster von selbst. Der Hinweistext bleibt: er steht unter einer
+       reservierten Zeit in der Tagesliste, nicht in der Legende. */
     legendHoldHint:
       'Der Kunde hat 48 Stunden Zeit. Die Zeit ist blockiert, der Einsatz entsteht erst mit der Zahlung.',
 
@@ -936,7 +936,15 @@ export const adminDe = {
     propertyArea: 'Fläche',
     serviceTitle: 'Leistung',
     moneyTitle: 'Betrag & Belege',
-    amountOnPlan: 'Im Abo enthalten — die monatliche Belastung deckt diesen Einsatz.',
+    /* Hiess `amountOnPlan` und wurde immer dann gezeigt, wenn keine Offerte
+       da war — also auch für den telefonisch gebuchten Einsatz, der weder
+       Offerte noch Abo hat. B-1044 behauptete, eine Monatsgebühr decke ihn,
+       und verlinkte darunter die Rechnung, die ihn verrechnet hat. */
+    amountBasis_offer: 'Aus der Offerte.',
+    amountBasis_invoice: 'So verrechnet.',
+    amountBasis_plan: 'Im Abo enthalten — die monatliche Belastung deckt diesen Einsatz.',
+    amountBasis_estimate: 'Schätzung nach Stunden. Noch nichts verrechnet.',
+    hours: '{hours} Std.',
     customerTitle: 'Kunde',
     propertyTitle: 'Objekt',
     accessTitle: 'Zutritt',
@@ -946,6 +954,18 @@ export const adminDe = {
     rescheduleLabel: 'Neuer Termin',
     rescheduleSave: 'Termin verschieben',
     rescheduledTo: 'Verschoben auf {date}, {time}',
+    /* Der Badge sagt «Verschoben» und kann kein Datum tragen. Was das Büro vor
+       dem Rückruf braucht, ist genau das eine, was fehlte: was der Kunde
+       vorher im Kalender stehen hatte. */
+    movedTitle: 'Dieser Einsatz wurde verschoben',
+    movedBody: 'Von {fromDate}, {fromTime} auf {toDate}, {toTime}.',
+    movedNotified: '{name} wurde am {at} im Kundenkonto benachrichtigt.',
+    movedShort: 'Stand vorher auf {date}, {time}.',
+    /* Landet im Nachrichtenverlauf des Kunden unter der Buchungsnummer — also
+       neben allem anderen zu diesem Einsatz, nicht in einem Postfach, das im
+       Produkt niemand öffnen kann. */
+    noticeBody:
+      'Guten Tag\n\nwir mussten Ihren Einsatz verschieben: statt {fromDate}, {fromTime} kommen wir neu am {toDate}, {toTime}.\n\nPasst Ihnen der neue Termin nicht, antworten Sie einfach hier — wir finden einen anderen.\n\nFreundliche Grüsse\nHomivaro',
     rescheduleDone: 'Termin verschoben.',
     dismiss: 'Abbrechen',
     cancel: 'Stornieren',
