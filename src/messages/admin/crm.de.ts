@@ -167,6 +167,17 @@ export const adminCrmDe = {
        Datensatz — auch nicht «nur zur Erinnerung». */
     paymentLabelHint: 'Nur zum Wiedererkennen: die letzten vier Ziffern. Nie die ganze Nummer.',
     paymentLabelPlaceholder: 'z. B. Visa · 4242',
+    /* Das Formular fragte nach einer *Bezeichnung* — «tippen Sie Visa · 4242
+       selbst» — also nach der Form des Datensatzes statt nach dem, was am
+       Telefon vorgelesen wird. Vier Felder, zwei bleiben. */
+    paymentExpires: 'gültig bis {date}',
+    cardNumber: 'Kartennummer',
+    cardName: 'Name auf der Karte',
+    cardExpiry: 'Gültig bis',
+    cardCvv: 'Prüfziffer',
+    cardCvvHint: 'Drei Ziffern auf der Rückseite.',
+    cardStorageNote:
+      'Gespeichert werden Kartentyp, die letzten vier Ziffern und das Ablaufdatum. Nummer und Prüfziffer werden nicht abgelegt.',
     paymentAddSave: 'Hinterlegen',
     paymentCancel: 'Abbrechen',
     paymentAdded: 'Zahlungsmittel hinterlegt.',

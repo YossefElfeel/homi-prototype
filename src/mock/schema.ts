@@ -786,6 +786,17 @@ export interface SavedPaymentMethod {
   kind: SavedMethodKind;
   /** "Visa · 4242", "+41 79 ··· 66" — never the full number. */
   label: string;
+  /**
+   * "09/28". Cards only, and the only field of a card worth keeping besides
+   * the brand and the last four: it is what tells the office a plan is about
+   * to fail to charge, which is a phone call worth making a week early.
+   *
+   * The number itself and the security code are deliberately not here. They
+   * are typed into the form and thrown away at the point of save — a record
+   * that stores them is one nobody in this market may legally keep, and
+   * modelling it in a prototype invites building it for real.
+   */
+  expiresAt?: string;
   isDefault: boolean;
   addedAt: ISODate;
 }

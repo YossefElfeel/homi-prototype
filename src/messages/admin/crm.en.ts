@@ -148,6 +148,17 @@ export const adminCrmEn: typeof adminCrmDe = {
        "just as a reminder". */
     paymentLabelHint: 'For recognition only: the last four digits. Never the full number.',
     paymentLabelPlaceholder: 'e.g. Visa · 4242',
+    /* The form asked for a *label* — "type Visa · 4242 yourself" — which is
+       the shape of the record, not the thing being read down the phone. Four
+       fields, two of them kept. */
+    paymentExpires: 'expires {date}',
+    cardNumber: 'Card number',
+    cardName: 'Name on the card',
+    cardExpiry: 'Expires',
+    cardCvv: 'Security code',
+    cardCvvHint: 'Three digits on the back.',
+    cardStorageNote:
+      'We keep the card type, the last four digits and the expiry date. The number and the security code are not stored.',
     paymentAddSave: 'Save',
     paymentCancel: 'Cancel',
     paymentAdded: 'Method saved.',

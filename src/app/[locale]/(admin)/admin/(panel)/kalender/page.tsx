@@ -594,16 +594,28 @@ export default function CalendarPage({
         </div>
       )}
 
-      <div className="gap-app mt-app grid lg:grid-cols-12">
+      {/*
+        Was 9/12 and 3/12. A twelfth is a *proportion*, so the legend grew with
+        the window — on a wide screen a column of six short labels was taking
+        close to four hundred pixels off the grid beside it, which is the one
+        thing on this screen that can actually use them. The legend needs a
+        fixed reading width and nothing more; everything else goes to the
+        calendar.
+      */}
+      <div className="gap-app mt-app grid lg:grid-cols-[minmax(0,1fr)_15rem]">
         <div
           id="calendar-panel"
           role="tabpanel"
           aria-labelledby={`calendar-tab-${view}`}
           tabIndex={0}
-          className="min-w-0 lg:col-span-9"
+          className="flex min-w-0 flex-col"
         >
           {view === 'day' && (
-            <Card pad="none">
+            /* `flex-1`, because a day with two entries left the card ending a
+               third of the way down a legend that runs the full height — two
+               panels side by side, one of them stopping for no reason the
+               reader can see. */
+            <Card pad="none" className="flex-1">
               <div className="p-card">
                 <p data-numeric className="label-type text-ink-tertiary">
                   {t('capacity', {
@@ -680,7 +692,7 @@ export default function CalendarPage({
           )}
 
           {view === 'week' && (
-            <Card pad="none" className="overflow-hidden">
+            <Card pad="none" className="flex flex-1 flex-col overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="grid min-w-3xl grid-cols-6 gap-px bg-line-subtle">
                   {weekDays.map((cell) => (
@@ -708,7 +720,7 @@ export default function CalendarPage({
                   ))}
                 </div>
               </div>
-              <p data-numeric className="border-t border-line-subtle p-card text-sm text-ink-tertiary">
+              <p data-numeric className="mt-auto border-t border-line-subtle p-card text-sm text-ink-tertiary">
                 {t('weekTotal', {
                   count: weekJobs.length,
                   hours: weekJobs.reduce((sum, b) => sum + b.duration, 0) / 60,
@@ -718,7 +730,7 @@ export default function CalendarPage({
           )}
 
           {view === 'month' && (
-            <Card pad="none" className="overflow-hidden">
+            <Card pad="none" className="flex-1 overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="grid min-w-2xl grid-cols-7 gap-px bg-line-subtle">
                   {Array.from({ length: 42 }, (_, i) => {
@@ -795,7 +807,7 @@ export default function CalendarPage({
           )}
 
           {view === 'agenda' && (
-            <Card pad="none">
+            <Card pad="none" className="flex-1">
               {(() => {
                 /* Built forward from the same day model rather than from a
                    second hand-rolled filter over bookings. That second filter
@@ -880,7 +892,7 @@ export default function CalendarPage({
           were never on screen together. Beside the grid it costs nothing to
           leave open.
         */}
-        <aside className="lg:col-span-3">
+        <aside className="min-w-0">
           <Card className="lg:sticky lg:top-4">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <h2 className="label-type text-ink-tertiary">{t('legendTitle')}</h2>

@@ -154,8 +154,13 @@ Marco Brunner`;
    `cancelled`. A blob from 18 has none of it: every moved booking loses the
    date it was moved from, so the note on /admin/buchungen/[id] and the one on
    the customer's dashboard both vanish, and two legend rows filter to
-   nothing. Not a crash — a reviewer quietly looking at the old product. */
-const SCHEMA_VERSION = 19;
+   nothing. Not a crash — a reviewer quietly looking at the old product.
+
+   20: `SavedPaymentMethod` gained `expiresAt`, and cus_1 — the one customer in
+   the seed on a plan — finally has the card that plan is charged to. A blob
+   from 19 opens her record on «Nichts hinterlegt», which is the empty state
+   the whole change exists to remove. */
+const SCHEMA_VERSION = 20;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -483,7 +488,7 @@ interface StoreState {
      Add, remove and set-default were all local component state, so every
      change vanished on navigation. */
   addPaymentMethod: (
-    input: { customerId: ID; kind: SavedMethodKind; label: string },
+    input: { customerId: ID; kind: SavedMethodKind; label: string; expiresAt?: string },
     now: Date,
   ) => void;
   removePaymentMethod: (id: ID) => void;
@@ -2245,7 +2250,7 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      addPaymentMethod: ({ customerId, kind, label }, now) =>
+      addPaymentMethod: ({ customerId, kind, label, expiresAt }, now) =>
         set((s) => {
           const mine = s.data.paymentMethods.filter((m) => m.customerId === customerId);
           return {
@@ -2258,6 +2263,7 @@ export const useStore = create<StoreState>()(
                   customerId,
                   kind,
                   label,
+                  expiresAt,
                   /* The first one saved is the default — otherwise the
                      customer ends up with a method and nothing marked. */
                   isDefault: mine.length === 0,

@@ -208,8 +208,26 @@ export default function RequestDetailPage({
         }`
       : '—';
 
-  const ALL_SECTIONS = ['service', 'property', 'preferred', 'access', 'photos'];
-  const allOpen = openSections.length === ALL_SECTIONS.length;
+  /*
+   * What "all" means for the button — and `access` is not in it.
+   *
+   * The screen opens with four of five sections already unfolded, so it looked
+   * open and the button underneath said «Alle ausklappen». Pressing it did do
+   * something: it opened the fifth, which is the one holding the key-box code
+   * and the alarm code. A bulk control that puts an alarm code on the display
+   * as a side effect of "tidy this up for me" is the same wrong grain
+   * `SecretValue` exists to fix — §13.1 wants that section opened on purpose,
+   * once, by somebody who meant to.
+   *
+   * So the toggle governs the four readable sections, and its label now tells
+   * the truth on arrival: everything it controls is open, so it offers to
+   * close them.
+   */
+  const BULK_SECTIONS = ['service', 'property', 'preferred', 'photos'];
+  /* `every`, not a length comparison — the old test was true for any five
+     strings, so a section renamed anywhere else would have left the label
+     stuck on "collapse". */
+  const allOpen = BULK_SECTIONS.every((s) => openSections.includes(s));
 
   const stages = quoteStages(
     {
@@ -356,7 +374,16 @@ export default function RequestDetailPage({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setOpenSections(allOpen ? [] : ALL_SECTIONS)}
+              onClick={() =>
+                setOpenSections((current) =>
+                  allOpen
+                    ? /* Leave `access` exactly as the reader left it. Folding
+                         it is harmless, but so is not touching it, and this
+                         button has no business having an opinion about it. */
+                      current.filter((s) => !BULK_SECTIONS.includes(s))
+                    : [...new Set([...current, ...BULK_SECTIONS])],
+                )
+              }
             >
               {allOpen ? t('collapseAll') : t('expandAll')}
             </Button>

@@ -249,10 +249,14 @@ export const TRACKS: Track[] = [
         'no search result',
         'nothing overdue',
       ]),
-      done('53', 'Anfrage-Detail', 'Request detail', '/admin/anfragen/req_2', [
-        'codes masked',
-        'codes revealed',
-      ]),
+      done(
+        '53',
+        'Anfrage-Detail',
+        'Request detail',
+        '/admin/anfragen/req_2',
+        ['codes masked', 'codes revealed', 'everything folded'],
+        'The fold-all button governs the four readable sections. Access is not one of them — a bulk control has no business putting an alarm code on the display',
+      ),
       done(
         '54',
         'Offerte erstellen',
@@ -349,8 +353,8 @@ export const TRACKS: Track[] = [
         'Kunden-Detail',
         'Customer detail',
         '/admin/kunden/cus_2',
-        ['no method on file', 'no invoice yet'],
-        'Payment methods, the invoices as a table with amount and route, and the last five things that happened. cus_1 opens on the empty halves of all three',
+        ['no method on file', 'no invoice yet', 'card on file with an expiry'],
+        'Every block is a card now. Putting a card on file asks for the four fields it is read off the phone as, and keeps the brand, the last four and the expiry',
       ),
       done(
         '65a',

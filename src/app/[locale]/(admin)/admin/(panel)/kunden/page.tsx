@@ -285,18 +285,6 @@ export default function CustomersPage() {
       <PageHeader title={t('title')} lead={t('lead')} actions={addButton} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">{t('tabActive')}</TabsTrigger>
-          <TabsTrigger value="archived">
-            {t('tabArchived')}
-            {archivedCount > 0 && (
-              <span data-numeric className="text-ink-tertiary">
-                {archivedCount}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
         {/*
           The search box was hand-built here — an absolutely positioned icon
           over a padded input — while every other admin list had moved to
@@ -310,6 +298,28 @@ export default function CustomersPage() {
             label: t('search'),
             clearLabel: appT('clearSearch'),
           }}
+          /*
+            The tabs sat above the toolbar as a bare strip on the page, so this
+            screen and /admin/anfragen — the same list, one row of tabs and one
+            row of filters each — put their tabs on opposite sides of the card
+            edge. They belong in the card with the controls they scope, which
+            is also where the archived count stops floating on the background.
+          */
+          views={
+            <TabsList className="p-0.5">
+              <TabsTrigger value="active" className="h-8 gap-1.5 px-2.5 py-0">
+                {t('tabActive')}
+              </TabsTrigger>
+              <TabsTrigger value="archived" className="h-8 gap-1.5 px-2.5 py-0">
+                {t('tabArchived')}
+                {archivedCount > 0 && (
+                  <span data-numeric className="text-ink-tertiary">
+                    {archivedCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          }
           count={
             filtering
               ? appT('results', { shown: filtered.length, total: inTab.length })
