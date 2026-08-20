@@ -71,7 +71,7 @@ export const adminDe = {
     statWaiting: 'Anfragen warten',
     statToday: 'Heute',
     statTomorrow: 'Morgen',
-    statRenewals: 'Abos diese Woche',
+    statRenewals: 'Abos laufen aus',
     waitingTitle: 'Anfragen, die auf Antwort warten',
     waitingLead: 'Älteste zuerst. Die Antwortfrist beträgt {hours} Stunden.',
     waitingEmptyTitle: 'Keine offenen Anfragen',
@@ -84,9 +84,10 @@ export const adminDe = {
     tomorrowTitle: 'Morgen',
     dayEmptyTitle: 'Nichts geplant',
     dayEmptyBody: 'Für diesen Tag ist kein Einsatz eingetragen.',
-    renewalsTitle: 'Abos in den nächsten Tagen',
+    renewalsTitle: 'Abos, die bald auslaufen',
+    addRequest: 'Anfrage erfassen',
     renewalsEmptyTitle: 'Keine Abo-Termine',
-    renewalsEmptyBody: 'In den nächsten sieben Tagen steht kein Abo-Einsatz an.',
+    renewalsEmptyBody: 'In den nächsten 30 Tagen läuft kein Abo aus.',
     termEnds: 'Läuft ab am {date}',
     viewAll: 'Alle ansehen',
     /* Each number now says what it means and where it is acted on. A bare
@@ -100,7 +101,7 @@ export const adminDe = {
     statTodayLink: 'Tag ansehen',
     statTomorrowHint: 'Erster Einsatz {time}',
     statTomorrowLink: 'Morgen ansehen',
-    statRenewalsHint: 'Nächste sieben Tage',
+    statRenewalsHint: 'Nächste 30 Tage',
     statRenewalsLink: 'Abos öffnen',
   },
 
@@ -198,9 +199,11 @@ export const adminDe = {
     unread: 'Ungelesen',
     waiting: 'Wartet auf Antwort',
     search: 'Nach Name oder Referenz suchen',
-    filterRead: 'Gelesen',
-    filterUnread: 'Ungelesen',
-    filterAll: 'Alle',
+    /* Aus dem Auswahlfeld «Gelesen: Alle» wurden drei Reiter. Der Lesestatus
+       sagt, welche Liste man ansieht — Suche und Zeitraum grenzen sie ein. */
+    tabAll: 'Alle',
+    tabUnread: 'Ungelesen',
+    tabRead: 'Gelesen',
     filterFrom: 'Von',
     filterTo: 'Bis',
     filterReset: 'Filter zurücksetzen',
@@ -208,8 +211,15 @@ export const adminDe = {
     emptyBody:
       'Sobald jemand aus dem Kundenkonto schreibt, erscheint das Gespräch hier.',
     filterEmptyTitle: 'Kein Gespräch gefunden',
-    filterEmptyBody:
-      'Kein Gespräch passt zu Suche, Lesestatus und Zeitraum zusammen.',
+    filterEmptyBody: 'Kein Gespräch passt zu Suche und Zeitraum zusammen.',
+    /* Nichts Ungelesenes ist das gute Ergebnis — «Kein Gespräch gefunden»
+       hätte es zum schlechten gemacht. */
+    unreadEmptyTitle: 'Alles gelesen',
+    unreadEmptyBody:
+      'Kein Gespräch wartet darauf, geöffnet zu werden. Neue Nachrichten erscheinen hier, sobald sie ankommen.',
+    readEmptyTitle: 'Noch nichts gelesen',
+    readEmptyBody:
+      'Ein Gespräch landet hier, sobald Sie es einmal geöffnet haben.',
     /* Eine Nachricht darf aus einem Anhang allein bestehen. In der Liste
        stünde sonst eine leere Zeile da, wo etwas angekommen ist. */
     attachmentOnly: 'Nur ein Anhang',
@@ -705,6 +715,7 @@ export const adminDe = {
     openCalendar: 'Im Kalender',
     rowActions: 'Aktionen',
     rowOpen: 'Buchung öffnen',
+    rowReschedule: 'Verschieben',
     rowOpenOffer: 'Offerte {reference} öffnen',
     rowOpenInvoice: 'Rechnung {reference} öffnen',
     emptyTitle: 'Noch keine Buchungen',
@@ -734,14 +745,15 @@ export const adminDe = {
     emptyAgendaTitle: 'Keine kommenden Einsätze',
     emptyAgendaBody: 'Sobald eine Buchung bestätigt ist, erscheint sie hier.',
     weekTotal: '{count} Einsätze · {hours} Std.',
+    /* Der Monat zeigte Punkte. Jetzt zeigt er dieselben Kacheln wie die
+       Woche, und eine Zelle mit vier Einträgen muss sagen, was sie weglässt. */
+    monthMore: '+{count} weitere',
 
     /* Die Legende. Der Kalender zeichnete in Woche und Monat jeden Eintrag in
        derselben Akzentfarbe — neun Buchungszustände, drei Terminarten, Ferien
        und eine reservierte Zeit, alle gleich. Eine Legende ohne Farben zu
        erklären wäre sinnlos gewesen; beides gehört zusammen. */
     legendTitle: 'Legende',
-    legendShow: 'Legende einblenden',
-    legendHide: 'Legende ausblenden',
     legendJobs: 'Einsätze',
     legendEvents: 'Termine ohne Einsatz',
     legendOther: 'Übriges',
@@ -751,39 +763,16 @@ export const adminDe = {
       'Der Kunde hat 48 Stunden Zeit. Die Zeit ist blockiert, der Einsatz entsteht erst mit der Zahlung.',
 
     addAction: 'Termin eintragen',
-    routeHint: 'Reihenfolge und Fahrzeit des Tages',
 
     eventsTitle: 'Termine',
     holdTitle: 'Reservierte Zeit',
     closureTitle: 'Betriebsferien',
     closureBody: 'In dieser Zeit wird nicht gearbeitet. Grund: {reason}.',
 
-    rowActions: 'Aktionen',
-    rowOpen: 'Einsatz öffnen',
-    rowReschedule: 'Verschieben',
-    rowCancel: 'Stornieren',
-    rowSettled: 'Abgeschlossen — nur noch lesbar',
-  },
-
-  map: {
-    title: 'Route',
-    lead: 'Die Einsätze von {date} in der Reihenfolge des Tages.',
-    stop: 'Halt {n}',
-    driveTime: '{minutes} Min. Fahrt',
-    totalDrive: 'Fahrzeit gesamt',
-    emptyTitle: 'Keine Einsätze an diesem Tag',
-    emptyBody: 'Die Route erscheint, sobald für diesen Tag etwas gebucht ist.',
-    mapNote: 'Prototyp: schematische Darstellung, keine echte Karte.',
-    /* Die Pfeile hiessen «−1» und «+1» — ein Screenreader las «minus eins,
-       Schaltfläche». Zurück, Heute und Min. standen fest im Code. */
-    back: 'Kalender',
-    previousDay: 'Vorheriger Tag',
-    nextDay: 'Nächster Tag',
-    today: 'Heute',
-    minutes: '{n} Min.',
-    /* Hiess «Route» — ein Wort neben der Kalenderüberschrift, das nicht sagt,
-       was passiert, wenn man es drückt. Ein Reviewer fragte genau danach. */
-    routeAction: 'Tagesroute',
+    /* Hiess «Einsatz öffnen» in einem ⋯-Menü. Es steht jetzt als Auge am
+       Zeilenende — dieselbe Bedeutung, dieselbe Beschriftung wie in jeder
+       Tabelle im Panel. */
+    rowOpen: 'Details ansehen',
   },
 
   /* Der Kalender konnte nur Buchungen halten, und eine Buchung entstand nur
@@ -846,15 +835,52 @@ export const adminDe = {
     kindContactCall: 'Anruf',
     kindFollowUp: 'Nachfassen',
     kindViewing: 'Besichtigung',
+    detailsTitle: 'Details',
+    notFoundTitle: 'Termin nicht gefunden',
+    notFoundBody:
+      'Diesen Kalendereintrag gibt es nicht mehr, oder der Link ist veraltet. Im Kalender stehen alle aktuellen Termine.',
+    slotTitle: 'Termin & Dauer',
     whenTitle: 'Wann',
+    durationTitle: 'Dauer',
+    /* Stand als graue Kachel neben dem Titel. Die Art ist eine Angabe zum
+       Eintrag, keine Ergänzung zu seinem Namen — sie gehört zu den übrigen
+       Angaben. */
+    kindTitle: 'Art',
+    minutes: '{n} Min.',
     contactTitle: 'Kontakt',
+    contactName: 'Name',
+    contactPhone: 'Telefon',
+    contactAddress: 'Adresse',
+    contactAssignee: 'Zuständig',
     noteTitle: 'Notiz',
-    outcomeTitle: 'Ergebnis',
-    outcomeLabel: 'Was ist herausgekommen?',
     historyTitle: 'Verlauf',
     actionsTitle: 'Aktionen',
     customerLink: 'Kundenakte öffnen',
     requestLink: 'Anfrage {reference} öffnen',
+
+    /* Hiess «Ergebnis» und lag hinter einem Knopf. Es ist das Einzige, was
+       nach einem Anruf geschrieben wird — und der Text, der in die Anfrage
+       übergeht. Ein Feld, kein Modus. */
+    messageTitle: 'Nachricht',
+    messageHint: 'Was im Gespräch gesagt wurde. Dieser Text geht in die Anfrage über.',
+    messagePlaceholder: 'Zum Beispiel: Grundreinigung vor der Übergabe, Termin Ende Monat.',
+    messageSave: 'Nachricht speichern',
+    messageSaved: 'Nachricht gespeichert.',
+
+    /* Die Übersicht zur Anfrage — vor und nach dem Erfassen dieselbe Karte.
+       Vorher stand hier nur ein Absatz darüber, was der Knopf tut; womit die
+       Anfrage vorbelegt wird, war erst im Formular zu sehen. */
+    requestTitle: 'Anfrage',
+    requestOpenLead:
+      'Das geht in die Anfrage über. Fehlt etwas, ergänzen Sie es hier, bevor Sie erfassen.',
+    requestDoneLead: 'Aus diesem Termin ist eine Anfrage geworden.',
+    requestReference: 'Nummer',
+    requestService: 'Leistung',
+    requestCreated: 'Erfasst am',
+    requestAmount: 'Betrag',
+    requestNoAmount: 'Noch keine Offerte',
+    requestMissing: 'Fehlt noch',
+    convertAction: 'Anfrage erfassen',
 
     markDone: 'Als erledigt markieren',
     markNoReply: 'Niemanden erreicht',
@@ -863,20 +889,14 @@ export const adminDe = {
     reopen: 'Wieder öffnen',
     dismiss: 'Abbrechen',
 
-    /* Der eigentliche Zweck des Anrufs. Ohne diesen Weg endet das Gespräch,
-       das zu einem Auftrag geführt hat, als abgehakter Kalendereintrag — und
-       die Anfrage muss danach von Hand nochmal erfasst werden. */
-    convertTitle: 'Daraus wurde ein Auftrag',
-    convertBody:
-      'Erfassen Sie die Anfrage mit den Angaben aus dem Gespräch. Von dort geht es wie gewohnt weiter: Offerte schreiben, Termin, Zahlung.',
-    convertAction: 'Anfrage erfassen',
-    convertedNote: 'Aus diesem Termin ist Anfrage {reference} entstanden.',
-
     doneToast: 'Als erledigt markiert.',
     noReplyToast: 'Notiert — niemand erreicht.',
+    /* Der Bestätigungstext war der Text des Erfassen-Knopfes: «Erfassen Sie
+       die Anfrage …» stand über einem roten Absagen-Knopf. */
+    cancelConfirmBody:
+      'Der Termin verschwindet aus dem Kalender. Der Eintrag bleibt lesbar und kann wieder geöffnet werden.',
     cancelToast: 'Termin abgesagt.',
     reopenToast: 'Termin wieder offen.',
-    outcomeSaved: 'Ergebnis gespeichert.',
   },
 
   booking: {

@@ -12,9 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { Field, Input, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toolbar } from '@/components/ui/toolbar';
 import { AttachmentPicker } from '@/components/messages/attachment-picker';
 import { MessageAttachments } from '@/components/messages/message-attachments';
@@ -146,7 +147,21 @@ export default function AdminMessagesPage() {
    * clicked it. The list narrows; what you are reading stays put.
    */
   const open = threads.find((thread) => thread.key === openKey) ?? filtered[0] ?? null;
-  const filtering = Boolean(query || from || to || read !== 'all');
+
+  /*
+   * The read state is a *view*, and the search and the range are filters on it.
+   *
+   * As a select in the filter row it read as the third of three filters, so
+   * «Filter zurücksetzen» had to clear it — and clicking Unread then produced a
+   * reset button whose whole job was to undo the tab you had just chosen. Tabs
+   * say which list you are in; the filters narrow it.
+   */
+  const filtering = Boolean(query || from || to);
+  const unreadTotal = threads.filter((thread) => isUnread(thread.items)).length;
+  /* "3 von 12" has to count against the tab you are in — on the Unread tab the
+     full total is not a denominator anything on screen adds up to. */
+  const tabTotal =
+    read === 'all' ? threads.length : read === 'unread' ? unreadTotal : threads.length - unreadTotal;
 
   const attachmentsFor = (key: string) => staged[key] ?? [];
   const canSend = (key: string) =>
@@ -154,7 +169,6 @@ export default function AdminMessagesPage() {
 
   function reset() {
     setQuery('');
-    setRead('all');
     setFrom('');
     setTo('');
   }
@@ -184,7 +198,43 @@ export default function AdminMessagesPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} lead={t('lead')} />
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        /* Two date inputs are the widest controls on any filter row, and this
+           list sits in a four-column panel — down there they wrapped the search
+           box onto a line of its own. Up here they balance a header that was a
+           title and nothing else. «Filter zurücksetzen» still clears them: a
+           range is a filter wherever it is drawn. */
+        actions={
+          threads.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1.5 text-sm">
+                <span className="text-ink-tertiary">{t('filterFrom')}</span>
+                <Input
+                  dense
+                  type="date"
+                  value={from}
+                  max={to || undefined}
+                  className="w-auto"
+                  onChange={(e) => setFrom(e.target.value)}
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-sm">
+                <span className="text-ink-tertiary">{t('filterTo')}</span>
+                <Input
+                  dense
+                  type="date"
+                  value={to}
+                  min={from || undefined}
+                  className="w-auto"
+                  onChange={(e) => setTo(e.target.value)}
+                />
+              </label>
+            </div>
+          ) : undefined
+        }
+      />
 
       {threads.length === 0 ? (
         <EmptyState
@@ -199,7 +249,11 @@ export default function AdminMessagesPage() {
         />
       ) : (
         <div className="gap-app grid lg:grid-cols-12">
-          <div className="lg:col-span-4">
+          <Tabs
+            value={read}
+            onValueChange={(v) => setRead(v as ReadFilter)}
+            className="lg:col-span-4"
+          >
             <Toolbar
               search={{
                 value: query,
@@ -207,47 +261,41 @@ export default function AdminMessagesPage() {
                 label: t('search'),
                 clearLabel: appT('clearSearch'),
               }}
-              count={appT('results', { shown: filtered.length, total: threads.length })}
+              /* Was a select reading «Gelesen: Alle», which is three words to
+                 say what three tabs say by being one click each — and it hid
+                 how much was unread behind opening the dropdown. The count that
+                 matters most on this screen is now on the control that acts on
+                 it. */
+              views={
+                <TabsList className="p-0.5">
+                  <TabsTrigger value="all" className="h-8 gap-1.5 px-2.5 py-0">
+                    {t('tabAll')}
+                    <span data-numeric className="text-ink-tertiary">
+                      {threads.length}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="unread" className="h-8 gap-1.5 px-2.5 py-0">
+                    {t('tabUnread')}
+                    {unreadTotal > 0 && (
+                      <span data-numeric className="font-medium text-status-info-fg">
+                        {unreadTotal}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="read" className="h-8 gap-1.5 px-2.5 py-0">
+                    {t('tabRead')}
+                  </TabsTrigger>
+                </TabsList>
+              }
+              /* Only while filtering. Unfiltered it restated a total the tab
+                 beside it already carries. */
+              count={
+                filtering
+                  ? appT('results', { shown: filtered.length, total: tabTotal })
+                  : null
+              }
               filters={
                 <>
-                  <label className="min-w-36">
-                    <span className="sr-only">{t('filterRead')}</span>
-                    <Select
-                      dense
-                      value={read}
-                      onChange={(e) => setRead(e.target.value as ReadFilter)}
-                    >
-                      <option value="all">
-                        {t('filterRead')}: {t('filterAll')}
-                      </option>
-                      <option value="unread">{t('filterUnread')}</option>
-                      <option value="read">{t('filterRead')}</option>
-                    </Select>
-                  </label>
-
-                  <label className="flex items-center gap-1.5 text-sm">
-                    <span className="text-ink-tertiary">{t('filterFrom')}</span>
-                    <Input
-                      dense
-                      type="date"
-                      value={from}
-                      max={to || undefined}
-                      className="w-auto"
-                      onChange={(e) => setFrom(e.target.value)}
-                    />
-                  </label>
-                  <label className="flex items-center gap-1.5 text-sm">
-                    <span className="text-ink-tertiary">{t('filterTo')}</span>
-                    <Input
-                      dense
-                      type="date"
-                      value={to}
-                      min={from || undefined}
-                      className="w-auto"
-                      onChange={(e) => setTo(e.target.value)}
-                    />
-                  </label>
-
                   {filtering && (
                     <Button size="sm" variant="ghost" onClick={reset}>
                       <X className="size-3.5" aria-hidden />
@@ -259,20 +307,39 @@ export default function AdminMessagesPage() {
             />
 
             {filtered.length === 0 ? (
-              /* The search-specific wording was the only empty state here, and
-                 it named a query that may well be blank now that a date range
-                 and a read filter can empty the list on their own. */
-              <EmptyState
-                compact
-                icon={Search}
-                title={t('filterEmptyTitle')}
-                body={t('filterEmptyBody')}
-                action={
-                  <Button variant="secondary" onClick={reset}>
-                    {t('filterReset')}
-                  </Button>
-                }
-              />
+              filtering ? (
+                /* The search-specific wording was the only empty state here,
+                   and it named a query that may well be blank now that a date
+                   range can empty the list on its own. */
+                <EmptyState
+                  compact
+                  icon={Search}
+                  title={t('filterEmptyTitle')}
+                  body={t('filterEmptyBody')}
+                  action={
+                    <Button variant="secondary" onClick={reset}>
+                      {t('filterReset')}
+                    </Button>
+                  }
+                />
+              ) : (
+                /* An empty tab is not an empty screen, and «Kein Gespräch
+                   gefunden» over a reset button that resets nothing would send
+                   the owner looking for a filter that is not set. Nothing
+                   unread is the good outcome; nothing read yet is a day-one
+                   state. Both offer the way back to the full list. */
+                <EmptyState
+                  compact
+                  icon={MessageSquare}
+                  title={read === 'unread' ? t('unreadEmptyTitle') : t('readEmptyTitle')}
+                  body={read === 'unread' ? t('unreadEmptyBody') : t('readEmptyBody')}
+                  action={
+                    <Button variant="secondary" onClick={() => setRead('all')}>
+                      {t('tabAll')}
+                    </Button>
+                  }
+                />
+              )
             ) : (
               <Card pad="none">
                 <ul>
@@ -331,7 +398,7 @@ export default function AdminMessagesPage() {
                 </ul>
               </Card>
             )}
-          </div>
+          </Tabs>
 
           <div className="lg:col-span-8">
             {!open ? (

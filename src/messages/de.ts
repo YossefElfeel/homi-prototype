@@ -110,10 +110,12 @@ export const de = {
       cancelled: 'Storniert',
     },
     calendarEvent: {
-      planned: 'Geplant',
+      upcoming: 'Bevorstehend',
       done: 'Erledigt',
-      noReply: 'Nicht erreicht',
-      converted: 'Anfrage entstanden',
+      /* «Nicht erreicht» beschrieb den Anruf, nicht den Stand. Offen ist der
+         Stand: es muss nochmal versucht werden. */
+      pending: 'Offen',
+      inProgress: 'In Arbeit',
       cancelled: 'Abgesagt',
     },
     subscription: {

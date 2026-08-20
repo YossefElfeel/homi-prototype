@@ -132,8 +132,16 @@ Marco Brunner`;
    only job is to tell read from unread, and a store carried over would open
    the panel with every thread marked unread, including the ones the owner
    answered themselves. A read state that is wrong on arrival is worse than
-   none, because the filter sitting above it still looks like it works. */
-const SCHEMA_VERSION = 16;
+   none, because the filter sitting above it still looks like it works.
+
+   17: `CalendarEventStatus` was renamed — `planned` → `upcoming`, `noReply` →
+   `pending`, `converted` → `inProgress`. A blob from 16 holds the old three,
+   and both registries are keyed by the value: `statusTone` falls through to
+   neutral, so every planned call turns grey, and `status.calendarEvent` has no
+   message under those keys at all — next-intl renders the missing key as its
+   own path. The calendar would open on a legend that matches nothing in the
+   grid beside it. */
+const SCHEMA_VERSION = 17;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -150,10 +158,10 @@ const INVOICE_TERM_DAYS = 30;
  * whichever language the owner happened to be using into the record.
  */
 const EVENT_STATUS_EVENT: Record<CalendarEventStatus, string> = {
-  planned: 'Wieder geöffnet',
+  upcoming: 'Wieder geöffnet',
   done: 'Erledigt',
-  noReply: 'Niemand erreicht',
-  converted: 'Anfrage entstanden',
+  pending: 'Niemand erreicht',
+  inProgress: 'Anfrage entstanden',
   cancelled: 'Abgesagt',
 };
 
@@ -3095,7 +3103,7 @@ export const useStore = create<StoreState>()(
           title: input.title.trim(),
           start: input.start,
           duration: input.duration,
-          status: 'planned',
+          status: 'upcoming',
           customerId: input.customerId,
           contactName: input.contactName?.trim() || undefined,
           contactPhone: input.contactPhone?.trim() || undefined,
@@ -3160,13 +3168,13 @@ export const useStore = create<StoreState>()(
                 ? e
                 : {
                     ...e,
-                    status: 'converted' as const,
+                    status: 'inProgress' as const,
                     requestId,
                     history: [
                       ...e.history,
                       {
                         at: now.toISOString(),
-                        kind: 'converted',
+                        kind: 'inProgress',
                         label: `Anfrage ${request.reference} entstanden`,
                       },
                     ],

@@ -149,6 +149,18 @@ const openDay = (from: Date, n: number) => {
 };
 
 /**
+ * `openDay` for a date behind us.
+ *
+ * Stepping *forward* off a Sunday is right for a slot being offered and wrong
+ * for one that already happened: from last Sunday it lands on today, on top of
+ * whatever is already booked there. A finished job moves back a day instead.
+ */
+const pastOpenDay = (from: Date, n: number) => {
+  const out = days(from, n);
+  return businessWeekday(out) === 7 ? days(out, -1) : out;
+};
+
+/**
  * A calendar entry that is not a job.
  *
  * Written as a factory because every scenario needs a handful and they differ
@@ -180,7 +192,7 @@ function calendarEvent(
     createdDaysAgo?: number;
   },
 ): CalendarEvent {
-  const status = input.status ?? 'planned';
+  const status = input.status ?? 'upcoming';
   const start = at(openDay(now, input.inDays), input.hour, input.minute ?? 0);
   const createdAt = days(now, -(input.createdDaysAgo ?? Math.max(1, input.inDays + 2)));
 
@@ -189,12 +201,12 @@ function calendarEvent(
   ];
   if (status === 'done') {
     history.push({ at: iso(start), kind: 'done', label: 'Erledigt' });
-  } else if (status === 'noReply') {
-    history.push({ at: iso(start), kind: 'noReply', label: 'Niemand erreicht' });
+  } else if (status === 'pending') {
+    history.push({ at: iso(start), kind: 'pending', label: 'Niemand erreicht' });
   } else if (status === 'cancelled') {
     history.push({ at: iso(start), kind: 'cancelled', label: 'Abgesagt' });
-  } else if (status === 'converted') {
-    history.push({ at: iso(start), kind: 'converted', label: 'Anfrage entstanden' });
+  } else if (status === 'inProgress') {
+    history.push({ at: iso(start), kind: 'inProgress', label: 'Anfrage entstanden' });
   }
 
   return {
@@ -548,6 +560,152 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Abo-Termin geplant' }],
     },
+
+    /*
+     * The other six BookingStatus values.
+     *
+     * `states` has carried all nine since it was written, and nobody opens
+     * `states` — the default scenario is `demo`, and its bookings list was
+     * three "Geplant", one "Verrechnet" and one "Storniert". So /admin/buchungen
+     * shipped with a status filter whose other six options matched nothing, and
+     * the booking screen's approval banner, no-access fee and settled-actions
+     * notice could not be looked at without first producing each state by hand.
+     *
+     * Each one carries the timeline that state implies rather than a bare
+     * `created` line: an `awaitingApproval` job with no reported hours in its
+     * history asks the owner to approve something with nothing to read, which
+     * is the screen showing a state without showing what happened in it.
+     *
+     * Placed on days `baseData` leaves free, so seeding the lifecycle does not
+     * push a day past the two-job ceiling (§1.2) or invent a travel conflict.
+     * The exception is `inProgress`, which has to be today to mean anything:
+     * it sits in the afternoon, an hour clear of the morning's plan visit, and
+     * both are in Küsnacht.
+     */
+    {
+      id: 'bkg_5',
+      reference: 'B-1050',
+      customerId: 'cus_m3',
+      propertyId: 'prp_m3',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(openDay(now, 3), 13)),
+      duration: 210,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'rescheduled',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -9)), kind: 'created', label: 'Gebucht' },
+        {
+          at: iso(days(now, -2)),
+          kind: 'rescheduled',
+          label: 'Verschoben auf Wunsch der Kundin — Handwerker im Haus',
+        },
+      ],
+    },
+    {
+      id: 'bkg_6',
+      reference: 'B-1051',
+      customerId: 'cus_m9',
+      propertyId: 'prp_m9',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(days(now, 0), 15)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'inProgress',
+      photoIds: [],
+      checkInAt: iso(at(days(now, 0), 15, 4)),
+      history: [
+        { at: iso(days(now, -5)), kind: 'created', label: 'Gebucht und bezahlt' },
+        { at: iso(at(days(now, 0), 15, 4)), kind: 'checkIn', label: 'Eingecheckt' },
+      ],
+    },
+    {
+      id: 'bkg_7',
+      reference: 'B-1052',
+      customerId: 'cus_m6',
+      propertyId: 'prp_m6',
+      serviceSlug: 'grundreinigung',
+      start: iso(at(pastOpenDay(now, -1), 9)),
+      duration: 300,
+      arrivalWindow: 90,
+      assigneeId: 'tm_owner',
+      status: 'awaitingApproval',
+      photoIds: [],
+      checkInAt: iso(at(pastOpenDay(now, -1), 9, 6)),
+      checkOutAt: iso(at(pastOpenDay(now, -1), 15, 40)),
+      history: [
+        { at: iso(days(now, -16)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(pastOpenDay(now, -1), 9, 6)), kind: 'checkIn', label: 'Eingecheckt' },
+        {
+          at: iso(at(pastOpenDay(now, -1), 15, 40)),
+          kind: 'checkOut',
+          /* §5.3 — reported by the person on site, priced by the office. This
+             is the sentence the approval button is asking about. */
+          label: 'Ausgecheckt · +1.5 Std. gemeldet · Garage war zusätzlich abgemacht',
+        },
+      ],
+    },
+    {
+      id: 'bkg_8',
+      reference: 'B-1053',
+      customerId: 'cus_m8',
+      propertyId: 'prp_m8',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(pastOpenDay(now, -4), 10)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'noAccess',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -12)), kind: 'created', label: 'Gebucht' },
+        {
+          at: iso(at(pastOpenDay(now, -4), 10, 22)),
+          kind: 'noAccess',
+          label: 'Kein Zutritt — 20 Min. gewartet, 50% verrechnet',
+        },
+      ],
+    },
+    {
+      id: 'bkg_9',
+      reference: 'B-1054',
+      customerId: 'cus_m10',
+      propertyId: 'prp_m10',
+      serviceSlug: 'fensterreinigung',
+      start: iso(at(pastOpenDay(now, -8), 9)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'completed',
+      photoIds: [],
+      checkInAt: iso(at(pastOpenDay(now, -8), 9, 2)),
+      checkOutAt: iso(at(pastOpenDay(now, -8), 12, 10)),
+      history: [
+        { at: iso(days(now, -19)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(pastOpenDay(now, -8), 12, 10)), kind: 'checkOut', label: 'Ausgecheckt' },
+        { at: iso(days(now, -7)), kind: 'approved', label: 'Freigegeben' },
+      ],
+    },
+    {
+      id: 'bkg_10',
+      reference: 'B-1055',
+      customerId: 'cus_m7',
+      propertyId: 'prp_m7',
+      serviceSlug: 'bueroreinigung',
+      start: iso(at(pastOpenDay(now, -30), 8)),
+      duration: 360,
+      arrivalWindow: 120,
+      assigneeId: 'tm_owner',
+      status: 'closed',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -44)), kind: 'created', label: 'Gebucht' },
+        { at: iso(at(pastOpenDay(now, -30), 14)), kind: 'checkOut', label: 'Ausgecheckt' },
+        { at: iso(days(now, -29)), kind: 'closed', label: 'Abgeschlossen und bezahlt' },
+      ],
+    },
   ];
 
   const subscriptions: Subscription[] = [
@@ -617,6 +775,55 @@ function baseData(now: Date): DataSet {
       history: [
         { at: iso(days(now, -90)), kind: 'started', label: 'Abo gestartet — Büro Kompakt' },
         { at: iso(days(now, -90)), kind: 'paid', label: 'Bezahlt — RE-0061' },
+      ],
+    },
+    /*
+     * Two terms about to run out.
+     *
+     * The start screen's third block is "Abos, die bald auslaufen", and every
+     * seeded plan ran for another nine to eleven months — so the block a plan
+     * business is supposed to open its morning on showed its empty state in the
+     * default scenario, every day, and the number above it was a permanent
+     * zero. A package is paid once for a year and the customer has to renew it
+     * themselves, so a term ending unnoticed is a customer quietly lost: this
+     * is the one block on that screen that costs money when it stays empty by
+     * accident.
+     *
+     * One inside the week and one three weeks out, because the block covers 30
+     * days and a single entry could not show that the list is ordered at all.
+     */
+    {
+      id: 'sub_4',
+      reference: 'S-0015',
+      customerId: 'cus_m1',
+      propertyId: 'prp_m1',
+      planId: 'pln_premium',
+      startDate: iso(days(now, -359)),
+      endDate: iso(days(now, 6)),
+      status: 'active',
+      visitsUsed: 22,
+      renewalCount: 0,
+      internalNotes: 'Läuft nächste Woche aus. Vor dem Ende anrufen, nicht danach.',
+      history: [
+        { at: iso(days(now, -359)), kind: 'started', label: 'Abo gestartet — Premium' },
+        { at: iso(days(now, -359)), kind: 'paid', label: 'Bezahlt — RE-0051' },
+      ],
+    },
+    {
+      id: 'sub_5',
+      reference: 'S-0016',
+      customerId: 'cus_m5',
+      propertyId: 'prp_m5',
+      planId: 'pln_basic',
+      startDate: iso(days(now, -346)),
+      endDate: iso(days(now, 19)),
+      status: 'active',
+      visitsUsed: 9,
+      renewalCount: 1,
+      history: [
+        { at: iso(days(now, -711)), kind: 'started', label: 'Abo gestartet — Basic' },
+        { at: iso(days(now, -346)), kind: 'renewed', label: 'Verlängert um 12 Monate' },
+        { at: iso(days(now, -346)), kind: 'paid', label: 'Bezahlt — RE-0052' },
       ],
     },
   ];
@@ -706,6 +913,21 @@ function baseData(now: Date): DataSet {
       issuedAt: iso(days(now, -5)),
       dueAt: iso(days(now, 25)),
       qrReference: '21 00000 00003 13947 14300 09008',
+    },
+    /* What `closed` means, spelled out. B-1055's timeline says "Abgeschlossen
+       und bezahlt"; without the invoice behind it the bookings list would put
+       "Nicht bezahlt" on the same row, and one of the two would be lying. */
+    {
+      id: 'inv_closed',
+      reference: 'RE-2026-0047',
+      customerId: 'cus_m7',
+      bookingId: 'bkg_10',
+      lines: [{ label: 'Büroreinigung', quantity: 6, unitPrice: 55 }],
+      status: 'paid',
+      issuedAt: iso(days(now, -30)),
+      dueAt: iso(days(now, 0)),
+      paidAt: iso(days(now, -29)),
+      qrReference: '21 00000 00003 13947 14300 09007',
     },
     /*
      * The four invoices that paid for the seeded plans.
@@ -1408,6 +1630,19 @@ function baseData(now: Date): DataSet {
       status: 'succeeded',
       gatewayRef: 'qr_2100000000313947143000899',
     },
+    /* The money behind RE-2026-0047. `test:crm` refuses a paid invoice with no
+       payment under it, and it is right to: an invoice that says `paid` with
+       nothing recording how is the customer record reporting its own state
+       instead of what happened. */
+    {
+      id: 'pay_inv_closed',
+      invoiceId: 'inv_closed',
+      amount: 6 * 55,
+      method: 'qr-bill',
+      at: iso(days(now, -29)),
+      status: 'succeeded',
+      gatewayRef: 'qr_2100000000313947143000907',
+    },
   ];
 
   /*
@@ -1458,7 +1693,7 @@ function baseData(now: Date): DataSet {
       note: 'Storenkasten anschauen, bevor die Offerte rausgeht.',
     }),
     /* The deal path, already walked. Without one seeded record carrying it,
-       `converted` would be a state only reachable by doing the whole flow. */
+       `inProgress` would be a state only reachable by doing the whole flow. */
     calendarEvent(now, {
       id: 'cev_converted',
       ref: 'K-403',
@@ -1466,7 +1701,7 @@ function baseData(now: Date): DataSet {
       title: 'Anruf Umzugsreinigung',
       inDays: -3,
       hour: 10,
-      status: 'converted',
+      status: 'inProgress',
       customerId: 'cus_m5',
       outcome: 'Umzug per Ende Monat, Wohnung 4.5 Zimmer. Offerte zugesagt.',
       requestId: 'req_q_offer',
@@ -1478,7 +1713,7 @@ function baseData(now: Date): DataSet {
       title: 'Offerte A-2494 nachfassen',
       inDays: -1,
       hour: 14,
-      status: 'noReply',
+      status: 'pending',
       customerId: 'cus_m5',
       note: 'Zweiter Versuch. Danach schriftlich.',
     }),
@@ -3139,7 +3374,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       title: 'Nachfassen — niemand erreicht',
       inDays: -1,
       hour: 15,
-      status: 'noReply',
+      status: 'pending',
       customerId: 'cus_5',
     }),
     calendarEvent(now, {
@@ -3149,7 +3384,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       title: 'Anruf — daraus wurde eine Anfrage',
       inDays: -4,
       hour: 9,
-      status: 'converted',
+      status: 'inProgress',
       customerId: 'cus_5',
       outcome: 'Grundreinigung vor Übergabe. Anfrage erfasst.',
       requestId: 'req_s_new',
@@ -3206,7 +3441,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     offers: [...matrixOffers, ...offers],
     bookings: [...matrixBookings, ...bookings],
     /* Every CalendarEventStatus, and every kind, at once — the whole point of
-       this scenario. Without it `cancelled` and `noReply` would be colours in
+       this scenario. Without it `cancelled` and `pending` would be colours in
        the legend with no record anywhere carrying them, which is precisely the
        "declared but unreachable" failure /flows exists to track. */
     events: [...stateEvents, ...data.events],
@@ -3481,7 +3716,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           hour: i % 2 === 0 ? 12 : 17,
           duration: 15,
           customerId: `cus_m${(i % 11) + 1}`,
-          status: i - 3 < 0 ? (i % 2 === 0 ? 'done' : 'noReply') : 'planned',
+          status: i - 3 < 0 ? (i % 2 === 0 ? 'done' : 'pending') : 'upcoming',
         }),
       );
 
@@ -3532,7 +3767,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
        * had the debt without the chasing — an overdue invoice, a past-due plan
        * and a calendar that looked like a quiet week. Two of these go
        * unanswered on purpose: people who owe money are the people who stop
-       * picking up, which is exactly why `noReply` is not `done`.
+       * picking up, which is exactly why `pending` is not `done`.
        */
       const chasing: CalendarEvent[] = [
         calendarEvent(now, {
@@ -3552,7 +3787,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           title: 'Abo-Zahlung fehlgeschlagen — Karte erneuern',
           inDays: -1,
           hour: 16,
-          status: 'noReply',
+          status: 'pending',
           customerId: 'cus_1',
           note: 'Einzug abgelehnt. Ohne neue Karte pausiert der nächste Termin.',
         }),
@@ -3563,7 +3798,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           title: 'Anfrage A-2524 — 11 Tage ohne Antwort',
           inDays: -2,
           hour: 11,
-          status: 'noReply',
+          status: 'pending',
           customerId: 'cus_m10',
           note: 'Dritter Versuch. Danach schriftlich schliessen.',
         }),
@@ -3785,7 +4020,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           inDays: -1,
           hour: 17,
           duration: 15,
-          status: 'noReply',
+          status: 'pending',
           contactName: 'Amara Diallo',
           contactPhone: '+41 78 000 00 17',
           note: 'Absage lieber am Telefon als per Mail.',

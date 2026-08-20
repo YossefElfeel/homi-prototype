@@ -4,6 +4,7 @@ import {
   Ban,
   CalendarClock,
   CalendarDays,
+  CalendarSync,
   ExternalLink,
   Eye,
   FileCheck,
@@ -55,6 +56,10 @@ export const ActionIcon = {
 
   sendOffer: Send,
   confirmSlot: CalendarClock,
+  /* Not `confirmSlot`'s CalendarClock, even though both are about a slot:
+     confirming settles a date and moving one un-settles it, and one glyph for
+     both would make the strip say the same thing for opposite outcomes. */
+  reschedule: CalendarSync,
   edit: Pencil,
 
   /* Reversible pairs. Each reversal is a distinct glyph rather than the same

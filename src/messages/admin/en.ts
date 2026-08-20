@@ -66,7 +66,7 @@ export const adminEn: typeof adminDe = {
     statWaiting: 'Awaiting reply',
     statToday: 'Today',
     statTomorrow: 'Tomorrow',
-    statRenewals: 'Plans this week',
+    statRenewals: 'Plans ending',
     waitingTitle: 'Requests waiting for an answer',
     waitingLead: 'Oldest first. The reply window is {hours} hours.',
     waitingEmptyTitle: 'No open requests',
@@ -78,9 +78,10 @@ export const adminEn: typeof adminDe = {
     tomorrowTitle: 'Tomorrow',
     dayEmptyTitle: 'Nothing scheduled',
     dayEmptyBody: 'No job is booked for this day.',
-    renewalsTitle: 'Plans in the next few days',
+    renewalsTitle: 'Plans about to run out',
+    addRequest: 'Record a request',
     renewalsEmptyTitle: 'No plan visits',
-    renewalsEmptyBody: 'No plan visit falls in the next seven days.',
+    renewalsEmptyBody: 'No plan term ends in the next 30 days.',
     termEnds: 'Ends {date}',
     viewAll: 'View all',
     statWaitingHintOk: 'All inside the window',
@@ -91,7 +92,7 @@ export const adminEn: typeof adminDe = {
     statTodayLink: 'See the day',
     statTomorrowHint: 'First job {time}',
     statTomorrowLink: 'See tomorrow',
-    statRenewalsHint: 'Next seven days',
+    statRenewalsHint: 'Next 30 days',
     statRenewalsLink: 'Open plans',
   },
 
@@ -170,16 +171,25 @@ export const adminEn: typeof adminDe = {
     unread: 'Unread',
     waiting: 'Waiting for a reply',
     search: 'Search by name or reference',
-    filterRead: 'Read',
-    filterUnread: 'Unread',
-    filterAll: 'All',
+    /* The "Read: All" select became three tabs. Read state says which list you
+       are looking at — the search and the range narrow it. */
+    tabAll: 'All',
+    tabUnread: 'Unread',
+    tabRead: 'Read',
     filterFrom: 'From',
     filterTo: 'To',
     filterReset: 'Clear filters',
     emptyTitle: 'No messages',
     emptyBody: 'As soon as someone writes from their account, the thread appears here.',
     filterEmptyTitle: 'No conversation found',
-    filterEmptyBody: 'No conversation matches the search, read state and date range together.',
+    filterEmptyBody: 'No conversation matches the search and the date range together.',
+    /* Nothing unread is the good outcome — "No conversation found" would have
+       called it the bad one. */
+    unreadEmptyTitle: 'All caught up',
+    unreadEmptyBody:
+      'No conversation is waiting to be opened. New messages land here as they arrive.',
+    readEmptyTitle: 'Nothing read yet',
+    readEmptyBody: 'A conversation moves here once you have opened it.',
     attachmentOnly: 'An attachment only',
     pickTitle: 'Pick a conversation',
     pickBody: 'Choose a thread on the left to read it and reply.',
@@ -604,6 +614,7 @@ export const adminEn: typeof adminDe = {
     openCalendar: 'On the calendar',
     rowActions: 'Actions',
     rowOpen: 'Open the booking',
+    rowReschedule: 'Reschedule',
     rowOpenOffer: 'Open quote {reference}',
     rowOpenInvoice: 'Open invoice {reference}',
     emptyTitle: 'No bookings yet',
@@ -633,10 +644,11 @@ export const adminEn: typeof adminDe = {
     emptyAgendaTitle: 'No upcoming jobs',
     emptyAgendaBody: 'Once a booking is confirmed it appears here.',
     weekTotal: '{count} jobs · {hours} hrs',
+    /* The month drew dots. It draws the week's chips now, and a cell with four
+       entries in it has to say what it is leaving out. */
+    monthMore: '+{count} more',
 
     legendTitle: 'Legend',
-    legendShow: 'Show the legend',
-    legendHide: 'Hide the legend',
     legendJobs: 'Jobs',
     legendEvents: 'Appointments that are not jobs',
     legendOther: 'Everything else',
@@ -646,35 +658,15 @@ export const adminEn: typeof adminDe = {
       'The customer has 48 hours. The time is blocked; the job itself only exists once it is paid.',
 
     addAction: 'Add an appointment',
-    routeHint: "The day's order and travel time",
 
     eventsTitle: 'Appointments',
     holdTitle: 'Held time',
     closureTitle: 'Company holiday',
     closureBody: 'Nobody is working during this period. Reason: {reason}.',
 
-    rowActions: 'Actions',
-    rowOpen: 'Open the job',
-    rowReschedule: 'Reschedule',
-    rowCancel: 'Cancel the job',
-    rowSettled: 'Finished — readable only',
-  },
-
-  map: {
-    title: 'Route',
-    lead: 'The jobs on {date}, in the order of the day.',
-    stop: 'Stop {n}',
-    driveTime: '{minutes} min travel',
-    totalDrive: 'Total travel',
-    emptyTitle: 'No jobs on this day',
-    emptyBody: 'The route appears once something is booked for this day.',
-    mapNote: 'Prototype: a schematic, not a real map.',
-    back: 'Calendar',
-    previousDay: 'Previous day',
-    nextDay: 'Next day',
-    today: 'Today',
-    minutes: '{n} min',
-    routeAction: 'Day route',
+    /* Was "Open the job" inside a ⋯ menu. It is an eye at the end of the row
+       now — same meaning, same label as every table in the panel. */
+    rowOpen: 'View details',
   },
 
   newAppointment: {
@@ -730,15 +722,50 @@ export const adminEn: typeof adminDe = {
     kindContactCall: 'Call',
     kindFollowUp: 'Follow-up',
     kindViewing: 'Viewing',
+    detailsTitle: 'Details',
+    notFoundTitle: 'Appointment not found',
+    notFoundBody:
+      'This calendar entry no longer exists, or the link is out of date. Every current appointment is on the calendar.',
+    slotTitle: 'Slot & duration',
     whenTitle: 'When',
+    durationTitle: 'Duration',
+    /* Sat beside the title as a grey chip. The kind is a fact about the entry,
+       not an addition to its name — it belongs with the other facts. */
+    kindTitle: 'Kind',
+    minutes: '{n} min',
     contactTitle: 'Contact',
+    contactName: 'Name',
+    contactPhone: 'Phone',
+    contactAddress: 'Address',
+    contactAssignee: 'Assigned to',
     noteTitle: 'Note',
-    outcomeTitle: 'Outcome',
-    outcomeLabel: 'What came out of it?',
     historyTitle: 'History',
     actionsTitle: 'Actions',
     customerLink: 'Open the customer',
     requestLink: 'Open request {reference}',
+
+    /* Was "Outcome" and sat behind a button. It is the one thing written after
+       a call — and the text that travels into the request. A field, not a mode. */
+    messageTitle: 'Message',
+    messageHint: 'What you were told on the call. This text travels into the request.',
+    messagePlaceholder: 'For example: deep clean before handover, a slot near the end of the month.',
+    messageSave: 'Save the message',
+    messageSaved: 'Message saved.',
+
+    /* The request overview, on both sides of the conversion. Before it there
+       was only a paragraph about what the button does; what the request would
+       be prefilled with was visible first in the intake form. */
+    requestTitle: 'Request',
+    requestOpenLead:
+      'This is what the request will carry. Anything missing is worth filling in before you record it.',
+    requestDoneLead: 'This appointment became a request.',
+    requestReference: 'Number',
+    requestService: 'Service',
+    requestCreated: 'Recorded on',
+    requestAmount: 'Amount',
+    requestNoAmount: 'No quote yet',
+    requestMissing: 'Still missing',
+    convertAction: 'Record request',
 
     markDone: 'Mark as done',
     markNoReply: 'Nobody answered',
@@ -747,17 +774,14 @@ export const adminEn: typeof adminDe = {
     reopen: 'Reopen it',
     dismiss: 'Never mind',
 
-    convertTitle: 'This turned into work',
-    convertBody:
-      'Enter the request with what you were told on the call. From there it is the usual path: write the quote, pick a slot, take payment.',
-    convertAction: 'Enter the request',
-    convertedNote: 'This appointment became request {reference}.',
-
     doneToast: 'Marked as done.',
     noReplyToast: 'Noted — nobody answered.',
+    /* The confirmation body was the convert button's text: "Enter the request
+       …" sat above a red call-it-off button. */
+    cancelConfirmBody:
+      'The appointment leaves the calendar. The entry stays readable and can be reopened.',
     cancelToast: 'Appointment called off.',
     reopenToast: 'Appointment is open again.',
-    outcomeSaved: 'Outcome saved.',
   },
 
   booking: {

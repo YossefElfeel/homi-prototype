@@ -468,13 +468,29 @@ export type CalendarEventKind =
   /** On site, before quoting. The only kind that occupies the owner's day. */
   | 'viewing';
 
+/**
+ * The five an appointment can stand in, named for where it stands rather than
+ * for what was last done to it.
+ *
+ * The old names were `planned`, `noReply` and `converted`, and the calendar
+ * legend built out of them read "Planned · Done · No reply · Became a request ·
+ * Called off" — a list of events, not a list of states, which is the one thing
+ * a legend cannot be. No meaning moved here; only what each is called.
+ */
 export type CalendarEventStatus =
-  | 'planned'
+  /** Ahead of us, still to happen. Was `planned`. */
+  | 'upcoming'
   | 'done'
-  /** Rang, nobody picked up. Not `done`: it still has to happen. */
-  | 'noReply'
-  /** It became a request. `requestId` says which one — this is the deal path. */
-  | 'converted'
+  /**
+   * Rang, nobody picked up. Not `done` — it still has to happen, which is
+   * exactly why it is pending rather than a closing state. Was `noReply`.
+   */
+  | 'pending'
+  /**
+   * It became a request and the work is running there now. `requestId` says
+   * which one — this is the deal path. Was `converted`.
+   */
+  | 'inProgress'
   | 'cancelled';
 
 export interface CalendarEvent {
