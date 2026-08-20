@@ -173,7 +173,7 @@ export default function RequestsPage() {
   /** One-off, plan wanted, or already on a plan — §3 prices these apart. */
   const kindOf = (r: ServiceRequest) => {
     if (r.status === 'draft') return { label: t('kindDraft'), tone: 'neutral' as const };
-    if (r.subscriptionIntent) return { label: t('kindRecurring'), tone: 'accent' as const };
+    if (r.planIntent) return { label: t('kindRecurring'), tone: 'accent' as const };
     if (subscriptions.some((s) => s.customerId === r.customerId && s.status === 'active'))
       return { label: t('kindSubscriber'), tone: 'accent' as const };
     return { label: t('kindOneOff'), tone: 'quiet' as const };

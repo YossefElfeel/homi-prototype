@@ -87,7 +87,7 @@ export const adminDe = {
     renewalsTitle: 'Abos in den nächsten Tagen',
     renewalsEmptyTitle: 'Keine Abo-Termine',
     renewalsEmptyBody: 'In den nächsten sieben Tagen steht kein Abo-Einsatz an.',
-    nextCharge: 'Abbuchung {date}',
+    termEnds: 'Läuft ab am {date}',
     viewAll: 'Alle ansehen',
     /* Each number now says what it means and where it is acted on. A bare
        count leaves the owner to work out both. */
@@ -155,7 +155,9 @@ export const adminDe = {
       '{n, plural, =0 {Reicht danach für keinen weiteren Einsatz dieser Grösse.} one {Reicht danach für einen weiteren Einsatz dieser Grösse.} other {Reicht danach für # weitere Einsätze dieser Grösse.}}',
     coverageExpires: 'Guthaben verfällt',
     coveragePlan: 'Abo',
-    coverageNextCharge: 'Nächste Belastung',
+    coverageVisits: 'Einsätze im Paket',
+    coverageVisitsValue: 'Noch {left} von {total}',
+    coverageValidUntil: 'Abo gültig bis',
     coverageSkips: 'Freie Aussetzer',
     coverageSkipsValue: '{left} von {total} diesen Monat',
     coverageOpenPlan: 'Abo öffnen',
@@ -658,6 +660,7 @@ export const adminDe = {
    */
   rhythm: {
     oneTime: 'Einmalig',
+    monthly: 'Monatlich',
     biweekly: 'Alle zwei Wochen',
     weekly: 'Wöchentlich',
     twiceWeekly: 'Zweimal wöchentlich',

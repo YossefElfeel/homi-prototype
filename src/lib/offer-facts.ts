@@ -21,7 +21,8 @@ import type {
   Offer,
   PackageCredit,
   Payment,
-  PlanTier,
+  Plan,
+  RhythmKey,
   ServiceRequest,
   Subscription,
 } from '@/mock/schema';
@@ -29,30 +30,39 @@ import { offerHours } from '@/mock/engines/offers';
 
 /* ----------------------------------------------------------- frequency */
 
-export type RhythmKey = 'oneTime' | 'biweekly' | 'weekly' | 'twiceWeekly';
-
 /**
- * §11 — the plan *is* the rhythm. There is no separate interval field and
- * there should not be one: two places that both claim to say how often a
- * customer is visited will disagree eventually, and the plan is the one the
- * customer is billed against.
+ * How often a plan's visits are meant to land, read off the plan's own numbers.
+ *
+ * This replaces a `PLAN_RHYTHM` map that hardcoded one rhythm per tier. The map
+ * was a second place claiming how often a customer is visited, and it could not
+ * survive a plan being editable: change a plan to twenty-six visits and the map
+ * would still call it weekly. Twenty-six visits across twelve months *is*
+ * fortnightly — so the rhythm is derived from the visits, and there is nothing
+ * left for it to disagree with.
  */
-export const PLAN_RHYTHM: Record<PlanTier, RhythmKey> = {
-  basic: 'biweekly',
-  premium: 'weekly',
-  vip: 'twiceWeekly',
-};
+export function planRhythm(plan: Plan | undefined): RhythmKey {
+  if (!plan || plan.includedVisits <= 0 || plan.validityMonths <= 0) return 'oneTime';
+
+  // Months rather than weeks, because `validityMonths` is what a plan stores.
+  // 4.33 is the average number of weeks in a month.
+  const perWeek = plan.includedVisits / plan.validityMonths / 4.33;
+  if (perWeek >= 1.75) return 'twiceWeekly';
+  if (perWeek >= 0.85) return 'weekly';
+  if (perWeek >= 0.4) return 'biweekly';
+  return 'monthly';
+}
 
 /**
  * One-time or recurring, from the request the quote answers.
  *
- * `subscriptionIntent` is what the customer ticked in the booking wizard, and
- * an accepted quote carrying one is what the subscription is opened from — so
- * it is the honest source for "is this a single job or the start of a plan?"
- * long before a `Subscription` row exists.
+ * `planIntent` is the plan the customer picked in the booking wizard, and an
+ * accepted quote carrying one is what the subscription is opened from — so it
+ * is the honest source for "is this a single job or the start of a plan?" long
+ * before a `Subscription` row exists.
  */
-export function offerRhythm(request: ServiceRequest | undefined): RhythmKey {
-  return request?.subscriptionIntent ? PLAN_RHYTHM[request.subscriptionIntent] : 'oneTime';
+export function offerRhythm(request: ServiceRequest | undefined, plans: Plan[]): RhythmKey {
+  if (!request?.planIntent) return 'oneTime';
+  return planRhythm(plans.find((p) => p.id === request.planIntent));
 }
 
 /* ------------------------------------------------------------ coverage */
@@ -65,35 +75,51 @@ export interface Coverage {
   sourceId?: ID;
   /** Hours left on the package, for the ones that are close to running out. */
   hoursRemaining?: number;
+  /** Visits left on the plan, for the same reason. */
+  visitsRemaining?: number;
 }
 
 /**
  * Whether this job is already paid for.
  *
- * The order matters. A subscription customer's regular visit is covered by the
- * plan whether or not they also hold package hours, and charging a card for it
- * would be a double bill. Package hours only answer for the work if there are
- * enough of them: a six-hour job against four remaining hours is a payable
- * job, not a covered one, and calling it covered is how an invoice goes
- * missing.
+ * The order matters. A plan customer's regular visit is covered by the plan
+ * whether or not they also hold package hours, and charging a card for it would
+ * be a double bill. Package hours only answer for the work if there are enough
+ * of them: a six-hour job against four remaining hours is a payable job, not a
+ * covered one, and calling it covered is how an invoice goes missing.
+ *
+ * A plan now runs out two ways rather than one. Its term can end, and it can be
+ * *spent* — the term still running, every included visit used. The second is
+ * new, and it is the one that would otherwise produce free work silently:
+ * before visits were counted, a plan covered everything it touched for a whole
+ * year no matter how much of it there was.
  */
 export function offerCoverage(
   offer: Offer,
   request: ServiceRequest | undefined,
   subscriptions: Subscription[],
+  plans: Plan[],
   credits: PackageCredit[],
   now: Date,
 ): Coverage {
   if (!request) return { kind: 'payable' };
 
-  const plan = subscriptions.find(
-    (s) =>
-      s.customerId === request.customerId &&
-      s.propertyId === request.propertyId &&
-      s.serviceSlug === request.serviceSlug &&
-      (s.status === 'active' || s.status === 'pastDue' || s.status === 'cancellationPending'),
-  );
-  if (plan) return { kind: 'subscription', sourceId: plan.id };
+  const subscription = subscriptions.find((s) => {
+    if (s.customerId !== request.customerId || s.propertyId !== request.propertyId) return false;
+    if (s.status !== 'active') return false;
+    if (new Date(s.endDate) <= now) return false;
+    const plan = plans.find((x) => x.id === s.planId);
+    if (!plan || plan.serviceSlug !== request.serviceSlug) return false;
+    return s.visitsUsed < plan.includedVisits;
+  });
+  if (subscription) {
+    const plan = plans.find((x) => x.id === subscription.planId);
+    return {
+      kind: 'subscription',
+      sourceId: subscription.id,
+      visitsRemaining: (plan?.includedVisits ?? 0) - subscription.visitsUsed,
+    };
+  }
 
   const hours = offerHours(offer);
   const credit = credits.find(
@@ -195,6 +221,9 @@ export function isReturningCustomer(
   );
   if (served) return true;
 
+  /* `expired` passes this test on purpose. A year of visits that has since run
+     out is the strongest evidence of a relationship on this model, not the
+     weakest — only a cancelled-and-refunded plan means nothing ever happened. */
   if (subscriptions.some((s) => s.customerId === customerId && s.status !== 'cancelled')) {
     return true;
   }

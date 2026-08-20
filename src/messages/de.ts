@@ -118,10 +118,9 @@ export const de = {
     },
     subscription: {
       active: 'Aktiv',
-      pastDue: 'Zahlung überfällig',
       paused: 'Pausiert',
-      cancellationPending: 'Kündigung eingegangen',
-      cancelled: 'Gekündigt',
+      expired: 'Abgelaufen',
+      cancelled: 'Storniert',
     },
     invoice: {
       draft: 'Entwurf',

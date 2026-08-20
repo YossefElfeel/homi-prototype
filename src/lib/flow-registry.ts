@@ -192,8 +192,8 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Vorlage einsetzen oder direkt senden',
-        '/admin/nachrichten',
-        'Der Wähler setzte nur ein und liess {name} stehen, weil nichts die Platzhalter auflöste. Aufgelöst wird jetzt gegen den Datensatz auf dem Bildschirm — was aufgeht, darf mit einem Klick raus, was nicht aufgeht, sperrt den Direktversand',
+        '/admin/rechnungen/inv_draft',
+        'Der Wähler setzte nur ein und liess {name} stehen, weil nichts die Platzhalter auflöste. Aufgelöst wird jetzt gegen den Datensatz auf dem Bildschirm — was aufgeht, darf mit einem Klick raus, was nicht aufgeht, sperrt den Direktversand. Auf /admin/nachrichten steht er nicht mehr: ein Gespräch dort kann von einer Anfrage, einer Offerte oder einer Rechnung handeln, und ein Wähler, der das nicht unterscheidet, bietet den falschen Text so bereitwillig an wie den richtigen',
       ),
       added(
         'Vorlage im Offert-Builder',
@@ -431,10 +431,7 @@ export const FLOWS: Flow[] = [
     de: 'Rechnungen & Abos',
     en: 'Invoices & plans',
     actors: ['owner', 'customer'],
-    entries: [
-      ok('Rechnung aus Einsatz', '/admin/rechnungen'),
-      ok('Abo anlegen', '/admin/abos'),
-    ],
+    entries: [ok('Rechnung aus Einsatz', '/admin/rechnungen')],
     actions: [
       ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
       ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
@@ -443,7 +440,6 @@ export const FLOWS: Flow[] = [
         '/admin/rechnungen/inv_paid',
         '«Als bezahlt markieren» schrieb den Status und sonst nichts — kein `Payment`, also stand nirgends, wie das Geld gekommen ist. `PaymentMethod` kannte dafür auch die zwei Wege nicht, über die eine Rechnung hier tatsächlich zurückkommt: QR-Rechnung und bar',
       ),
-      ok('Besuch überspringen, pausieren, kündigen', '/konto/abo'),
     ],
     exits: [
       ok('Bezahlt', '/konto/rechnungen/inv_paid'),
@@ -457,9 +453,73 @@ export const FLOWS: Flow[] = [
         'Rückerstattung',
         'Bewusst auf die nächste Welle geschoben. Bis jetzt war sie gar nicht baubar: eine bezahlte Rechnung hatte keinen `Payment`-Datensatz, also gab es nichts, worauf sich eine Erstattung beziehen könnte. Den gibt es seit dieser Welle — `refunded` steht in `PaymentStatus` und in der Statusfarbtabelle, und die Offerten-Seite zeigt ihn bereits für eine Offert-Zahlung. Für eine Rechnung führt noch kein Knopf dahin',
       ),
+      added(
+        'Erstattet',
+        '/admin/abos/pln_basic/sub_2',
+        'War bewusst offen — es gab keinen Payment-Datensatz, auf den sich eine Erstattung hätte beziehen können. Eine Abo-Stornierung innerhalb der Widerrufsfrist erzeugt jetzt eine Zahlung mit Status «refunded» und storniert die Rechnung dazu. Für eine Rechnung aus einem Einsatz führt weiterhin kein Knopf dahin',
+      ),
+    ],
+  },
+  {
+    /*
+     * Abos waren zwei Zeilen im Geld-Flow und keine davon stimmte noch.
+     * Der Grund: ein Abo war kein Ding. `PlanTier` waren drei String-Literale,
+     * also gab es nichts anzulegen, nichts zu bearbeiten, nichts zurückzuziehen
+     * — und der Weg, auf dem eine Kundin tatsächlich ein Abo bekommt, war
+     * schlicht nicht verdrahtet.
+     */
+    id: 'plans',
+    de: 'Abos',
+    en: 'Plans',
+    actors: ['visitor', 'customer', 'owner'],
+    entries: [
+      added('Abo anlegen', '/admin/abos/neu', 'Es gab keine Entität, also gab es kein Anlegen'),
+      added('Abo bearbeiten', '/admin/abos/pln_basic/bearbeiten'),
+      ok('Abo-Seite auf der Website', '/abos'),
+      added(
+        'Abo aus bezahlter Offerte',
+        '/admin/abos/pln_basic',
+        'Der eigentliche Bruch: Besucherin wählt ein Abo, der Wunsch landet auf der Anfrage, der Rabatt auf der Offerte — und dann legte niemand ein Abo an. Wer auf der Website ein Abo abschloss, hatte hinterher keines',
+      ),
+    ],
+    actions: [
+      added(
+        'Aus dem Verkauf nehmen',
+        '/admin/abos',
+        'Bestehende Abos laufen weiter. Ein bezahltes Jahr lässt sich nicht rückwirkend zurückziehen',
+      ),
+      added(
+        'Von der Website nehmen',
+        '/admin/abos/pln_buero',
+        'Zwei Schalter, nicht einer: telefonisch verkaufen, bevor es angekündigt ist — und aufhören zu werben, während die Bestandskundschaft es weiter nutzt',
+      ),
+      added(
+        'Einsätze zählen',
+        '/admin/abos/pln_basic/sub_2',
+        'Vorher deckte ein Abo ein Jahr lang alles ab, was es berührte. Ein Einsatz wird beim Freigeben angerechnet, und danach ist er weg',
+      ),
+      ok('Besuch überspringen', '/konto/abo'),
+      added('Pausieren und fortsetzen', '/admin/abos/pln_basic/sub_2'),
+    ],
+    exits: [
+      added(
+        'Abgelaufen',
+        '/admin/abos/pln_vip/sub_s_expired',
+        'Wird beim Lesen aus dem Enddatum abgeleitet, nicht gespeichert — sonst bräuchte es einen nächtlichen Lauf. Nicht genutzte Einsätze werden benannt, nicht verschwiegen',
+      ),
+      added(
+        'Verlängert',
+        '/admin/abos/pln_basic/sub_2',
+        'Neue Rechnung, Einsätze zurückgesetzt, Zähler um eins hoch. Bewusst nicht automatisch: hier bucht nichts turnusmässig ab',
+      ),
+      added(
+        'Storniert und erstattet',
+        '/admin/abos/pln_basic/sub_2',
+        'Nur solange kein Einsatz stattgefunden hat und die Widerrufsfrist läuft. Die Regel steht im Store, nicht nur im deaktivierten Knopf — sonst geht eine URL daran vorbei',
+      ),
       open(
-        'Zahlung im Abo fehlgeschlagen (pastDue)',
-        'Nur in den Demodaten vorhanden. Es gibt keinen Abrechnungslauf, der einen fehlgeschlagenen Einzug erzeugen könnte — den zu erfinden, hiesse Verhalten zu behaupten, das der Prototyp nicht hat',
+        'Abo wechseln',
+        'Die Kundin sieht das grössere Abo und schreibt uns; verrechnet wird von Hand. §21.7 sagt «Upgrade sofort, Downgrade zur nächsten Laufzeit» — was bei einem im Voraus bezahlten Paket eine Verrechnung der schon bezahlten Einsätze bedeutet, und die Formel dafür ist nicht entschieden. Sie zu erfinden hiesse, Geld zu berechnen, das niemand bestätigt hat',
       ),
     ],
   },
@@ -502,7 +562,7 @@ export const FLOWS: Flow[] = [
     exits: [
       added(
         'Vorlage steht in den Wählern',
-        '/admin/nachrichten',
+        '/admin/rechnungen/inv_draft',
         'Der Bereich der Vorlage bestimmt, welcher Wähler sie anbietet — dieselbe Tabelle, die die Verwendungs-Liste im Editor füllt',
       ),
       added(

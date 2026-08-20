@@ -194,7 +194,8 @@ export interface ServiceRequest {
   createdAt: ISODate;
   openedAt?: ISODate;
   respondedAt?: ISODate;
-  subscriptionIntent?: PlanTier;
+  /** The plan the customer asked for, by id. */
+  planIntent?: ID;
 }
 
 /**
@@ -246,7 +247,7 @@ export interface RequestDraft {
   };
   acceptedTerms: boolean;
   acceptedPrivacy: boolean;
-  subscriptionIntent: PlanTier | null;
+  planIntent: ID | null;
   updatedAt: ISODate | null;
 }
 
@@ -506,33 +507,119 @@ export interface CalendarEvent {
   history: TimelineEvent[];
 }
 
+/* -------------------------------------------------------------------- plan */
+
+/**
+ * How often a plan's visits are meant to land. Derived from the plan rather
+ * than stored on it — see `planRhythm` in `lib/offer-facts`.
+ */
+export type RhythmKey = 'oneTime' | 'monthly' | 'biweekly' | 'weekly' | 'twiceWeekly';
+
+/**
+ * A plan is a product the office can edit, not a tier baked into the types.
+ *
+ * What a plan *was* lived in four places at once and not one of them was
+ * reachable from the panel: its identity in a `PlanTier` union of three string
+ * literals, its discount in `Settings.planDiscounts`, its rhythm in a
+ * `PLAN_RHYTHM` map, and its feature list hardcoded in the marketing card. So
+ * adding a fourth plan, retiring one, or changing what one costs each meant a
+ * deploy — which is why the "Add Plan" the brief asks for had nothing it could
+ * add to.
+ *
+ * It is a prepaid package, not a recurring charge: one payment at sign-up buys
+ * `includedVisits` visits, usable for `validityMonths`. That is why no
+ * next-charge date appears anywhere on this model, and why `Subscription`
+ * counts visits instead of billing periods.
+ */
+export interface Plan {
+  id: ID;
+  reference: string;
+  name: Record<Locale, string>;
+  description: Record<Locale, string>;
+  /** The selling points, in the order the customer reads them. */
+  features: Record<Locale, string>[];
+  /** Paid once, at sign-up — not per month. */
+  price: number;
+  /** How many visits that price buys. */
+  includedVisits: number;
+  /** How long those visits stay usable, from the day the plan is paid for. */
+  validityMonths: number;
+  /** The service the included visits are drawn against. */
+  serviceSlug: ServiceSlug;
+  /**
+   * Applied to work *outside* the package — an extra visit once the included
+   * ones are spent, or a different service entirely. Inside the package there
+   * is nothing left to discount: those visits are already paid for.
+   */
+  extraDiscountPercent: number;
+  /**
+   * Two flags rather than one, because they answer different questions.
+   *
+   * `active` decides whether anyone can still subscribe or renew. Turning it
+   * off has to leave existing subscribers untouched — they paid for a term,
+   * and retiring a product cannot reach back and take that away.
+   *
+   * `visibleOnSite` decides only whether the marketing page lists it. That is
+   * how a plan gets sold by phone before it is announced, and how a retired
+   * plan stops being advertised while the people holding it keep using it.
+   */
+  active: boolean;
+  visibleOnSite: boolean;
+  order: number;
+}
+
 /* ------------------------------------------------------------ subscription */
 
-export type PlanTier = 'basic' | 'premium' | 'vip';
-
-export type SubscriptionStatus =
-  | 'active'
-  | 'pastDue'
-  | 'paused'
-  | 'cancellationPending'
-  | 'cancelled';
+/**
+ * `pastDue` and `cancellationPending` are gone rather than kept and unused.
+ *
+ * Both described a monthly-charge product this is not. A plan is paid once, so
+ * there is no recurring collection left to fail; and a cancellation is either
+ * inside the refund window — in which case it happens immediately — or refused,
+ * so nothing stays pending. A status no screen can write is exactly the kind of
+ * lie the type system does not catch.
+ *
+ * `expired` replaces them, and it is the one every plan reaches eventually:
+ * the term ran out, whether or not visits were left on it.
+ */
+export type SubscriptionStatus = 'active' | 'paused' | 'expired' | 'cancelled';
 
 export interface Subscription {
   id: ID;
   reference: string;
   customerId: ID;
   propertyId: ID;
-  plan: PlanTier;
-  serviceSlug: ServiceSlug;
+  planId: ID;
   startDate: ISODate;
-  /** One year minimum commitment (§11.2, reaffirmed). */
-  commitmentEndsAt: ISODate;
+  /**
+   * `startDate` plus the plan's `validityMonths`. The package ends here
+   * whether or not visits remain — that is what was bought, and implying
+   * leftovers roll over is how a refund argument starts.
+   */
+  endDate: ISODate;
   status: SubscriptionStatus;
-  skipsUsedThisMonth: number;
-  lastChargedAt?: ISODate;
-  nextChargeAt?: ISODate;
-  cancellationRequestedAt?: ISODate;
+  /**
+   * Counted, not derived from bookings. A booking can be cancelled, moved or
+   * deleted; a visit that was delivered stays spent. `history` records which
+   * booking spent which visit, so the number can still be audited.
+   */
+  visitsUsed: number;
+  /** The invoice that paid for the current term. */
+  invoiceId?: ID;
+  /** How many times this package has been bought again after the first term. */
+  renewalCount: number;
+  cancelledAt?: ISODate;
+  /** The refunded payment, when a cancellation landed inside the window. */
+  refundedPaymentId?: ID;
   internalNotes?: string;
+  /*
+   * Every other entity here carries a history and this one did not, which is
+   * why "when was it renewed, and how many times" had nothing to read.
+   * `skipsUsedThisMonth` also lived here as a stored counter that nothing ever
+   * reset — so a customer's free skips ran out permanently, once. Skips are
+   * counted off these events instead.
+   */
+  history: TimelineEvent[];
 }
 
 export interface CreditLedgerEntry {
@@ -959,10 +1046,16 @@ export interface Settings {
   cancellationFreeHours: number;
   lateCancellationPercent: number;
   noAccessFeePercent: number;
-  subscriptionCommitmentMonths: number;
-  subscriptionNoticeMonths: number;
+  /**
+   * How long after paying a customer may still cancel a plan and be refunded.
+   *
+   * The commitment length and the discount both left this record: they are
+   * properties of a *plan* now, and two plans are allowed to differ on both.
+   * What stays global is the cooling-off window, because it is a promise the
+   * business makes once rather than per product.
+   */
+  planCancellationDays: number;
   monthlyFreeSkips: number;
-  planDiscounts: Record<PlanTier, number>;
   creditValidityMonths: number;
   /**
    * §21 item 12 — permanent key holding stays locked until a liability policy

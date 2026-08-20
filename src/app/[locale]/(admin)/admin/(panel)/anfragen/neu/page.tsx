@@ -101,6 +101,7 @@ export default function NewRequestPage() {
   const properties = useStore((s) => s.data.properties);
   const requests = useStore((s) => s.data.requests);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
   const addOns = useStore((s) => s.addOns);
   const settings = useStore((s) => s.settings);
   const bookings = useStore((s) => s.data.bookings);
@@ -229,9 +230,10 @@ export default function NewRequestPage() {
           windowCount,
           furniturePieces,
         },
-        { services, addOns, settings, properties },
+        { services, addOns, settings, properties, plans },
       ),
     [
+      plans,
       serviceSlug,
       savedProperty,
       property,

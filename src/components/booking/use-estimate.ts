@@ -6,7 +6,7 @@ import { priceEstimate, type Estimate } from '@/mock/engines/pricing';
 import type {
   AddOn,
   ID,
-  PlanTier,
+  Plan,
   Property,
   Service,
   ServiceSlug,
@@ -35,7 +35,8 @@ export interface EstimateSource {
   addOnIds: ID[];
   windowCount: number | null;
   furniturePieces: number | null;
-  subscriptionIntent?: PlanTier | null;
+  /** The plan the customer picked, by id. */
+  planIntent?: ID | null;
 }
 
 export interface EstimateContext {
@@ -43,6 +44,7 @@ export interface EstimateContext {
   addOns: AddOn[];
   settings: Settings;
   properties: Property[];
+  plans: Plan[];
 }
 
 /**
@@ -51,7 +53,7 @@ export interface EstimateContext {
  */
 export function computeEstimate(
   source: EstimateSource,
-  { services, addOns, settings, properties }: EstimateContext,
+  { services, addOns, settings, properties, plans }: EstimateContext,
 ): Estimate | null {
   const service = services.find((s) => s.slug === source.serviceSlug);
   if (!service) return null;
@@ -86,7 +88,11 @@ export function computeEstimate(
       needsExtraEffort: needsExtraEffort ?? false,
       windowCount: source.windowCount ?? undefined,
       furniturePieces: source.furniturePieces ?? undefined,
-      plan: source.subscriptionIntent ?? undefined,
+      /* The estimate a visitor sees while picking a plan is the *quoted*
+         price with the plan's discount on it, which is what they are comparing.
+         The first visit under a plan is not quoted at all — it comes out of the
+         package — so this number is what any work beyond the package costs. */
+      planDiscountPercent: plans.find((x) => x.id === source.planIntent)?.extraDiscountPercent,
     },
     settings,
   );
@@ -106,9 +112,10 @@ export function useEstimate(): Estimate | null {
   const addOns = useStore((s) => s.addOns);
   const settings = useStore((s) => s.settings);
   const properties = useStore((s) => s.data.properties);
+  const plans = useStore((s) => s.plans);
 
   return useMemo(
-    () => computeEstimate(draft, { services, addOns, settings, properties }),
-    [draft, services, addOns, settings, properties],
+    () => computeEstimate(draft, { services, addOns, settings, properties, plans }),
+    [draft, services, addOns, settings, properties, plans],
   );
 }

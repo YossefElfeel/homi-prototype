@@ -63,6 +63,7 @@ export default function AdminDashboard() {
   const properties = useStore((s) => s.data.properties);
   const bookings = useStore((s) => s.data.bookings);
   const subscriptions = useStore((s) => s.data.subscriptions);
+  const plans = useStore((s) => s.plans);
   const team = useStore((s) => s.data.team);
   const memberId = useStore((s) => s.demo.currentMemberId);
   const services = useStore((s) => s.services);
@@ -81,13 +82,21 @@ export default function AdminDashboard() {
   const today = bookingsOnDay(now, bookings);
   const tomorrow = bookingsOnDay(addDays(startOfDay(now), 1), bookings);
 
-  const weekAhead = addDays(now, 7);
+  /*
+   * Plans about to run out, not charges about to be taken.
+   *
+   * This list was built from `nextChargeAt` — a monthly collection this
+   * product does not have. What the office actually needs to see is the
+   * opposite end: a plan is paid once for a year and the customer has to renew
+   * it themselves, so a term ending unnoticed is a customer quietly lost. Thirty
+   * days, not seven, because that is a conversation rather than a direct debit.
+   */
+  const monthAhead = addDays(now, 30);
   const renewals = subscriptions.filter(
     (s) =>
       s.status === 'active' &&
-      s.nextChargeAt &&
-      new Date(s.nextChargeAt) <= weekAhead &&
-      new Date(s.nextChargeAt) >= now,
+      new Date(s.endDate) <= monthAhead &&
+      new Date(s.endDate) >= now,
   );
 
   const nameOf = (id: string) => {
@@ -320,18 +329,16 @@ export default function AdminDashboard() {
               >
                 <div>
                   <p className="font-medium">{nameOf(sub.customerId)}</p>
-                  <p className="mt-0.5 text-sm text-ink-secondary capitalize">{sub.plan}</p>
+                  <p className="mt-0.5 text-sm text-ink-secondary">
+                    {plans.find((p) => p.id === sub.planId)?.name[locale] ?? '—'}
+                  </p>
                 </div>
                 <span
                   data-numeric
                   className="flex items-center gap-1.5 text-sm text-ink-tertiary"
                 >
                   <Clock className="size-3.5" aria-hidden />
-                  {t('nextCharge', {
-                    date: sub.nextChargeAt
-                      ? format.dateTime(new Date(sub.nextChargeAt), 'short')
-                      : '—',
-                  })}
+                  {t('termEnds', { date: format.dateTime(new Date(sub.endDate), 'short') })}
                 </span>
               </li>
             ))}

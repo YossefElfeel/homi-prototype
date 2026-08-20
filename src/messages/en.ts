@@ -117,9 +117,8 @@ export const en: Messages = {
     },
     subscription: {
       active: 'Active',
-      pastDue: 'Payment overdue',
       paused: 'Paused',
-      cancellationPending: 'Cancellation received',
+      expired: 'Expired',
       cancelled: 'Cancelled',
     },
     invoice: {

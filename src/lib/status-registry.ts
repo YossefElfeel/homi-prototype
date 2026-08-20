@@ -67,11 +67,16 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     cancelled: 'neutral',
   },
   // §4.3
+  /* §11 — four states, and every one of them reachable from a screen.
+     `pastDue` and `cancellationPending` left with the monthly-charge model that
+     produced them: a plan is paid once, so no collection can fall behind, and a
+     cancellation is either immediate or refused. `expired` is the state every
+     plan reaches on its own — neutral rather than a warning, because a term
+     running its course is not a problem. */
   subscription: {
     active: 'success',
-    pastDue: 'danger',
     paused: 'warning',
-    cancellationPending: 'warning',
+    expired: 'neutral',
     cancelled: 'neutral',
   },
   // §4.4

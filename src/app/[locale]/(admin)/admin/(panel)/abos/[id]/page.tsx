@@ -1,354 +1,393 @@
 'use client';
 
-import { use, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { use, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { AlertTriangle, ArrowLeft, Lock, Pause, Play, SkipForward } from 'lucide-react';
+import { Check, Search, Users } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
+import type { Locale } from '@/i18n/routing';
+import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { DataView, type Column } from '@/components/ui/data-view';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Money } from '@/components/ui/money';
+import { PageHeader } from '@/components/ui/page-header';
+import { Progress } from '@/components/ui/progress';
+import { RowAction, RowActionButton, RowActions } from '@/components/ui/row-actions';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { CustomerLink } from '@/components/ui/record-link';
-import { Field, Select, Textarea } from '@/components/ui/field';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
-import type { PlanTier } from '@/mock/schema';
-import { PLAN_RHYTHM } from '@/lib/offer-facts';
+import { SwitchField } from '@/components/ui/switch';
+import { Toolbar } from '@/components/ui/toolbar';
+import { planRhythm } from '@/lib/offer-facts';
+import { subscribersOf, subscriptionState, visitsLeft } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { Subscription } from '@/mock/schema';
 
 /**
- * Screen 70 — one plan.
+ * Screen 70 — one plan, and who is on it.
  *
- * Two rules from the specification are visible rather than silent: the monthly
- * free skip is shown as a remaining count (§11.2), and a cancellation inside
- * the minimum term is routed to the owner to decide rather than processed
- * automatically (§20.4).
+ * The brief asks for the subscriber list to live here, with each customer's
+ * used and remaining visits and a way to cancel one. It could not exist before:
+ * a plan was a string literal, so there was nothing for a subscriber to belong
+ * *to*, and visits were not counted at all — the plan simply covered whatever
+ * it touched for a year.
  */
-export default function SubscriptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const t = useTranslations('admin.subscription');
-  /* The second copy of the hardcoded German `FREQUENCY` map lived here. */
+  const t = useTranslations('admin.plan');
   const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
+  const locale = useLocale() as Locale;
   const now = useNow();
   const hydrated = useHydrated();
 
+  const plan = useStore((s) => s.plans.find((p) => p.id === id));
   const subscriptions = useStore((s) => s.data.subscriptions);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
-  const bookings = useStore((s) => s.data.bookings);
+  const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
-  const data = useStore((s) => s.data);
-  const patchData = useStore((s) => s.patchData);
+  const setPlanActive = useStore((s) => s.setPlanActive);
+  const setPlanVisible = useStore((s) => s.setPlanVisible);
+  const cancelSubscription = useStore((s) => s.cancelSubscription);
 
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const [changingPlan, setChangingPlan] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const subscribers = useMemo(
+    () => (plan ? subscribersOf(plan.id, subscriptions) : []),
+    [plan, subscriptions],
+  );
+
+  const nameOf = (s: Subscription) => {
+    const c = customers.find((x) => x.id === s.customerId);
+    return c ? `${c.firstName} ${c.lastName}` : '—';
+  };
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return subscribers;
+    return subscribers.filter((s) => {
+      const property = properties.find((p) => p.id === s.propertyId);
+      return [nameOf(s), s.reference, property?.label ?? '']
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscribers, query, properties, customers]);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
-
-  const sub = subscriptions.find((s) => s.id === id);
-  if (!sub) return <p className="text-ink-tertiary">—</p>;
-
-  const customer = customers.find((c) => c.id === sub.customerId)!;
-  const property = properties.find((p) => p.id === sub.propertyId);
-  const visits = bookings
-    .filter((b) => b.subscriptionId === sub.id)
-    .sort((a, b) => a.start.localeCompare(b.start));
-  const upcoming = visits.filter((v) => new Date(v.start) >= now);
-  const past = visits.filter((v) => new Date(v.start) < now);
-  const skipsLeft = Math.max(0, settings.monthlyFreeSkips - sub.skipsUsedThisMonth);
-
-  /**
-   * There is no per-entity store action for subscriptions — `patchData` is the
-   * escape hatch the customer side already uses (konto/abo). Everything on this
-   * screen writes through here so the list, the badge and the banners all read
-   * the same record.
-   */
-  function patchSub(patch: Partial<typeof sub>) {
-    patchData({
-      subscriptions: data.subscriptions.map((s) =>
-        s.id === sub!.id ? { ...s, ...patch } : s,
-      ),
-    });
+  if (!plan) {
+    return (
+      <div>
+        <PageHeader title={t('missingTitle')} back={{ href: '/admin/abos', label: t('back') }} />
+        <EmptyState title={t('missingTitle')} body={t('missingBody')} />
+      </div>
+    );
   }
 
-  const setNotes = (notes: string) => patchSub({ internalNotes: notes });
+  const serviceName =
+    services.find((s) => s.slug === plan.serviceSlug)?.name[locale] ?? plan.serviceSlug;
 
-  const paused = sub.status === 'paused';
-  /** A cancellation already filed, or a dead plan, closes every other action. */
-  const settled = sub.status === 'cancellationPending' || sub.status === 'cancelled';
+  function cancel(subscription: Subscription) {
+    const block = cancelSubscription(subscription.id, now);
+    /* The store decides, and it says which rule refused. A button that just
+       fails is a button somebody presses three times before phoning. */
+    if (block) {
+      toast.error(t(`cancelBlocked.${block}`));
+      return;
+    }
+    toast.success(t('cancelDone', { name: nameOf(subscription) }));
+  }
+
+  const columns: Column<Subscription>[] = [
+    {
+      key: 'customer',
+      header: t('colCustomer'),
+      primary: true,
+      cell: (s) => (
+        <Link
+          href={`/admin/abos/${plan.id}/${s.id}`}
+          className="rounded-[var(--radius-xs)] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+        >
+          {nameOf(s)}
+          <span data-numeric className="ms-2 text-sm font-normal text-ink-tertiary">
+            {s.reference}
+          </span>
+        </Link>
+      ),
+    },
+    {
+      /*
+       * The property, on every row.
+       *
+       * A customer can hold a plan on their flat and another on their office,
+       * and the two are told apart by nothing else — same name, same plan, same
+       * dates. Without this column the office cannot answer "which address is
+       * this one for?" from the list at all.
+       */
+      key: 'property',
+      header: t('colProperty'),
+      cell: (s) => {
+        const property = properties.find((p) => p.id === s.propertyId);
+        return property ? (
+          <Link
+            href={`/admin/objekte/${property.id}`}
+            className="text-ink-secondary hover:underline"
+          >
+            {property.label}
+            <span data-numeric className="block text-sm text-ink-tertiary">
+              {property.postcode} {property.city}
+            </span>
+          </Link>
+        ) : (
+          <span className="text-ink-tertiary">—</span>
+        );
+      },
+    },
+    {
+      key: 'visits',
+      header: t('colVisits'),
+      sortBy: (s) => s.visitsUsed,
+      cell: (s) => (
+        <span className="block min-w-32">
+          <span data-numeric className="text-sm text-ink-secondary">
+            {t('visitsOf', { used: s.visitsUsed, total: plan.includedVisits })}
+          </span>
+          <Progress
+            className="mt-1.5"
+            value={s.visitsUsed}
+            max={plan.includedVisits}
+            label={t('visitsOf', { used: s.visitsUsed, total: plan.includedVisits })}
+          />
+          <span data-numeric className="mt-1 block text-sm text-ink-tertiary">
+            {t('visitsLeft', { n: visitsLeft(s, plan) })}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'term',
+      header: t('colTerm'),
+      align: 'end',
+      sortBy: (s) => s.endDate,
+      cell: (s) => (
+        <span data-numeric className="text-sm text-ink-secondary">
+          {format.dateTime(new Date(s.startDate), 'short')} –{' '}
+          {format.dateTime(new Date(s.endDate), 'short')}
+          {s.renewalCount > 0 && (
+            <span className="block text-ink-tertiary">
+              {t('renewedTimes', { n: s.renewalCount })}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      cell: (s) => (
+        <StatusBadge entity="subscription" state={subscriptionState(s, now)} size="sm" />
+      ),
+    },
+  ];
 
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/abos">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <PageHeader
+        title={plan.name[locale]}
+        lead={plan.description[locale] || undefined}
+        back={{ href: '/admin/abos', label: t('back') }}
+        meta={
+          <>
+            <span data-numeric className="text-ink-tertiary">
+              {plan.reference}
+            </span>
+            <Chip tone={plan.active ? 'success' : 'neutral'}>
+              {t(plan.active ? 'active' : 'retired')}
+            </Chip>
+            {plan.active && !plan.visibleOnSite && <Chip tone="warning">{t('hidden')}</Chip>}
+          </>
+        }
+        actions={
+          <Button asChild variant="secondary">
+            <Link href={`/admin/abos/${plan.id}/bearbeiten`}>
+              <ActionIcon.edit className="size-4" aria-hidden />
+              {t('edit')}
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="display-type text-3xl">
-          <CustomerLink
-            id={customer.id}
-            name={`${customer.firstName} ${customer.lastName}`}
-          />
-        </h1>
-        <StatusBadge entity="subscription" state={sub.status} />
-      </div>
-      <p className="mt-2 text-ink-secondary">
-        <span className="capitalize">{sub.plan}</span> · {rhythmT(PLAN_RHYTHM[sub.plan])} ·{' '}
-        <Link
-          href={`/admin/kunden/${customer.id}`}
-          className="underline decoration-from-font underline-offset-4"
-        >
-          {t('viewCustomer')}
-        </Link>
-      </p>
-
-      {sub.status === 'pastDue' && (
-        <div className="mt-6 flex gap-3 rounded-[var(--radius-md)] border border-status-danger-line bg-status-danger p-5 text-status-danger-fg">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <div>
-            <h2 className="font-medium">{t('pastDueTitle')}</h2>
-            <p className="mt-1.5 text-sm">{t('pastDueBody', { days: 7 })}</p>
-          </div>
-        </div>
-      )}
-
-      {sub.status === 'cancellationPending' && (
-        <div className="mt-6 flex gap-3 border-l-2 border-rule bg-sunken p-5">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-          <div>
-            <h2 className="font-medium">{t('cancelRequestTitle')}</h2>
-            <p className="mt-1.5 text-sm text-ink-secondary">
-              {t('cancelRequestBody', {
-                date: format.dateTime(new Date(sub.commitmentEndsAt), 'full'),
-              })}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="mt-10 grid gap-10 lg:grid-cols-12">
-        <div className="space-y-10 lg:col-span-7">
+      <div className="grid gap-app lg:grid-cols-12">
+        <div className="space-y-app lg:col-span-8">
           <dl className="grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2">
-            <div className="bg-page p-5">
-              <dt className="label-type text-ink-tertiary">{t('startedAt')}</dt>
-              <dd data-numeric className="mt-2">
-                {format.dateTime(new Date(sub.startDate), 'full')}
-              </dd>
-            </div>
-            <div className="bg-page p-5">
-              <dt className="label-type text-ink-tertiary">{t('commitmentUntil')}</dt>
-              <dd data-numeric className="mt-2">
-                {format.dateTime(new Date(sub.commitmentEndsAt), 'full')}
-              </dd>
-            </div>
+            <Fact label={t('price')}>
+              <Money amount={plan.price} />
+              <span className="mt-0.5 block text-sm text-ink-tertiary">
+                {t('perTerm', { months: plan.validityMonths })}
+              </span>
+            </Fact>
+            <Fact label={t('perVisit')}>
+              <Money amount={plan.price / Math.max(1, plan.includedVisits)} per="visit" />
+            </Fact>
+            <Fact label={t('includedVisits')}>
+              <span data-numeric>{plan.includedVisits}</span>
+              <span className="mt-0.5 block text-sm text-ink-tertiary">
+                {rhythmT(planRhythm(plan))}
+              </span>
+            </Fact>
+            <Fact label={t('service')}>
+              <Link href={`/admin/leistungen/${plan.serviceSlug}`} className="hover:underline">
+                {serviceName}
+              </Link>
+              {/* The brief asks for the service id to be visible where one
+                  applies. It is what a plan is drawn against, so it belongs
+                  next to the name rather than behind the link. */}
+              <span data-numeric className="mt-0.5 block text-sm text-ink-tertiary">
+                {plan.serviceSlug}
+              </span>
+            </Fact>
+            <Fact label={t('extraDiscount')}>
+              <span data-numeric>{plan.extraDiscountPercent}%</span>
+              <span className="mt-0.5 block text-sm text-ink-tertiary">
+                {t('extraDiscountHint')}
+              </span>
+            </Fact>
+            <Fact label={t('cancellationWindow')}>
+              <span data-numeric>{t('days', { n: settings.planCancellationDays })}</span>
+              <span className="mt-0.5 block text-sm text-ink-tertiary">
+                {t('cancellationHint')}
+              </span>
+            </Fact>
           </dl>
 
-          {property && (
+          {plan.features.length > 0 && (
             <section>
-              <h2 className="display-type text-xl">{t('propertyTitle')}</h2>
-              <Link
-                href={`/admin/objekte/${property.id}`}
-                className="surface-card mt-4 block p-4 transition-colors hover:bg-sunken"
-              >
-                <span className="block font-medium">{property.label}</span>
-                <span className="block text-sm text-ink-secondary">
-                  {property.street}, <span data-numeric>{property.postcode}</span>{' '}
-                  {property.city}
-                </span>
-              </Link>
+              <h2 className="display-type text-xl">{t('featuresTitle')}</h2>
+              <ul className="mt-4 space-y-2.5 text-sm">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
+                    <span className="text-ink-secondary">{feature[locale] || feature.de}</span>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
-
-          <section>
-            <h2 className="display-type text-xl">{t('visitsTitle')}</h2>
-            {visits.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-tertiary">{t('visitsEmpty')}</p>
-            ) : (
-              <>
-                <h3 className="label-type mt-4 text-ink-tertiary">{t('upcoming')}</h3>
-                <ul className="mt-2 divide-y divide-line-subtle border-y border-line-subtle">
-                  {upcoming.map((visit) => (
-                    <li key={visit.id}>
-                      <Link
-                        href={`/admin/buchungen/${visit.id}`}
-                        className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-sunken"
-                      >
-                        <span data-numeric>
-                          {format.dateTime(new Date(visit.start), 'full')},{' '}
-                          {format.dateTime(new Date(visit.start), 'time')}
-                        </span>
-                        <StatusBadge entity="booking" state={visit.status} size="sm" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                {past.length > 0 && (
-                  <>
-                    <h3 className="label-type mt-6 text-ink-tertiary">{t('past')}</h3>
-                    <ul className="mt-2 divide-y divide-line-subtle border-y border-line-subtle">
-                      {past.map((visit) => (
-                        <li key={visit.id} className="flex items-center justify-between gap-4 py-3">
-                          <span data-numeric className="text-ink-secondary">
-                            {format.dateTime(new Date(visit.start), 'short')}
-                          </span>
-                          <StatusBadge entity="booking" state={visit.status} size="sm" />
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </>
-            )}
-          </section>
         </div>
 
-        <aside className="space-y-6 lg:col-span-5">
-          <div className="surface-card p-5">
-            <h2 className="label-type text-ink-tertiary">{t('paymentTitle')}</h2>
-            <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-ink-tertiary">{t('lastCharge')}</dt>
-                <dd data-numeric>
-                  {sub.lastChargedAt
-                    ? format.dateTime(new Date(sub.lastChargedAt), 'short')
-                    : '—'}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-ink-tertiary">{t('nextCharge')}</dt>
-                <dd data-numeric>
-                  {sub.nextChargeAt
-                    ? format.dateTime(new Date(sub.nextChargeAt), 'short')
-                    : '—'}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="surface-card p-5">
-            <h2 className="label-type text-ink-tertiary">{t('skipTitle')}</h2>
-            <p data-numeric className="mt-2 text-sm text-ink-secondary">
-              {skipsLeft > 0 ? t('skipRemaining', { n: skipsLeft }) : t('skipNone')}
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-4"
-              disabled={skipsLeft === 0 || paused || settled}
-              onClick={() => {
-                patchSub({ skipsUsedThisMonth: sub.skipsUsedThisMonth + 1 });
-                toast.success(t('skipDone'));
+        <aside className="space-y-4 lg:col-span-4">
+          <div className="surface-card space-y-4 p-5">
+            <h2 className="label-type text-ink-tertiary">{t('availabilityTitle')}</h2>
+            <SwitchField
+              label={t('activeLabel')}
+              hint={t('activeHint')}
+              checked={plan.active}
+              onCheckedChange={(active) => {
+                setPlanActive(plan.id, active);
+                toast.success(t(active ? 'activatedDone' : 'retiredDone'));
               }}
-            >
-              <SkipForward className="size-3.5" aria-hidden />
-              {t('skipAction')}
-            </Button>
-          </div>
-
-          <div>
-            <h2 className="label-type text-ink-tertiary">{t('actionsTitle')}</h2>
-            <div className="mt-3 space-y-2">
-              {changingPlan ? (
-                <div className="surface-card space-y-3 p-4">
-                  <Field label={t('changePlanLabel')}>
-                    {(props) => (
-                      <Select
-                        {...props}
-                        defaultValue={sub.plan}
-                        onChange={(e) => {
-                          patchSub({ plan: e.target.value as PlanTier });
-                          setChangingPlan(false);
-                          toast.success(t('planChanged'));
-                        }}
-                      >
-                        {(['basic', 'premium', 'vip'] as PlanTier[]).map((tier) => (
-                          <option key={tier} value={tier}>
-                            {t(`plans.${tier}`)}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
-                  <Button variant="ghost" size="sm" onClick={() => setChangingPlan(false)}>
-                    {t('dismiss')}
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="secondary"
-                  block
-                  disabled={settled}
-                  onClick={() => setChangingPlan(true)}
-                >
-                  {t('changePlan')}
-                </Button>
-              )}
-
-              <Button
-                variant="secondary"
-                block
-                disabled={settled}
-                onClick={() => {
-                  patchSub({ status: paused ? 'active' : 'paused' });
-                  toast.success(paused ? t('resumeDone') : t('pauseDone'));
-                }}
-              >
-                {paused ? (
-                  <Play className="size-4" aria-hidden />
-                ) : (
-                  <Pause className="size-4" aria-hidden />
-                )}
-                {paused ? t('resume') : t('pause')}
-              </Button>
-
-              {confirmingCancel ? (
-                <ConfirmPanel
-                  title={t('cancelConfirmTitle')}
-                  body={t('cancelConfirmBody', {
-                    date: format.dateTime(new Date(sub.commitmentEndsAt), 'full'),
-                  })}
-                  action={t('cancelConfirmAction')}
-                  dismiss={t('dismiss')}
-                  onConfirm={() => {
-                    patchSub({
-                      status: 'cancellationPending',
-                      cancellationRequestedAt: now.toISOString(),
-                    });
-                    setConfirmingCancel(false);
-                    toast.success(t('cancelDone'));
-                  }}
-                  onDismiss={() => setConfirmingCancel(false)}
-                />
-              ) : (
-                <Button
-                  variant="danger"
-                  block
-                  disabled={settled}
-                  onClick={() => setConfirmingCancel(true)}
-                >
-                  {t('cancel')}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-[var(--radius-lg)] border border-dashed border-line bg-sunken p-5">
-            <h2 className="flex items-center gap-2 font-medium">
-              <Lock className="size-4 text-ink-tertiary" aria-hidden />
-              {t('notesTitle')}
-            </h2>
-            <Textarea
-              className="mt-3 min-h-20 bg-page"
-              value={sub.internalNotes ?? ''}
-              onChange={(e) => setNotes(e.target.value)}
+            />
+            <SwitchField
+              label={t('visibleLabel')}
+              /* Answers the brief's question about who controls whether a plan
+                 shows on the site, in the place the answer is acted on. */
+              hint={plan.active ? t('visibleHint') : t('visibleBlockedHint')}
+              checked={plan.visibleOnSite}
+              disabled={!plan.active}
+              onCheckedChange={(visible) => {
+                setPlanVisible(plan.id, visible);
+                toast.success(t(visible ? 'shownDone' : 'hiddenDone'));
+              }}
             />
           </div>
         </aside>
       </div>
+
+      <section className="mt-app-section">
+        <h2 className="display-type text-2xl">{t('subscribersTitle')}</h2>
+
+        {subscribers.length > 0 && (
+          <Toolbar
+            className="mt-4"
+            search={{
+              value: query,
+              onChange: setQuery,
+              label: t('searchLabel'),
+              placeholder: t('searchPlaceholder'),
+              clearLabel: t('searchClear'),
+            }}
+            count={t('count', { shown: filtered.length, total: subscribers.length })}
+          />
+        )}
+
+        <DataView
+          className={subscribers.length > 0 ? undefined : 'mt-4'}
+          items={filtered}
+          columns={columns}
+          getKey={(s) => s.id}
+          caption={t('subscribersTitle')}
+          defaultSort={{ key: 'term', dir: 'desc' }}
+          rowActions={(s) => (
+            <RowActions>
+              <RowAction href={`/admin/abos/${plan.id}/${s.id}`} label={t('rowView')}>
+                <ActionIcon.open aria-hidden />
+              </RowAction>
+              {/*
+                Always offered, never disabled. The interesting cases here are
+                the refusals — a plan half used, a window that closed last week
+                — and a greyed-out button explains neither. Pressing it says
+                which rule stopped it, which is the sentence the office has to
+                repeat to the customer anyway.
+              */}
+              <RowActionButton
+                tone="danger"
+                label={t('rowCancel')}
+                onClick={() => cancel(s)}
+              >
+                <ActionIcon.decline aria-hidden />
+              </RowActionButton>
+            </RowActions>
+          )}
+          empty={
+            query.trim() ? (
+              <EmptyState
+                icon={Search}
+                title={t('searchEmptyTitle')}
+                body={t('searchEmptyBody', { query })}
+              />
+            ) : (
+              <EmptyState
+                icon={Users}
+                title={t('subscribersEmptyTitle')}
+                body={
+                  plan.active ? t('subscribersEmptyBody') : t('subscribersEmptyRetiredBody')
+                }
+                action={
+                  plan.active ? (
+                    <Button asChild variant="secondary">
+                      <Link href="/admin/anfragen/neu">{t('subscribersEmptyAction')}</Link>
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )
+          }
+        />
+      </section>
+    </div>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-page p-5">
+      <dt className="label-type text-ink-tertiary">{label}</dt>
+      <dd className="mt-2">{children}</dd>
     </div>
   );
 }

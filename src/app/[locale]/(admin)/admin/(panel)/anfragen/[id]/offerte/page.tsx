@@ -79,6 +79,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const holds = useStore((s) => s.holds);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
   const addOns = useStore((s) => s.addOns);
   const settings = useStore((s) => s.settings);
 
@@ -149,9 +150,25 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const customer = customers.find((c) => c.id === request.customerId)!;
   const property = properties.find((p) => p.id === request.propertyId)!;
   const service = services.find((s) => s.slug === request.serviceSlug)!;
-  const plan = subscriptions.find(
-    (s) => s.customerId === customer.id && s.status === 'active',
-  )?.plan;
+  /*
+   * The plan this customer holds *for this address*, not just any plan.
+   *
+   * It used to match on the customer alone, so someone with a plan on their
+   * office had its discount applied to a quote for their flat. The plan is
+   * bought per property and its visits are drawn against one service — a
+   * discount that ignores both is a discount given away by accident.
+   */
+  const plan = plans.find(
+    (p) =>
+      p.id ===
+      subscriptions.find(
+        (s) =>
+          s.customerId === customer.id &&
+          s.propertyId === request.propertyId &&
+          s.status === 'active' &&
+          new Date(s.endDate) > now,
+      )?.planId,
+  );
 
   const labelFor = (line: OfferLine) =>
     offerLineLabel(line, services, addOns, locale);
@@ -346,7 +363,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
             )}
             {plan && (
               <p className="basis-full text-sm text-status-success-fg">
-                {t('planDiscount', { percent: settings.planDiscounts[plan] })}
+                {t('planDiscount', { percent: plan.extraDiscountPercent })}
               </p>
             )}
           </section>

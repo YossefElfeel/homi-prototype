@@ -221,7 +221,13 @@ export const TRACKS: Track[] = [
       done('40', 'Rechnungs-Detail', 'Invoice detail', '/konto/rechnungen/inv_paid', ['overdue', 'paid']),
       done('41', 'Meine Objekte', 'My properties', '/konto/objekte', ['empty']),
       done('42', 'Objekt-Detail', 'Property detail', '/konto/objekte/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account'),
-      done('43', 'Mein Abo', 'My plan', '/konto/abo', ['no plan', 'paused', 'skips used up']),
+      done('43', 'Meine Abos', 'My plans', '/konto/abo', [
+        'no plan',
+        'two plans, two properties',
+        'paused',
+        'skips used up',
+        'expired with visits left',
+      ], 'One card per plan — the demo customer holds one on a flat and one on an office'),
       done('44', 'Stundenguthaben', 'Hour credit', '/konto/guthaben', ['expiring', 'empty']),
       done('45', 'Zahlungsmittel', 'Payment methods', '/konto/zahlungsmittel', ['TWINT unavailable']),
       done('46', 'Bewertung schreiben', 'Write a review', '/konto/bewertung', ['nothing to review', 'sent']),
@@ -361,12 +367,22 @@ export const TRACKS: Track[] = [
         ['locked — no insurance', 'active', 'empty'],
         'Toggle “Haftpflichtversicherung” in the demo controls to switch states — §21 item 12',
       ),
-      done('69', 'Abos', 'Subscriptions', '/admin/abos', ['empty']),
-      done('70', 'Abo-Detail', 'Subscription detail', '/admin/abos/sub_1', [
-        'active',
-        'past due',
-        'cancellation pending',
+      done('69', 'Abos', 'Plans', '/admin/abos', ['empty', 'search', 'retired filtered']),
+      done('69a', 'Abo anlegen', 'Add plan', '/admin/abos/neu', ['blank']),
+      done('69b', 'Abo bearbeiten', 'Edit plan', '/admin/abos/pln_basic/bearbeiten', [
+        'existing plan',
       ]),
+      done('70', 'Abo-Detail', 'Plan detail', '/admin/abos/pln_basic', [
+        'on sale',
+        'retired with subscribers',
+        'no subscribers',
+      ], 'The plan as a product, with everyone on it and their used/remaining visits'),
+      done('70a', 'Abonnent', 'Subscriber', '/admin/abos/pln_basic/sub_2', [
+        'active',
+        'paused',
+        'expired',
+        'renewed once',
+      ], 'One customer on one plan — history, payments and the cancellation rule'),
       done('71', 'Rechnungen', 'Invoices', '/admin/rechnungen', ['empty', 'overdue']),
       done('72', 'Rechnung bearbeiten', 'Edit invoice', '/admin/rechnungen/inv_draft', [
         'draft awaiting approval',

@@ -18,6 +18,7 @@ import { SCENARIOS, buildScenario } from '../src/mock/scenarios.ts';
 import { customerHistory, invoiceSubject, invoiceTotal } from '../src/lib/customer-history.ts';
 import { INVOICE_METHODS, METHOD_ICONS, SAVABLE_METHODS, invoicePayment } from '../src/lib/payment-methods.ts';
 import { de, en } from '../src/messages/index.ts';
+import { SEED_PLANS } from '../src/mock/seed.ts';
 import type { PaymentMethod } from '../src/mock/schema.ts';
 
 let passed = 0;
@@ -250,6 +251,7 @@ for (const clock of CLOCKS) {
         bookings: data.bookings,
         invoices: data.invoices,
         subscriptions: data.subscriptions,
+        plans: SEED_PLANS,
         services: [],
         locale: 'de',
       });
@@ -298,6 +300,7 @@ for (const clock of CLOCKS) {
           bookings: data.bookings,
           invoices: data.invoices,
           subscriptions: data.subscriptions,
+          plans: SEED_PLANS,
           services: [],
           locale: 'de',
         }).trim(),

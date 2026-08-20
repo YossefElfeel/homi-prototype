@@ -2,6 +2,7 @@ import type { Locale } from '@/i18n/routing';
 import type {
   AddOn,
   MessageTemplate,
+  Plan,
   Service,
   Settings,
   TemplateChannel,
@@ -534,6 +535,121 @@ const OWNER_SIGNATURE = {
   ].join(' '),
 };
 
+/**
+ * The three plans, as records rather than as a type.
+ *
+ * Each is a prepaid package: the price is paid once, buys `includedVisits`
+ * visits of one service, and those visits stay usable for a year. The
+ * arithmetic is deliberately checkable against the catalogue — a Basic visit is
+ * three hours at the CHF 49 base rate, twenty-six times, less the ten per cent
+ * the package earns for being paid up front. A price that cannot be re-derived
+ * from the hourly rate is a price nobody can defend on the phone.
+ *
+ * The rhythms are the ones the marketing page has always promised, kept rather
+ * than quietly reduced. What that makes visible is the size of the up-front
+ * payment — see the open question this raised on /open-questions, which the
+ * business has to answer before any of this is real.
+ */
+export const SEED_PLANS: Plan[] = [
+  {
+    id: 'pln_basic',
+    reference: 'P-001',
+    name: l('Basic', 'Basic'),
+    description: l(
+      'Alle zwei Wochen eine Unterhaltsreinigung, ein Jahr im Voraus bezahlt.',
+      'A regular clean every two weeks, paid a year in advance.',
+    ),
+    features: [
+      l('26 Einsätze im Jahr', '26 visits a year'),
+      l('10 % auf jede weitere Leistung', '10% off any further service'),
+      l('Ein kostenloses Aussetzen pro Monat', 'One free skip a month'),
+    ],
+    price: 3440,
+    includedVisits: 26,
+    validityMonths: 12,
+    serviceSlug: 'unterhaltsreinigung',
+    extraDiscountPercent: 10,
+    active: true,
+    visibleOnSite: true,
+    order: 1,
+  },
+  {
+    id: 'pln_premium',
+    reference: 'P-002',
+    name: l('Premium', 'Premium'),
+    description: l(
+      'Wöchentlich, mit Vorrang bei der Terminvergabe.',
+      'Weekly, with priority when dates are handed out.',
+    ),
+    features: [
+      l('52 Einsätze im Jahr', '52 visits a year'),
+      l('15 % auf jede weitere Leistung', '15% off any further service'),
+      l('Vorrang bei der Terminvergabe', 'Priority when dates are handed out'),
+      l('Ein kostenloses Aussetzen pro Monat', 'One free skip a month'),
+    ],
+    price: 6500,
+    includedVisits: 52,
+    validityMonths: 12,
+    serviceSlug: 'unterhaltsreinigung',
+    extraDiscountPercent: 15,
+    active: true,
+    visibleOnSite: true,
+    order: 2,
+  },
+  {
+    id: 'pln_vip',
+    reference: 'P-003',
+    name: l('VIP', 'VIP'),
+    description: l(
+      'Zweimal wöchentlich, immer dasselbe Team.',
+      'Twice a week, always the same team.',
+    ),
+    features: [
+      l('104 Einsätze im Jahr', '104 visits a year'),
+      l('20 % auf jede weitere Leistung', '20% off any further service'),
+      l('Immer dasselbe Team', 'Always the same team'),
+      l('Vorrang bei der Terminvergabe', 'Priority when dates are handed out'),
+    ],
+    price: 12230,
+    includedVisits: 104,
+    validityMonths: 12,
+    serviceSlug: 'unterhaltsreinigung',
+    extraDiscountPercent: 20,
+    active: true,
+    visibleOnSite: true,
+    order: 3,
+  },
+  {
+    /*
+     * Retired, and kept that way on purpose.
+     *
+     * `active: false` is the only thing that proves the toggle does something,
+     * and this plan still has a subscriber in the seed — which is the case the
+     * flag exists for. Retiring a product must not cancel the year somebody
+     * already paid for.
+     */
+    id: 'pln_buero',
+    reference: 'P-004',
+    name: l('Büro Kompakt', 'Office Compact'),
+    description: l(
+      'Zwölf Büroreinigungen im Jahr. Nicht mehr im Verkauf.',
+      'Twelve office cleans a year. No longer sold.',
+    ),
+    features: [
+      l('12 Einsätze im Jahr', '12 visits a year'),
+      l('10 % auf jede weitere Leistung', '10% off any further service'),
+    ],
+    price: 1980,
+    includedVisits: 12,
+    validityMonths: 12,
+    serviceSlug: 'bueroreinigung',
+    extraDiscountPercent: 10,
+    active: false,
+    visibleOnSite: false,
+    order: 4,
+  },
+];
+
 export const SEED_SETTINGS: Settings = {
   hourlyRate: 49, // §5.1
   minimumHours: 2, // §5.1
@@ -554,10 +670,8 @@ export const SEED_SETTINGS: Settings = {
   cancellationFreeHours: 24, // §12
   lateCancellationPercent: 50, // §12
   noAccessFeePercent: 50, // §4.2
-  subscriptionCommitmentMonths: 12, // §11.2 — reaffirmed
-  subscriptionNoticeMonths: 1, // §11.2
+  planCancellationDays: 14,
   monthlyFreeSkips: 1, // §11.2
-  planDiscounts: { basic: 10, premium: 15, vip: 20 }, // §11.1
   creditValidityMonths: 12, // §11.3
   // §21 item 12 — key holding stays locked until a policy exists.
   hasLiabilityInsurance: false,

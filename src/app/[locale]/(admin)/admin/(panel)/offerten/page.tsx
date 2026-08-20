@@ -98,6 +98,7 @@ export default function OffersPage() {
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
+  const plans = useStore((s) => s.plans);
 
   const [status, setStatus] = useState('all');
   const [payment, setPayment] = useState('all');
@@ -118,7 +119,7 @@ export default function OffersPage() {
   const paymentStateOf = (o: Offer) => {
     const record = offerPayment(o.id, payments);
     if (record) return record.status;
-    return offerCoverage(o, requestOf(o), subscriptions, credits, now).kind === 'payable'
+    return offerCoverage(o, requestOf(o), subscriptions, plans, credits, now).kind === 'payable'
       ? 'none'
       : 'notDue';
   };
@@ -222,7 +223,7 @@ export default function OffersPage() {
       cell: (o) => {
         const request = requestOf(o);
         const service = services.find((s) => s.slug === request?.serviceSlug);
-        const rhythm = offerRhythm(request);
+        const rhythm = offerRhythm(request, plans);
         return (
           <span className="flex flex-col gap-0.5">
             <span>{service?.name[locale] ?? '—'}</span>
@@ -273,7 +274,7 @@ export default function OffersPage() {
         if (payment) {
           return <StatusBadge entity="payment" state={payment.status} size="sm" />;
         }
-        const coverage = offerCoverage(o, requestOf(o), subscriptions, credits, now);
+        const coverage = offerCoverage(o, requestOf(o), subscriptions, plans, credits, now);
         /* A covered job never produces a payment and never will. Leaving the
            cell blank would read as "not paid yet" for a job that owes
            nothing. */

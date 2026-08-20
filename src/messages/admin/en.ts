@@ -81,7 +81,7 @@ export const adminEn: typeof adminDe = {
     renewalsTitle: 'Plans in the next few days',
     renewalsEmptyTitle: 'No plan visits',
     renewalsEmptyBody: 'No plan visit falls in the next seven days.',
-    nextCharge: 'Charge {date}',
+    termEnds: 'Ends {date}',
     viewAll: 'View all',
     statWaitingHintOk: 'All inside the window',
     statWaitingHintLate: '{n, plural, one {# past the window} other {# past the window}}',
@@ -138,7 +138,9 @@ export const adminEn: typeof adminDe = {
       '{n, plural, =0 {Not enough left for another job this size.} one {Enough left for one more job this size.} other {Enough left for # more jobs this size.}}',
     coverageExpires: 'Balance expires',
     coveragePlan: 'Plan',
-    coverageNextCharge: 'Next charge',
+    coverageVisits: 'Visits in the package',
+    coverageVisitsValue: '{left} of {total} left',
+    coverageValidUntil: 'Plan valid until',
     coverageSkips: 'Free skips',
     coverageSkipsValue: '{left} of {total} this month',
     coverageOpenPlan: 'Open the plan',
@@ -565,6 +567,7 @@ export const adminEn: typeof adminDe = {
 
   rhythm: {
     oneTime: 'One-off',
+    monthly: 'Monthly',
     biweekly: 'Every two weeks',
     weekly: 'Weekly',
     twiceWeekly: 'Twice weekly',
