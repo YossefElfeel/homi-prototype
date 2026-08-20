@@ -24,9 +24,16 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { ActionIcon } from '@/lib/action-icons';
 import { customerHistory, invoiceSubject, invoiceTotal } from '@/lib/customer-history';
-import { METHOD_ICONS, SAVABLE_METHODS, invoicePayment } from '@/lib/payment-methods';
+import {
+  METHOD_ICONS,
+  SAVABLE_METHODS,
+  cardBrand,
+  cardLastFour,
+  invoicePayment,
+} from '@/lib/payment-methods';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import {
@@ -96,6 +103,12 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const [adding, setAdding] = useState(false);
   const [kind, setKind] = useState<SavedMethodKind>('card');
   const [label, setLabel] = useState('');
+  /* The four a card is read off the phone as. Only the brand, the last four
+     and the expiry survive `saveMethod`. */
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
   /** The invoice open in the popup, by id — never the record, which the store replaces. */
   const [openInvoice, setOpenInvoice] = useState<string | null>(null);
 
@@ -161,10 +174,44 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     });
   }
 
+  /*
+   * A card has four fields, and only two of them are kept.
+   *
+   * The dialog asked for a *label* — "type Visa · 4242 yourself" — which is
+   * the shape of the record leaking into the form. Nobody reading a card off
+   * the phone has a label; they have a number, a name, an expiry and a
+   * security code, and the label is what the product should work out.
+   *
+   * So the four are typed and the save keeps the brand, the last four and the
+   * expiry. The number and the code never reach the store, and `SavedPaymentMethod`
+   * has nowhere to put them — a prototype that models a stored PAN is a
+   * prototype somebody builds for real.
+   */
+  const cardReady =
+    cardLastFour(cardNumber).length === 4 &&
+    cardName.trim().length > 0 &&
+    /^\d{2}\/\d{2}$/.test(cardExpiry) &&
+    /^\d{3,4}$/.test(cardCvv);
+  const canSave = kind === 'card' ? cardReady : label.trim().length > 0;
+
   function saveMethod() {
-    addPaymentMethod({ customerId: customer!.id, kind, label: label.trim() }, now);
+    addPaymentMethod(
+      kind === 'card'
+        ? {
+            customerId: customer!.id,
+            kind,
+            label: `${cardBrand(cardNumber)} · ${cardLastFour(cardNumber)}`,
+            expiresAt: cardExpiry,
+          }
+        : { customerId: customer!.id, kind, label: label.trim() },
+      now,
+    );
     setAdding(false);
     setLabel('');
+    setCardNumber('');
+    setCardName('');
+    setCardExpiry('');
+    setCardCvv('');
     setKind('card');
     toast.success(t('paymentAdded'));
   }
@@ -301,38 +348,40 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         had one. Status was not there at all, so "why can I not send this
         person a quote" had no answer on the record it was true of.
       */}
-      <div className="surface-card mt-6 p-5">
-        <h2 className="label-type text-ink-tertiary">{t('detailsTitle')}</h2>
-        <dl className="mt-3 grid gap-x-10 text-sm sm:grid-cols-2">
-          <DetailRow label={t('statusLabel')}>
-            {customer.status === 'blocked' ? (
-              <Chip tone="danger">{lt('blocked')}</Chip>
-            ) : customer.status === 'active' ? (
-              lt('active')
-            ) : (
-              lt('inactive')
-            )}
-          </DetailRow>
-          <DetailRow label={t('since')}>
-            <span data-numeric>
-              {format.dateTime(new Date(customer.createdAt), 'full')}
-            </span>
-          </DetailRow>
-          <DetailRow label={ft('email')}>{customer.email}</DetailRow>
-          <DetailRow label={ft('phone')}>
-            <span data-numeric>{customer.phone}</span>
-          </DetailRow>
-          <DetailRow label={t('language')}>{customer.language.toUpperCase()}</DetailRow>
-          {customer.archivedAt && (
-            <DetailRow label={lt('tabArchived')}>
+      <Card className="mt-6">
+        <CardHeader title={t('detailsTitle')} />
+        <CardBody>
+          <dl className="grid gap-x-10 text-sm sm:grid-cols-2">
+            <DetailRow label={t('statusLabel')}>
+              {customer.status === 'blocked' ? (
+                <Chip tone="danger">{lt('blocked')}</Chip>
+              ) : customer.status === 'active' ? (
+                lt('active')
+              ) : (
+                lt('inactive')
+              )}
+            </DetailRow>
+            <DetailRow label={t('since')}>
               <span data-numeric>
-                {format.dateTime(new Date(customer.archivedAt), 'full')}
+                {format.dateTime(new Date(customer.createdAt), 'full')}
               </span>
             </DetailRow>
-          )}
-        </dl>
+            <DetailRow label={ft('email')}>{customer.email}</DetailRow>
+            <DetailRow label={ft('phone')}>
+              <span data-numeric>{customer.phone}</span>
+            </DetailRow>
+            <DetailRow label={t('language')}>{customer.language.toUpperCase()}</DetailRow>
+            {customer.archivedAt && (
+              <DetailRow label={lt('tabArchived')}>
+                <span data-numeric>
+                  {format.dateTime(new Date(customer.archivedAt), 'full')}
+                </span>
+              </DetailRow>
+            )}
+          </dl>
+        </CardBody>
 
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-line-subtle pt-4">
+        <CardFooter>
           <Button asChild size="sm" variant="secondary">
             <a href={`tel:${customer.phone.replace(/\s/g, '')}`}>
               <Phone className="size-3.5" aria-hidden />
@@ -351,17 +400,27 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               {customer.email}
             </a>
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
 
+      {/*
+        Everything on this screen is now on a card.
+        Six blocks, and three of them — the properties, the saved methods, the
+        recent history — were bare headings over a list drawn straight onto the
+        page background, next to three that had a surface. There is no rule the
+        reader can infer from that: it reads as some of the record being part
+        of the record and the rest being page furniture.
+      */}
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
         <div className="space-y-10 lg:col-span-7">
-          <section>
-            <h2 className="display-type text-xl">{t('propertiesTitle')}</h2>
+          <Card pad="none">
+            <CardHeader title={t('propertiesTitle')} className="p-card pb-4" />
             {owned.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-tertiary">{t('propertiesEmpty')}</p>
+              <p className="px-card pb-card text-sm text-ink-tertiary">
+                {t('propertiesEmpty')}
+              </p>
             ) : (
-              <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+              <ul className="divide-y divide-line-subtle border-t border-line-subtle px-card">
                 {owned.map((property) => (
                   <li key={property.id}>
                     <Link
@@ -383,7 +442,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
 
           {/*
             §11.2 pays a plan by card and §10 settles an invoice by QR-bill, so
@@ -392,22 +451,25 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             and the owner could see nothing at all. The list is the same store
             records, which is what makes the two views agree.
           */}
-          <section>
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="display-type text-xl">{t('paymentTitle')}</h2>
-              <Button size="sm" variant="secondary" onClick={() => setAdding(true)}>
-                <Plus className="size-3.5" aria-hidden />
-                {t('paymentAdd')}
-              </Button>
-            </div>
-            <p className="mt-1 text-sm text-ink-tertiary">{t('paymentLead')}</p>
+          <Card pad="none">
+            <CardHeader
+              className="p-card pb-4"
+              title={t('paymentTitle')}
+              description={t('paymentLead')}
+              actions={
+                <Button size="sm" variant="secondary" onClick={() => setAdding(true)}>
+                  <Plus className="size-3.5" aria-hidden />
+                  {t('paymentAdd')}
+                </Button>
+              }
+            />
 
             {myMethods.length === 0 ? (
-              <p className="mt-4 border-y border-line-subtle py-3.5 text-sm text-ink-tertiary">
+              <p className="border-t border-line-subtle p-card text-sm text-ink-tertiary">
                 {t('paymentEmpty')}
               </p>
             ) : (
-              <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+              <ul className="divide-y divide-line-subtle border-t border-line-subtle px-card">
                 {myMethods.map((method) => {
                   const Icon = METHOD_ICONS[method.kind];
                   return (
@@ -426,6 +488,18 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                             {t('paymentAddedOn', {
                               date: format.dateTime(new Date(method.addedAt), 'short'),
                             })}
+                            {/* The one field of a card worth keeping besides
+                                the brand and the last four: a plan charged to
+                                a card that runs out mid-term is a phone call
+                                the record can prompt a week early. */}
+                            {method.expiresAt && (
+                              <>
+                                {' · '}
+                                <span data-numeric>
+                                  {t('paymentExpires', { date: method.expiresAt })}
+                                </span>
+                              </>
+                            )}
                           </span>
                         </span>
                         {method.isDefault && <Chip>{t('paymentDefaultLabel')}</Chip>}
@@ -461,14 +535,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 the screen names the reason — and "ring us to delete your card"
                 is the support call this sentence prevents. */}
             {myMethods.length > 0 && (
-              <p className="mt-3 text-xs text-ink-tertiary">{t('paymentRemoveHint')}</p>
+              <p className="border-t border-line-subtle p-card text-xs text-ink-tertiary">
+                {t('paymentRemoveHint')}
+              </p>
             )}
-          </section>
+          </Card>
         </div>
 
         <aside className="space-y-6 lg:col-span-5">
-          <div className="surface-card p-5">
-            <h2 className="label-type text-ink-tertiary">{t('subscriptionTitle')}</h2>
+          <Card>
+            <CardHeader title={t('subscriptionTitle')} />
             {subscription ? (
               <Link
                 href={`/admin/abos/${subscription.planId}/${subscription.id}`}
@@ -483,19 +559,24 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               <p className="mt-2 text-ink-tertiary">{t('noSubscription')}</p>
             )}
 
-            <h2 className="label-type mt-5 border-t border-line-subtle pt-4 text-ink-tertiary">
-              {t('revenueTitle')}
-            </h2>
-            <p className="mt-2 text-2xl">
-              <Money amount={paid} emphasis="strong" />
-            </p>
-          </div>
+            <div className="mt-5 border-t border-line-subtle pt-4">
+              <CardHeader title={t('revenueTitle')} headingLevel={3} />
+              <p className="mt-2 text-2xl">
+                <Money amount={paid} emphasis="strong" />
+              </p>
+            </div>
+          </Card>
 
-          <div className="rounded-[var(--radius-lg)] border border-dashed border-line bg-sunken p-5">
-            <h2 className="flex items-center gap-2 font-medium">
-              <Lock className="size-4 text-ink-tertiary" aria-hidden />
-              {t('notesTitle')}
-            </h2>
+          <Card tone="muted" className="border-dashed">
+            <CardHeader
+              headingLevel={2}
+              title={
+                <span className="flex items-center gap-2">
+                  <Lock className="size-4 text-ink-tertiary" aria-hidden />
+                  {t('notesTitle')}
+                </span>
+              }
+            />
             <p className="mt-1 text-xs text-ink-tertiary">{t('notesHint')}</p>
             <Textarea
               className="mt-3 min-h-24 bg-page"
@@ -503,7 +584,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               value={customer.internalNotes ?? ''}
               onChange={(e) => setNotes(e.target.value)}
             />
-          </div>
+          </Card>
         </aside>
       </div>
 
@@ -547,27 +628,34 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         />
       </section>
 
-      <section className="mt-10">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="display-type text-xl">{t('historyTitle')}</h2>
-          {timeline.length > 0 && (
-            <Button asChild variant="link" size="sm">
-              <Link href={`/admin/kunden/${customer.id}/verlauf`}>
-                {t('historyAll')}
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </Button>
-          )}
-        </div>
+      <Card pad="none" className="mt-10">
+        <CardHeader
+          className="p-card pb-4"
+          title={t('historyTitle')}
+          description={
+            timeline.length > 0
+              ? t('historyRecent', { n: Math.min(RECENT, timeline.length) })
+              : undefined
+          }
+          actions={
+            timeline.length > 0 ? (
+              <Button asChild variant="link" size="sm">
+                <Link href={`/admin/kunden/${customer.id}/verlauf`}>
+                  {t('historyAll')}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        />
 
         {timeline.length === 0 ? (
-          <EmptyState compact className="mt-4" title={t('historyEmpty')} body={t('historyEmpty')} />
+          <div className="px-card pb-card">
+            <EmptyState compact title={t('historyEmpty')} body={t('historyEmpty')} />
+          </div>
         ) : (
           <>
-            <p className="mt-1 text-sm text-ink-tertiary">
-              {t('historyRecent', { n: Math.min(RECENT, timeline.length) })}
-            </p>
-            <ul className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+            <ul className="divide-y divide-line-subtle border-t border-line-subtle px-card">
               {timeline.slice(0, RECENT).map((entry) => (
                 <li key={`${entry.kind}-${entry.id}`}>
                   <Link
@@ -598,7 +686,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             </ul>
           </>
         )}
-      </section>
+      </Card>
 
       <Dialog open={adding} onOpenChange={setAdding}>
         <DialogContent closeLabel={t('paymentCancel')}>
@@ -623,23 +711,89 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 </Select>
               )}
             </Field>
-            <Field label={t('paymentLabelField')} hint={t('paymentLabelHint')}>
-              {(props) => (
-                <Input
-                  {...props}
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder={t('paymentLabelPlaceholder')}
-                />
-              )}
-            </Field>
+            {kind === 'card' ? (
+              <>
+                <Field label={t('cardNumber')}>
+                  {(props) => (
+                    <Input
+                      {...props}
+                      data-numeric
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={19}
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder="4242 4242 4242 4242"
+                    />
+                  )}
+                </Field>
+                <Field label={t('cardName')}>
+                  {(props) => (
+                    <Input
+                      {...props}
+                      autoComplete="off"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      placeholder={`${customer.firstName} ${customer.lastName}`}
+                    />
+                  )}
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label={t('cardExpiry')}>
+                    {(props) => (
+                      <Input
+                        {...props}
+                        data-numeric
+                        inputMode="numeric"
+                        autoComplete="off"
+                        maxLength={5}
+                        value={cardExpiry}
+                        onChange={(e) => setCardExpiry(e.target.value)}
+                        placeholder="09/28"
+                      />
+                    )}
+                  </Field>
+                  <Field label={t('cardCvv')} hint={t('cardCvvHint')}>
+                    {(props) => (
+                      <Input
+                        {...props}
+                        data-numeric
+                        inputMode="numeric"
+                        autoComplete="off"
+                        maxLength={4}
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value)}
+                        placeholder="123"
+                      />
+                    )}
+                  </Field>
+                </div>
+                {/* Says what survives the save, on the form that collects it.
+                    An owner typing a customer's card number over the phone is
+                    entitled to know which parts of it we keep. */}
+                <p className="rounded-[var(--radius-sm)] bg-sunken p-3 text-xs text-ink-tertiary">
+                  {t('cardStorageNote')}
+                </p>
+              </>
+            ) : (
+              <Field label={t('paymentLabelField')} hint={t('paymentLabelHint')}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={t('paymentLabelPlaceholder')}
+                  />
+                )}
+              </Field>
+            )}
           </div>
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAdding(false)}>
               {t('paymentCancel')}
             </Button>
-            <Button onClick={saveMethod} disabled={!label.trim()}>
+            <Button onClick={saveMethod} disabled={!canSave}>
               {t('paymentAddSave')}
             </Button>
           </DialogFooter>

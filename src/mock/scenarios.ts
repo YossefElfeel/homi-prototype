@@ -1837,6 +1837,7 @@ function baseData(now: Date): DataSet {
         customerId: 'cus_2',
         kind: 'card' as const,
         label: 'Visa · 4242',
+        expiresAt: '09/28',
         isDefault: true,
         addedAt: iso(days(now, -120)),
       },
@@ -1847,6 +1848,43 @@ function baseData(now: Date): DataSet {
         label: 'TWINT · 079 ··· 66',
         isDefault: false,
         addedAt: iso(days(now, -60)),
+      },
+      /*
+       * cus_1 had nothing on file, and she is the one customer in the seed on
+       * a *plan* — §11.2 charges a plan to a card every month, so the empty
+       * state on her record was claiming a year's subscription was being
+       * collected from no instrument at all. The screen that answers "what do
+       * we have saved for this person" opened on «Nichts hinterlegt» for the
+       * only person it certainly had something for.
+       */
+      {
+        id: 'pm_card_1',
+        customerId: 'cus_1',
+        kind: 'card' as const,
+        label: 'Mastercard · 5410',
+        /* Runs out inside the plan's term. The office finding that out from
+           the record beats finding it out from a declined charge. */
+        expiresAt: '02/27',
+        isDefault: true,
+        addedAt: iso(days(now, -400)),
+      },
+      {
+        id: 'pm_twint_1',
+        customerId: 'cus_1',
+        kind: 'twint' as const,
+        label: 'TWINT · 076 ··· 12',
+        isDefault: false,
+        addedAt: iso(days(now, -95)),
+      },
+      /* Apple Pay exists in the union and appeared on no record, so the row it
+         draws — and the icon it shares with TWINT — had never been looked at. */
+      {
+        id: 'pm_apple_m9',
+        customerId: 'cus_m9',
+        kind: 'apple-pay' as const,
+        label: 'Apple Pay · iPhone',
+        isDefault: true,
+        addedAt: iso(days(now, -18)),
       },
     ],
     keyLog,

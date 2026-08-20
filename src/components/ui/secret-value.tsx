@@ -42,7 +42,12 @@ export function SecretValue({
           shown ? 'bg-status-warning text-status-warning-fg' : 'bg-sunken tracking-widest',
         )}
       >
-        {shown ? value : '••••'}
+        {/* Was «••••». A row of dots next to an eye reads as an ellipsis —
+            "there is more here, click to see the rest" — and on a screen where
+            the value beside it is a *number*, as though the dots might be part
+            of it. Asterisks are the one masking convention nobody has to be
+            taught. */}
+        {shown ? value : '****'}
       </span>
       <button
         type="button"

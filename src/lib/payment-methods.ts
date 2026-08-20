@@ -34,6 +34,26 @@ export const SAVABLE_METHODS: readonly SavedMethodKind[] = [
 ];
 
 /**
+ * The brand, off the first digit — the same rule every checkout uses.
+ *
+ * Here rather than in the dialog because it decides what gets *stored*: the
+ * saved label is "Visa · 4242" and nothing else, so this is the one place that
+ * ever looks at a card number, and it looks at one character of it.
+ */
+export function cardBrand(number: string): string {
+  const digits = number.replace(/\D/g, '');
+  if (digits.startsWith('4')) return 'Visa';
+  if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+  if (/^3[47]/.test(digits)) return 'Amex';
+  return 'Karte';
+}
+
+/** The last four, which is the whole of what a saved card may be identified by. */
+export function cardLastFour(number: string): string {
+  return number.replace(/\D/g, '').slice(-4);
+}
+
+/**
  * What the owner can pick when marking an invoice paid.
  *
  * Apple Pay and Google Pay are absent on purpose: both are card rails the
