@@ -524,6 +524,55 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    /* Der einzige Bildschirm, auf dem beide Seiten schreiben — und bis jetzt
+       der einzige ohne eigene Zeile auf diesem Board. Screen 48 stand unter
+       /screens als gebaut, während im Panel monatelang gar nichts die
+       Nachrichten las: genau der Fall, für den es diese zweite Tabelle gibt. */
+    id: 'messages',
+    de: 'Gespräch mit dem Kunden',
+    en: 'The conversation',
+    actors: ['owner', 'customer'],
+    entries: [
+      ok('Kunde schreibt zu einer Referenz', '/konto/nachrichten'),
+      ok('Inhaber öffnet ein Gespräch', '/admin/nachrichten'),
+      ok(
+        'Aus einer Rechnung heraus',
+        '/admin/rechnungen/inv_draft',
+        'Der Begleittext landet im Thread der Rechnung, nicht in einer zweiten Ablage',
+      ),
+    ],
+    actions: [
+      ok('Antworten', '/admin/nachrichten'),
+      added(
+        'Datei oder Bild anhängen',
+        '/admin/nachrichten',
+        'Die Offerte, die Preisliste, das Foto vom Wintergarten — alles, worauf eine Antwort sich berief, musste bisher per Mail daneben laufen. Kein `Photo`: eine Anhang ist an einen benannten Kunden adressiert, also ist die Einwilligungsfrage aus §20.6 mit dem Senden schon beantwortet, und ein PDF passt ohnehin nicht hinein',
+      ),
+      added(
+        'Nach gelesen, ungelesen und Zeitraum filtern',
+        '/admin/nachrichten',
+        'Ein einziger Chip hiess «Ungelesen» und mass in Wahrheit «der Kunde hat zuletzt geschrieben». Beides ist jetzt getrennt: `readByAdmin` sagt, was niemand angeschaut hat, und wer zuletzt schrieb sagt, was noch eine Antwort schuldet',
+      ),
+      ok(
+        'Gespräch als gelesen markieren',
+        '/admin/nachrichten',
+        'Durch Öffnen. Ein eigener Knopf dafür wäre ein Knopf für etwas, das der Klick davor schon gesagt hat',
+      ),
+    ],
+    exits: [
+      ok('Antwort steht im Kundenkonto', '/konto/nachrichten'),
+      ok('Weiter in die Kundenakte', '/admin/kunden/cus_2'),
+      open(
+        'Kunde hängt selbst etwas an',
+        'Nur der Inhaber kann anhängen. Was ein Kunde hochlädt, kommt von aussen — Ablage, Grössenbegrenzung und Virenprüfung sind dann echte Fragen, und §22 beantwortet keine davon. Fotos zur Anfrage nimmt Screen 20 weiterhin entgegen, dort ist der Rahmen geklärt',
+      ),
+      open(
+        'Gespräch schliessen oder archivieren',
+        'Ein Thread endet heute dadurch, dass niemand mehr schreibt. Ob ein erledigtes Gespräch aus der Liste verschwinden soll — und was dann mit einer späteren Antwort des Kunden passiert — ist nicht entschieden',
+      ),
+    ],
+  },
+  {
     id: 'templates',
     de: 'Textvorlagen',
     en: 'Message templates',

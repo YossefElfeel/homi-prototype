@@ -244,6 +244,16 @@ export const en: Messages = {
     rowActions: 'Actions',
     saving: 'Saving …',
     saved: 'Saved',
+    attachments: {
+      label: '{count, plural, one {# attachment} other {# attachments}}',
+      attach: 'Attach a file',
+      uploading: 'Uploading …',
+      mockNotice: 'Upload is mocked — JPG, PNG, WEBP or PDF, up to 10 MB.',
+      errorType: 'Only JPG, PNG, WEBP or PDF.',
+      errorSize: '“{name}” is larger than {max} MB.',
+      staged: 'Attachments ready to send',
+      remove: 'Remove “{name}”',
+    },
   },
 
   demo: {
