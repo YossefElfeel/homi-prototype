@@ -282,7 +282,7 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} actions={addButton} />
+      <PageHeader title={t('title')} lead={t('lead')} actions={addButton} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList className="mb-4">

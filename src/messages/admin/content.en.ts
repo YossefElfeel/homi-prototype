@@ -59,6 +59,7 @@ export const adminContentEn: typeof adminContentDe = {
 
   coupons: {
     title: 'Coupons',
+    lead: 'Discount codes, how long each one runs and how often it has been redeemed.',
     colCode: 'Code',
     colValue: 'Discount',
     colValidity: 'Valid',
@@ -266,6 +267,7 @@ export const adminContentEn: typeof adminContentDe = {
 
   settings: {
     title: 'Settings',
+    lead: 'Prices, hours, regions and rules. Changes take effect at once — there is no save button.',
     tabRegions: 'Areas',
     tabHours: 'Hours',
     tabFees: 'Fees & rules',

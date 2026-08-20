@@ -59,6 +59,7 @@ export const adminContentDe = {
 
   coupons: {
     title: 'Gutscheine',
+    lead: 'Rabattcodes, wie lange sie laufen und wie oft sie schon eingelöst wurden.',
     colCode: 'Code',
     colValue: 'Rabatt',
     colValidity: 'Gültig',
@@ -273,6 +274,7 @@ export const adminContentDe = {
 
   settings: {
     title: 'Einstellungen',
+    lead: 'Preise, Zeiten, Gebiete und Regeln. Änderungen greifen sofort — es gibt keinen Speichern-Knopf.',
     tabRegions: 'Gebiete',
     tabHours: 'Zeiten',
     tabFees: 'Gebühren & Regeln',

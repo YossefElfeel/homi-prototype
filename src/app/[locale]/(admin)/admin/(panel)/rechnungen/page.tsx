@@ -167,7 +167,7 @@ export default function InvoicesPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} actions={createButton} />
+      <PageHeader title={t('title')} lead={t('lead')} actions={createButton} />
 
       <DataView
         items={sorted}

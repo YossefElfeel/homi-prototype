@@ -7,6 +7,7 @@
 export const adminCrmDe = {
   customers: {
     title: 'Kunden',
+    lead: 'Wer bei uns gebucht hat, mit Objekten, Abos und Verlauf. Archivierte bleiben lesbar.',
     search: 'Name, E-Mail oder Telefon',
     colName: 'Name',
     colContact: 'Kontakt',
@@ -239,6 +240,7 @@ export const adminCrmDe = {
 
   properties: {
     title: 'Objekte',
+    lead: 'Die Adressen, an denen gearbeitet wird. Fläche, Zimmer und Zutritt gehören zum Objekt, nicht zur einzelnen Buchung.',
     colLabel: 'Objekt',
     colCustomer: 'Kunde',
     colAddress: 'Adresse',
@@ -403,6 +405,7 @@ export const adminCrmDe = {
     cancellationWindow: 'Widerrufsfrist',
     cancellationHint: 'Ab Kaufdatum, solange kein Einsatz stattgefunden hat.',
     days: '{n} Tage',
+    detailsTitle: 'Konditionen',
     featuresTitle: 'Was enthalten ist',
     availabilityTitle: 'Verfügbarkeit',
     activeLabel: 'Im Verkauf',
@@ -500,6 +503,7 @@ export const adminCrmDe = {
 
   invoices: {
     title: 'Rechnungen',
+    lead: 'Was gestellt wurde und was noch offen ist. Entwürfe lassen sich gesammelt freigeben.',
     filterAll: 'Alle',
     colReference: 'Nummer',
     colCustomer: 'Kunde',

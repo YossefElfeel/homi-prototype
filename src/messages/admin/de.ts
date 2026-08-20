@@ -237,6 +237,7 @@ export const adminDe = {
 
   requests: {
     title: 'Anfragen',
+    lead: 'Alles, was hereinkommt, bis eine Offerte daraus wird — oder bis feststeht, dass keine daraus wird.',
     filterStatus: 'Status',
     filterAll: 'Alle',
     filterRegion: 'Gebiet',
@@ -701,6 +702,14 @@ export const adminDe = {
     colSource: 'Herkunft',
     colWhen: 'Termin',
     colAmount: 'Betrag',
+    /* Woher die Zahl kommt. Eine unterschriebene Offerte, eine gestellte
+       Rechnung, ein Abo-Anteil und eine Schätzung sind vier verschiedene
+       Grade von Sicherheit — als blosse Franken nebeneinander sähe die
+       Schätzung aus wie eine Forderung. */
+    amount_offer: 'Offerte',
+    amount_invoice: 'Rechnung',
+    amount_plan: 'Abo-Anteil',
+    amount_estimate: 'Schätzung',
     colPaid: 'Bezahlt',
     filterPaid: 'Zahlung',
     paid_paid: 'Bezahlt',
@@ -726,6 +735,7 @@ export const adminDe = {
 
   calendar: {
     title: 'Kalender',
+    lead: 'Einsätze, Termine, reservierte Zeit und Betriebsferien — alles, was einen Tag belegt, in einer Ansicht.',
     viewDay: 'Tag',
     viewWeek: 'Woche',
     viewMonth: 'Monat',
@@ -754,6 +764,15 @@ export const adminDe = {
        und eine reservierte Zeit, alle gleich. Eine Legende ohne Farben zu
        erklären wäre sinnlos gewesen; beides gehört zusammen. */
     legendTitle: 'Legende',
+    /* Die Legende erklärte eine Farbe und hörte da auf — was eine halbe
+       Antwort ist: Man liest sie, weil man die grauen *sucht*, und musste sie
+       danach im Monatsraster von Hand zusammensuchen. */
+    legendFilterHint: 'Auf eine Farbe tippen, um nur diese zu sehen.',
+    filterActive: 'Gefiltert — nicht alles wird angezeigt.',
+    filterClear: 'Alle anzeigen',
+    filterEmptyTitle: 'Nichts in diesen Farben',
+    filterEmptyBody:
+      'In dieser Ansicht gibt es keinen Eintrag in der gewählten Farbe. Der Tag kann trotzdem voll sein.',
     legendJobs: 'Einsätze',
     legendEvents: 'Termine ohne Einsatz',
     legendOther: 'Übriges',

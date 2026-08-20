@@ -515,6 +515,7 @@ export default function RequestsPage() {
     <div>
       <PageHeader
         title={t('title')}
+        lead={t('lead')}
         actions={
           <>
             {dateRange}

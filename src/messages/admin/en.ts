@@ -205,6 +205,7 @@ export const adminEn: typeof adminDe = {
 
   requests: {
     title: 'Requests',
+    lead: 'Everything that comes in, until it turns into a quote — or until it is clear that it will not.',
     filterStatus: 'Status',
     filterAll: 'All',
     filterRegion: 'Area',
@@ -600,6 +601,13 @@ export const adminEn: typeof adminDe = {
     colSource: 'Came from',
     colWhen: 'When',
     colAmount: 'Amount',
+    /* Where the number came from. A signed quote, an issued invoice, a plan
+       share and an estimate are four different kinds of certainty — printed
+       as bare francs side by side, the estimate reads as a debt. */
+    amount_offer: 'Quote',
+    amount_invoice: 'Invoice',
+    amount_plan: 'Plan share',
+    amount_estimate: 'Estimate',
     colPaid: 'Paid',
     filterPaid: 'Payment',
     paid_paid: 'Paid',
@@ -625,6 +633,7 @@ export const adminEn: typeof adminDe = {
 
   calendar: {
     title: 'Calendar',
+    lead: 'Jobs, appointments, held time and company holidays — everything that takes up a day, in one view.',
     viewDay: 'Day',
     viewWeek: 'Week',
     viewMonth: 'Month',
@@ -649,6 +658,15 @@ export const adminEn: typeof adminDe = {
     monthMore: '+{count} more',
 
     legendTitle: 'Legend',
+    /* The legend explained a colour and stopped there, which is half an
+       answer: you read it because you are looking *for* the grey ones, and
+       then had to find them by eye across a month grid. */
+    legendFilterHint: 'Tap a colour to see only those.',
+    filterActive: 'Filtered — not everything is shown.',
+    filterClear: 'Show all',
+    filterEmptyTitle: 'Nothing in these colours',
+    filterEmptyBody:
+      'No entry in this view carries the colour you picked. The day can still be full.',
     legendJobs: 'Jobs',
     legendEvents: 'Appointments that are not jobs',
     legendOther: 'Everything else',

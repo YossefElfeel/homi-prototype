@@ -19,8 +19,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { CustomerLink } from '@/components/ui/record-link';
 import { Toolbar } from '@/components/ui/toolbar';
-import { offerTotal } from '@/mock/engines/offers';
-import { bookingPaymentState, customerName } from '@/lib/offer-facts';
+import { bookingAmount, bookingPaymentState, customerName } from '@/lib/offer-facts';
 import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
 import { useHydrated, useStore } from '@/mock/store';
@@ -76,7 +75,10 @@ export default function BookingsPage() {
   const offers = useStore((s) => s.data.offers);
   const invoices = useStore((s) => s.data.invoices);
   const payments = useStore((s) => s.data.payments);
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
+  const settings = useStore((s) => s.settings);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
@@ -86,6 +88,16 @@ export default function BookingsPage() {
     customerName(customers.find((c) => c.id === b.customerId));
 
   const paymentOf = (b: Booking) => bookingPaymentState(b, payments, invoices);
+
+  const amountOf = (b: Booking) =>
+    bookingAmount(b, {
+      offers,
+      invoices,
+      subscriptions,
+      plans,
+      services,
+      hourlyRate: settings.hourlyRate,
+    });
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -181,16 +193,32 @@ export default function BookingsPage() {
       ),
     },
     {
+      /*
+       * Was the quote total or a dash, and a dash for four rows out of five:
+       * only a job that came off a quote had one. The amount is derived now,
+       * and the line under it says which record it came off — a plan share
+       * and an hourly estimate are not the same claim as an issued invoice,
+       * and a column printing all three as bare francs said they were.
+       */
       key: 'amount',
       header: t('colAmount'),
       align: 'end',
       tableOnly: true,
+      sortBy: (b) => amountOf(b).amount,
       cell: (b) => {
-        const offer = offers.find((o) => o.id === b.offerId);
-        /* A plan visit has no amount of its own — the monthly charge covers
-           it, and printing the quote total here would count money twice. */
-        if (!offer) return <span className="text-ink-tertiary">—</span>;
-        return <Money amount={offerTotal(offer)} emphasis="quiet" />;
+        const { amount, basis } = amountOf(b);
+        return (
+          <span className="flex flex-col items-end gap-0.5">
+            <Money
+              amount={amount}
+              /* The only one of the four that is not a total: the plan is
+                 billed monthly and this is one visit's share of it. */
+              per={basis === 'plan' ? 'visit' : 'none'}
+              emphasis={basis === 'estimate' ? 'quiet' : 'default'}
+            />
+            <span className="text-xs text-ink-tertiary">{t(`amount_${basis}`)}</span>
+          </span>
+        );
       },
     },
     {

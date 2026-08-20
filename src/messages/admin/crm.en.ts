@@ -3,6 +3,7 @@ import type { adminCrmDe } from './crm.de';
 export const adminCrmEn: typeof adminCrmDe = {
   customers: {
     title: 'Customers',
+    lead: 'Everyone who has booked, with their properties, plans and history. Archived customers stay readable.',
     search: 'Name, email or phone',
     colName: 'Name',
     colContact: 'Contact',
@@ -219,6 +220,7 @@ export const adminCrmEn: typeof adminCrmDe = {
 
   properties: {
     title: 'Properties',
+    lead: 'The addresses the work happens at. Size, rooms and access belong to the property, not to one booking.',
     colLabel: 'Property',
     colCustomer: 'Customer',
     colAddress: 'Address',
@@ -380,6 +382,7 @@ export const adminCrmEn: typeof adminCrmDe = {
     cancellationWindow: 'Cooling-off',
     cancellationHint: 'From the purchase date, while no visit has happened.',
     days: '{n} days',
+    detailsTitle: 'Terms',
     featuresTitle: 'What is included',
     availabilityTitle: 'Availability',
     activeLabel: 'On sale',
@@ -477,6 +480,7 @@ export const adminCrmEn: typeof adminCrmDe = {
 
   invoices: {
     title: 'Invoices',
+    lead: 'What has been issued and what is still outstanding. Drafts can be approved together.',
     filterAll: 'All',
     colReference: 'Number',
     colCustomer: 'Customer',

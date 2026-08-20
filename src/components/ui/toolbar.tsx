@@ -14,6 +14,8 @@ import { Input } from './field';
  * result count, so "did the filter do anything" was answered by counting rows.
  */
 export function Toolbar({
+  title,
+  titleLevel = 2,
   search,
   filters,
   views,
@@ -21,6 +23,16 @@ export function Toolbar({
   actions,
   className,
 }: {
+  /**
+   * For a list that lives *inside* a screen rather than being one.
+   *
+   * A subscriber list under a plan had a heading of its own, then a toolbar
+   * under it, then the count on a third line — three stacked rows to say
+   * «Abonnentinnen», "search them", "2 of 2". A section heading and the row
+   * that filters the section are the same row.
+   */
+  title?: React.ReactNode;
+  titleLevel?: 2 | 3;
   search?: {
     value: string;
     onChange: (value: string) => void;
@@ -43,6 +55,8 @@ export function Toolbar({
   actions?: React.ReactNode;
   className?: string;
 }) {
+  const Heading = `h${titleLevel}` as const;
+
   return (
     <div
       className={cn(
@@ -68,6 +82,20 @@ export function Toolbar({
         rather than crushing the search.
       */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 [&>label]:inline-flex [&>label]:min-w-44 [&>label]:flex-col">
+        {title && (
+          /* The count rides up here with the title, because the second row
+             exists to carry `views` — and a titled toolbar that pushed "2 of
+             2" onto a line of its own would cost the row this slot was added
+             to save. */
+          <div className="flex min-w-0 items-baseline gap-2 ps-1">
+            <Heading className="display-type text-lg">{title}</Heading>
+            {count != null && (
+              <p data-numeric aria-live="polite" className="text-sm text-ink-tertiary">
+                {count}
+              </p>
+            )}
+          </div>
+        )}
         {search && (
           <div className="relative min-w-56 flex-1">
             <Input
@@ -97,7 +125,7 @@ export function Toolbar({
         {actions && <div className="ms-auto flex items-center gap-2">{actions}</div>}
       </div>
 
-      {(views != null || count != null) && (
+      {(views != null || (count != null && !title)) && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-1">
           {views}
           {count != null && (

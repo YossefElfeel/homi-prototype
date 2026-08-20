@@ -140,8 +140,14 @@ Marco Brunner`;
    neutral, so every planned call turns grey, and `status.calendarEvent` has no
    message under those keys at all — next-intl renders the missing key as its
    own path. The calendar would open on a legend that matches nothing in the
-   grid beside it. */
-const SCHEMA_VERSION = 17;
+   grid beside it.
+
+   18: Not a shape change — a data one, and the mildest kind. RE-2026-0050 was
+   added so B-1053's «50% verrechnet» has an invoice behind it. A blob from 17
+   simply does not contain it, so the row keeps reading «Schätzung / Nicht
+   bezahlt» on a reviewer's machine while it reads «Rechnung / Offen» on a
+   fresh one, and the two would disagree for as long as the blob lives. */
+const SCHEMA_VERSION = 18;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and

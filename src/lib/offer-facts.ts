@@ -23,10 +23,14 @@ import type {
   Payment,
   Plan,
   RhythmKey,
+  Service,
   ServiceRequest,
   Subscription,
 } from '@/mock/schema';
-import { offerHours } from '@/mock/engines/offers';
+import { offerHours, offerTotal, roundChf } from '@/mock/engines/offers';
+/* The one implementation of "add up an invoice". A second one here would be
+   two answers to the same sum the first time a line grows a field. */
+import { invoiceTotal } from '@/lib/customer-history';
 
 /* ----------------------------------------------------------- frequency */
 
@@ -200,6 +204,70 @@ export function bookingPaymentState(
    */
   if (booking.subscriptionId && !booking.offerId && !invoice) return 'covered';
   return 'unpaid';
+}
+
+/** Which record the amount came off. Four different kinds of certainty. */
+export type AmountBasis = 'offer' | 'invoice' | 'plan' | 'estimate';
+
+export interface BookingAmount {
+  amount: number;
+  basis: AmountBasis;
+}
+
+/**
+ * What one job is worth, and which record says so.
+ *
+ * The bookings list read the amount off the quote and printed «—» when there
+ * was none — which is most of them. A job entered on the phone has no quote, a
+ * plan visit has no quote, and a job invoiced afterwards has one only if
+ * somebody quoted it first. So the money column was a dash down the page, on
+ * the one screen that exists to answer what a month is worth.
+ *
+ * The basis travels with the number on purpose. A signed quote, an issued
+ * invoice, a plan's per-visit share and an hourly estimate are four different
+ * kinds of certainty, and a column that printed all four as plain francs would
+ * make the estimate look like a bill somebody owes.
+ *
+ * The order is what keeps it from counting the same money twice. The quote is
+ * what was agreed, so it wins; the invoice is what was actually asked for; a
+ * plan visit is already paid for by the monthly charge, so its share is
+ * informational and marked `/ Einsatz`; the estimate is last because it is the
+ * only one of the four nobody has agreed to.
+ */
+export function bookingAmount(
+  booking: Booking,
+  sources: {
+    offers: Offer[];
+    invoices: Invoice[];
+    subscriptions: Subscription[];
+    plans: Plan[];
+    services: Service[];
+    /** §5.1's office rate — the fallback for work priced by the unit. */
+    hourlyRate: number;
+  },
+): BookingAmount {
+  const offer = booking.offerId
+    ? sources.offers.find((o) => o.id === booking.offerId)
+    : undefined;
+  if (offer) return { amount: offerTotal(offer), basis: 'offer' };
+
+  const invoice = sources.invoices.find((i) => i.bookingId === booking.id);
+  if (invoice) return { amount: invoiceTotal(invoice), basis: 'invoice' };
+
+  if (booking.subscriptionId) {
+    const subscription = sources.subscriptions.find((s) => s.id === booking.subscriptionId);
+    const plan = sources.plans.find((p) => p.id === subscription?.planId);
+    if (plan && plan.includedVisits > 0) {
+      return { amount: roundChf(plan.price / plan.includedVisits), basis: 'plan' };
+    }
+  }
+
+  /* `basePrice` is per *unit* for window and furniture work, so it cannot
+     price an hour of it. The office rate can, and what this returns is an
+     estimate either way — the column says so. */
+  const service = sources.services.find((s) => s.slug === booking.serviceSlug);
+  const rate = service?.calc === 'hourly' ? service.basePrice : sources.hourlyRate;
+  return { amount: roundChf((booking.duration / 60) * rate), basis: 'estimate' };
 }
 
 /* ------------------------------------------------------------- history */
