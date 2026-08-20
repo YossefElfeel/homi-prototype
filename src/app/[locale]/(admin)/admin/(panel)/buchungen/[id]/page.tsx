@@ -26,7 +26,8 @@ import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
-import { offerTotal } from '@/mock/engines/offers';
+import { bookingAmount } from '@/lib/offer-facts';
+import { fromZoned, zonedParts } from '@/lib/business-time';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -68,10 +69,13 @@ export default function BookingDetailPage({
   const properties = useStore((s) => s.data.properties);
   const offers = useStore((s) => s.data.offers);
   const invoices = useStore((s) => s.data.invoices);
+  const subscriptions = useStore((s) => s.data.subscriptions);
+  const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const patchData = useStore((s) => s.patchData);
   const approveBooking = useStore((s) => s.approveBooking);
+  const rescheduleBooking = useStore((s) => s.rescheduleBooking);
   const now = useNow();
 
   /*
@@ -101,6 +105,43 @@ export default function BookingDetailPage({
 
   const start = new Date(booking.start);
   const access = property.access;
+
+  /*
+   * `<input type="datetime-local">` has no timezone. The browser reads what is
+   * typed as the *browser's* wall clock, and everything else in this product —
+   * every rendered time, the scheduler, the whole seed — is Europe/Zurich.
+   *
+   * So the form was off by the reviewer's offset in both directions at once.
+   * It opened on `booking.start.slice(0, 16)`, which is the raw UTC string, so
+   * a 09:00 job showed as 07:00 in summer; and whatever was typed back was
+   * parsed against the browser's zone, so an owner in Cairo typing 10:00 moved
+   * the job to 09:00 Zurich. Both halves have to be Zurich or neither is.
+   */
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const localValue = (d: Date) => {
+    const p = zonedParts(d);
+    return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
+  };
+  const fromLocalValue = (value: string) => {
+    const [date, time] = value.split('T');
+    const [y, mo, d] = (date ?? '').split('-').map(Number);
+    const [h, mi] = (time ?? '').split(':').map(Number);
+    return fromZoned(y!, mo!, d!, h ?? 0, mi ?? 0);
+  };
+
+  /* The same derivation the bookings list prints in its amount column. This
+     card used to say "no quote → it is on the plan", which is the exact
+     mistake `bookingPaymentState` was fixed for one wave earlier: a job taken
+     over the phone has no quote either, and B-1044 sat here claiming a monthly
+     charge covered it while linking to the invoice that charged for it. */
+  const money = bookingAmount(booking, {
+    offers,
+    invoices,
+    subscriptions,
+    plans,
+    services,
+    hourlyRate: settings.hourlyRate,
+  });
 
   /**
    * Every action on this screen writes through here. The history entry is not
@@ -174,6 +215,37 @@ export default function BookingDetailPage({
         </div>
       )}
 
+      {/*
+        The move, said out loud.
+        `status: 'rescheduled'` is a badge, and a badge cannot say *from when* —
+        so the one fact the office needs before phoning the customer back
+        ("what did they have in their diary?") was only in a timeline entry
+        three collapsed sections down. It stops once the job moves on: a
+        checked-in or cancelled booking has news of its own, and this is no
+        longer information, it is history.
+      */}
+      {booking.reschedule && booking.status === 'rescheduled' && (
+        <div className="mt-6 border-l-2 border-status-info-line bg-status-info p-5">
+          <h2 className="font-medium">{t('movedTitle')}</h2>
+          <p data-numeric className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
+            {t('movedBody', {
+              fromDate: format.dateTime(new Date(booking.reschedule.from), 'dayDate'),
+              fromTime: format.dateTime(new Date(booking.reschedule.from), 'time'),
+              toDate: format.dateTime(start, 'dayDate'),
+              toTime: format.dateTime(start, 'time'),
+            })}
+          </p>
+          {/* Not decoration. Whether the customer already knows decides
+              whether the next thing the office does is phone them. */}
+          <p data-numeric className="mt-2 text-sm text-ink-tertiary">
+            {t('movedNotified', {
+              name: `${customer.firstName} ${customer.lastName}`,
+              at: format.dateTime(new Date(booking.reschedule.at), 'dayDate'),
+            })}
+          </p>
+        </div>
+      )}
+
       <div className="mt-8 grid gap-10 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-7">
           <h2 className="label-type text-ink-tertiary">{t('overviewTitle')}</h2>
@@ -212,8 +284,10 @@ export default function BookingDetailPage({
                 </div>
                 <div>
                   <dt className="label-type text-ink-tertiary">{t('durationTitle')}</dt>
+                  {/* Was a hardcoded «Std.», printed under an English
+                      heading on the English site. */}
                   <dd data-numeric className="mt-1.5 text-lg">
-                    {booking.duration / 60} Std.
+                    {t('hours', { hours: booking.duration / 60 })}
                   </dd>
                 </div>
               </dl>
@@ -351,16 +425,19 @@ export default function BookingDetailPage({
           <Card>
             <CardHeader title={t('moneyTitle')} />
             <CardBody>
-              {offer ? (
-                <p className="flex items-baseline justify-between gap-4">
-                  <span className="text-sm text-ink-secondary">{t('amountTitle')}</span>
-                  <Money amount={offerTotal(offer)} emphasis="strong" />
-                </p>
-              ) : (
-                /* A plan visit has no amount of its own — the monthly charge
-                   covers it, and printing a total here would count it twice. */
-                <p className="text-sm text-ink-secondary">{t('amountOnPlan')}</p>
-              )}
+              <p className="flex items-baseline justify-between gap-4">
+                <span className="text-sm text-ink-secondary">{t('amountTitle')}</span>
+                <Money
+                  amount={money.amount}
+                  /* The plan is billed monthly; this is one visit's share of
+                     it, and the unit is what stops it reading as a bill. */
+                  per={money.basis === 'plan' ? 'visit' : 'none'}
+                  emphasis="strong"
+                />
+              </p>
+              <p className="mt-1.5 text-sm text-ink-secondary">
+                {t(`amountBasis_${money.basis}`)}
+              </p>
               {offer && (
                 <Button asChild block variant="secondary" className="mt-4">
                   <Link href={`/admin/offerten/${offer.id}`}>{t('offerLink')}</Link>
@@ -390,6 +467,21 @@ export default function BookingDetailPage({
               </p>
             )}
             <div className="mt-3 space-y-2">
+              {/* The same fact as the banner, in the one place somebody is
+                  about to move it a second time. Whoever reaches for this
+                  button should not have to scroll up to find out that it has
+                  already been pressed once. */}
+              {booking.reschedule && (
+                <p
+                  data-numeric
+                  className="rounded-[var(--radius-sm)] bg-sunken p-3 text-sm text-ink-secondary"
+                >
+                  {t('movedShort', {
+                    date: format.dateTime(new Date(booking.reschedule.from), 'dayDate'),
+                    time: format.dateTime(new Date(booking.reschedule.from), 'time'),
+                  })}
+                </p>
+              )}
               {rescheduling ? (
                 <form
                   className="surface-card space-y-3 p-4"
@@ -397,16 +489,32 @@ export default function BookingDetailPage({
                     e.preventDefault();
                     const value = new FormData(e.currentTarget).get('start');
                     if (typeof value !== 'string' || !value) return;
-                    const next = new Date(value);
-                    patchBooking(
-                      { start: next.toISOString(), status: 'rescheduled' },
+                    const next = fromLocalValue(value);
+                    /*
+                      Was `patchBooking` — a local write that moved the job and
+                      told nobody. The store does both halves now, because a
+                      reschedule the customer does not hear about is a phone
+                      call on the day rather than a record.
+                    */
+                    rescheduleBooking(
                       {
-                        kind: 'rescheduled',
-                        label: t('rescheduledTo', {
+                        id: booking!.id,
+                        start: next.toISOString(),
+                        historyLabel: t('rescheduledTo', {
                           date: format.dateTime(next, 'full'),
                           time: format.dateTime(next, 'time'),
                         }),
+                        notice: {
+                          subject: booking!.reference,
+                          body: t('noticeBody', {
+                            fromDate: format.dateTime(start, 'full'),
+                            fromTime: format.dateTime(start, 'time'),
+                            toDate: format.dateTime(next, 'full'),
+                            toTime: format.dateTime(next, 'time'),
+                          }),
+                        },
                       },
+                      now,
                     );
                     setRescheduling(false);
                     toast.success(t('rescheduleDone'));
@@ -419,7 +527,7 @@ export default function BookingDetailPage({
                         name="start"
                         type="datetime-local"
                         required
-                        defaultValue={booking.start.slice(0, 16)}
+                        defaultValue={localValue(start)}
                       />
                     )}
                   </Field>

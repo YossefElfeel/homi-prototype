@@ -392,6 +392,27 @@ export type BookingStatus =
   /** Called off by the company. `closed` means finished, which is not this. */
   | 'cancelled';
 
+/**
+ * The office moved this job, and where it stood before.
+ *
+ * `status: 'rescheduled'` said *that* it moved and nothing else. The badge
+ * cannot carry a date, and the one line that could — the timeline entry — is
+ * three collapsed sections down the booking screen, which is not where anybody
+ * looks before phoning a customer back. On the customer's side it was worse
+ * than invisible: the date on their dashboard simply changed under them, with
+ * no record that it had ever been anything else.
+ *
+ * Only the most recent move. The full chain stays in `history`; this is the
+ * one fact a note has to state — what the customer had in their diary before
+ * we touched it.
+ */
+export interface BookingReschedule {
+  /** Where the job stood before the move. */
+  from: ISODate;
+  /** When the office moved it — also when the customer was told. */
+  at: ISODate;
+}
+
 export interface Booking {
   id: ID;
   reference: string;
@@ -409,6 +430,7 @@ export interface Booking {
   status: BookingStatus;
   checkInAt?: ISODate;
   checkOutAt?: ISODate;
+  reschedule?: BookingReschedule;
   photoIds: ID[];
   history: TimelineEvent[];
 }

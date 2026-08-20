@@ -86,6 +86,9 @@ export const accountEn: typeof accountDe = {
     nextAction: 'See the appointment',
     arrival: 'Arrival between {from} and {to}',
     cancelFreeUntil: 'Free cancellation until {date}',
+    /* The date simply changed before. A moved appointment looked exactly like
+       one that had always been on that day. */
+    movedNote: 'We moved this appointment on {at}. It was: {from}.',
     openTitle: 'Waiting for you',
     openOffer: 'Quote {reference} — valid until {date}',
     openInvoice: 'Invoice {reference} — due on {date}',

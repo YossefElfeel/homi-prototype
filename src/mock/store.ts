@@ -146,8 +146,16 @@ Marco Brunner`;
    added so B-1053's «50% verrechnet» has an invoice behind it. A blob from 17
    simply does not contain it, so the row keeps reading «Schätzung / Nicht
    bezahlt» on a reviewer's machine while it reads «Rechnung / Offen» on a
-   fresh one, and the two would disagree for as long as the blob lives. */
-const SCHEMA_VERSION = 18;
+   fresh one, and the two would disagree for as long as the blob lives.
+
+   19: `Booking` gained `reschedule`, and the seed moved with it — B-1044 is
+   now a moved job with the notice that told the customer, B-1055 sits inside
+   the current month, and two calendar events were added for `done` and
+   `cancelled`. A blob from 18 has none of it: every moved booking loses the
+   date it was moved from, so the note on /admin/buchungen/[id] and the one on
+   the customer's dashboard both vanish, and two legend rows filter to
+   nothing. Not a crash — a reviewer quietly looking at the old product. */
+const SCHEMA_VERSION = 19;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -519,6 +527,29 @@ interface StoreState {
    * zero used after a year of work booked from anywhere else.
    */
   approveBooking: (id: ID, label: string, now: Date) => void;
+  /**
+   * Moving a confirmed job — and telling the customer, in the same call.
+   *
+   * The booking screen did this inline: patch `start`, patch `status`, push a
+   * timeline line. Nothing reached the customer. Their next appointment simply
+   * read a different date the next time they opened the account, which is the
+   * one thing §15 calls an operational notice — the kind they cannot switch
+   * off, because it is not marketing, it is a van arriving on a different day.
+   *
+   * It lives here rather than on the screen so the two halves cannot come
+   * apart. A reschedule that moved the job and forgot the message would look
+   * identical in the store and be a phone call on the day.
+   */
+  rescheduleBooking: (
+    input: {
+      id: ID;
+      start: ISODate;
+      historyLabel: string;
+      /** Keyed by the booking reference, so it lands in that thread. */
+      notice: { subject: string; body: string };
+    },
+    now: Date,
+  ) => void;
   /**
    * Cancels and refunds, or returns why it may not be. The caller gets the
    * reason rather than a boolean because "already used" and "window closed"
@@ -2516,6 +2547,45 @@ export const useStore = create<StoreState>()(
           },
         });
         return invoice.id;
+      },
+
+      rescheduleBooking: ({ id, start, historyLabel, notice }, now) => {
+        const booking = get().data.bookings.find((b) => b.id === id);
+        if (!booking) return;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            bookings: s.data.bookings.map((b) =>
+              b.id !== id
+                ? b
+                : {
+                    ...b,
+                    start,
+                    status: 'rescheduled' as const,
+                    /* `b.start`, read before the patch lands — the date the
+                       customer had in their diary. */
+                    reschedule: { from: b.start, at: now.toISOString() },
+                    history: [
+                      ...b.history,
+                      { at: now.toISOString(), kind: 'rescheduled', label: historyLabel },
+                    ],
+                  },
+            ),
+          },
+        }));
+
+        /* `sendMessage` rather than a second message built here: one writer
+           for both ends of a thread is the whole reason it exists. */
+        get().sendMessage(
+          {
+            customerId: booking.customerId,
+            subject: notice.subject,
+            body: notice.body,
+            from: 'homivaro',
+          },
+          now,
+        );
       },
 
       approveBooking: (id, label, now) =>

@@ -303,7 +303,7 @@ export const TRACKS: Track[] = [
         'Calendar — day',
         '/admin/kalender',
         ['no jobs', 'travel conflict', 'closure period', 'held slot', 'filtered to nothing'],
-        'The legend is the filter: one row per colour, and clicking it keeps only that colour across all four views',
+        'The legend is the filter: one row per colour, clicking it keeps only that colour across all four views, and every row has something in the seed to find',
       ),
       done(
         '58a',
@@ -328,15 +328,15 @@ export const TRACKS: Track[] = [
         'Buchungs-Detail',
         'Booking detail',
         '/admin/buchungen/bkg_1',
-        ['codes masked', 'settled — actions closed'],
-        'The calendar row menu deep-links here with a panel already open. A settled job now says why its actions are shut instead of showing a greyed strip',
+        ['codes masked', 'settled — actions closed', 'moved — note above the actions'],
+        'Moving a job writes the customer their notice in the same call, and the screen says what it moved from — bkg_2 opens on a job that was already moved once',
       ),
       done(
         '63a',
         'Termin-Detail',
         'Appointment detail',
         '/admin/kalender/cev_today',
-        ['upcoming', 'pending', 'in progress'],
+        ['upcoming', 'pending', 'in progress', 'done', 'called off'],
         'The call that produced work becomes a request without being retyped, and the request card says what it will carry before you press. cev_converted opens on the closed loop, cev_noreply on the one still outstanding',
       ),
       done('64', 'Kunden', 'Customers', '/admin/kunden', [

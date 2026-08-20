@@ -86,6 +86,9 @@ export const accountDe = {
     nextAction: 'Termin ansehen',
     arrival: 'Ankunft zwischen {from} und {to}',
     cancelFreeUntil: 'Kostenlose Absage bis {date}',
+    /* Vorher änderte sich einfach das Datum. Ein verschobener Einsatz sah
+       genauso aus wie einer, der immer an diesem Tag war. */
+    movedNote: 'Wir haben diesen Termin am {at} verschoben. Vorher: {from}.',
     openTitle: 'Wartet auf Sie',
     openOffer: 'Offerte {reference} — gültig bis {date}',
     openInvoice: 'Rechnung {reference} — fällig am {date}',

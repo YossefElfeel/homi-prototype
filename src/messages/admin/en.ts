@@ -669,9 +669,9 @@ export const adminEn: typeof adminDe = {
       'No entry in this view carries the colour you picked. The day can still be full.',
     legendJobs: 'Jobs',
     legendEvents: 'Appointments that are not jobs',
-    legendOther: 'Everything else',
-    legendClosure: 'Company holiday',
-    legendHold: 'Held, not yet signed',
+    /* "Everything else" is gone — a held slot and a company holiday explain
+       themselves in the grid. The hint stays: it sits under a held slot in
+       the day list, not in the legend. */
     legendHoldHint:
       'The customer has 48 hours. The time is blocked; the job itself only exists once it is paid.',
 
@@ -817,7 +817,15 @@ export const adminEn: typeof adminDe = {
     propertyArea: 'Area',
     serviceTitle: 'Service',
     moneyTitle: 'Amount & records',
-    amountOnPlan: 'Included in the plan — the monthly charge covers this visit.',
+    /* Was `amountOnPlan`, and it showed whenever there was no quote — which
+       includes the job taken over the phone, which has neither quote nor plan.
+       B-1044 claimed a monthly charge covered it, above a link to the invoice
+       that charged for it. */
+    amountBasis_offer: 'From the quote.',
+    amountBasis_invoice: 'As invoiced.',
+    amountBasis_plan: 'Included in the plan — the monthly charge covers this visit.',
+    amountBasis_estimate: 'Estimated from the hours. Nothing has been charged yet.',
+    hours: '{hours} hrs',
     customerTitle: 'Customer',
     propertyTitle: 'Property',
     accessTitle: 'Access',
@@ -827,6 +835,18 @@ export const adminEn: typeof adminDe = {
     rescheduleLabel: 'New slot',
     rescheduleSave: 'Move the job',
     rescheduledTo: 'Moved to {date}, {time}',
+    /* The badge says "Rescheduled" and cannot carry a date. What the office
+       needs before phoning back is exactly the thing that was missing: what
+       the customer had in their diary before we touched it. */
+    movedTitle: 'This job was moved',
+    movedBody: 'From {fromDate}, {fromTime} to {toDate}, {toTime}.',
+    movedNotified: '{name} was told in their account on {at}.',
+    movedShort: 'Was on {date}, {time}.',
+    /* Lands in the customer's message thread under the booking reference —
+       beside everything else about this job, rather than in a mailbox nobody
+       in the product can open. */
+    noticeBody:
+      'Hello\n\nwe had to move your appointment: instead of {fromDate}, {fromTime} we will now come on {toDate}, {toTime}.\n\nIf the new date does not suit you, just reply here and we will find another one.\n\nKind regards\nHomivaro',
     rescheduleDone: 'Job rescheduled.',
     dismiss: 'Never mind',
     cancel: 'Cancel',

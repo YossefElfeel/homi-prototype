@@ -9,6 +9,16 @@ export const DATE_FORMATS = {
   /** "Donnerstag, 12. September 2026" — the brief's canonical long date. */
   full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
   dayMonth: { weekday: 'long', day: 'numeric', month: 'long' },
+  /**
+   * "Do, 20. Aug. 2026" — a whole date in the width of a heading.
+   *
+   * `full` spells the weekday and the month out, which is right in a sentence
+   * and wrong above a grid: the calendar's own heading ran to «Donnerstag,
+   * 20. August 2026» and the week view had to print two of them side by side.
+   * Same four fields, abbreviated, and the year stops being the thing that
+   * gets dropped to make it fit.
+   */
+  dayDate: { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' },
   short: { day: '2-digit', month: '2-digit', year: 'numeric' },
   time: { hour: '2-digit', minute: '2-digit' },
 } as const satisfies Record<string, Intl.DateTimeFormatOptions>;
