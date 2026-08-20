@@ -101,6 +101,7 @@ export default function AdminSettingsPage({
       */}
       <PageHeader
         title={t('title')}
+        lead={t('lead')}
         actions={
           <SaveIndicator
             signal={settings}

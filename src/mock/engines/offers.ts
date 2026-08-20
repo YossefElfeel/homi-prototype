@@ -79,19 +79,21 @@ export function activeLines(offer: Offer) {
 }
 
 export function offerSubtotal(offer: Offer) {
-  return round(activeLines(offer).reduce((sum, line) => sum + line.quantity * line.unitPrice, 0));
+  return roundChf(
+    activeLines(offer).reduce((sum, line) => sum + line.quantity * line.unitPrice, 0),
+  );
 }
 
 export function offerDiscount(offer: Offer) {
   const subtotal = offerSubtotal(offer);
   if (!offer.discountValue) return 0;
   return offer.discountKind === 'percent'
-    ? round((subtotal * offer.discountValue) / 100)
+    ? roundChf((subtotal * offer.discountValue) / 100)
     : offer.discountValue;
 }
 
 export function offerTotal(offer: Offer) {
-  return round(offerSubtotal(offer) - offerDiscount(offer));
+  return roundChf(offerSubtotal(offer) - offerDiscount(offer));
 }
 
 /**
@@ -147,6 +149,14 @@ export function qrReference(seed: ID) {
   return digits.replace(/(\d{2})(\d{5})(\d{5})(\d{5})(\d{5})(\d{5})/, '$1 $2 $3 $4 $5 $6');
 }
 
-function round(value: number) {
+/**
+ * Swiss five-Rappen rounding.
+ *
+ * Exported because the bookings list now has to price a job nobody quoted —
+ * an hour of work and a plan visit's share both land on fractions of a
+ * centime otherwise, and rounding them by a second rule written next to the
+ * call site is how two screens end up disagreeing about CHF 122.475.
+ */
+export function roundChf(value: number) {
   return Math.round(value * 20) / 20;
 }

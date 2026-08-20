@@ -101,7 +101,7 @@ export default function PropertiesPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} actions={addButton} />
+      <PageHeader title={t('title')} lead={t('lead')} actions={addButton} />
 
       {adding && (
         <form

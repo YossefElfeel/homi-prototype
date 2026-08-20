@@ -914,6 +914,22 @@ function baseData(now: Date): DataSet {
       dueAt: iso(days(now, 25)),
       qrReference: '21 00000 00003 13947 14300 09008',
     },
+    /* §4.2 charges half a job when nobody lets us in, and B-1053's timeline
+       already said so — «20 Min. gewartet, 50% verrechnet». Without the
+       invoice behind it that sentence was the only trace of the money: the
+       bookings list priced the row off the hourly rate and marked it a
+       Schätzung, and the payment column said nobody owed us anything. */
+    {
+      id: 'inv_noaccess',
+      reference: 'RE-2026-0050',
+      customerId: 'cus_m8',
+      bookingId: 'bkg_8',
+      lines: [{ label: 'Einmalreinigung — kein Zutritt (50%)', quantity: 1.5, unitPrice: 49 }],
+      status: 'sent',
+      issuedAt: iso(days(now, -11)),
+      dueAt: iso(days(now, 19)),
+      qrReference: '21 00000 00003 13947 14300 09024',
+    },
     /* What `closed` means, spelled out. B-1055's timeline says "Abgeschlossen
        und bezahlt"; without the invoice behind it the bookings list would put
        "Nicht bezahlt" on the same row, and one of the two would be lying. */

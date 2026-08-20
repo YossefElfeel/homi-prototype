@@ -295,15 +295,15 @@ export const TRACKS: Track[] = [
         'Bookings',
         '/admin/buchungen',
         ['empty', 'no filter result'],
-        'The list a booking never had. Rows open screen 63 rather than a second detail that would drift from it',
+        'The list a booking never had. Every row carries an amount now — off the quote, the invoice, the plan share or an hourly estimate, and the column says which',
       ),
       done(
         '58',
         'Kalender — Tag',
         'Calendar — day',
         '/admin/kalender',
-        ['no jobs', 'travel conflict', 'closure period', 'held slot'],
-        'Every view is a card now, with the legend as the card beside it rather than a disclosure that pushed the grid off screen. One legend row per colour, not per state',
+        ['no jobs', 'travel conflict', 'closure period', 'held slot', 'filtered to nothing'],
+        'The legend is the filter: one row per colour, and clicking it keeps only that colour across all four views',
       ),
       done(
         '58a',
@@ -322,7 +322,7 @@ export const TRACKS: Track[] = [
         ['closure period', 'more than three entries'],
         'Draws the week grid\'s chips instead of coloured dots — a dot said something was on that day and never what',
       ),
-      done('61', 'Agenda', 'Agenda list', '/admin/kalender', ['empty']),
+      done('61', 'Agenda', 'Agenda list', '/admin/kalender', ['empty', 'filtered to nothing']),
       done(
         '63',
         'Buchungs-Detail',
@@ -382,7 +382,7 @@ export const TRACKS: Track[] = [
         'on sale',
         'retired with subscribers',
         'no subscribers',
-      ], 'The plan as a product, with everyone on it and their used/remaining visits'),
+      ], 'The plan as a product, with everyone on it and their used/remaining visits. Terms and features are cards, and the subscriber heading carries its own search and count'),
       done('70a', 'Abonnent', 'Subscriber', '/admin/abos/pln_basic/sub_2', [
         'active',
         'paused',

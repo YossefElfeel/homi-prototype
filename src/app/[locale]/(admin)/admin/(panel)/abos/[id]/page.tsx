@@ -10,6 +10,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -224,65 +225,77 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
 
       <div className="grid gap-app lg:grid-cols-12">
         <div className="space-y-app lg:col-span-8">
-          <dl className="grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2">
-            <Fact label={t('price')}>
-              <Money amount={plan.price} />
-              <span className="mt-0.5 block text-sm text-ink-tertiary">
-                {t('perTerm', { months: plan.validityMonths })}
-              </span>
-            </Fact>
-            <Fact label={t('perVisit')}>
-              <Money amount={plan.price / Math.max(1, plan.includedVisits)} per="visit" />
-            </Fact>
-            <Fact label={t('includedVisits')}>
-              <span data-numeric>{plan.includedVisits}</span>
-              <span className="mt-0.5 block text-sm text-ink-tertiary">
-                {rhythmT(planRhythm(plan))}
-              </span>
-            </Fact>
-            <Fact label={t('service')}>
-              <Link href={`/admin/leistungen/${plan.serviceSlug}`} className="hover:underline">
-                {serviceName}
-              </Link>
-              {/* The brief asks for the service id to be visible where one
-                  applies. It is what a plan is drawn against, so it belongs
-                  next to the name rather than behind the link. */}
-              <span data-numeric className="mt-0.5 block text-sm text-ink-tertiary">
-                {plan.serviceSlug}
-              </span>
-            </Fact>
-            <Fact label={t('extraDiscount')}>
-              <span data-numeric>{plan.extraDiscountPercent}%</span>
-              <span className="mt-0.5 block text-sm text-ink-tertiary">
-                {t('extraDiscountHint')}
-              </span>
-            </Fact>
-            <Fact label={t('cancellationWindow')}>
-              <span data-numeric>{t('days', { n: settings.planCancellationDays })}</span>
-              <span className="mt-0.5 block text-sm text-ink-tertiary">
-                {t('cancellationHint')}
-              </span>
-            </Fact>
-          </dl>
+          {/*
+            What a plan costs and what it includes sat on the page as a bare
+            hairline grid, next to an availability panel that *was* a card —
+            so the two halves of the same row read as different kinds of
+            thing, and the facts read as the page's background rather than as
+            the record.
+          */}
+          <Card pad="none" className="overflow-hidden">
+            <CardHeader title={t('detailsTitle')} className="p-card pb-4" />
+            <dl className="grid gap-px border-t border-line-subtle bg-line-subtle sm:grid-cols-2">
+              <Fact label={t('price')}>
+                <Money amount={plan.price} />
+                <span className="mt-0.5 block text-sm text-ink-tertiary">
+                  {t('perTerm', { months: plan.validityMonths })}
+                </span>
+              </Fact>
+              <Fact label={t('perVisit')}>
+                <Money amount={plan.price / Math.max(1, plan.includedVisits)} per="visit" />
+              </Fact>
+              <Fact label={t('includedVisits')}>
+                <span data-numeric>{plan.includedVisits}</span>
+                <span className="mt-0.5 block text-sm text-ink-tertiary">
+                  {rhythmT(planRhythm(plan))}
+                </span>
+              </Fact>
+              <Fact label={t('service')}>
+                <Link href={`/admin/leistungen/${plan.serviceSlug}`} className="hover:underline">
+                  {serviceName}
+                </Link>
+                {/* The brief asks for the service id to be visible where one
+                    applies. It is what a plan is drawn against, so it belongs
+                    next to the name rather than behind the link. */}
+                <span data-numeric className="mt-0.5 block text-sm text-ink-tertiary">
+                  {plan.serviceSlug}
+                </span>
+              </Fact>
+              <Fact label={t('extraDiscount')}>
+                <span data-numeric>{plan.extraDiscountPercent}%</span>
+                <span className="mt-0.5 block text-sm text-ink-tertiary">
+                  {t('extraDiscountHint')}
+                </span>
+              </Fact>
+              <Fact label={t('cancellationWindow')}>
+                <span data-numeric>{t('days', { n: settings.planCancellationDays })}</span>
+                <span className="mt-0.5 block text-sm text-ink-tertiary">
+                  {t('cancellationHint')}
+                </span>
+              </Fact>
+            </dl>
+          </Card>
 
           {plan.features.length > 0 && (
-            <section>
-              <h2 className="display-type text-xl">{t('featuresTitle')}</h2>
-              <ul className="mt-4 space-y-2.5 text-sm">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex gap-2.5">
-                    <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
-                    <span className="text-ink-secondary">{feature[locale] || feature.de}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <Card>
+              <CardHeader title={t('featuresTitle')} />
+              <CardBody>
+                <ul className="space-y-2.5 text-sm">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex gap-2.5">
+                      <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
+                      <span className="text-ink-secondary">{feature[locale] || feature.de}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
           )}
         </div>
 
         <aside className="space-y-4 lg:col-span-4">
-          <div className="surface-card space-y-4 p-5">
-            <h2 className="label-type text-ink-tertiary">{t('availabilityTitle')}</h2>
+          <Card className="space-y-4">
+            <CardHeader title={t('availabilityTitle')} />
             <SwitchField
               label={t('activeLabel')}
               hint={t('activeHint')}
@@ -304,29 +317,38 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                 toast.success(t(visible ? 'shownDone' : 'hiddenDone'));
               }}
             />
-          </div>
+          </Card>
         </aside>
       </div>
 
       <section className="mt-app-section">
-        <h2 className="display-type text-2xl">{t('subscribersTitle')}</h2>
-
-        {subscribers.length > 0 && (
-          <Toolbar
-            className="mt-4"
-            search={{
-              value: query,
-              onChange: setQuery,
-              label: t('searchLabel'),
-              placeholder: t('searchPlaceholder'),
-              clearLabel: t('searchClear'),
-            }}
-            count={t('count', { shown: filtered.length, total: subscribers.length })}
-          />
-        )}
+        {/*
+          Heading, search and «2 von 2» were three stacked rows saying one
+          thing between them, and the table they belong to started below the
+          fold on a laptop because of it. One row now — the count sits next to
+          the title it counts.
+        */}
+        <Toolbar
+          title={t('subscribersTitle')}
+          search={
+            subscribers.length > 0
+              ? {
+                  value: query,
+                  onChange: setQuery,
+                  label: t('searchLabel'),
+                  placeholder: t('searchPlaceholder'),
+                  clearLabel: t('searchClear'),
+                }
+              : undefined
+          }
+          count={
+            subscribers.length > 0
+              ? t('count', { shown: filtered.length, total: subscribers.length })
+              : undefined
+          }
+        />
 
         <DataView
-          className={subscribers.length > 0 ? undefined : 'mt-4'}
           items={filtered}
           columns={columns}
           getKey={(s) => s.id}
@@ -385,7 +407,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-page p-5">
+    <div className="bg-card p-5">
       <dt className="label-type text-ink-tertiary">{label}</dt>
       <dd className="mt-2">{children}</dd>
     </div>

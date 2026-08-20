@@ -9,9 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Filter,
   MapPin,
   Phone,
   Plus,
+  X,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -23,7 +25,13 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { addDays, detectRouteConflicts, startOfDay } from '@/mock/engines/availability';
 import { businessWeekday, fromZoned, zonedParts } from '@/lib/business-time';
-import { calendarDay, TONE_CHIP, TONE_DOT, type CalendarEntry } from '@/lib/calendar-entries';
+import {
+  calendarDay,
+  TONE_CHIP,
+  TONE_DOT,
+  type CalendarDay,
+  type CalendarEntry,
+} from '@/lib/calendar-entries';
 import { statesOf, statusTone, type StatusTone } from '@/lib/status-registry';
 import { ActionIcon } from '@/lib/action-icons';
 import type { CalendarEventKind } from '@/mock/schema';
@@ -73,14 +81,59 @@ function toneRows(
   return [...byTone].map(([tone, labels]) => ({ tone, label: labels.join(' · ') }));
 }
 
-function Swatch({ tone, label }: { tone: StatusTone; label: string }) {
+/**
+ * A legend row — and, where the colour belongs to something the calendar
+ * actually draws, the control that keeps only it.
+ *
+ * The legend answered "what does grey mean" and nothing else, which is half a
+ * question: the owner reads it because they are looking *for* the grey ones,
+ * and then had to find them by eye across a month grid. A row that explains a
+ * colour is already the natural place to click on it.
+ *
+ * `onToggle` is optional because one row is not a filter. Betriebsferien is a
+ * property of the day, not an entry in it, so there is nothing to keep.
+ */
+function Swatch({
+  tone,
+  label,
+  pressed,
+  onToggle,
+}: {
+  tone: StatusTone;
+  label: string;
+  pressed?: boolean;
+  onToggle?: () => void;
+}) {
+  const dot = (
+    <span
+      aria-hidden
+      className={cn('mt-1.5 size-2.5 shrink-0 rounded-full', TONE_DOT[tone])}
+    />
+  );
+
+  if (!onToggle) {
+    return (
+      <li className="flex items-start gap-2.5 px-2 py-1 text-sm">
+        {dot}
+        <span className="min-w-0">{label}</span>
+      </li>
+    );
+  }
+
   return (
-    <li className="flex items-start gap-2.5 text-sm">
-      <span
-        aria-hidden
-        className={cn('mt-1.5 size-2.5 shrink-0 rounded-full', TONE_DOT[tone])}
-      />
-      <span className="min-w-0">{label}</span>
+    <li>
+      <button
+        type="button"
+        aria-pressed={pressed}
+        onClick={onToggle}
+        className={cn(
+          'flex w-full items-start gap-2.5 rounded-[var(--radius-sm)] px-2 py-1 text-start text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+          pressed ? 'bg-accent-subtle font-medium text-ink' : 'hover:bg-sunken',
+        )}
+      >
+        {dot}
+        <span className="min-w-0">{label}</span>
+      </button>
     </li>
   );
 }
@@ -143,6 +196,7 @@ export default function CalendarPage({
   const settings = useStore((s) => s.settings);
 
   const [view, setView] = useState<View>('day');
+  const [filters, setFilters] = useState<string[]>([]);
   // `?tag` makes the calendar deep-linkable — a team member's job list links
   // to the day it happens on. A lazy initialiser, not an effect: an effect
   // would undo the "Today" button on every render.
@@ -187,7 +241,38 @@ export default function CalendarPage({
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
   const step = view === 'month' ? 30 : view === 'week' ? 7 : 1;
-  const today = calendarDay(cursor, source);
+
+  /*
+   * The legend, as a filter.
+   *
+   * Keyed by kind *and* tone. A cancelled job and a cancelled call are both
+   * grey and the legend lists them under two different headings — one key per
+   * colour would have made the two rows do the same thing.
+   *
+   * A row can carry more than one state, because the legend merges states that
+   * share a dot: «Kein Zutritt» and «Storniert» are one row, so they are one
+   * filter. Splitting them here would filter by something the calendar does
+   * not draw, and the owner would be selecting a distinction they cannot see.
+   */
+  const filtering = filters.length > 0;
+  const entryKey = (entry: CalendarEntry) =>
+    entry.kind === 'hold' ? 'hold' : `${entry.kind}:${entry.tone}`;
+  const toggle = (key: string) =>
+    setFilters((current) =>
+      current.includes(key) ? current.filter((k) => k !== key) : [...current, key],
+    );
+
+  /* Applied to a day after it is built, never inside `calendarDay`. The
+     capacity line and the week total count what the day and the week hold —
+     filtering the source they read would have both of them report the filter
+     back as if it were the schedule. */
+  const onlyPicked = (day: CalendarDay): CalendarDay =>
+    filtering
+      ? { ...day, entries: day.entries.filter((e) => filters.includes(entryKey(e))) }
+      : day;
+
+  const todayFull = calendarDay(cursor, source);
+  const today = onlyPicked(todayFull);
 
   const nameOf = (id: string) => {
     const c = customers.find((x) => x.id === id);
@@ -234,10 +319,11 @@ export default function CalendarPage({
         ? `${format.dateTime(weekStart, 'dayMonth')} – ${format.dateTime(addDays(weekStart, 5), 'dayMonth')}`
         : format.dateTime(cursor, 'full');
 
-  const weekDays = Array.from({ length: 6 }, (_, i) =>
+  const weekFull = Array.from({ length: 6 }, (_, i) =>
     calendarDay(addDays(weekStart, i), source),
   );
-  const weekJobs = weekDays.flatMap((d) => d.entries.filter((e) => e.kind === 'booking'));
+  const weekDays = weekFull.map(onlyPicked);
+  const weekJobs = weekFull.flatMap((d) => d.entries.filter((e) => e.kind === 'booking'));
 
   function EntryRow({ entry, time, until }: { entry: CalendarEntry; time: string; until: string }) {
     const Icon = entry.event ? EVENT_ICON[entry.event.kind] : entry.kind === 'hold' ? Clock : null;
@@ -353,6 +439,7 @@ export default function CalendarPage({
     <div>
       <PageHeader
         title={t('title')}
+        lead={t('lead')}
         actions={
           /*
             «Tagesroute» sat here and is gone, along with the screen behind it.
@@ -453,6 +540,21 @@ export default function CalendarPage({
         </ul>
       )}
 
+      {filtering && (
+        /* The legend is a side card, and a side card is *below* the grid on a
+           narrow screen — so the only thing saying "you are not seeing
+           everything" would sit exactly where nobody is looking when a week
+           comes up half empty. */
+        <div className="mt-app flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-line-subtle bg-sunken px-4 py-2.5 text-sm">
+          <Filter className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+          <span className="text-ink-secondary">{t('filterActive')}</span>
+          <Button size="sm" variant="ghost" className="ms-auto" onClick={() => setFilters([])}>
+            <X className="size-3.5" aria-hidden />
+            {t('filterClear')}
+          </Button>
+        </div>
+      )}
+
       <div className="gap-app mt-app grid lg:grid-cols-12">
         <div
           id="calendar-panel"
@@ -466,7 +568,7 @@ export default function CalendarPage({
               <div className="p-card">
                 <p data-numeric className="label-type text-ink-tertiary">
                   {t('capacity', {
-                    used: today.entries.filter((e) => e.kind === 'booking').length,
+                    used: todayFull.entries.filter((e) => e.kind === 'booking').length,
                     max: settings.maxJobsPerDay,
                   })}
                 </p>
@@ -483,19 +585,36 @@ export default function CalendarPage({
                   </div>
                 )}
 
-                {today.entries.length === 0 && !today.closure && (
-                  <EmptyState
-                    className="mt-4"
-                    compact
-                    title={t('emptyDayTitle')}
-                    body={t('emptyDayBody')}
-                    action={
-                      <Button asChild variant="secondary">
-                        <Link href="/admin/kalender/neu">{t('addAction')}</Link>
-                      </Button>
-                    }
-                  />
-                )}
+                {today.entries.length === 0 &&
+                  !today.closure &&
+                  /* «Nichts geplant» over a day the filter emptied is a lie
+                     with a button under it: it would send the owner to enter
+                     an appointment into a day that is already full. */
+                  (filtering ? (
+                    <EmptyState
+                      className="mt-4"
+                      compact
+                      title={t('filterEmptyTitle')}
+                      body={t('filterEmptyBody')}
+                      action={
+                        <Button variant="secondary" onClick={() => setFilters([])}>
+                          {t('filterClear')}
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <EmptyState
+                      className="mt-4"
+                      compact
+                      title={t('emptyDayTitle')}
+                      body={t('emptyDayBody')}
+                      action={
+                        <Button asChild variant="secondary">
+                          <Link href="/admin/kalender/neu">{t('addAction')}</Link>
+                        </Button>
+                      }
+                    />
+                  ))}
               </div>
 
               {today.entries.length > 0 && (
@@ -564,7 +683,7 @@ export default function CalendarPage({
                     const day = addDays(monthFirst, i - monthOffset);
                     const parts = zonedParts(day);
                     const inMonth = parts.month === monthAnchor.month;
-                    const cell = calendarDay(day, source);
+                    const cell = onlyPicked(calendarDay(day, source));
                     const shown = cell.entries.slice(0, MONTH_CELL_LIMIT);
                     const hidden = cell.entries.length - shown.length;
 
@@ -640,17 +759,35 @@ export default function CalendarPage({
                    second hand-rolled filter over bookings. That second filter
                    is exactly what lost the closures here. */
                 const days = Array.from({ length: 60 }, (_, i) =>
-                  calendarDay(addDays(startOfDay(now), i), source),
-                ).filter((d) => d.entries.length > 0 || d.closure);
+                  onlyPicked(calendarDay(addDays(startOfDay(now), i), source)),
+                ).filter(
+                  /* A shutdown earns a row because it explains the gap after
+                     it — but not under a filter, where sixty days of
+                     Betriebsferien would bury the four entries that matched. */
+                  (d) => d.entries.length > 0 || (Boolean(d.closure) && !filtering),
+                );
 
                 if (days.length === 0) {
                   return (
                     <div className="p-card">
-                      <EmptyState
-                        compact
-                        title={t('emptyAgendaTitle')}
-                        body={t('emptyAgendaBody')}
-                      />
+                      {filtering ? (
+                        <EmptyState
+                          compact
+                          title={t('filterEmptyTitle')}
+                          body={t('filterEmptyBody')}
+                          action={
+                            <Button variant="secondary" onClick={() => setFilters([])}>
+                              {t('filterClear')}
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <EmptyState
+                          compact
+                          title={t('emptyAgendaTitle')}
+                          body={t('emptyAgendaBody')}
+                        />
+                      )}
                     </div>
                   );
                 }
@@ -703,32 +840,60 @@ export default function CalendarPage({
         */}
         <aside className="lg:col-span-3">
           <Card className="lg:sticky lg:top-4">
-            <h2 className="label-type text-ink-tertiary">{t('legendTitle')}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <h2 className="label-type text-ink-tertiary">{t('legendTitle')}</h2>
+              {filtering && (
+                <Button size="sm" variant="ghost" onClick={() => setFilters([])}>
+                  {t('filterClear')}
+                </Button>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-ink-tertiary">{t('legendFilterHint')}</p>
 
             <div className="mt-4 space-y-4">
               <div>
                 <p className="text-sm font-medium">{t('legendJobs')}</p>
-                <ul className="mt-2 space-y-1.5">
+                {/* Pulled out by the button's own padding, so turning the rows
+                    into controls did not shift the dots off the card's
+                    left edge. */}
+                <ul className="-mx-2 mt-2 space-y-0.5">
                   {toneRows('booking', (state) => bookingStatusT(state)).map((row) => (
-                    <Swatch key={row.tone} tone={row.tone} label={row.label} />
+                    <Swatch
+                      key={row.tone}
+                      tone={row.tone}
+                      label={row.label}
+                      pressed={filters.includes(`booking:${row.tone}`)}
+                      onToggle={() => toggle(`booking:${row.tone}`)}
+                    />
                   ))}
                 </ul>
               </div>
 
               <div>
                 <p className="text-sm font-medium">{t('legendEvents')}</p>
-                <ul className="mt-2 space-y-1.5">
+                <ul className="-mx-2 mt-2 space-y-0.5">
                   {toneRows('calendarEvent', (state) => eventStatusT(state)).map((row) => (
-                    <Swatch key={row.tone} tone={row.tone} label={row.label} />
+                    <Swatch
+                      key={row.tone}
+                      tone={row.tone}
+                      label={row.label}
+                      pressed={filters.includes(`event:${row.tone}`)}
+                      onToggle={() => toggle(`event:${row.tone}`)}
+                    />
                   ))}
                 </ul>
               </div>
 
               <div>
                 <p className="text-sm font-medium">{t('legendOther')}</p>
-                <ul className="mt-2 space-y-1.5">
-                  <Swatch tone="progress" label={t('legendHold')} />
-                  <li className="flex items-start gap-2.5 text-sm">
+                <ul className="-mx-2 mt-2 space-y-0.5">
+                  <Swatch
+                    tone="progress"
+                    label={t('legendHold')}
+                    pressed={filters.includes('hold')}
+                    onToggle={() => toggle('hold')}
+                  />
+                  <li className="flex items-start gap-2.5 px-2 py-1 text-sm">
                     <span
                       aria-hidden
                       className="mt-1.5 size-2.5 shrink-0 rounded-full border border-line bg-sunken"

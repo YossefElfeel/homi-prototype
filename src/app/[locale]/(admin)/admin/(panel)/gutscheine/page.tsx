@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
+import { PageHeader } from '@/components/ui/page-header';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Coupon } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -108,17 +109,23 @@ export default function AdminCouponsPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="display-type text-3xl">{t('title')}</h1>
-        <Button asChild>
-          <Link href="/admin/gutscheine/neu">
-            <Plus className="size-4" aria-hidden />
-            {t('newAction')}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        actions={
+          <Button asChild>
+            <Link href="/admin/gutscheine/neu">
+              <Plus className="size-4" aria-hidden />
+              {t('newAction')}
+            </Link>
+          </Button>
+        }
+      />
 
-      <p className="mt-6 flex max-w-[var(--measure)] items-start gap-2 text-sm text-ink-secondary">
+      {/* Not the subheading, and it never was: the stacking rule is what the
+          office has to know *before* writing a code, not what this screen is
+          for. It keeps its icon and its own line under the header. */}
+      <p className="flex max-w-[var(--measure)] items-start gap-2 text-sm text-ink-secondary">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
         {t('stackingNote')}
       </p>
