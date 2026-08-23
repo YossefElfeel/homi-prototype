@@ -235,8 +235,39 @@ export const adminCrmEn: typeof adminCrmDe = {
     colLabel: 'Property',
     colCustomer: 'Customer',
     colAddress: 'Address',
-    colSpecs: 'Key facts',
+    /* Replaces `colSpecs`: the numbers had a column and the property type had
+       none — and the type is what the new filter selects on. */
+    colKind: 'Type & key facts',
+    colLastService: 'Last service',
+    colNextVisit: 'Next visit',
     colAccess: 'Access',
+    never: 'Never',
+    nothingBooked: 'Nothing booked',
+    overdue: 'Date has passed',
+    kinds: {
+      apartment: 'Flat',
+      house: 'House',
+      office: 'Office',
+    },
+    search: 'Search properties',
+    searchPlaceholder: 'Label, street, town or customer',
+    filterKind: 'Type',
+    filterZone: 'Zone',
+    filterAll: 'All',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody: 'No property matches “{query}”.',
+    filterEmptyBody: 'No property matches these filters.',
+    rowView: 'Open property',
+    rowEdit: 'Edit property',
+    rowDelete: 'Delete property',
+    /* The reason goes in the label: a greyed line carrying the same word
+       explains nothing, and a disabled item never fires a tooltip. */
+    rowDeleteBlocked: 'Cannot delete — {n} records depend on it',
+    deleteConfirm:
+      'Delete “{label}” for good? Nothing has ever used this property, so nothing is lost.',
+    deleteDone: '“{label}” deleted.',
+    deleteBlockedToast:
+      'This property is in use after all and has been kept. Please reload the page.',
     emptyTitle: 'No properties yet',
     emptyBody:
       'Properties come out of requests and appear here afterwards. A known property can also be entered directly.',
@@ -264,6 +295,7 @@ export const adminCrmEn: typeof adminCrmDe = {
 
   property: {
     back: 'All properties',
+    editAction: 'Edit',
     specsTitle: 'Key facts',
     accessTitle: 'Access',
     keysTitle: 'Keys',
@@ -272,6 +304,38 @@ export const adminCrmEn: typeof adminCrmDe = {
     notesPlaceholder: 'e.g. dog in the living room, very friendly …',
     historyTitle: 'Jobs at this property',
     historyEmpty: 'No job recorded yet.',
+  },
+
+  propertyEdit: {
+    title: 'Edit property',
+    lead: 'Correct the address and the key facts. Access details and keys stay on the property itself.',
+    back: 'Back to the property',
+    notFound: 'No such property.',
+    /* The customer is deliberately not a field: moving a property to another
+       household would leave bookings, quotes and invoices pointing at somebody
+       who never had it. */
+    owner: 'Belongs to',
+    addressTitle: 'Address',
+    addressHint: 'Printed on every quote, job sheet and invoice at this address.',
+    specsTitle: 'Key facts',
+    specsHint: 'Area and rooms feed the price calculation (§5).',
+    elevator: 'Lift in the building',
+    pets: 'Pets',
+    petsHint: 'On the job sheet before anybody opens the door.',
+    extraEffort: 'Extra effort',
+    extraEffortHint: 'Soiling, access or the state of the building take longer than the floor area suggests.',
+    notesTitle: 'Standing notes',
+    notesHint: 'Shown on every job at this property.',
+    notesPlaceholder: 'e.g. dog in the living room, very friendly …',
+    outsideTitle: 'Outside the service area',
+    outsideBody:
+      'Postcode {postcode} is not one of the eight municipalities served (§6). Saving still works — the property then belongs to no zone.',
+    errorRequired: 'Required.',
+    errorPostcode: 'Four digits.',
+    errorPositive: 'Must be greater than 0.',
+    save: 'Save changes',
+    cancel: 'Cancel',
+    done: '“{label}” saved.',
   },
 
   keys: {

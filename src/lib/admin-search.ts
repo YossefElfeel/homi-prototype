@@ -63,12 +63,15 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
   }
 
   for (const p of data.properties) {
-    if (has(p.street, p.postcode, p.city, `${p.postcode} ${p.city}`)) {
+    /* `label` was missing, so the one name the office actually uses for an
+       address — «Büro Seestrasse» — was the one string the search could not
+       find it by. It leads the title for the same reason. */
+    if (has(p.label, p.street, p.postcode, p.city, `${p.postcode} ${p.city}`)) {
       results.push({
         group: 'Properties',
         id: p.id,
-        title: p.street,
-        detail: `${p.postcode} ${p.city} · ${customerName(p.customerId)}`,
+        title: p.label || p.street,
+        detail: `${p.street}, ${p.postcode} ${p.city} · ${customerName(p.customerId)}`,
         href: `/admin/objekte/${p.id}`,
       });
     }

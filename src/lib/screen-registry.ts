@@ -364,11 +364,26 @@ export const TRACKS: Track[] = [
         ['empty', 'no match for the filters'],
         'The timeline the record used to carry whole — searchable, filtered by type and by date. Quotes are in it, which they never were on the record',
       ),
-      done('66', 'Objekte', 'Properties', '/admin/objekte', ['empty']),
+      done(
+        '66',
+        'Objekte',
+        'Properties',
+        '/admin/objekte',
+        ['empty', 'no search result', 'no match for the type or zone filter'],
+        'Last service and next visit are derived from the bookings, so the two questions the office asks this list every day are answered on it rather than in the calendar',
+      ),
       done('67', 'Objekt-Detail', 'Property detail', '/admin/objekte/prp_1', [
         'codes masked',
         'codes revealed',
       ]),
+      done(
+        '67a',
+        'Objekt bearbeiten',
+        'Edit property',
+        '/admin/objekte/prp_1/bearbeiten',
+        ['field error', 'postcode outside the service area'],
+        'Lift, pets and extra effort were written as `false` at creation and had no control anywhere — the three facts that change what a job costs and how it is briefed',
+      ),
       done(
         '68',
         'Schlüsselregister',

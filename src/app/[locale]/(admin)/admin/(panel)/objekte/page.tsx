@@ -1,18 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
-import { DoorOpen, KeyRound, Lock, Plus, UserCheck } from 'lucide-react';
+import { DoorOpen, KeyRound, Lock, Plus, Search, UserCheck } from 'lucide-react';
 
 import { useRouter } from '@/i18n/navigation';
+import type { Locale } from '@/i18n/routing';
+import { ActionIcon } from '@/lib/action-icons';
+import { PROPERTY_KINDS, propertyUsage, propertyVisits, zoneOf, zonesOf } from '@/lib/property-facts';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
+import {
+  RowAction,
+  RowActionButton,
+  RowActions,
+  RowActionsDivider,
+} from '@/components/ui/row-actions';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { Toolbar } from '@/components/ui/toolbar';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { AccessMethod, Property, PropertyKind } from '@/mock/schema';
+import type { AccessMethod, Booking, Property, PropertyKind } from '@/mock/schema';
 
 const ACCESS_ICONS: Record<AccessMethod, typeof DoorOpen> = {
   'customer-present': DoorOpen,
@@ -28,23 +41,86 @@ const ACCESS_SHORT: Record<AccessMethod, string> = {
   'other-person': 'Andere Person',
 };
 
-/** Screen 66 — every property, with its access method visible at a glance. */
+/**
+ * Screen 66 — every property, and what is owed at it.
+ *
+ * The list was five columns of what an address *is* — label, owner, street,
+ * area, access method — sorted by nothing, filtered by nothing, and acted on
+ * only by opening it. Two questions the office asks this screen every day had
+ * no answer on it: "when were we last at this address" and "when are we next
+ * there". Both were one click and a scroll away on the property's own history,
+ * per address, which is why the answer was normally looked up in the calendar
+ * instead.
+ *
+ * The two date columns are derived, not stored — see `lib/property-facts.ts`.
+ */
 export default function PropertiesPage() {
   const t = useTranslations('admin.properties');
+  const appT = useTranslations('app');
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const format = useFormatter();
   const hydrated = useHydrated();
 
   const properties = useStore((s) => s.data.properties);
   const customers = useStore((s) => s.data.customers);
+  const bookings = useStore((s) => s.data.bookings);
+  const services = useStore((s) => s.services);
+  const data = useStore((s) => s.data);
   const createProperty = useStore((s) => s.createProperty);
+  const deleteProperty = useStore((s) => s.deleteProperty);
   const now = useNow();
 
   const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState('');
+  const [kind, setKind] = useState<'all' | PropertyKind>('all');
+  const [zone, setZone] = useState('all');
+
+  const zones = useMemo(() => zonesOf(properties), [properties]);
+
+  /* Derived once for the whole table rather than per cell: two columns read it
+     and both are sortable, so the naive version rescans every booking four
+     times per row and again on every comparison the sort makes. */
+  const visits = useMemo(
+    () => new Map(properties.map((p) => [p.id, propertyVisits(bookings, p.id)])),
+    [properties, bookings],
+  );
+
+  const customerName = useMemo(() => {
+    const byId = new Map(customers.map((c) => [c.id, `${c.firstName} ${c.lastName}`]));
+    return (id: string) => byId.get(id) ?? '—';
+  }, [customers]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return properties
+      .filter((p) => (kind === 'all' ? true : p.kind === kind))
+      .filter((p) => (zone === 'all' ? true : p.postcode === zone))
+      .filter((p) =>
+        q
+          ? /* The label is first because it is what the office calls the
+               address out loud — «Büro Seestrasse», not a postcode. The rest
+               are here because a caller reads out whatever is in front of
+               them, which is as often the street or the owner's name. */
+            [p.label, p.street, p.postcode, p.city, customerName(p.customerId)]
+              .join(' ')
+              .toLowerCase()
+              .includes(q)
+          : true,
+      );
+  }, [properties, kind, zone, query, customerName]);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
+  const filtering = kind !== 'all' || zone !== 'all' || Boolean(query.trim());
+
+  /** The service name, or the slug if the catalogue no longer carries it. */
+  const serviceName = (booking: Booking) =>
+    services.find((s) => s.slug === booking.serviceSlug)?.name[locale] ?? booking.serviceSlug;
+
   const columns: Column<Property>[] = [
-    { key: 'label', header: t('colLabel'), primary: true, cell: (p) => p.label },
+    { key: 'label', header: t('colLabel'), primary: true, cell: (p) => p.label,
+      sortBy: (p) => p.label.toLowerCase() },
     {
       key: 'access',
       header: t('colAccess'),
@@ -63,29 +139,95 @@ export default function PropertiesPage() {
     {
       key: 'customer',
       header: t('colCustomer'),
-      cell: (p) => {
-        const c = customers.find((x) => x.id === p.customerId);
-        return c ? `${c.firstName} ${c.lastName}` : '—';
-      },
+      cell: (p) => customerName(p.customerId),
+      sortBy: (p) => customerName(p.customerId).toLowerCase(),
     },
     {
       key: 'address',
       header: t('colAddress'),
       cell: (p) => (
         <span className="text-ink-secondary">
-          {p.street}, <span data-numeric>{p.postcode}</span> {p.city}
+          {p.street}
+          <span className="block text-sm text-ink-tertiary">
+            <span data-numeric>{p.postcode}</span> {zoneOf(p).label}
+          </span>
         </span>
       ),
+      sortBy: (p) => `${p.postcode} ${p.street}`,
     },
     {
-      key: 'specs',
-      header: t('colSpecs'),
-      align: 'end',
+      /* Was two columns' worth of nothing: `colSpecs` printed the numbers and
+         the *kind* — the thing the new filter selects on — appeared nowhere at
+         all, so filtering to «Büro» left a table with no column explaining why
+         those rows survived. */
+      key: 'kind',
+      header: t('colKind'),
       cell: (p) => (
-        <span data-numeric className="text-sm text-ink-tertiary">
-          {p.area} m² · {p.rooms} Zi. · {p.bathrooms} Bad
+        <span>
+          {t(`kinds.${p.kind}`)}
+          <span data-numeric className="block text-sm text-ink-tertiary">
+            {p.area} m² · {p.rooms} Zi. · {p.bathrooms} Bad
+          </span>
         </span>
       ),
+      sortBy: (p) => p.kind,
+    },
+    {
+      key: 'lastService',
+      header: t('colLastService'),
+      cell: (p) => {
+        const last = visits.get(p.id)?.last;
+        if (!last) return <span className="text-ink-tertiary">{t('never')}</span>;
+        return (
+          <span>
+            <span data-numeric className="block">
+              {format.dateTime(new Date(last.start), 'short')}
+            </span>
+            <span className="block text-sm text-ink-tertiary">{serviceName(last)}</span>
+          </span>
+        );
+      },
+      sortBy: (p) => visits.get(p.id)?.last?.start ?? null,
+    },
+    {
+      key: 'nextVisit',
+      header: t('colNextVisit'),
+      cell: (p) => {
+        const next = visits.get(p.id)?.next;
+        if (!next) return <span className="text-ink-tertiary">{t('nothingBooked')}</span>;
+        const start = new Date(next.start);
+        /*
+         * A job still on the books whose day has gone.
+         *
+         * Nothing sweeps these: `scheduled` is written when the slot is taken
+         * and only a check-in moves it, so the seed carries one or two in most
+         * scenarios and real use would carry more. Dropping them from the
+         * column would blank it for precisely the rows that need chasing, and
+         * printing the date bare would file a job nobody turned up to under
+         * "next visit" — so it is printed, and marked.
+         */
+        const overdue = next.status !== 'inProgress' && start < now;
+        return (
+          <span>
+            <span data-numeric className="block">
+              {format.dateTime(start, 'short')}, {format.dateTime(start, 'time')}
+            </span>
+            <span className="block text-sm text-ink-tertiary">{serviceName(next)}</span>
+            {/* A job that has been moved, or one the crew is standing in right
+                now, is not the same news as a plain «scheduled» — and the date
+                alone cannot say which of the three this is. */}
+            {(next.status !== 'scheduled' || overdue) && (
+              <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                {next.status !== 'scheduled' && (
+                  <StatusBadge entity="booking" state={next.status} size="sm" />
+                )}
+                {overdue && <Chip tone="warning">{t('overdue')}</Chip>}
+              </span>
+            )}
+          </span>
+        );
+      },
+      sortBy: (p) => visits.get(p.id)?.next?.start ?? null,
     },
   ];
 
@@ -98,6 +240,19 @@ export default function PropertiesPage() {
       {t('addAction')}
     </Button>
   );
+
+  function remove(property: Property) {
+    if (!window.confirm(t('deleteConfirm', { label: property.label || property.street })))
+      return;
+    /* The store re-checks rather than trusting this screen's arithmetic: the
+       menu item is only enabled when the usage count is zero, and a second
+       tab could have booked the address between the render and the click. */
+    if (!deleteProperty(property.id)) {
+      toast.error(t('deleteBlockedToast'));
+      return;
+    }
+    toast.success(t('deleteDone', { label: property.label || property.street }));
+  }
 
   return (
     <div>
@@ -179,9 +334,11 @@ export default function PropertiesPage() {
             <Field label={t('newKind')}>
               {(props) => (
                 <Select {...props} name="kind" defaultValue="apartment">
-                  <option value="apartment">Wohnung</option>
-                  <option value="house">Haus</option>
-                  <option value="office">Büro</option>
+                  {PROPERTY_KINDS.map((k) => (
+                    <option key={k} value={k}>
+                      {t(`kinds.${k}`)}
+                    </option>
+                  ))}
                 </Select>
               )}
             </Field>
@@ -212,18 +369,123 @@ export default function PropertiesPage() {
         </form>
       )}
 
+      {/* The screen carried no toolbar at all. Sixteen addresses in the default
+          scenario is already past the point where "find the Meilen office"
+          means reading every row, and the count is the only confirmation that
+          typing in the box changed anything. */}
+      <Toolbar
+        search={{
+          value: query,
+          onChange: setQuery,
+          label: t('search'),
+          placeholder: t('searchPlaceholder'),
+          clearLabel: appT('clearSearch'),
+        }}
+        count={
+          filtering
+            ? appT('results', { shown: filtered.length, total: properties.length })
+            : appT('resultsAll', { total: properties.length })
+        }
+        filters={
+          <>
+            <label className="min-w-36">
+              <span className="sr-only">{t('filterKind')}</span>
+              <Select
+                dense
+                value={kind}
+                onChange={(e) => setKind(e.target.value as typeof kind)}
+              >
+                <option value="all">
+                  {t('filterKind')}: {t('filterAll')}
+                </option>
+                {PROPERTY_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`kinds.${k}`)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {/* §6 draws the area as eight municipalities and the postcode is
+                the only field that says which one. The options are built from
+                the properties on hand rather than from all eight, so the list
+                never offers a zone that would filter to nothing. */}
+            <label className="min-w-36">
+              <span className="sr-only">{t('filterZone')}</span>
+              <Select dense value={zone} onChange={(e) => setZone(e.target.value)}>
+                <option value="all">
+                  {t('filterZone')}: {t('filterAll')}
+                </option>
+                {zones.map((z) => (
+                  <option key={z.key} value={z.key}>
+                    {z.label} ({z.key})
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
+        }
+      />
+
       <DataView
-        items={properties}
+        items={filtered}
         columns={columns}
         getKey={(p) => p.id}
         onSelect={(p) => router.push(`/admin/objekte/${p.id}`)}
         caption={t('title')}
+        openLabel={t('rowView')}
+        /*
+         * Opening the record was the row's only trick. Correcting a street
+         * number meant opening the property to find there was nowhere to do it
+         * there either, and an address typed wrong on a call could not be
+         * removed at all — so the list grew a duplicate every time.
+         */
+        rowActions={(p) => {
+          const usage = propertyUsage(data, p.id);
+          return (
+            <RowActions>
+              <RowAction href={`/admin/objekte/${p.id}`} label={t('rowView')}>
+                <ActionIcon.open aria-hidden />
+              </RowAction>
+              <RowAction href={`/admin/objekte/${p.id}/bearbeiten`} label={t('rowEdit')}>
+                <ActionIcon.edit aria-hidden />
+              </RowAction>
+              <RowActionsDivider />
+              <RowActionButton
+                tone="danger"
+                disabled={usage.total > 0}
+                /* The label carries the reason: seven record types point at a
+                   property, and an address with history is kept so the
+                   invoices behind it still resolve (§15). */
+                label={
+                  usage.total > 0
+                    ? t('rowDeleteBlocked', { n: usage.total })
+                    : t('rowDelete')
+                }
+                onClick={() => remove(p)}
+              >
+                <ActionIcon.delete aria-hidden />
+              </RowActionButton>
+            </RowActions>
+          );
+        }}
         empty={
-          <EmptyState
-            title={t('emptyTitle')}
-            body={customers.length === 0 ? t('newNoCustomers') : t('emptyBody')}
-            action={customers.length > 0 ? addButton : undefined}
-          />
+          /* Three ways to be empty, and they need three different sentences.
+             Keying the empty state on the data alone would answer "no match
+             for Meilen" with "properties come from requests" — an explanation
+             of how to create the rows you were looking at a second ago. */
+          filtering ? (
+            <EmptyState
+              icon={Search}
+              title={t('searchEmptyTitle')}
+              body={query.trim() ? t('searchEmptyBody', { query }) : t('filterEmptyBody')}
+            />
+          ) : (
+            <EmptyState
+              title={t('emptyTitle')}
+              body={customers.length === 0 ? t('newNoCustomers') : t('emptyBody')}
+              action={customers.length > 0 ? addButton : undefined}
+            />
+          )
         }
       />
     </div>
