@@ -138,7 +138,10 @@ export function Section({
         className,
       )}
     >
-      <div className="mx-auto max-w-7xl px-gutter">{children}</div>
+      {/* hv-section-inner is a hook, not a style: Homivaro's container is
+          1440 to match its header, and every other direction keeps 7xl. The
+          gutter already comes from --space-gutter, so only the ceiling moves. */}
+      <div className="hv-section-inner mx-auto max-w-7xl px-gutter">{children}</div>
     </section>
   );
 }

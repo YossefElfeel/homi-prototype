@@ -305,4 +305,60 @@ export const siteEn: typeof siteDe = {
     n3: 'If it works, you pick a free slot.',
     home: 'Back to the home page',
   },
+
+  display: {
+    services: {
+      lines: [{ lead: 'Seven services,' }, { lead: 'one', accent: 'per request.' }],
+      relatedLines: [{ lead: 'Other' }, { accent: 'services.' }],
+      includedLines: [{ lead: 'What is in —' }, { accent: 'and what is not.' }],
+      addOnsLines: [{ lead: 'Can be' }, { accent: 'added.' }],
+      faqLines: [{ lead: 'Common' }, { accent: 'questions.' }],
+    },
+    pricing: {
+      lines: [{ lead: 'One hourly rate.' }, { accent: 'No flat fees.' }],
+      tableLines: [{ lead: 'Guide prices' }, { accent: 'by service.' }],
+      durationLines: [{ lead: 'How we estimate' }, { accent: 'the hours.' }],
+      extrasLines: [{ lead: 'What can be' }, { accent: 'added.' }],
+      faqLines: [{ lead: 'Questions' }, { accent: 'about price.' }],
+    },
+    plans: {
+      lines: [{ lead: 'Regularly clean,' }, { lead: 'without the', accent: 'planning.' }],
+      compareLines: [{ lead: 'Side' }, { accent: 'by side.' }],
+      faqLines: [{ lead: 'Questions' }, { accent: 'about plans.' }],
+    },
+    gallery: {
+      lines: [{ lead: 'Before' }, { accent: 'and after.' }],
+    },
+    about: {
+      lines: [{ lead: 'One person, one area,' }, { accent: 'clear rules.' }],
+      valuesLines: [{ lead: 'What we' }, { accent: 'stand for.' }],
+      regionLines: [{ lead: 'Where we' }, { accent: 'work.' }],
+      careersLines: [{ lead: 'Working' }, { accent: 'with us.' }],
+    },
+    contact: {
+      lines: [{ lead: 'Talk' }, { accent: 'to us.' }],
+    },
+    regions: {
+      leadWord: 'Cleaning in',
+      servicesLines: [{ lead: 'Services' }, { accent: 'on site.' }],
+      otherLines: [{ lead: 'Other' }, { accent: 'municipalities.' }],
+    },
+    regionsIndex: {
+      lines: [{ accent: 'Eight municipalities' }, { lead: 'on the right shore.' }],
+      metaTitle: 'Service area',
+      metaDescription:
+        'Cleaning and furniture assembly across eight municipalities on the right shore of Lake Zurich. Check your postcode.',
+      lead: 'We work a deliberately tight area. Short distances mean punctual appointments — and no travel charge.',
+      checkLabel: 'Check your postcode',
+      checkPlaceholder: '8700',
+      checkAction: 'Check',
+      inside: 'Yes — {region} is inside the service area.',
+      outside: '{postcode} is outside it. Send the request anyway and we will look at it.',
+      invalid: 'A postcode has four digits.',
+      gridTitle: 'Every municipality',
+      gridLines: [{ lead: 'Every' }, { accent: 'municipality.' }],
+      responseLabel: 'Reply within',
+    },
+  },
+
 };

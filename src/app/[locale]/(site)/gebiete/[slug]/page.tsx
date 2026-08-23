@@ -12,6 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
 import { ServiceGrid } from '@/components/site/service-grid';
+import { Masthead } from '@/components/landing/Masthead';
+import { PageSection, SectionHead } from '@/components/landing/PageSection';
+import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
+import { ArrowUpRight } from '@/components/landing/icons';
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
@@ -55,6 +59,62 @@ export default async function RegionPage({
   const theme = await getTheme();
   const t = await getTranslations('site.regions');
   const others = SERVED_REGIONS.filter((r) => r.slug !== region.slug);
+
+  const d = await getTranslations('site.display.regions');
+
+  if (theme === 'homivaro') {
+    return (
+      <>
+        {/* The town is the red half of the heading. It is also the only word
+            on the page that changes between the eight, so it is the one worth
+            colouring. */}
+        <Masthead
+          lines={[{ lead: d('leadWord') }, { accent: region.name }]}
+          lead={t('lead', { region: region.name })}
+          action={{ label: t('cta', { region: region.name }), href: `/anfrage?plz=${region.postcode}` }}
+          stats={[
+            { label: t('postcodeLabel'), value: region.postcode },
+            { label: t('travelLabel'), value: t('travelValue') },
+            { label: t('responseLabel'), value: `${SEED_SETTINGS.responseTimeHours} h` },
+          ]}
+        />
+
+        <PageSection>
+          <SectionHead lines={d.raw('servicesLines')} />
+          <div className="mt-12">
+            <ServiceMosaic />
+          </div>
+        </PageSection>
+
+        <PageSection tone="sunken">
+          <SectionHead lines={d.raw('otherLines')} />
+          <ul className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {others.map((other) => (
+              <li key={other.slug} className="hv-card hv-card-light group overflow-hidden">
+                <Link
+                  href={`/gebiete/${other.slug}`}
+                  className="flex items-center justify-between gap-3 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                >
+                  <span>
+                    <span className="block font-medium text-ink">{other.name}</span>
+                    <span data-numeric className="mt-1 block text-sm text-ink-secondary">
+                      {other.postcode}
+                    </span>
+                  </span>
+                  <ArrowUpRight
+                    className="h-4 w-4 shrink-0 text-ink-tertiary transition-transform duration-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </PageSection>
+
+        <CtaBand theme={theme} />
+      </>
+    );
+  }
 
   return (
     <>

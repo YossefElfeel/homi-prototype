@@ -11,6 +11,9 @@ import { Section, SectionHeading } from '@/components/signature/section-heading'
 import { CtaBand } from '@/components/signature/cta-band';
 import { PlanCards } from '@/components/site/plan-cards';
 import { PlanComparison } from '@/components/site/plan-comparison';
+import { Masthead } from '@/components/landing/Masthead';
+import { PageSection, SectionHead } from '@/components/landing/PageSection';
+import { Plans } from '@/components/landing/Plans';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -53,6 +56,60 @@ export default async function PlansPage({
   setRequestLocale(locale);
   const theme = await getTheme();
   const t = await getTranslations('site.plans');
+  const d = await getTranslations('site.display.plans');
+
+  if (theme === 'homivaro') {
+    return (
+      <>
+        <Masthead lines={d.raw('lines')} lead={t('lead')} />
+
+        {/* The commitment notice comes before the cards, not after them. It is
+            the one fact that decides whether a plan is the right purchase, and
+            a caveat printed under the buy button is a caveat nobody read. */}
+        <PageSection className="!pb-0">
+          <div className="hv-card hv-card-light flex max-w-3xl gap-4 p-6">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
+            <div>
+              <h2 className="font-medium">{t('commitmentNoticeTitle')}</h2>
+              <p className="mt-1.5 text-[15px] leading-[1.6] text-ink-secondary">
+                {t('commitmentNoticeBody')}
+              </p>
+            </div>
+          </div>
+        </PageSection>
+
+        {/* The homepage block, unchanged. Somebody arriving from the CTA there
+            has to land on the thing they clicked. */}
+        <Plans />
+
+        <PageSection tone="sunken">
+          <SectionHead lines={d.raw('compareLines')} />
+          <div className="mt-12">
+            <PlanComparison />
+          </div>
+        </PageSection>
+
+        <PageSection>
+          <div className="grid gap-10 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <SectionHead lines={d.raw('faqLines')} />
+            </div>
+            <div className="lg:col-span-7">
+              <Faq
+                items={[
+                  { q: t('q1'), a: t('a1') },
+                  { q: t('q2'), a: t('a2') },
+                  { q: t('q3'), a: t('a3') },
+                ]}
+              />
+            </div>
+          </div>
+        </PageSection>
+
+        <CtaBand theme={theme} />
+      </>
+    );
+  }
 
   return (
     <>

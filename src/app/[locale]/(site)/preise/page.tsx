@@ -13,6 +13,7 @@ import { Faq } from '@/components/ui/accordion';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
 import { serviceFromPrice } from '@/components/site/service-grid';
+import { Masthead } from '@/components/landing/Masthead';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -47,17 +48,26 @@ export default async function PricingPage({
   const t = await getTranslations('site.pricing');
   const s = SEED_SETTINGS;
 
+  const d = await getTranslations('site.display.pricing');
+  const hv = theme === 'homivaro';
+
   return (
     <>
+      {hv ? (
+        <Masthead lines={d.raw('lines')} lead={t('lead')} />
+      ) : null}
+
       <Section>
-        <SectionHeading
-          theme={theme}
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lead={t('lead')}
-          align="start"
-          level={1}
-        />
+        {!hv ? (
+          <SectionHeading
+            theme={theme}
+            eyebrow={t('eyebrow')}
+            title={t('title')}
+            lead={t('lead')}
+            align="start"
+            level={1}
+          />
+        ) : null}
 
         <dl className="mt-12 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2">
           <div className="bg-page p-7">
@@ -96,7 +106,7 @@ export default async function PricingPage({
               {SEED_SERVICES.filter((service) => service.active)
                 .sort((a, b) => a.order - b.order)
                 .map((service) => (
-                  <tr key={service.slug} className="border-b border-line-subtle">
+                  <tr key={service.slug} className="hv-row border-b border-line-subtle">
                     <th scope="row" className="py-4 pr-4 font-normal">
                       <Link
                         href={`/leistungen/${service.slug}`}

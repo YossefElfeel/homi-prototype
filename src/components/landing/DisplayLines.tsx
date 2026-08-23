@@ -11,6 +11,8 @@ type Props = {
   /** Fire on mount rather than on scroll — used by the hero. */
   immediate?: boolean;
   each?: number;
+  /** Set when the caller renders its own accessible copy of the text. */
+  ariaHidden?: boolean;
 };
 
 /**
@@ -24,6 +26,7 @@ export function DisplayLines({
   delay = 0,
   immediate = false,
   each = 0.09,
+  ariaHidden = false,
 }: Props) {
   const animateProps = immediate
     ? { animate: "show" as const }
@@ -31,6 +34,7 @@ export function DisplayLines({
 
   return (
     <motion.span
+      aria-hidden={ariaHidden || undefined}
       className={className}
       initial="hidden"
       variants={stagger(each, delay)}
