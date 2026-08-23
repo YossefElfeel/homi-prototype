@@ -65,7 +65,7 @@ export function Coverage() {
               }}
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className={`hv-card hv-hv-card-light group overflow-hidden px-6 py-6 ${
+              className={`hv-card hv-card-light group overflow-hidden px-6 py-6 ${
                 // Three, three, then two wider tiles — the design's 3-3-2 grid.
                 i >= 6 ? "sm:col-span-3" : "sm:col-span-2"
               }`}
