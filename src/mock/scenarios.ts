@@ -893,8 +893,17 @@ function baseData(now: Date): DataSet {
     }),
   ];
 
-  // §13.2 — a key held permanently for a subscription customer gets its own
-  // record: when it was taken, by whom, and where it is kept.
+  /*
+   * §13.2 — a key held permanently for a subscription customer gets its own
+   * record: when it was taken, by whom, and where it is kept.
+   *
+   * Three entries rather than one, and all three on prp_1, because that is the
+   * record screen 67 is linked from everywhere. One key was a card with a
+   * single unlabelled line on it, which could not show the difference between
+   * "we hold this" and "we gave it back" — the one thing the card is asked.
+   * The set now carries a held house key, its spare, and a returned cellar key,
+   * so both `KeyStatus` values are on the record a reviewer opens first.
+   */
   const keyLog: KeyLogEntry[] = [
     {
       id: 'key_1',
@@ -903,6 +912,23 @@ function baseData(now: Date): DataSet {
       receivedBy: 'Marco Brunner',
       storageLocation: 'Schlüsselschrank Büro, Fach 3',
       status: 'held',
+    },
+    {
+      id: 'key_2',
+      propertyId: 'prp_1',
+      receivedAt: iso(days(now, -58)),
+      receivedBy: 'Marco Brunner',
+      storageLocation: 'Zweitschlüssel — Tresor, Fach 1',
+      status: 'held',
+    },
+    {
+      id: 'key_3',
+      propertyId: 'prp_1',
+      receivedAt: iso(days(now, -120)),
+      receivedBy: 'Anna Suter',
+      storageLocation: 'Kellerschlüssel — Schlüsselschrank Büro, Fach 3',
+      returnedAt: iso(days(now, -74)),
+      status: 'returned',
     },
   ];
 
@@ -3427,7 +3453,10 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     },
   ];
 
-  /* Both KeyStatus values — `returned` existed only as a type. */
+  /* A returned key on a *second* property. The base set carries both
+     KeyStatus values on prp_1 now, so this is no longer the only place
+     `returned` exists — it is here so the key log lists more than one address
+     with a closed record behind it. */
   const keyLog: KeyLogEntry[] = [
     ...data.keyLog,
     {

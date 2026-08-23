@@ -321,8 +321,13 @@ export const adminCrmDe = {
     back: 'Alle Objekte',
     editAction: 'Bearbeiten',
     specsTitle: 'Eckdaten',
+    kindLabel: 'Objektart',
+    zoneLabel: 'Gebiet',
     accessTitle: 'Zutritt',
     keysTitle: 'Schlüssel',
+    keysLead: 'Was von diesem Objekt bei uns liegt — und was schon zurück ist.',
+    keysEmptyBody:
+      'An diesem Objekt liegt kein Schlüssel bei uns. Zutritt läuft über die Methode oben.',
     notesTitle: 'Dauerhafte Notizen',
     notesHint: 'Erscheinen bei jedem Einsatz an diesem Objekt.',
     notesPlaceholder: 'z. B. Hund im Wohnzimmer, sehr freundlich …',
