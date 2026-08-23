@@ -147,6 +147,10 @@ export const en: Messages = {
       failed: 'Failed',
       refunded: 'Refunded',
     },
+    key: {
+      held: 'Held',
+      returned: 'Returned',
+    },
     /* Not the state of a payment but its route. Here because it used to live in
        three places: the customer's account, the quote's payment step, and
        `admin.offers.method` — inside a single screen's namespace. */

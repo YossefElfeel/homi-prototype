@@ -21,7 +21,8 @@ export type StatusEntity =
   | 'invoice'
   | 'review'
   | 'application'
-  | 'payment';
+  | 'payment'
+  | 'key';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   // §4.1
@@ -119,6 +120,21 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     succeeded: 'success',
     failed: 'danger',
     refunded: 'neutral',
+  },
+  /*
+   * §13.2. The key log wrote these two colours inline — `status-info` against
+   * `status-neutral`, hand-typed in the cell — and the property record drew the
+   * same two states as a `Chip` with its own tones. Two screens, one state, two
+   * places to get it wrong, which is precisely what this file exists to stop.
+   *
+   * `returned` is neutral rather than success: handing a key back is the record
+   * closing, not something going well. Green would put the same weight on it as
+   * a paid invoice, and read as an outcome to aim for — the office is normally
+   * holding keys on purpose.
+   */
+  key: {
+    held: 'info',
+    returned: 'neutral',
   },
 };
 

@@ -148,6 +148,10 @@ export const de = {
       failed: 'Fehlgeschlagen',
       refunded: 'Rückerstattet',
     },
+    key: {
+      held: 'In Aufbewahrung',
+      returned: 'Zurückgegeben',
+    },
     /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
        vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
        Zahlschritt der Offerte und einmal als `admin.offers.method`, also

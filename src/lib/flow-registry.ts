@@ -265,11 +265,26 @@ export const FLOWS: Flow[] = [
       ),
       added('Objekt erfassen', '/admin/objekte', 'Ausserhalb einer Anfrage — für bekannte Adressen'),
       ok('Automatisch aus einer Anfrage', '/anfrage/kontakt'),
+      added(
+        'Schlüssel übernehmen',
+        '/admin/schluessel',
+        'Das Formular fragte nur nach dem Objekt und listete jede Adresse der Firma als «Bezeichnung — Strasse». Übergeben wird ein Schlüssel aber von einem Menschen, der seinen Namen nennt: das Büro musste den Namen erst in eines von sechzehn Labels übersetzen, und zwei Kunden mit einer Wohnung an derselben Strasse waren ein Fehlgriff, den nichts danach je bemerkt hätte. Kunde zuerst, dann seine Objekte',
+      ),
     ],
     actions: [
       added('Doppelprüfung auf E-Mail und Telefon', '/admin/kunden/neu', 'Dieselbe Regel wie im Assistenten'),
       ok('Interne Notizen', '/admin/kunden/cus_1'),
       ok('Zutritt und Schlüssel am Objekt', '/admin/objekte/prp_1', 'Codes rollen- und datumsgebunden, §13.1'),
+      added(
+        'Nach Status filtern, nach Aufbewahrung und Person suchen',
+        '/admin/schluessel',
+        '«Welche Schlüssel haben wir gerade?» hiess jede Zeile lesen und das Badge prüfen. Das Register behält zurückgegebene Einträge dauerhaft (§13.2), die Liste wächst also von der Antwort weg. Gesucht wird hier als einziger Liste auch rückwärts: jemand steht am Schrank mit einem Anhänger «Fach 3» und muss wissen, zu wessen Tür er gehört — deshalb sind Aufbewahrungsort und die Namen bei Übernahme und Rückgabe durchsuchbar, nicht nur Objekt und Kunde. Dazu die Trefferzahl, die jede andere Admin-Liste über die `Toolbar` längst hatte',
+      ),
+      added(
+        'Vom Schlüssel zum Objekt springen',
+        '/admin/schluessel',
+        'Die Zeile hatte genau ein Control — «Rückgabe erfassen» — und keinen Weg zu der Adresse, zu der der Schlüssel gehört. Genau dort endet aber jede Frage zu einem Schlüssel: wessen Tür, welcher Zutritt, steht dort ein Auftrag an. Der Sprung lief über die Seitenleiste und eine Suche nach dem hier abgelesenen Label',
+      ),
       added(
         'Objekt bearbeiten',
         '/admin/objekte/prp_1/bearbeiten',
@@ -337,6 +352,11 @@ export const FLOWS: Flow[] = [
       ),
     ],
     exits: [
+      added(
+        'Schlüssel zurückgeben',
+        '/admin/schluessel',
+        'Die Rückgabe war ein Knopf in der Tabelle: ein Klick, Status umgestellt, Zeitstempel gesetzt, nichts gefragt — unumkehrbar und ohne Rückfrage. Der geschlossene Eintrag konnte damit keine der beiden Fragen beantworten, die zu einem Schlüssel ausserhalb des Schranks überhaupt gestellt werden: wer ihn hinausgetragen hat und wer dafür unterschrieben hat. Jetzt ein Dialog mit Datum, beiden Namen und einer Notiz — und der Eintrag bleibt im Register, gelöscht wird er nie',
+      ),
       ok('Konto schliessen', '/konto/profil', 'Durch den Kunden selbst'),
       added(
         'Archivieren und wiederherstellen',

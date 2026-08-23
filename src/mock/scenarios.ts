@@ -897,12 +897,21 @@ function baseData(now: Date): DataSet {
    * §13.2 — a key held permanently for a subscription customer gets its own
    * record: when it was taken, by whom, and where it is kept.
    *
-   * Three entries rather than one, and all three on prp_1, because that is the
-   * record screen 67 is linked from everywhere. One key was a card with a
-   * single unlabelled line on it, which could not show the difference between
-   * "we hold this" and "we gave it back" — the one thing the card is asked.
-   * The set now carries a held house key, its spare, and a returned cellar key,
-   * so both `KeyStatus` values are on the record a reviewer opens first.
+   * Three of the five sit on prp_1, because that is the record screen 67 is
+   * linked from everywhere. One key was a card with a single unlabelled line on
+   * it, which could not show the difference between "we hold this" and "we gave
+   * it back" — the one thing the card is asked. Those three carry a held house
+   * key, its spare, and a returned cellar key, so both `KeyStatus` values are
+   * on the record a reviewer opens first.
+   *
+   * The other two are on other addresses, and that is the point of them: with
+   * every key on one property the register was a list that answered every
+   * question the same way. Nothing could be told apart by customer, the status
+   * filter had one row on one side of it, and searching for an address that was
+   * not Seestrasse 44 returned nothing — so neither control could be seen
+   * working. Five entries across three customers, three held and two returned,
+   * is the smallest set where the filter, the search and the customer column
+   * each have something to do.
    */
   const keyLog: KeyLogEntry[] = [
     {
@@ -921,6 +930,10 @@ function baseData(now: Date): DataSet {
       storageLocation: 'Zweitschlüssel — Tresor, Fach 1',
       status: 'held',
     },
+    /* The closed record, carrying the return in full — who handed it over, who
+       signed for it, and why only this one went back. A `returned` entry used
+       to be a timestamp and nothing else, which meant the reviewer's first look
+       at the state showed a card that could not say where the key went. */
     {
       id: 'key_3',
       propertyId: 'prp_1',
@@ -928,6 +941,38 @@ function baseData(now: Date): DataSet {
       receivedBy: 'Anna Suter',
       storageLocation: 'Kellerschlüssel — Schlüsselschrank Büro, Fach 3',
       returnedAt: iso(days(now, -74)),
+      returnedBy: 'Anna Suter',
+      returnedTo: 'Andrea Keller',
+      returnNote: 'Keller wird nicht mehr gereinigt — Haupt- und Zweitschlüssel bleiben bei uns.',
+      status: 'returned',
+    },
+    /* A commercial address, held on an open contract. The office key is the
+       normal case for §13.2 — a business cannot have somebody there to let the
+       crew in at six in the morning — and every key in the set being a private
+       flat made the register look like a domestic-only arrangement. */
+    {
+      id: 'key_4',
+      propertyId: 'prp_2b',
+      receivedAt: iso(days(now, -35)),
+      receivedBy: 'Marco Brunner',
+      storageLocation: 'Schlüsselschrank Büro, Fach 7',
+      status: 'held',
+    },
+    /* Closed because the contract ended, which is the ordinary way a key goes
+       back — not the handover-to-a-third-party case the `states` scenario
+       stages. Handed over by somebody other than the person who took it in, so
+       «übernommen von» and «zurückgegeben durch» are visibly two fields rather
+       than one printed twice. */
+    {
+      id: 'key_5',
+      propertyId: 'prp_4',
+      receivedAt: iso(days(now, -210)),
+      receivedBy: 'Marco Brunner',
+      storageLocation: 'Schlüsselschrank Büro, Fach 9',
+      returnedAt: iso(days(now, -12)),
+      returnedBy: 'Anna Suter',
+      returnedTo: 'James Whitfield',
+      returnNote: 'Vertrag zum Monatsende beendet, Schlüssel an der Rezeption übergeben.',
       status: 'returned',
     },
   ];
@@ -3453,10 +3498,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     },
   ];
 
-  /* A returned key on a *second* property. The base set carries both
-     KeyStatus values on prp_1 now, so this is no longer the only place
-     `returned` exists — it is here so the key log lists more than one address
-     with a closed record behind it. */
+  /* A sixth key, and the only one handed to somebody who is not the customer.
+     The base set already carries `returned` on two addresses, so this is not
+     here to make the state reachable — it is here for the case «übergeben an»
+     exists for at all. With only the customer's own name ever in the data that
+     field reads as a duplicate of the customer column. */
   const keyLog: KeyLogEntry[] = [
     ...data.keyLog,
     {
@@ -3466,6 +3512,13 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       receivedBy: 'Marco Brunner',
       storageLocation: 'Schlüsselschrank Büro, Fach 5',
       returnedAt: iso(days(now, -46)),
+      returnedBy: 'Marco Brunner',
+      /* Not the customer. Somebody else collecting is the case the return
+         dialog asks «übergeben an» for at all — with only the customer's own
+         name ever in the data, the field looks like a duplicate of the
+         customer column and the reason for it is invisible. */
+      returnedTo: 'Nachmieterin, Frau Bühler (Vollmacht per Mail)',
+      returnNote: 'Wohnung übergeben, Endreinigung abgeschlossen.',
       status: 'returned',
     },
   ];

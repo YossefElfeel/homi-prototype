@@ -312,9 +312,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     >
                       <div className="flex items-start justify-between gap-3">
                         <span className="min-w-0 font-medium">{key.storageLocation}</span>
-                        <Chip tone={key.status === 'held' ? 'info' : 'neutral'}>
-                          {kt(key.status === 'held' ? 'held' : 'returned')}
-                        </Chip>
+                        {/* Was a `Chip` with tones picked here, which made this
+                            card and the key log two places deciding what
+                            colour «in Aufbewahrung» is. */}
+                        <StatusBadge entity="key" state={key.status} size="sm" />
                       </div>
                       <dl className="mt-2.5 space-y-1 text-sm">
                         <KeyRow label={kt('colReceived')}>
@@ -323,12 +324,28 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                           </span>
                         </KeyRow>
                         <KeyRow label={kt('colBy')}>{key.receivedBy}</KeyRow>
+                        {/* The handover back, as fully as the handover in. A
+                            closed record used to be a bare date: the card said
+                            the key had gone and could not say who took it,
+                            which is the half a liability question turns on. */}
                         {key.returnedAt && (
-                          <KeyRow label={kt('returned')}>
+                          <KeyRow label={kt('colReturned')}>
                             <span data-numeric>
                               {format.dateTime(new Date(key.returnedAt), 'short')}
                             </span>
+                            {key.returnedTo && (
+                              <span className="text-ink-tertiary">
+                                {' '}
+                                · {kt('returnedToShort', { to: key.returnedTo })}
+                              </span>
+                            )}
                           </KeyRow>
+                        )}
+                        {key.returnedBy && (
+                          <KeyRow label={kt('returnedByLabel')}>{key.returnedBy}</KeyRow>
+                        )}
+                        {key.returnNote && (
+                          <KeyRow label={kt('returnNoteLabel')}>{key.returnNote}</KeyRow>
                         )}
                       </dl>
                     </li>

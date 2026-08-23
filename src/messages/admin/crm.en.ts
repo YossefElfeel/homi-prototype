@@ -357,21 +357,60 @@ export const adminCrmEn: typeof adminCrmDe = {
     colBy: 'By',
     colStorage: 'Kept at',
     colStatus: 'Status',
-    held: 'Held',
-    returned: 'Returned',
-    colAction: 'Return',
+    colReturned: 'Returned',
+    /* Not “Held” a second time — the state itself comes from `status.key`, so
+       the badge, the filter and the property card all say one word. This is
+       what the column is missing, not the status again. */
+    stillHeld: 'Still with us',
+    returnedToShort: 'to {to}',
+    filterStatus: 'Status',
+    filterAll: 'All',
+    search: 'Search keys',
+    /* Where it is kept comes first, because this is the one list that also gets
+       searched backwards: somebody is at the cupboard holding a tag that reads
+       “slot 3” and needs to know whose door it opens. */
+    searchPlaceholder: 'Storage, property, customer or person',
     returnAction: 'Record return',
-    returnDone: 'Return recorded.',
+    rowProperty: 'Open the property',
+    rowReturnDone: 'Already returned',
     addAction: 'Record a key',
     addDone: 'Key recorded.',
     newTitle: 'Take a key in',
+    newCustomer: 'Customer',
+    newCustomerPlaceholder: 'Choose a customer …',
     newPropertyPlaceholder: 'Choose a property …',
+    newPropertyLocked: 'Pick the customer first.',
+    newByHint: 'Who is taking the key in',
     newStorageHint: 'e.g. safe, slot 3',
     newSave: 'Record the handover',
     dismiss: 'Never mind',
+
+    /* Screen 68a — the return. */
+    returnTitle: 'Record the return',
+    returnLead: 'Who is handing the key back, to whom, and on what day.',
+    heldFor: 'for {days, plural, one {# day} other {# days}}',
+    returnDateLabel: 'Returned on',
+    returnedByLabel: 'Handed over by',
+    returnedByHint: 'Who is giving the key back',
+    returnedToLabel: 'Handed over to',
+    returnedToHint: 'The customer — or whoever they send',
+    returnNoteLabel: 'Note',
+    returnNoteHint: 'For instance: spare key only, we keep the main one',
+    returnSubmit: 'Record the return',
+    returnDone: 'Return recorded.',
+    returnDoneBody: 'Handed over to {to}. The entry stays in the log.',
+    returnRaceToast: 'This key has already been handed back.',
+
     emptyTitle: 'No key held',
     emptyBody:
       'When you take a customer key permanently it is recorded here with the date, the person and where it is kept.',
+    emptyNoProperties:
+      'A key belongs to an address, and there is none on file yet. Add a customer with a property first.',
+    filterEmptyTitle: 'No entry with that status',
+    filterEmptyBody: 'No key is currently “{status}”. Set the filter back to “All”.',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody:
+      'No key matches “{query}” — the search covers where it is kept, the property, the address, the customer, and the names on the handover in and out.',
   },
 
   plans: {
