@@ -6,6 +6,9 @@ import { getTheme } from '@/lib/theme-server';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { ServiceGrid } from '@/components/site/service-grid';
 import { CtaBand } from '@/components/signature/cta-band';
+import { Masthead } from '@/components/landing/Masthead';
+import { PageSection } from '@/components/landing/PageSection';
+import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -30,6 +33,24 @@ export default async function ServicesIndexPage({
   setRequestLocale(locale);
   const theme = await getTheme();
   const t = await getTranslations('site.services');
+  const d = await getTranslations('site.display.services');
+  const home = await getTranslations('site.home.hero');
+
+  if (theme === 'homivaro') {
+    return (
+      <>
+        <Masthead
+          lines={d.raw('lines')}
+          lead={t('listLead')}
+          action={{ label: home('primary'), href: '/anfrage' }}
+        />
+        <PageSection>
+          <ServiceMosaic />
+        </PageSection>
+        <CtaBand theme={theme} />
+      </>
+    );
+  }
 
   return (
     <>

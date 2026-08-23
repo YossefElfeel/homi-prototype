@@ -713,6 +713,28 @@
     overflow: clip;
   }
 
+  /* The shared <Section> keeps its markup; only its ceiling moves, so an
+     interior page lines up with the 1440 header above it. */
+  .hv-section-inner {
+    max-width: 90rem;
+  }
+
+  /*
+   * A table row, hovered.
+   *
+   * It takes the card's colour shift and none of its lift. A row that rises
+   * off the page under the cursor is a bug, not a delight — and in a price
+   * table, where the whole job is comparing one line against the next,
+   * anything that moves a row breaks the comparison it exists for.
+   */
+  .hv-row {
+    transition: background-color var(--motion-base) var(--ease-standard);
+  }
+
+  .hv-row:hover {
+    background: var(--surface-sunken);
+  }
+
   .hv-container {
     width: 100%;
     max-width: 90rem;

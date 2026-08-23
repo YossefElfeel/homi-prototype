@@ -15,6 +15,15 @@ import { Money } from '@/components/ui/money';
 import { Faq } from '@/components/ui/accordion';
 import { CtaBand } from '@/components/signature/cta-band';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
+import { Masthead } from '@/components/landing/Masthead';
+import { formatChf } from '@/components/ui/money';
+
+/** The three photographs the design shipped, on the services they show. */
+const SERVICE_PHOTO: Partial<Record<string, string>> = {
+  unterhaltsreinigung: '/img/service-1.webp',
+  umzugsreinigung: '/img/service-2.webp',
+  moebelmontage: '/img/service-3.webp',
+};
 import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid';
 
 export function generateStaticParams() {
@@ -65,6 +74,40 @@ export default async function ServicePage({
   const addOns = SEED_ADDONS.filter((a) => a.services.includes(service.slug));
   const related = SEED_SERVICES.filter((s) => s.active && s.slug !== service.slug).slice(0, 3);
 
+  const pricing = await getTranslations('site.pricing');
+  const hv = theme === 'homivaro';
+  const photo = SERVICE_PHOTO[service.slug];
+
+  /*
+   * This is the one interior page that earns a photograph, and only for the
+   * three services one exists for — the page is *about* the thing in the
+   * picture. The other four open on type alone rather than borrowing an image
+   * of a different job.
+   *
+   * The service name is the whole heading, so it takes the navy `lead` slot
+   * with no red half: there is nothing here to split, and inventing a split
+   * would put the accent on an arbitrary syllable of a compound noun.
+   */
+  const masthead = hv ? (
+    <Masthead
+      lines={[{ lead: service.name[locale as Locale] }]}
+      lead={content.lead}
+      action={{ label: t('cta'), href: `/anfrage?leistung=${service.slug}` }}
+      image={photo ? { src: photo, alt: service.name[locale as Locale] } : undefined}
+      stats={[
+        {
+          label: t('fromLabel'),
+          value: formatChf(serviceFromPrice(service.minDuration), locale as Locale),
+        },
+        ...(range ? [{ label: t('durationLabel'), value: `${range[0]}–${range[1]} h` }] : []),
+        {
+          label: pricing('minimumLabel'),
+          value: `${Math.max(service.minDuration, SEED_SETTINGS.minimumHours)} h`,
+        },
+      ]}
+    />
+  ) : null;
+
   return (
     <>
       <div className="border-b border-line-subtle">
@@ -91,6 +134,12 @@ export default async function ServicePage({
         </div>
       </div>
 
+      {masthead}
+
+      {/* The old opening block carries an h1 of its own, so it is removed
+          outright rather than hidden — two h1s in the document is no outline
+          at all, even when one of them is display:none. */}
+      {!hv ? (
       <div className="border-b border-line-subtle">
         <div className="mx-auto grid max-w-7xl gap-10 px-gutter py-14 lg:grid-cols-12 lg:py-20">
           <div className="lg:col-span-7">
@@ -148,6 +197,7 @@ export default async function ServicePage({
           </dl>
         </div>
       </div>
+      ) : null}
 
       <Section>
         <div className="grid gap-12 lg:grid-cols-2">

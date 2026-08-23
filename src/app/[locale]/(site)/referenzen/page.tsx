@@ -6,6 +6,8 @@ import { getTheme } from '@/lib/theme-server';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
 import { Gallery } from '@/components/site/gallery';
+import { Masthead } from '@/components/landing/Masthead';
+import { PageSection } from '@/components/landing/PageSection';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -31,6 +33,22 @@ export default async function GalleryPage({
   setRequestLocale(locale);
   const theme = await getTheme();
   const t = await getTranslations('site.gallery');
+  const d = await getTranslations('site.display.gallery');
+
+  if (theme === 'homivaro') {
+    return (
+      <>
+        <Masthead lines={d.raw('lines')} lead={t('lead')} />
+        {/* The gallery keeps every rule it had. §20.6 makes what appears here
+            a recorded decision and its empty state is the launch state — this
+            page changes how the work is framed, never what may be shown. */}
+        <PageSection>
+          <Gallery />
+        </PageSection>
+        <CtaBand theme={theme} />
+      </>
+    );
+  }
 
   return (
     <>

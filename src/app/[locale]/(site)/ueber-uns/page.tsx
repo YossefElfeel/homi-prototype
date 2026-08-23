@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
+import { Masthead } from '@/components/landing/Masthead';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -55,18 +56,27 @@ export default async function AboutPage({
     hasInsurance ? t('c5') : t('c5None'),
   ];
 
+  const d = await getTranslations('site.display.about');
+  const hv = theme === 'homivaro';
+
   return (
     <>
+      {hv ? <Masthead lines={d.raw('lines')} lead={t('lead')} /> : null}
+
       <Section>
         <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
           <div className="lg:col-span-7">
-            <SectionHeading
-              theme={theme}
-              eyebrow={t('eyebrow')}
-              title={t('title')}
-              align="start"
-          level={1}
-        />
+            {/* The masthead above already carries the h1 in this direction,
+                and a page with two of them has no outline. */}
+            {!hv ? (
+              <SectionHeading
+                theme={theme}
+                eyebrow={t('eyebrow')}
+                title={t('title')}
+                align="start"
+                level={1}
+              />
+            ) : null}
             <div className="mt-8 space-y-5 text-lg text-ink-secondary">
               <p className="max-w-[var(--measure)]">{t('story1')}</p>
               <p className="max-w-[var(--measure)]">{t('story2')}</p>

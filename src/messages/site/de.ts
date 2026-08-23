@@ -10,6 +10,8 @@
  * src/content/services.ts — message dictionaries hold interface strings only.
  */
 
+import type { HeadlineLine } from '@/lib/display-headline';
+
 export const siteDe = {
   home: {
     meta: {
@@ -322,4 +324,72 @@ export const siteDe = {
     n3: 'Passt sie, wählen Sie einen freien Termin.',
     home: 'Zur Startseite',
   },
+
+  /**
+   * Display headlines for the interior pages, pre-broken and split by colour.
+   *
+   * Kept in one block rather than scattered through the namespaces above
+   * because they are one decision made once — see lib/display-headline for why
+   * the line break and the red half both belong to the writing rather than to
+   * a component. The plain `title` strings above are untouched: a direction
+   * may change how the site says something, never what it says.
+   */
+  display: {
+    services: {
+      lines: [{ lead: 'Sieben Leistungen,' }, { lead: 'eine', accent: 'pro Anfrage.' }] as HeadlineLine[],
+      relatedLines: [{ lead: 'Weitere' }, { accent: 'Leistungen.' }] as HeadlineLine[],
+      includedLines: [{ lead: 'Was drin ist —' }, { accent: 'und was nicht.' }] as HeadlineLine[],
+      addOnsLines: [{ lead: 'Kann' }, { accent: 'dazukommen.' }] as HeadlineLine[],
+      faqLines: [{ lead: 'Häufige' }, { accent: 'Fragen.' }] as HeadlineLine[],
+    },
+    pricing: {
+      lines: [{ lead: 'Ein Stundensatz.' }, { accent: 'Keine Pauschalen.' }] as HeadlineLine[],
+      tableLines: [{ lead: 'Richtwerte' }, { accent: 'pro Leistung.' }] as HeadlineLine[],
+      durationLines: [{ lead: 'Woraus wir die' }, { accent: 'Dauer schätzen.' }] as HeadlineLine[],
+      extrasLines: [{ lead: 'Was' }, { accent: 'dazukommen kann.' }] as HeadlineLine[],
+      faqLines: [{ lead: 'Fragen' }, { accent: 'zum Preis.' }] as HeadlineLine[],
+    },
+    plans: {
+      lines: [{ lead: 'Regelmässig sauber,' }, { lead: 'ohne', accent: 'Planung.' }] as HeadlineLine[],
+      compareLines: [{ lead: 'Im' }, { accent: 'Vergleich.' }] as HeadlineLine[],
+      faqLines: [{ lead: 'Fragen' }, { accent: 'zum Abo.' }] as HeadlineLine[],
+    },
+    gallery: {
+      lines: [{ lead: 'Vorher' }, { accent: 'und nachher.' }] as HeadlineLine[],
+    },
+    about: {
+      lines: [{ lead: 'Eine Person, ein Gebiet,' }, { accent: 'klare Regeln.' }] as HeadlineLine[],
+      valuesLines: [{ lead: 'Wofür wir' }, { accent: 'stehen.' }] as HeadlineLine[],
+      regionLines: [{ lead: 'Wo wir' }, { accent: 'arbeiten.' }] as HeadlineLine[],
+      careersLines: [{ lead: 'Bei uns' }, { accent: 'arbeiten.' }] as HeadlineLine[],
+    },
+    contact: {
+      lines: [{ lead: 'Sprechen Sie' }, { accent: 'mit uns.' }] as HeadlineLine[],
+    },
+    regions: {
+      /* The town name is the red half, so the line is assembled in the page
+         from this word plus the name — an ICU placeholder cannot live inside
+         a raw array. */
+      leadWord: 'Reinigung in',
+      servicesLines: [{ lead: 'Leistungen' }, { accent: 'vor Ort.' }] as HeadlineLine[],
+      otherLines: [{ lead: 'Weitere' }, { accent: 'Gemeinden.' }] as HeadlineLine[],
+    },
+    regionsIndex: {
+      lines: [{ accent: 'Acht Gemeinden' }, { lead: 'am rechten Ufer.' }] as HeadlineLine[],
+      metaTitle: 'Einsatzgebiet',
+      metaDescription:
+        'Reinigung und Möbelmontage in acht Gemeinden am rechten Zürichseeufer. Prüfen Sie Ihre Postleitzahl.',
+      lead: 'Wir arbeiten bewusst in einem engen Gebiet. Kurze Wege heissen pünktliche Termine — und keine Anfahrtspauschale.',
+      checkLabel: 'Postleitzahl prüfen',
+      checkPlaceholder: '8700',
+      checkAction: 'Prüfen',
+      inside: 'Ja — {region} gehört zum Einsatzgebiet.',
+      outside: 'Die {postcode} liegt ausserhalb. Senden Sie die Anfrage trotzdem, wir schauen sie an.',
+      invalid: 'Eine Postleitzahl hat vier Ziffern.',
+      gridTitle: 'Alle Gemeinden',
+      gridLines: [{ lead: 'Alle' }, { accent: 'Gemeinden.' }] as HeadlineLine[],
+      responseLabel: 'Antwort innert',
+    },
+  },
+
 };

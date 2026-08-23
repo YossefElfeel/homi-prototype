@@ -9,6 +9,7 @@ import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { Button } from '@/components/ui/button';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { ContactForm } from '@/components/site/contact-form';
+import { Masthead } from '@/components/landing/Masthead';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -43,16 +44,24 @@ export default async function ContactPage({
   const brand = await getTranslations('brand');
   const footer = await getTranslations('footer');
 
+  const d = await getTranslations('site.display.contact');
+  const hv = theme === 'homivaro';
+
   return (
+    <>
+      {hv ? <Masthead lines={d.raw('lines')} lead={t('lead')} /> : null}
+
     <Section>
-      <SectionHeading
-        theme={theme}
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        lead={t('lead')}
-        align="start"
+      {!hv ? (
+        <SectionHeading
+          theme={theme}
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          lead={t('lead')}
+          align="start"
           level={1}
         />
+      ) : null}
 
       <div className="mt-12 grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
@@ -117,6 +126,7 @@ export default async function ContactPage({
         </div>
       </div>
     </Section>
+    </>
   );
 }
 
