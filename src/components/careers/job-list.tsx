@@ -62,7 +62,7 @@ export function JobList() {
             className="surface-card group flex flex-col gap-4 p-6 transition-colors hover:bg-sunken sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0">
-              <h3 className="display-type text-xl">{posting.title[locale]}</h3>
+              <h3 className="subhead-type text-xl">{posting.title[locale]}</h3>
               <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
                 {posting.summary[locale]}
               </p>

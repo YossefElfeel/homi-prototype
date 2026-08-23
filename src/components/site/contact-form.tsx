@@ -80,7 +80,7 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} onInput={revalidate} noValidate className="surface-card p-6 sm:p-8">
-      <h2 className="display-type text-2xl">{t('formTitle')}</h2>
+      <h2 className="subhead-type text-2xl">{t('formTitle')}</h2>
 
       <div className="mt-7 space-y-5">
         <Field label={t('fieldName')} error={errors.name}>

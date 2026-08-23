@@ -95,7 +95,7 @@ export default async function AboutPage({
         <dl className="mt-10 grid gap-8 sm:grid-cols-3">
           {(['v1', 'v2', 'v3'] as const).map((key) => (
             <div key={key}>
-              <dt className="display-type text-xl">{t(`${key}Title`)}</dt>
+              <dt className="subhead-type text-xl">{t(`${key}Title`)}</dt>
               <dd className="mt-3 text-ink-secondary">{t(`${key}Body`)}</dd>
             </div>
           ))}
@@ -105,7 +105,7 @@ export default async function AboutPage({
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className="display-type text-2xl">{t('regionTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('regionTitle')}</h2>
             <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">
               {t('regionBody')}
             </p>
@@ -124,7 +124,7 @@ export default async function AboutPage({
           </div>
 
           <div className="lg:col-span-7">
-            <h2 className="display-type text-2xl">{t('commitmentsTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('commitmentsTitle')}</h2>
             <ul className="mt-6 divide-y divide-line-subtle border-y border-line-subtle">
               {commitments.map((commitment) => (
                 <li key={commitment} className="flex gap-3 py-4">
@@ -140,7 +140,7 @@ export default async function AboutPage({
       <Section tone="sunken">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h2 className="display-type text-2xl">{t('careersTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('careersTitle')}</h2>
             <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">
               {t('careersBody')}
             </p>

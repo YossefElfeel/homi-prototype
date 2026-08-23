@@ -99,8 +99,14 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
                 <span className="mt-7 flex items-end justify-between gap-4">
                   <span
                     data-numeric
+                    /* Money renders its "ab"/"from" prefix in tertiary grey,
+                       which is 2.65:1 on the dark card. Lift it with the rest
+                       of the price rather than leaving the qualifier the one
+                       unreadable word on the tile. */
                     className={`display-type text-[clamp(30px,3vw,40px)] leading-[0.85] ${
-                      photo ? "text-ink-inverse" : "text-ink"
+                      photo
+                        ? "text-ink-inverse [&_span]:text-ink-inverse/70"
+                        : "text-ink"
                     }`}
                   >
                     <Money amount={serviceFromPrice(service.minDuration)} from />

@@ -71,6 +71,13 @@ export function Field({
  * ring still fires on top for keyboard users.
  */
 const controlBase = [
+  /* hv-field is a theme hook, not a style. The Homivaro direction has no form
+     in its design file, so the field shape was derived: the card surface at
+     the small radius, because a 999px pill collapses on a textarea and reads
+     as a search box on one line. Defined only under that theme and reset
+     inside the console, so the other three and every admin screen are
+     untouched — see globals.css. */
+  'hv-field',
   'w-full rounded-[var(--radius-sm)] border border-line bg-card px-3.5 text-ink',
   'transition-[border-color,box-shadow,background-color] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
   'placeholder:text-ink-tertiary',

@@ -87,7 +87,7 @@ export function PlanComparison() {
       <div className="mt-8 space-y-5 lg:hidden">
         {shown.map((plan, planIndex) => (
           <div key={plan.id} className="surface-card p-6">
-            <h3 className="display-type text-xl">{plan.name[locale]}</h3>
+            <h3 className="subhead-type text-xl">{plan.name[locale]}</h3>
             <dl className="mt-4 divide-y divide-line-subtle border-t border-line-subtle">
               {rows.map((row) => (
                 <div key={row.label} className="flex items-baseline justify-between gap-4 py-3">

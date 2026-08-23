@@ -374,6 +374,9 @@ export const siteDe = {
       servicesLines: [{ lead: 'Leistungen' }, { accent: 'vor Ort.' }] as HeadlineLine[],
       otherLines: [{ lead: 'Weitere' }, { accent: 'Gemeinden.' }] as HeadlineLine[],
     },
+    careers: {
+      lines: [{ lead: 'Leute, denen man' }, { accent: 'den Schlüssel gibt.' }] as HeadlineLine[],
+    },
     regionsIndex: {
       lines: [{ accent: 'Acht Gemeinden' }, { lead: 'am rechten Ufer.' }] as HeadlineLine[],
       metaTitle: 'Einsatzgebiet',

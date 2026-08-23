@@ -85,7 +85,7 @@ export function ApplicationStatusCheck({ initialReference }: { initialReference?
         {application && (
           <div className="surface-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="display-type text-xl">
+              <h2 className="subhead-type text-xl">
                 {t('foundTitle', { reference: application.reference })}
               </h2>
               <StatusBadge entity="application" state={application.status} />

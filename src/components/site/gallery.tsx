@@ -96,7 +96,7 @@ export function Gallery() {
           <Dialog.Content className="fixed inset-4 z-50 flex flex-col overflow-auto rounded-[var(--radius-lg)] bg-page p-6 sm:inset-8 lg:inset-16">
             <div className="flex items-start justify-between gap-6">
               <div>
-                <Dialog.Title className="display-type text-2xl">
+                <Dialog.Title className="subhead-type text-2xl">
                   {open?.before.note ?? t('title')}
                 </Dialog.Title>
                 <Dialog.Description className="mt-2 text-sm text-ink-secondary">
