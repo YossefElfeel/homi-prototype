@@ -43,6 +43,7 @@ import type {
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
 import { cancelBlock, type CancelBlock } from '@/lib/plan-facts';
+import { propertyUsage } from '@/lib/property-facts';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -311,6 +312,23 @@ interface StoreState {
     input: Omit<Property, 'id'>,
     now: Date,
   ) => ID;
+  /**
+   * A property could be created and read and nothing else. An address typed
+   * wrong on the call that produced it stayed wrong on every job, quote and
+   * invoice that hung off it, and the one field the panel could change was
+   * the standing note — which is the field the customer never sees.
+   */
+  updateProperty: (id: ID, patch: Partial<Property>) => void;
+  /**
+   * Removes an address nothing has used yet, and refuses otherwise.
+   *
+   * `propertyUsage` is the guard, not a warning the caller may skip: seven
+   * record types carry a `propertyId` and three dereference it with `!`, so a
+   * delete that ignored them would not leave a gap in a list, it would crash
+   * the screen that opened the booking behind it. Returns whether the row
+   * went, so the caller can say which of the two happened.
+   */
+  deleteProperty: (id: ID) => boolean;
   /**
    * The same request the public wizard produces, entered by the owner on
    * behalf of a customer who phoned. Runs the identical coverage check, so an
@@ -987,6 +1005,44 @@ export const useStore = create<StoreState>()(
           summary: `Objekt angelegt: ${input.label || input.street}`,
         });
         return id;
+      },
+
+      updateProperty: (id, patch) => {
+        const s = get();
+        const before = s.data.properties.find((p) => p.id === id);
+        if (!before) return;
+
+        set({
+          data: {
+            ...s.data,
+            properties: s.data.properties.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+          },
+        });
+        get().logChange({
+          entity: 'property',
+          entityId: id,
+          summary: `Objekt bearbeitet: ${patch.label ?? before.label ?? before.street}`,
+          /* The detail screen writes the standing note on every keystroke.
+             Without this the log would carry one entry per character typed. */
+          coalesce: true,
+        });
+      },
+
+      deleteProperty: (id) => {
+        const s = get();
+        const property = s.data.properties.find((p) => p.id === id);
+        if (!property) return false;
+        if (propertyUsage(s.data, id).total > 0) return false;
+
+        set({
+          data: { ...s.data, properties: s.data.properties.filter((p) => p.id !== id) },
+        });
+        get().logChange({
+          entity: 'property',
+          entityId: id,
+          summary: `Objekt gelöscht: ${property.label || property.street}`,
+        });
+        return true;
       },
 
       createRequestForCustomer: (input, now) => {

@@ -270,6 +270,30 @@ export const FLOWS: Flow[] = [
       added('Doppelprüfung auf E-Mail und Telefon', '/admin/kunden/neu', 'Dieselbe Regel wie im Assistenten'),
       ok('Interne Notizen', '/admin/kunden/cus_1'),
       ok('Zutritt und Schlüssel am Objekt', '/admin/objekte/prp_1', 'Codes rollen- und datumsgebunden, §13.1'),
+      added(
+        'Objekt bearbeiten',
+        '/admin/objekte/prp_1/bearbeiten',
+        'Ein Objekt liess sich anlegen und lesen, sonst nichts. Eine falsch aufgenommene Hausnummer stand danach auf jeder Offerte, jedem Auftragsblatt und jeder Rechnung an dieser Adresse — Lift, Haustiere und erhöhter Aufwand wurden beim Anlegen auf `false` gesetzt und hatten nirgends einen Schalter',
+      ),
+      added(
+        'Objekt löschen, solange nichts daran hängt',
+        '/admin/objekte',
+        'Sieben Datensatztypen zeigen auf ein Objekt, drei davon mit `!`. Gelöscht wird deshalb nur eine Adresse, die noch nie verwendet wurde; sonst nennt der Eintrag im Menü die Zahl, die ihn blockiert. In jedem Szenario hängt an jedem gesäten Objekt etwas — der aktive Zustand ist also über «Objekt erfassen» erreichbar, was auch der einzige Fall ist, für den «löschen» ehrlich ist. Kein Archiv-Flag: eine am Telefon falsch getippte Adresse ist ein Fehler, und ein Fehler, den man nur verstecken kann, macht aus zwölf Objekten vierzig',
+      ),
+      open(
+        'Objekt einem anderen Kunden zuweisen',
+        'Bewusst kein Feld im Editor. Ein Objekt umzuhängen liesse Buchungen, Offerten und Rechnungen auf einen Kunden zeigen, der es nie hatte — das ist eine Zusammenführung, keine Bearbeitung, und braucht eine Entscheidung darüber, was mit dem Verlauf passiert',
+      ),
+      added(
+        'Nach Objektart und Gebiet filtern, nach Name suchen',
+        '/admin/objekte',
+        'Die Liste war nach nichts sortierbar und nach nichts filterbar. Die Objektart hatte nicht einmal eine Spalte, und das Gebiet steckt einzig in der PLZ (§6)',
+      ),
+      added(
+        'Letzter Einsatz und nächster Termin in der Liste',
+        '/admin/objekte',
+        '«Wann waren wir zuletzt dort?» und «wann wieder?» standen pro Adresse einen Klick tief im Objektverlauf — nachgeschaut wurde deshalb im Kalender. Beide Spalten werden aus den Buchungen abgeleitet, `noAccess` zählt nicht als Einsatz',
+      ),
       ok('Verlauf als eine Zeitachse', '/admin/kunden/cus_1'),
       added(
         'Stammdaten bearbeiten',

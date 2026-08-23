@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, Eye, EyeOff, KeyRound, Lock } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Pencil } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -42,8 +42,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const keyLog = useStore((s) => s.data.keyLog);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
-  const data = useStore((s) => s.data);
-  const patchData = useStore((s) => s.patchData);
+  const updateProperty = useStore((s) => s.updateProperty);
 
   const [revealed, setRevealed] = useState(false);
 
@@ -61,11 +60,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const hasSecrets = Boolean(access?.boxCode || access?.alarmCode);
 
   function setNotes(notes: string) {
-    patchData({
-      properties: data.properties.map((p) =>
-        p.id === property!.id ? { ...p, permanentNotes: notes } : p,
-      ),
-    });
+    updateProperty(property!.id, { permanentNotes: notes });
   }
 
   return (
@@ -77,7 +72,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </Link>
       </Button>
 
-      <h1 className="display-type text-3xl">{property.label}</h1>
+      {/* The record could be read and not corrected — the only writable field
+          on it was the standing note. The list gained an edit action, and the
+          screen you land on after following it has to offer the same door. */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="display-type text-3xl">{property.label}</h1>
+        <Button asChild variant="secondary">
+          <Link href={`/admin/objekte/${property.id}/bearbeiten`}>
+            <Pencil className="size-4" aria-hidden />
+            {t('editAction')}
+          </Link>
+        </Button>
+      </div>
       <p className="mt-2 text-ink-secondary">
         {property.street}, <span data-numeric>{property.postcode}</span> {property.city}
         {customer && (

@@ -111,12 +111,27 @@ export function RowActionButton({
   onClick,
   label,
   tone = 'default',
+  disabled = false,
   className,
   children,
-}: ActionProps & { onClick: () => void }) {
+}: ActionProps & {
+  onClick: () => void;
+  /**
+   * For an action this particular row cannot take.
+   *
+   * Dropping the item instead would be worse: the strip would then be a
+   * different length per row, and the reader would have to notice an absence
+   * to learn that something is impossible. The item stays, and the *label* is
+   * where the reason goes — a greyed line with the same word on it explains
+   * nothing, and `pointer-events-none` means a `title` tooltip would never
+   * fire to explain it either.
+   */
+  disabled?: boolean;
+}) {
   return (
     <DropdownMenuItem
       tone={tone}
+      disabled={disabled}
       className={className}
       /*
        * Deferred by a tick rather than run inside `onSelect`.

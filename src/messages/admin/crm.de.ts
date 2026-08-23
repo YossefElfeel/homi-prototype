@@ -255,8 +255,40 @@ export const adminCrmDe = {
     colLabel: 'Objekt',
     colCustomer: 'Kunde',
     colAddress: 'Adresse',
-    colSpecs: 'Eckdaten',
+    /* Ersetzt `colSpecs`: die Zahlen standen in der Spalte, die Objektart
+       nirgends — und genau danach wird jetzt gefiltert. */
+    colKind: 'Art & Eckdaten',
+    colLastService: 'Letzter Einsatz',
+    colNextVisit: 'Nächster Termin',
     colAccess: 'Zutritt',
+    never: 'Noch nie',
+    nothingBooked: 'Nichts gebucht',
+    overdue: 'Termin liegt zurück',
+    kinds: {
+      apartment: 'Wohnung',
+      house: 'Haus',
+      office: 'Büro',
+    },
+    search: 'Objekt suchen',
+    searchPlaceholder: 'Bezeichnung, Strasse, Ort oder Kunde',
+    filterKind: 'Objektart',
+    filterZone: 'Gebiet',
+    filterAll: 'Alle',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody: 'Kein Objekt passt zu «{query}».',
+    filterEmptyBody: 'Kein Objekt passt zu diesen Filtern.',
+    rowView: 'Objekt öffnen',
+    rowEdit: 'Objekt bearbeiten',
+    rowDelete: 'Objekt löschen',
+    /* Der Grund steht im Label: eine ausgegraute Zeile mit demselben Wort
+       darauf erklärt nichts, und ein Tooltip käme bei einem deaktivierten
+       Eintrag nie zum Zug. */
+    rowDeleteBlocked: 'Löschen nicht möglich — {n} Einträge hängen daran',
+    deleteConfirm:
+      '«{label}» endgültig löschen? Das Objekt wurde noch nie verwendet, es geht also nichts verloren.',
+    deleteDone: '«{label}» gelöscht.',
+    deleteBlockedToast:
+      'Das Objekt wird inzwischen verwendet und bleibt bestehen. Bitte Seite neu laden.',
     emptyTitle: 'Noch keine Objekte',
     emptyBody:
       'Objekte entstehen aus Anfragen und erscheinen dann hier. Ein bekanntes Objekt lässt sich auch direkt erfassen.',
@@ -287,6 +319,7 @@ export const adminCrmDe = {
 
   property: {
     back: 'Alle Objekte',
+    editAction: 'Bearbeiten',
     specsTitle: 'Eckdaten',
     accessTitle: 'Zutritt',
     keysTitle: 'Schlüssel',
@@ -295,6 +328,37 @@ export const adminCrmDe = {
     notesPlaceholder: 'z. B. Hund im Wohnzimmer, sehr freundlich …',
     historyTitle: 'Einsätze an diesem Objekt',
     historyEmpty: 'Noch kein Einsatz erfasst.',
+  },
+
+  propertyEdit: {
+    title: 'Objekt bearbeiten',
+    lead: 'Adresse und Eckdaten korrigieren. Zutritt und Schlüssel bleiben auf dem Objekt selbst.',
+    back: 'Zurück zum Objekt',
+    notFound: 'Dieses Objekt gibt es nicht.',
+    /* Der Kunde ist bewusst kein Feld: ein Objekt umzuhängen liesse Buchungen,
+       Offerten und Rechnungen auf einen Kunden zeigen, der es nie hatte. */
+    owner: 'Gehört zu',
+    addressTitle: 'Adresse',
+    addressHint: 'Steht auf jeder Offerte, jedem Auftragsblatt und jeder Rechnung an dieser Adresse.',
+    specsTitle: 'Eckdaten',
+    specsHint: 'Fläche und Zimmer gehen in die Preisberechnung ein (§5).',
+    elevator: 'Lift vorhanden',
+    pets: 'Haustiere',
+    petsHint: 'Steht im Auftragsblatt, bevor jemand die Tür öffnet.',
+    extraEffort: 'Erhöhter Aufwand',
+    extraEffortHint: 'Verschmutzung, Zugang oder Bausubstanz brauchen mehr Zeit als die Fläche vermuten lässt.',
+    notesTitle: 'Dauerhafte Notizen',
+    notesHint: 'Erscheinen bei jedem Einsatz an diesem Objekt.',
+    notesPlaceholder: 'z. B. Hund im Wohnzimmer, sehr freundlich …',
+    outsideTitle: 'Ausserhalb des Einsatzgebiets',
+    outsideBody:
+      'PLZ {postcode} liegt nicht in den acht bedienten Gemeinden (§6). Speichern geht trotzdem — das Objekt erscheint dann aber unter keinem Gebiet.',
+    errorRequired: 'Pflichtfeld.',
+    errorPostcode: 'Vier Ziffern.',
+    errorPositive: 'Muss grösser als 0 sein.',
+    save: 'Änderungen speichern',
+    cancel: 'Abbrechen',
+    done: '«{label}» gespeichert.',
   },
 
   keys: {
