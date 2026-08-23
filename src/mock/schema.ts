@@ -877,7 +877,20 @@ export interface KeyLogEntry {
   receivedAt: ISODate;
   receivedBy: string;
   storageLocation: string;
+  /*
+   * The handover back, recorded as fully as the handover in.
+   *
+   * `receivedAt`/`receivedBy` had a counterpart of one timestamp, so a closed
+   * record said a key left the cupboard and could not say who carried it out
+   * or who signed for it. That is the half of the trail a liability policy is
+   * actually read against (§21 item 12) — "we gave it back" with nobody's name
+   * on it is the same as no record.
+   */
   returnedAt?: ISODate;
+  returnedBy?: string;
+  /** Who took it — normally the customer, sometimes whoever they sent. */
+  returnedTo?: string;
+  returnNote?: string;
   status: KeyStatus;
 }
 

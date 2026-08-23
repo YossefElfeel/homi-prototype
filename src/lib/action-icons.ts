@@ -9,11 +9,13 @@ import {
   Eye,
   FileCheck,
   FileText,
+  Home,
   Pencil,
   Receipt,
   Send,
   ShieldCheck,
   Trash2,
+  Undo2,
   X,
 } from 'lucide-react';
 
@@ -50,6 +52,11 @@ export const ActionIcon = {
   offer: FileCheck,
   booking: CalendarDays,
   invoice: Receipt,
+  /* The same `Home` the sidebar puts on «Objekte», so the item in a key's menu
+     and the nav entry it lands on are visibly the same destination. Not the
+     eye: a key row is not a property, and rule 1 keeps the eye for the row's
+     own record — which a key does not have, since it has no screen of its own. */
+  property: Home,
 
   /** Leaves the panel for the page the customer sees. */
   customerView: ExternalLink,
@@ -73,6 +80,11 @@ export const ActionIcon = {
   unblock: ShieldCheck,
   archive: Archive,
   restore: ArchiveRestore,
+
+  /* Giving a held thing back to whoever owns it. Deliberately not `restore`:
+     that one is the reversal of `archive` and puts the row back where it was,
+     while this closes the record for good — the key leaves the building. */
+  handBack: Undo2,
 
   /* Destructive. Both carry `tone="danger"` at the call site. */
   decline: X,

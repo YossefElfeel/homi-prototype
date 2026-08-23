@@ -160,8 +160,24 @@ Marco Brunner`;
    20: `SavedPaymentMethod` gained `expiresAt`, and cus_1 — the one customer in
    the seed on a plan — finally has the card that plan is charged to. A blob
    from 19 opens her record on «Nichts hinterlegt», which is the empty state
-   the whole change exists to remove. */
-const SCHEMA_VERSION = 20;
+   the whole change exists to remove.
+
+   21: Both kinds at once, which is why this one is not optional. `KeyLogEntry`
+   gained `returnedBy`, `returnedTo` and `returnNote`, and the seed went from a
+   key log that was effectively one address to five entries across three
+   customers, three held and two returned.
+
+   A blob from 20 has neither, and the failure is quiet rather than loud: the
+   register renders, the search box renders, the status filter renders — over
+   whatever few rows that reviewer's localStorage happens to hold. So the two
+   controls this wave added look built and broken at the same time, the return
+   dialog writes fields into a record whose siblings have none, and a returned
+   key still prints a bare date because the names it should carry were never in
+   the blob. Nothing crashes and nothing says why, which makes it exactly the
+   "reviewer quietly looking at the old product" case 18 and 19 were bumped
+   for — and it was caught by a reviewer reporting the row count had not
+   moved, not by the build. */
+const SCHEMA_VERSION = 21;
 
 /**
  * §10 — payment term. Not in Settings: the settings screen is the owner's, and
@@ -329,6 +345,28 @@ interface StoreState {
    * went, so the caller can say which of the two happened.
    */
   deleteProperty: (id: ID) => boolean;
+  /* ---- the key register (screen 68) ----
+     §13.2. Both halves of a key's life used to be a `patchData` written on the
+     screen: the intake spread a new entry onto the array, and the return
+     mapped over it flipping a string. Neither reached the change log, so the
+     one record in the app that exists to say who had physical access to a
+     customer's home left no trace of who wrote it. */
+  recordKey: (
+    input: { propertyId: ID; receivedBy: string; storageLocation: string },
+    now: Date,
+  ) => ID;
+  /**
+   * Closes a key record, and refuses to close one twice.
+   *
+   * The guard is here rather than on the screen because the menu item that
+   * calls it is rendered from a snapshot: a second tab returning the same key
+   * would otherwise overwrite the first handover's names and date with the
+   * second's, and the log would carry two returns of one key.
+   */
+  returnKey: (
+    id: ID,
+    input: { returnedAt: ISODate; returnedBy: string; returnedTo: string; returnNote?: string },
+  ) => boolean;
   /**
    * The same request the public wizard produces, entered by the owner on
    * behalf of a customer who phoned. Runs the identical coverage check, so an
@@ -1041,6 +1079,56 @@ export const useStore = create<StoreState>()(
           entity: 'property',
           entityId: id,
           summary: `Objekt gelöscht: ${property.label || property.street}`,
+        });
+        return true;
+      },
+
+      recordKey: (input, now) => {
+        const s = get();
+        /* Length first, then the clock. `now` only ticks every 30 seconds, so
+           two keys taken in one sitting — a front door and its spare, which is
+           the normal case — would collide on a bare timestamp. */
+        const id = `key_${s.data.keyLog.length}_${now.getTime().toString(36).slice(-4)}`;
+        const property = s.data.properties.find((p) => p.id === input.propertyId);
+
+        set({
+          data: {
+            ...s.data,
+            keyLog: [
+              ...s.data.keyLog,
+              { ...input, id, receivedAt: now.toISOString(), status: 'held' },
+            ],
+          },
+        });
+        get().logChange({
+          entity: 'key',
+          entityId: id,
+          summary: `Schlüssel übernommen: ${property?.label || property?.street || input.propertyId} — ${input.storageLocation}`,
+          actor: input.receivedBy,
+        });
+        return id;
+      },
+
+      returnKey: (id, input) => {
+        const s = get();
+        const entry = s.data.keyLog.find((k) => k.id === id);
+        if (!entry || entry.status === 'returned') return false;
+
+        const property = s.data.properties.find((p) => p.id === entry.propertyId);
+
+        set({
+          data: {
+            ...s.data,
+            keyLog: s.data.keyLog.map((k) =>
+              k.id === id ? { ...k, ...input, status: 'returned' as const } : k,
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'key',
+          entityId: id,
+          summary: `Schlüssel zurückgegeben: ${property?.label || property?.street || entry.propertyId} — an ${input.returnedTo}`,
+          actor: input.returnedBy,
         });
         return true;
       },

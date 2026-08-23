@@ -380,21 +380,60 @@ export const adminCrmDe = {
     colBy: 'Von',
     colStorage: 'Aufbewahrung',
     colStatus: 'Status',
-    held: 'In Aufbewahrung',
-    returned: 'Zurückgegeben',
-    colAction: 'Rückgabe',
+    colReturned: 'Zurückgegeben',
+    /* «In Aufbewahrung» stünde hier ein zweites Mal — der Status kommt aus
+       `status.key`, damit Badge, Filter und Objektkarte dasselbe Wort tragen.
+       Die Spalte sagt deshalb, was in ihr fehlt, nicht den Status nochmal. */
+    stillHeld: 'Noch bei uns',
+    returnedToShort: 'an {to}',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    search: 'Schlüssel suchen',
+    /* Der Aufbewahrungsort steht zuerst, weil diese Liste als einzige auch
+       rückwärts durchsucht wird: jemand steht am Schrank mit einem Anhänger
+       «Fach 3» und muss wissen, zu wessen Tür er gehört. */
+    searchPlaceholder: 'Aufbewahrung, Objekt, Kunde oder Person',
     returnAction: 'Rückgabe erfassen',
-    returnDone: 'Rückgabe erfasst.',
+    rowProperty: 'Objekt öffnen',
+    rowReturnDone: 'Bereits zurückgegeben',
     addAction: 'Schlüssel erfassen',
     addDone: 'Schlüssel erfasst.',
     newTitle: 'Schlüssel übernehmen',
+    newCustomer: 'Kunde',
+    newCustomerPlaceholder: 'Kunde wählen …',
     newPropertyPlaceholder: 'Objekt wählen …',
+    newPropertyLocked: 'Zuerst den Kunden wählen.',
+    newByHint: 'Wer den Schlüssel entgegennimmt',
     newStorageHint: 'z. B. Tresor, Fach 3',
     newSave: 'Übernahme erfassen',
     dismiss: 'Abbrechen',
+
+    /* Screen 68a — die Rückgabe. */
+    returnTitle: 'Rückgabe erfassen',
+    returnLead: 'Wer den Schlüssel zurückgibt, an wen, und an welchem Tag.',
+    heldFor: 'seit {days, plural, one {# Tag} other {# Tagen}}',
+    returnDateLabel: 'Rückgabedatum',
+    returnedByLabel: 'Zurückgegeben durch',
+    returnedByHint: 'Wer den Schlüssel aushändigt',
+    returnedToLabel: 'Übergeben an',
+    returnedToHint: 'Der Kunde — oder wen er schickt',
+    returnNoteLabel: 'Notiz',
+    returnNoteHint: 'Etwa: nur der Zweitschlüssel, Hauptschlüssel bleibt bei uns',
+    returnSubmit: 'Rückgabe erfassen',
+    returnDone: 'Rückgabe erfasst.',
+    returnDoneBody: 'Übergeben an {to}. Der Eintrag bleibt im Register.',
+    returnRaceToast: 'Dieser Schlüssel wurde bereits zurückgegeben.',
+
     emptyTitle: 'Kein Schlüssel in Aufbewahrung',
     emptyBody:
       'Sobald Sie einen Kundenschlüssel dauerhaft übernehmen, wird er hier mit Datum, Person und Aufbewahrungsort erfasst.',
+    emptyNoProperties:
+      'Ein Schlüssel gehört zu einer Adresse, und es ist noch keine erfasst. Legen Sie zuerst einen Kunden mit Objekt an.',
+    filterEmptyTitle: 'Kein Eintrag mit diesem Status',
+    filterEmptyBody: 'Kein Schlüssel steht gerade auf «{status}». Filter zurücksetzen auf «Alle».',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Kein Schlüssel passt zu «{query}» — gesucht wird in Aufbewahrung, Objekt, Adresse, Kunde und den Namen bei Übernahme und Rückgabe.',
   },
 
   plans: {
