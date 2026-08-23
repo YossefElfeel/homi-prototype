@@ -213,7 +213,7 @@ function NavButton({
       className={`grid h-11 w-11 place-items-center rounded-xl transition-colors duration-300 disabled:opacity-35 ${
         variant === "red"
           ? "bg-accent hover:bg-inverse text-ink-inverse"
-          : "border-navy/25 text-ink hover:bg-inverse border hover:text-ink-inverse"
+          : "border-ink/25 text-ink hover:bg-inverse border hover:text-ink-inverse"
       }`}
     >
       {children}

@@ -10,14 +10,13 @@ import {
 } from 'next/font/google';
 
 /**
- * Five directions, five typographic voices — deliberately not one neutral UI
+ * Four directions, four typographic voices — deliberately not one neutral UI
  * font across all of them. `next/font` self-hosts every file at build time,
  * so none of this costs a runtime request to Google.
  *
  * Only the default direction's faces are preloaded; the rest swap in when a
  * reviewer switches. Homivaro is the default, so Bebas and Geist are the pair
- * that gets preloaded — they are declared further down, next to Kante, which
- * shares them.
+ * that gets preloaded — they are declared further down.
  */
 
 // Raster — Swiss editorial. A grotesque with real character at tight tracking.
@@ -60,12 +59,11 @@ export const instrumentSans = Instrument_Sans({
   preload: false,
 });
 
-// Homivaro and Kante share this pairing — Homivaro because the Figma file
-// specifies it, Kante because its reference template landed on the same two.
-// Bebas Neue is a caps-only condensed face: enormous at tight leading,
-// unreadable in long paragraphs. That constraint shapes both directions, so
-// it is deliberate, not a side effect — display lines stay short, nothing sets
-// Bebas below 36px, and Geist carries everything else.
+// The approved design's pairing. Bebas Neue is a caps-only condensed face:
+// enormous at tight leading, unreadable in long paragraphs. That constraint
+// shapes the whole direction, so it is deliberate rather than a side effect —
+// display lines stay short, nothing sets Bebas below 36px, and Geist carries
+// everything else.
 //
 // Preloaded because Homivaro is the default and its hero headline is the LCP
 // element on the highest-traffic page on the site.
