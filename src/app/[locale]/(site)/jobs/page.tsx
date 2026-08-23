@@ -9,6 +9,7 @@ import { getCareersContent } from '@/content/careers';
 import { Button } from '@/components/ui/button';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { Masthead } from '@/components/landing/Masthead';
+import { SectionHead } from '@/components/landing/PageSection';
 import { JobList } from '@/components/careers/job-list';
 
 export function generateStaticParams() {
@@ -65,22 +66,41 @@ export default async function JobsPage({
             level={1}
           />
         ) : null}
-        <h2 className="label-type mt-16 text-ink-tertiary">{t('openTitle')}</h2>
+        {hv ? (
+          <div className="mt-16">
+            <SectionHead lines={d.raw('openLines')} />
+          </div>
+        ) : (
+          <h2 className="label-type mt-16 text-ink-tertiary">{t('openTitle')}</h2>
+        )}
         <div className="mt-6">
           <JobList />
         </div>
       </Section>
 
       <Section tone="sunken">
-        <SectionHeading theme={theme} title={t('howTitle')} lead={t('howLead')} />
+        {hv ? (
+          <SectionHead lines={d.raw('howLines')} lead={t('howLead')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('howTitle')} lead={t('howLead')} />
+        )}
         <ol className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2">
           {content.how.map((step, index) => (
-            <li key={step.title} className="rule-accent pt-5">
-              <p data-numeric className="label-type text-ink-tertiary">
+            <li key={step.title} className={hv ? 'flex gap-5' : 'rule-accent pt-5'}>
+              <p
+                data-numeric
+                className={
+                  hv
+                    ? 'display-type shrink-0 text-[64px] leading-[0.72] text-ink-accent'
+                    : 'label-type text-ink-tertiary'
+                }
+              >
                 {String(index + 1).padStart(2, '0')}
               </p>
-              <h3 className="mt-3 text-lg font-medium">{step.title}</h3>
+              <div className={hv ? 'pt-1' : 'contents'}>
+              <h3 className={hv ? 'text-xl font-medium' : 'mt-3 text-lg font-medium'}>{step.title}</h3>
               <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{step.body}</p>
+              </div>
             </li>
           ))}
         </ol>

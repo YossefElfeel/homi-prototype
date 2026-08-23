@@ -16,6 +16,7 @@ import { Faq } from '@/components/ui/accordion';
 import { CtaBand } from '@/components/signature/cta-band';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { Masthead } from '@/components/landing/Masthead';
+import { SectionHead } from '@/components/landing/PageSection';
 import { formatChf } from '@/components/ui/money';
 
 /** The three photographs the design shipped, on the services they show. */
@@ -75,6 +76,7 @@ export default async function ServicePage({
   const related = SEED_SERVICES.filter((s) => s.active && s.slug !== service.slug).slice(0, 3);
 
   const pricing = await getTranslations('site.pricing');
+  const d = await getTranslations('site.display.services');
   const hv = theme === 'homivaro';
   const photo = SERVICE_PHOTO[service.slug];
 
@@ -200,8 +202,8 @@ export default async function ServicePage({
       ) : null}
 
       <Section>
-        <div className="grid gap-12 lg:grid-cols-2">
-          <div>
+        <div className={hv ? 'grid items-start gap-4 lg:grid-cols-2' : 'grid gap-12 lg:grid-cols-2'}>
+          <div className={hv ? 'hv-card hv-card-light p-8' : undefined}>
             <h2 className="subhead-type text-2xl">{t('includedTitle')}</h2>
             <ul className="mt-6 space-y-3">
               {content.included.map((item) => (
@@ -213,16 +215,25 @@ export default async function ServicePage({
             </ul>
           </div>
 
-          <div>
+          <div className={hv ? 'hv-card hv-card-dark p-8' : undefined}>
             <h2 className="subhead-type text-2xl">{t('notIncludedTitle')}</h2>
-            <p className="mt-3 max-w-[var(--measure)] text-sm text-ink-secondary">
+            <p
+              className={`mt-3 max-w-[var(--measure)] text-sm ${
+                hv ? 'text-ink-inverse/70' : 'text-ink-secondary'
+              }`}
+            >
               {t('notIncludedLead')}
             </p>
             <ul className="mt-6 space-y-3">
               {content.notIncluded.map((item) => (
                 <li key={item} className="flex gap-3">
-                  <X className="mt-1 size-4 shrink-0 text-ink-tertiary" aria-hidden />
-                  <span className="text-ink-secondary">{item}</span>
+                  <X
+                    className={`mt-1 size-4 shrink-0 ${
+                      hv ? 'text-ink-accent-inverse' : 'text-ink-tertiary'
+                    }`}
+                    aria-hidden
+                  />
+                  <span className={hv ? 'text-ink-inverse' : 'text-ink-secondary'}>{item}</span>
                 </li>
               ))}
             </ul>
@@ -232,15 +243,29 @@ export default async function ServicePage({
 
       {addOns.length > 0 && (
         <Section tone="sunken">
-          <SectionHeading theme={theme} title={t('addOnsTitle')} align="start" />
-          <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2 lg:grid-cols-3">
+          {hv ? (
+            <SectionHead lines={d.raw('addOnsLines')} />
+          ) : (
+            <SectionHeading theme={theme} title={t('addOnsTitle')} align="start" />
+          )}
+          <ul
+            className={
+              hv
+                ? 'mt-10 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                : 'mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2 lg:grid-cols-3'
+            }
+          >
             {addOns.map((addOn) => (
-              <li key={addOn.slug} className="bg-page p-6">
+              <li key={addOn.slug} className={hv ? 'hv-card hv-card-light p-6' : 'bg-page p-6'}>
                 <h3 className="font-medium">{addOn.name[locale as Locale]}</h3>
                 <p className="mt-1.5 text-sm text-ink-secondary">
                   {addOn.short[locale as Locale]}
                 </p>
-                <p className="mt-4 flex items-baseline justify-between border-t border-line-subtle pt-3">
+                <p
+                  className={`mt-4 flex items-baseline justify-between pt-3 ${
+                    hv ? 'border-t border-line' : 'border-t border-line-subtle'
+                  }`}
+                >
                   <Money amount={addOn.price} />
                   <span data-numeric className="text-sm text-ink-tertiary">
                     +{addOn.extraDuration} h
@@ -272,7 +297,11 @@ export default async function ServicePage({
       </Section>
 
       <Section tone="sunken">
-        <SectionHeading theme={theme} title={t('relatedTitle')} align="start" />
+        {hv ? (
+          <SectionHead lines={d.raw('relatedLines')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('relatedTitle')} align="start" />
+        )}
         <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
           {related.map((other) => {
             const OtherIcon = SERVICE_ICONS[other.slug];

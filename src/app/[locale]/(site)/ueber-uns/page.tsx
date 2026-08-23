@@ -11,6 +11,8 @@ import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
 import { Masthead } from '@/components/landing/Masthead';
+import { SectionHead } from '@/components/landing/PageSection';
+import Image from 'next/image';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -82,16 +84,42 @@ export default async function AboutPage({
               <p className="max-w-[var(--measure)]">{t('story2')}</p>
             </div>
           </div>
-          <ImagePlaceholder
-            seed="about-portrait"
-            alt="Homivaro"
-            className="aspect-4/5 rounded-[var(--radius-lg)] lg:col-span-5"
-          />
+          {hv ? (
+            /*
+             * A real photograph instead of the pastel placeholder, which was
+             * the last element on the site with a palette of its own.
+             *
+             * Worth stating: this is a picture of the work, not of the person
+             * the copy beside it is about. It reads as adjacent rather than
+             * exact, and it is still the better of the two — a coral-and-sage
+             * geometric panel in a navy-and-red system belongs to no one. The
+             * moment a portrait exists this is a one-line swap.
+             */
+            <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-lg)] lg:col-span-5">
+              <Image
+                src="/img/service-1.webp"
+                alt={t('imageAlt')}
+                fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <ImagePlaceholder
+              seed="about-portrait"
+              alt="Homivaro"
+              className="aspect-4/5 rounded-[var(--radius-lg)] lg:col-span-5"
+            />
+          )}
         </div>
       </Section>
 
       <Section tone="sunken">
-        <SectionHeading theme={theme} title={t('valuesTitle')} align="start" />
+        {hv ? (
+          <SectionHead lines={d.raw('valuesLines')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('valuesTitle')} align="start" />
+        )}
         <dl className="mt-10 grid gap-8 sm:grid-cols-3">
           {(['v1', 'v2', 'v3'] as const).map((key) => (
             <div key={key}>
@@ -105,7 +133,11 @@ export default async function AboutPage({
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className="subhead-type text-2xl">{t('regionTitle')}</h2>
+            {hv ? (
+              <SectionHead lines={d.raw('regionLines')} />
+            ) : (
+              <h2 className="subhead-type text-2xl">{t('regionTitle')}</h2>
+            )}
             <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">
               {t('regionBody')}
             </p>
@@ -140,7 +172,11 @@ export default async function AboutPage({
       <Section tone="sunken">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h2 className="subhead-type text-2xl">{t('careersTitle')}</h2>
+            {hv ? (
+              <SectionHead lines={d.raw('careersLines')} />
+            ) : (
+              <h2 className="subhead-type text-2xl">{t('careersTitle')}</h2>
+            )}
             <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">
               {t('careersBody')}
             </p>
