@@ -251,7 +251,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
 
           {selectedDay && (
             <section className="mt-10">
-              <h2 className="display-type text-xl">
+              <h2 className="subhead-type text-xl">
                 {t('slotsFor', {
                   date: format.dateTime(new Date(selectedDay), 'dayMonth'),
                 })}

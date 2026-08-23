@@ -144,7 +144,7 @@ export default async function PlansPage({
       <Section>
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className="display-type text-2xl">{t('faqTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
             <Button asChild size="lg" className="mt-6">
               <Link href="/anfrage">{t('cta')}</Link>
             </Button>

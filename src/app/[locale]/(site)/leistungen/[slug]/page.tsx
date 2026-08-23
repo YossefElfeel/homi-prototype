@@ -202,7 +202,7 @@ export default async function ServicePage({
       <Section>
         <div className="grid gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="display-type text-2xl">{t('includedTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('includedTitle')}</h2>
             <ul className="mt-6 space-y-3">
               {content.included.map((item) => (
                 <li key={item} className="flex gap-3">
@@ -214,7 +214,7 @@ export default async function ServicePage({
           </div>
 
           <div>
-            <h2 className="display-type text-2xl">{t('notIncludedTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('notIncludedTitle')}</h2>
             <p className="mt-3 max-w-[var(--measure)] text-sm text-ink-secondary">
               {t('notIncludedLead')}
             </p>
@@ -255,7 +255,7 @@ export default async function ServicePage({
       <Section>
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className="display-type text-2xl">{t('calcTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('calcTitle')}</h2>
             <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{t('calcBody')}</p>
             <Button asChild variant="link" className="mt-5">
               <Link href="/preise">
@@ -265,7 +265,7 @@ export default async function ServicePage({
             </Button>
           </div>
           <div className="lg:col-span-7">
-            <h2 className="display-type text-2xl">{t('faqTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
             <Faq items={content.faq} className="mt-6" />
           </div>
         </div>

@@ -159,6 +159,17 @@
   --font-display: var(--font-bebas), 'Arial Narrow', sans-serif;
   --font-body: var(--font-geist), system-ui, sans-serif;
   --font-label: var(--font-geist), system-ui, sans-serif;
+  /* axis 3b — the sub-heading face.
+     A heading is not always a poster. Raster, Zuhause and Goldküste set every
+     heading in their display face at any size, and that works because none of
+     their faces is caps-only. Homivaro's is: Bebas at 20–24px is a reading
+     problem rather than a voice, so headings below the display floor step
+     down to Geist and carry their rank with weight instead. */
+  --font-subhead: var(--font-geist), system-ui, sans-serif;
+  --subhead-tracking: -0.005em;
+  --subhead-weight: 500;
+  --subhead-transform: none;
+
   --display-tracking: -0.045em;
   --display-leading: 0.95;
   --display-weight: 400;
@@ -304,6 +315,12 @@
   --font-display: var(--font-bricolage), system-ui, sans-serif;
   --font-body: var(--font-figtree), system-ui, sans-serif;
   --font-label: var(--font-figtree), system-ui, sans-serif;
+  /* This face is readable at any size, so a sub-heading keeps it. */
+  --font-subhead: var(--font-display);
+  --subhead-tracking: var(--display-tracking);
+  --subhead-weight: var(--display-weight);
+  --subhead-transform: var(--display-transform);
+
   --display-tracking: -0.018em;
   --display-leading: 1.06;
   --display-weight: 600;
@@ -369,6 +386,12 @@
   --font-display: var(--font-instrument-serif), Georgia, serif;
   --font-body: var(--font-instrument-sans), system-ui, sans-serif;
   --font-label: var(--font-jetbrains), ui-monospace, monospace;
+  /* This face is readable at any size, so a sub-heading keeps it. */
+  --font-subhead: var(--font-display);
+  --subhead-tracking: var(--display-tracking);
+  --subhead-weight: var(--display-weight);
+  --subhead-transform: var(--display-transform);
+
   --display-tracking: -0.01em;
   --display-leading: 1.02;
   --display-weight: 400;
@@ -425,6 +448,19 @@
   --font-display: var(--font-geist), system-ui, sans-serif;
   --font-body: var(--font-geist), system-ui, sans-serif;
   --font-label: var(--font-geist), system-ui, sans-serif;
+  /* This face is readable at any size, so a sub-heading keeps it. */
+  --font-subhead: var(--font-display);
+  --subhead-tracking: var(--display-tracking);
+  --subhead-weight: var(--display-weight);
+  --subhead-transform: var(--display-transform);
+
+  /* The console already collapses the display face to Geist, so a sub-heading
+     here follows it rather than inheriting a marketing direction's. */
+  --font-subhead: var(--font-geist), system-ui, sans-serif;
+  --subhead-tracking: -0.005em;
+  --subhead-weight: 600;
+  --subhead-transform: none;
+
   --display-tracking: -0.015em;
   --display-leading: 1.15;
   --display-weight: 600;
@@ -459,6 +495,14 @@
   --app-control-h: 2.25rem;
   --app-sidebar-w: 16.5rem;
   --app-topbar-h: 3.5rem;
+}
+
+/* The console's fields keep the shared shape. .hv-field is the marketing
+   site's derived form style and would put a sunken fill behind every input in
+   a data-dense table. */
+[data-scope='app'] .hv-field {
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
 }
 
 [data-density='compact'] [data-scope='app'] {
@@ -668,6 +712,16 @@
   letter-spacing: var(--display-tracking);
   line-height: var(--display-leading);
   text-transform: var(--display-transform);
+}
+
+/* A heading below the display floor: the theme's sub-heading face, with its
+   own tracking and weight. Everything from text-lg down that used to reach for
+   display-type belongs here. */
+@utility subhead-type {
+  font-family: var(--font-subhead);
+  font-weight: var(--subhead-weight);
+  letter-spacing: var(--subhead-tracking);
+  text-transform: var(--subhead-transform);
 }
 
 @utility label-type {
