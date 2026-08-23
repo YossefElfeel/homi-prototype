@@ -67,7 +67,7 @@ export default function JobPostingPage({ params }: { params: Promise<{ slug: str
 
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         <div className="min-w-0">
-          <h1 className="display-type text-[clamp(2rem,4vw,3rem)]">
+          <h1 className="display-type text-[clamp(36px,5vw,60px)]">
             {posting.title[locale]}
           </h1>
           <p className="mt-5 max-w-[var(--measure)] text-lg text-ink-secondary">
@@ -78,7 +78,7 @@ export default function JobPostingPage({ params }: { params: Promise<{ slug: str
             ({ key, items }) =>
               items.length > 0 && (
                 <section key={key} className="mt-12">
-                  <h2 className="display-type text-xl">{t(key)}</h2>
+                  <h2 className="subhead-type text-xl">{t(key)}</h2>
                   <ul className="mt-5 space-y-3">
                     {items.map((item) => (
                       <li key={item} className="flex gap-3">

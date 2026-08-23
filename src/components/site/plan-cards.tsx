@@ -63,7 +63,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
               </span>
             )}
 
-            <h3 className="display-type text-2xl">{plan.name[locale]}</h3>
+            <h3 className="subhead-type text-2xl">{plan.name[locale]}</h3>
             <p className="mt-1.5 text-ink-secondary">{rhythmT(planRhythm(plan))}</p>
 
             <p data-numeric className="mt-6 text-4xl">

@@ -81,7 +81,7 @@ export function DialogTitle({
 }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
-      className={cn('display-type text-lg', className)}
+      className={cn('subhead-type text-lg', className)}
       {...props}
     />
   );

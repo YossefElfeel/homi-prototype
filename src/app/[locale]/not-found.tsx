@@ -9,8 +9,17 @@ export default function NotFound() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center px-gutter py-section">
-      <p className="label-type text-ink-tertiary">404</p>
-      <h1 className="display-type rule-accent mt-4 text-4xl sm:text-5xl">
+      {/* The one place a giant numeral is honest — it is the whole message,
+          and a numeral has no reading to do, so the display face is legal at
+          any size here. */}
+      <p
+        aria-hidden
+        data-numeric
+        className="display-type text-ink-accent text-[clamp(96px,18vw,220px)] leading-[0.8]"
+      >
+        404
+      </p>
+      <h1 className="display-type rule-accent mt-6 text-[clamp(36px,5vw,56px)]">
         {t('notFoundTitle')}
       </h1>
       <p className="mt-6 text-lg text-ink-secondary">{t('notFoundBody')}</p>

@@ -48,7 +48,7 @@ export default async function LegalPage({
   return (
     <div className="mx-auto max-w-7xl px-gutter py-block">
       <header className="border-b border-line-subtle pb-8">
-        <h1 className="display-type text-[clamp(2rem,4.5vw,3rem)]">{doc.title}</h1>
+        <h1 className="display-type text-[clamp(36px,4.5vw,56px)]">{doc.title}</h1>
         <p className="mt-4 text-sm text-ink-tertiary">
           {t('updated')}{' '}
           <time data-numeric dateTime={doc.updated}>
@@ -84,7 +84,7 @@ export default async function LegalPage({
               id={section.id}
               className="scroll-mt-24 border-b border-line-subtle py-8 first:pt-0 last:border-0"
             >
-              <h2 className="display-type text-xl">{section.heading}</h2>
+              <h2 className="subhead-type text-xl">{section.heading}</h2>
 
               {section.placeholder && (
                 <p className="mt-4 flex gap-3 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
@@ -115,7 +115,7 @@ export default async function LegalPage({
           ))}
 
           <section className="pt-8">
-            <h2 className="display-type text-xl">{t('contactTitle')}</h2>
+            <h2 className="subhead-type text-xl">{t('contactTitle')}</h2>
             <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">
               {t('contactBody', { email: brand('email') })}
             </p>

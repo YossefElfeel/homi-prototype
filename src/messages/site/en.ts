@@ -343,6 +343,9 @@ export const siteEn: typeof siteDe = {
       servicesLines: [{ lead: 'Services' }, { accent: 'on site.' }],
       otherLines: [{ lead: 'Other' }, { accent: 'municipalities.' }],
     },
+    careers: {
+      lines: [{ lead: 'People you would' }, { accent: 'hand a key to.' }],
+    },
     regionsIndex: {
       lines: [{ accent: 'Eight municipalities' }, { lead: 'on the right shore.' }],
       metaTitle: 'Service area',

@@ -100,7 +100,7 @@ export function Testimonials() {
             <Reveal>
               <p className="text-ink-accent text-lg font-medium">{t.testimonials.eyebrow}</p>
             </Reveal>
-            <h2 className="display-type text-ink mt-2 text-[clamp(32px,5.7vw,82px)] leading-[0.95]">
+            <h2 className="display-type text-ink mt-2 text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
               <DisplayLines key={locale}>
                 {[<span key="a">{t.testimonials.headline}</span>]}
               </DisplayLines>
