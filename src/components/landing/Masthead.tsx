@@ -87,7 +87,9 @@ export function Masthead({
               <span key={i} className="block">
                 {line.lead ? <span>{line.lead}</span> : null}
                 {line.lead && line.accent ? " " : null}
-                {line.accent ? <span className="text-ink-accent">{line.accent}</span> : null}
+                {/* The masthead is navy, so the accent takes the lighter red —
+                    see --content-accent-inverse. */}
+                {line.accent ? <span className="text-ink-accent-inverse">{line.accent}</span> : null}
               </span>
             ))}
           </DisplayLines>
