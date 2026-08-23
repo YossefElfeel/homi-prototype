@@ -31,6 +31,8 @@ export type Content = {
     menu: string;
     prev: string;
     next: string;
+    pauseServices: string;
+    playServices: string;
   };
   hero: {
     headline: HeadlinePart[][];
@@ -160,6 +162,8 @@ const en: Content = {
     menu: "Menu",
     prev: "Previous testimonials",
     next: "Next testimonials",
+    pauseServices: "Stop the services advancing on their own",
+    playServices: "Let the services advance on their own",
   },
   hero: {
     headline: [
@@ -386,6 +390,8 @@ const de: Content = {
     menu: "Menü",
     prev: "Vorherige Kundenstimmen",
     next: "Nächste Kundenstimmen",
+    pauseServices: "Automatischen Wechsel der Leistungen anhalten",
+    playServices: "Leistungen automatisch weiterblättern",
   },
   hero: {
     headline: [

@@ -2,7 +2,7 @@ import { Camera, Clock, FileCheck, ShieldCheck, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { SectionHeading, Section } from './section-heading';
-import { Rise } from '@/components/motion/reveal';
+
 import type { Theme } from '@/lib/theme';
 
 /**
@@ -60,36 +60,6 @@ export function ProofBlock({
                 <p className="mt-1.5 text-ink-inverse-secondary">{promise.body}</p>
               </div>
             </li>
-          ))}
-        </ul>
-      </Section>
-    );
-  }
-
-  if (theme === 'kante') {
-    return (
-      <Section tone="inverse">
-        <SectionHeading
-          theme={theme}
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lead={t('lead')}
-          align="start"
-        />
-        <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {promises.map((promise, i) => (
-            <Rise
-              key={promise.title}
-              enabled
-              delay={i}
-              className="rounded-[var(--radius-lg)] bg-white/6 p-6"
-            >
-              <span className="inline-flex size-10 items-center justify-center rounded-full bg-accent text-on-accent">
-                <promise.icon className="size-5" aria-hidden />
-              </span>
-              <h3 className="display-type mt-5 text-xl">{promise.title}</h3>
-              <p className="mt-2 text-sm text-ink-inverse-secondary">{promise.body}</p>
-            </Rise>
           ))}
         </ul>
       </Section>

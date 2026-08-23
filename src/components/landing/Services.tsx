@@ -34,8 +34,24 @@ export function Services() {
 
   const [active, setActive] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const go = useCallback((dir: 1 | -1) => setActive((a) => (a + dir + n) % n), [n]);
+
+  /* Any deliberate move stops the autoplay for good. Restarting it under
+     someone who just took the wheel is how a carousel loses an argument. */
+  const step = useCallback(
+    (dir: 1 | -1) => {
+      setPaused(true);
+      go(dir);
+    },
+    [go],
+  );
+
+  const jumpTo = useCallback((i: number) => {
+    setPaused(true);
+    setActive(i);
+  }, []);
 
   /*
    * Advances on its own while the stack is on screen. Hovering deliberately
@@ -44,10 +60,10 @@ export function Services() {
    * are dragging, and never runs for visitors who ask for reduced motion.
    */
   useEffect(() => {
-    if (reduce || dragging || !onScreen) return;
+    if (reduce || paused || dragging || !onScreen) return;
     const id = setInterval(() => setActive((a) => (a + 1) % n), AUTOPLAY_MS);
     return () => clearInterval(id);
-  }, [reduce, dragging, onScreen, n]);
+  }, [reduce, paused, dragging, onScreen, n]);
 
   // Trackpad and wheel: a sideways gesture over the stack steps it. Vertical
   // intent is left alone so the page keeps scrolling normally.
@@ -63,12 +79,12 @@ export function Services() {
       if (now - last < WHEEL_COOLDOWN_MS) return;
       if (Math.abs(e.deltaX) < 8) return;
       last = now;
-      go(e.deltaX > 0 ? 1 : -1);
+      step(e.deltaX > 0 ? 1 : -1);
     };
 
     node.addEventListener("wheel", onWheel, { passive: false });
     return () => node.removeEventListener("wheel", onWheel);
-  }, [go]);
+  }, [step]);
 
   return (
     <section id="services" className="scroll-mt-28 overflow-x-clip py-20 lg:py-[70px]">
@@ -116,17 +132,17 @@ export function Services() {
             onDragStart={() => setDragging(true)}
             onDragEnd={(_, info) => {
               setDragging(false);
-              if (info.offset.x < -60) go(1);
-              else if (info.offset.x > 60) go(-1);
+              if (info.offset.x < -60) step(1);
+              else if (info.offset.x > 60) step(-1);
             }}
             onKeyDown={(e) => {
               if (e.key === "ArrowRight") {
                 e.preventDefault();
-                go(1);
+                step(1);
               }
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                go(-1);
+                step(-1);
               }
             }}
             style={{ ["--card" as string]: "clamp(248px, 66vw, 360px)" }}
@@ -203,7 +219,7 @@ export function Services() {
                   {pos !== 0 ? (
                     <button
                       type="button"
-                      onClick={() => setActive(i)}
+                      onClick={() => jumpTo(i)}
                       aria-label={service.name}
                       className="absolute inset-0 cursor-pointer"
                     />
@@ -214,27 +230,57 @@ export function Services() {
           </motion.div>
 
           <div className="mt-8 flex items-center justify-between gap-4 pr-6 sm:justify-end sm:pr-10 lg:pr-12">
-            <p
-              aria-live="polite"
-              className="text-ink text-[15px] font-medium whitespace-nowrap tabular-nums"
-            >
-              {t.services.counter(active + 1, n)}
-            </p>
+            <div className="flex items-center gap-3">
+              {/*
+               * The stack advances by itself every 3.8 seconds. WCAG 2.2.2 is
+               * unambiguous that anything moving for more than five seconds
+               * needs a way to stop it, and the design has none — so this is
+               * an addition, kept as quiet as the rail it sits in.
+               *
+               * It does not pause on hover, which is the design's call and the
+               * right one: the pointer rests over these cards most of the
+               * time, and a stack that freezes whenever the mouse crosses it
+               * reads as broken rather than considerate.
+               */}
+              <button
+                type="button"
+                onClick={() => setPaused((v) => !v)}
+                aria-pressed={paused}
+                aria-label={paused ? t.actions.playServices : t.actions.pauseServices}
+                className="text-ink hover:bg-inverse hover:text-ink-inverse border-line grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              >
+                {paused ? (
+                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>
+                    <path d="M4.5 3.2v9.6L13 8Z" fill="currentColor" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>
+                    <path d="M4.5 3h2.2v10H4.5zM9.3 3h2.2v10H9.3z" fill="currentColor" />
+                  </svg>
+                )}
+              </button>
+              <p
+                aria-live="polite"
+                className="text-ink text-[15px] font-medium whitespace-nowrap tabular-nums"
+              >
+                {t.services.counter(active + 1, n)}
+              </p>
+            </div>
             <div className="flex items-center gap-1.5">
               {items.map((service, i) => (
                 <button
                   key={service.name}
                   type="button"
-                  onClick={() => setActive(i)}
+                  onClick={() => jumpTo(i)}
                   aria-label={service.name}
                   aria-current={i === active}
-                  className="group py-3"
+                  className="group py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
                 >
                   <span
                     className={`block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       i === active
                         ? "bg-accent w-8 sm:w-11"
-                        : "bg-line group-hover:bg-muted w-4 sm:w-6"
+                        : "bg-line group-hover:bg-ink-secondary w-4 sm:w-6"
                     }`}
                   />
                 </button>

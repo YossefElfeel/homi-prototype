@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
-import { SplitReveal } from '@/components/motion/reveal';
+
 import type { Theme } from '@/lib/theme';
 
 /**
@@ -98,38 +98,6 @@ export function SectionHeading({
       <header className={cn(centred ? 'text-center' : '', className)}>
         {eyebrow && <p className="label-type text-ink-tertiary">{eyebrow}</p>}
         <Title className={cn('display-type mt-2', size)}>{title}</Title>
-        {leadNode}
-      </header>
-    );
-  }
-
-  if (theme === 'kante') {
-    // No rule under the heading: at this scale, in caps, the type is the rule.
-    // The eyebrow gets the red instead, as a dot.
-    return (
-      <header className={cn(centred ? 'text-center' : '', className)}>
-        {eyebrow && (
-          <p
-            className={cn(
-              'label-type flex items-center gap-2.5 text-ink-tertiary',
-              centred && 'justify-center',
-            )}
-          >
-            <span aria-hidden className="size-1.5 rounded-full bg-rule" />
-            {eyebrow}
-          </p>
-        )}
-        <SplitReveal
-          as={level === 1 ? 'h1' : 'h2'}
-          enabled
-          text={title}
-          className={cn(
-            'display-type mt-4',
-            level === 1
-              ? 'text-[clamp(2.5rem,6.5vw,5rem)]'
-              : 'text-[clamp(2rem,4.5vw,3.5rem)]',
-          )}
-        />
         {leadNode}
       </header>
     );

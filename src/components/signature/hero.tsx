@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
-import { Rise, SplitReveal } from '@/components/motion/reveal';
+
 import type { Theme } from '@/lib/theme';
 
 /**
@@ -19,7 +19,6 @@ import type { Theme } from '@/lib/theme';
 export function Hero({ theme }: { theme: Theme }) {
   if (theme === 'zuhause') return <HeroZuhause />;
   if (theme === 'goldkueste') return <HeroGoldkueste />;
-  if (theme === 'kante') return <HeroKante />;
   return <HeroRaster />;
 }
 
@@ -161,70 +160,6 @@ function HeroGoldkueste() {
             >
               {c.secondary}
             </Link>
-          </div>
-        </div>
-      </div>
-
-      <ReassuranceStrip points={c.points} />
-    </section>
-  );
-}
-
-/* ---------------------------------------------------------------- Kante */
-
-function HeroKante() {
-  const c = useHeroCopy();
-
-  return (
-    <section>
-      <div className="bg-inverse text-ink-inverse">
-        <div className="mx-auto max-w-7xl px-gutter pt-16 pb-14 lg:pt-24 lg:pb-20">
-          <Rise enabled>
-            <p className="label-type flex items-center gap-2.5 text-ink-inverse-secondary">
-              <span aria-hidden className="size-2 rounded-full bg-rule" />
-              {c.eyebrow}
-            </p>
-          </Rise>
-
-          {/* Bebas Neue is caps-only and set at 0.88 leading, so the headline
-              has to stay short. That is the constraint the direction is built
-              around, not something to work around. */}
-          <SplitReveal
-            as="h1"
-            enabled
-            text={c.title}
-            className="display-type mt-7 max-w-[15ch] text-[clamp(3rem,9vw,7rem)]"
-          />
-
-          <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:items-end">
-            <Rise enabled delay={1} className="lg:col-span-6">
-              <p className="max-w-[46ch] text-lg text-ink-inverse-secondary">{c.lead}</p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Button asChild size="lg">
-                  <Link href="/anfrage">
-                    {c.primary}
-                    <ArrowRight className="size-4" aria-hidden />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="secondary"
-                  className="border-white/30 text-white hover:bg-white/10"
-                >
-                  <Link href="/preise">{c.secondary}</Link>
-                </Button>
-              </div>
-            </Rise>
-
-            <Rise enabled delay={2} className="lg:col-span-6">
-              <ImagePlaceholder
-                seed="hero-kante"
-                alt={c.imageAlt}
-                tone="dark"
-                className="aspect-16/10 rounded-[var(--radius-xl)]"
-              />
-            </Rise>
           </div>
         </div>
       </div>

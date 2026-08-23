@@ -70,7 +70,7 @@
 
 /* ======================================================== THEME: HOMIVARO
    The approved Figma design, and the only direction here that was drawn
-   rather than proposed. The four below it are wave-1 exploration and stay
+   rather than proposed. The three below it are wave-1 exploration and stay
    switchable; this one holds :root.
 
    What makes it itself:
@@ -377,86 +377,8 @@
   --label-transform: uppercase;
 }
 
-/* =========================================================== THEME: KANTE
-   Bold contemporary, modelled on the Rennox template and mapped onto the
-   Homivaro palette. What makes it a genuinely different direction rather than
-   a restyle:
-
-   · red is a SURFACE here, not a hairline. Whole blocks carry it.
-   · the display face is Bebas Neue — condensed, caps-only, set enormous at
-     0.88 leading. That forces short headlines and rules it out for body copy.
-   · motion is the point: line-by-line reveals as sections enter the viewport
-     (the reference uses GSAP SplitText + ScrollTrigger; this does it with an
-     IntersectionObserver and CSS, see .reveal below).
-
-   Worth stating plainly: this direction argues with the brief. The team brief
-   says this audience reads loud type and shouting colour as cheap, and warns
-   off exactly this register. It is built so the comparison is real, not to
-   settle it. */
-[data-theme='kante'] {
-  --surface-page: #ffffff;
-  --surface-card: #ffffff;
-  --surface-raised: #ffffff;
-  --surface-sunken: #efefee;
-  --surface-inverse: #0b1b3f;
-  --surface-accent-subtle: #fbe7e7;
-
-  --content-primary: #14161c;
-  --content-secondary: #4c515e;
-  --content-tertiary: #5b6170;
-  --content-inverse: #ffffff;
-  --content-inverse-secondary: #b4bdd2;
-  --content-accent: var(--brand-red-600);
-  --content-on-accent: #ffffff;
-
-  --border-subtle: #e4e4e2;
-  --border-default: #d4d4d1;
-  --border-strong: #14161c;
-  --border-focus: var(--brand-red-600);
-
-  /* The defining move: the primary action is Swiss red, not navy. */
-  --accent-solid: var(--brand-red-600);
-  --accent-solid-hover: var(--brand-red-700);
-  --accent-on-solid: #ffffff;
-  --accent-quiet: #fbe7e7;
-  --accent-line: var(--brand-red-600);
-  --accent-eco: var(--brand-green-600);
-
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-action: 999px;
-
-  --shadow-sm: 0 1px 2px rgb(20 22 28 / 0.06);
-  --shadow-md: 0 8px 24px -10px rgb(20 22 28 / 0.16);
-  --shadow-lg: 0 24px 60px -24px rgb(20 22 28 / 0.3);
-  --card-border-width: 1px;
-
-  --space-section: 6.5rem;
-  --space-block: 3rem;
-  --space-gutter: 1.5rem;
-  --measure: 62ch;
-
-  --motion-fast: 260ms;
-  --motion-base: 520ms;
-  --motion-slow: 900ms;
-  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
-
-  --font-display: var(--font-bebas), 'Arial Narrow', sans-serif;
-  --font-body: var(--font-geist), system-ui, sans-serif;
-  --font-label: var(--font-geist), system-ui, sans-serif;
-  --display-tracking: -0.025em;
-  --display-leading: 0.88;
-  --display-weight: 400;
-  --display-transform: uppercase;
-  --label-tracking: 0.08em;
-  --label-transform: uppercase;
-}
-
 /* ====================================================== SCOPE: APP (console)
-   The four themes above are marketing directions. A dense operations console
+   The themes above are marketing directions. A dense operations console
    is a different job: it needs a ground for cards to sit on, real elevation,
    quick motion and UI type — not editorial type set on white paper.
 
@@ -518,8 +440,9 @@
   --space-gutter: 1.5rem;
   --measure: 72ch;
 
-  /* axis 6 — motion. Kante's 520ms base is deliberate on a landing page and
-     unusable on a screen you click through forty times an hour. */
+  /* axis 6 — motion. The marketing directions run 450–1050ms, which is right
+     on a landing page and unusable on a screen you click through forty times
+     an hour. */
   --motion-fast: 90ms;
   --motion-base: 140ms;
   --motion-slow: 220ms;
@@ -577,13 +500,6 @@
   --surface-sunken: #eceae4;
   --border-subtle: #e6e4de;
   --border-default: #d5d2c9;
-}
-
-[data-theme='kante'] [data-scope='app'] {
-  --surface-page: #f6f6f7;
-  --surface-sunken: #eaeaec;
-  --border-subtle: #e6e6e7;
-  --border-default: #d6d6d8;
 }
 
 /* ------------------------------------------- 3. TAILWIND UTILITY BINDINGS */
@@ -1115,73 +1031,4 @@
 [data-stress='on'] {
   letter-spacing: 0.012em;
   word-spacing: 0.06em;
-}
-
-/* ------------------------------------------------ 6. SCROLL REVEAL (KANTE)
-   The reference template does this with GSAP SplitText + ScrollTrigger, both
-   Club plugins. The same effect here is an IntersectionObserver plus these
-   two rules — no runtime dependency, no licence, and it degrades to plain
-   text when JavaScript or motion is unavailable.
-
-   Each word sits in its own overflow-hidden box and slides up from below;
-   words sharing a rendered line share a delay, which is what makes it read as
-   a line reveal rather than a word-by-word typewriter. */
-/* The mask has to be TALLER than the line box.
-   Kante sets --display-leading to 0.88, so the line box (0.88em) is shorter
-   than the glyphs it contains — an overflow-hidden mask sized to the line box
-   slices the caps and umlauts clean off. The padding grows the mask; the equal
-   negative margin keeps the layout identical. */
-.split-line {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: bottom;
-  padding-block: 0.22em 0.16em;
-  margin-block: -0.22em -0.16em;
-}
-
-.split-word {
-  display: inline-block;
-  will-change: transform;
-}
-
-/* Far enough to clear the enlarged mask, not just the line box. */
-[data-reveal='pending'] .split-word {
-  transform: translateY(150%);
-}
-
-[data-reveal] .split-word {
-  transition:
-    transform var(--motion-slow) var(--ease-standard),
-    opacity var(--motion-base) var(--ease-standard);
-  transition-delay: calc(var(--line) * 90ms);
-}
-
-[data-reveal='shown'] .split-word {
-  transform: translateY(0);
-}
-
-/* Block-level reveal for anything that is not a headline. */
-[data-rise='pending'] {
-  opacity: 0;
-  transform: translateY(1.25rem);
-}
-
-[data-rise] {
-  transition:
-    opacity var(--motion-base) var(--ease-standard),
-    transform var(--motion-base) var(--ease-standard);
-  transition-delay: calc(var(--delay, 0) * 90ms);
-}
-
-[data-rise='shown'] {
-  opacity: 1;
-  transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-reveal='pending'] .split-word,
-  [data-rise='pending'] {
-    transform: none;
-    opacity: 1;
-  }
 }

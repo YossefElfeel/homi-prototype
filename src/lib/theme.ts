@@ -6,12 +6,17 @@
  * Only the components under components/signature/ are allowed to branch on
  * the theme. Everything else must work in all of them from tokens alone.
  *
- * `homivaro` is not a fifth exploration — it is the approved Figma design, so
- * it leads the list and holds the default. The four before it were wave 1,
+ * `homivaro` is not another exploration — it is the approved Figma design, so
+ * it leads the list and holds the default. The three after it are wave 1,
  * kept because a comparison you can still open is worth more than a
  * screenshot of one.
+ *
+ * Kante was a fourth, and it is gone. It was Bebas + Geist + red + scroll
+ * reveals — which is what the approved design turned out to be — so it
+ * stopped being a comparison and became a near-duplicate that every
+ * signature component had to carry a branch for.
  */
-export const THEMES = ['homivaro', 'raster', 'zuhause', 'goldkueste', 'kante'] as const;
+export const THEMES = ['homivaro', 'raster', 'zuhause', 'goldkueste'] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const DEFAULT_THEME: Theme = 'homivaro';
@@ -32,10 +37,6 @@ export const THEME_META: Record<Theme, { name: string; note: string }> = {
   goldkueste: {
     name: 'Goldküste',
     note: 'Concierge — deep navy sections, serif display, slow motion',
-  },
-  kante: {
-    name: 'Kante',
-    note: 'Bold contemporary — condensed caps, red as a surface, scroll reveals',
   },
 };
 

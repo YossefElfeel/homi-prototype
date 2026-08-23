@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
-import { Rise, SplitReveal } from '@/components/motion/reveal';
+
 import type { Theme } from '@/lib/theme';
 import { CtaBand as LandingCtaBand } from '@/components/landing/CtaBand';
 
@@ -51,48 +51,6 @@ export function CtaBand({ theme }: { theme: Theme }) {
               <span data-numeric>{phone}</span>
             </a>
           </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (theme === 'kante') {
-    // The clearest expression of the direction: red is a surface, not a
-    // hairline. A full-bleed Swiss-red block is exactly what the other three
-    // themes deliberately avoid.
-    return (
-      <section className="bg-accent text-on-accent">
-        <div className="mx-auto max-w-6xl px-gutter py-section">
-          <SplitReveal
-            as="h2"
-            enabled
-            text={t('title')}
-            className="display-type max-w-[16ch] text-[clamp(2.5rem,7vw,5.5rem)]"
-          />
-          <Rise enabled delay={1} className="mt-8 grid gap-8 lg:grid-cols-12 lg:items-end">
-            {/* /90, not /80: white at 80% over this red measures 3.85:1, below
-                the 4.5 floor. Hierarchy here comes from type size, not opacity. */}
-            <p className="max-w-[52ch] text-lg text-white/90 lg:col-span-7">{t('lead')}</p>
-            <div className="flex flex-wrap items-center gap-4 lg:col-span-5 lg:justify-end">
-              <Button
-                asChild
-                size="lg"
-                className="bg-white text-[var(--brand-red-700)] hover:bg-white/90"
-              >
-                <Link href="/anfrage">
-                  {t('primary')}
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              </Button>
-              <a
-                href={`tel:${phone.replace(/\s/g, '')}`}
-                className="inline-flex items-center gap-2 border-b border-white/40 pb-1 text-sm text-white/90 transition-colors hover:border-white"
-              >
-                <Phone className="size-4" aria-hidden />
-                <span data-numeric>{phone}</span>
-              </a>
-            </div>
-          </Rise>
         </div>
       </section>
     );
