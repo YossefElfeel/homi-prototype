@@ -8,6 +8,7 @@ import { getStressMode, getTheme } from '@/lib/theme-server';
 import { getCareersContent } from '@/content/careers';
 import { Button } from '@/components/ui/button';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
+import { Masthead } from '@/components/landing/Masthead';
 import { JobList } from '@/components/careers/job-list';
 
 export function generateStaticParams() {
@@ -47,16 +48,23 @@ export default async function JobsPage({
   const t = await getTranslations('careers.index');
   const content = getCareersContent(locale as Locale, stressed);
 
+  const d = await getTranslations('site.display.careers');
+  const hv = theme === 'homivaro';
+
   return (
     <>
+      {hv ? <Masthead lines={d.raw('lines')} lead={t('lead')} /> : null}
+
       <Section>
-        <SectionHeading
-          theme={theme}
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lead={t('lead')}
-          level={1}
-        />
+        {!hv ? (
+          <SectionHeading
+            theme={theme}
+            eyebrow={t('eyebrow')}
+            title={t('title')}
+            lead={t('lead')}
+            level={1}
+          />
+        ) : null}
         <h2 className="label-type mt-16 text-ink-tertiary">{t('openTitle')}</h2>
         <div className="mt-6">
           <JobList />
@@ -81,7 +89,7 @@ export default async function JobsPage({
       <Section>
         <div className="surface-card flex flex-col gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="display-type text-xl">{t('statusTitle')}</h2>
+            <h2 className="subhead-type text-xl">{t('statusTitle')}</h2>
             <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
               {t('statusBody')}
             </p>

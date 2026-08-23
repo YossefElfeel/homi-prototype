@@ -48,7 +48,7 @@ export function ApplicationSent({ reference }: { reference: string }) {
       </div>
 
       <section className="mt-10">
-        <h2 className="display-type text-xl">{t('nextTitle')}</h2>
+        <h2 className="subhead-type text-xl">{t('nextTitle')}</h2>
         <ol className="mt-5 space-y-4">
           {content.next.map((line, index) => (
             <li key={line} className="flex gap-4">

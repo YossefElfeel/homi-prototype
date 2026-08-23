@@ -133,7 +133,7 @@ export default function ReviewStep() {
       {estimate && (
         <section className="mt-8 rounded-[var(--radius-lg)] border border-line p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="display-type text-xl">{t('priceTitle')}</h2>
+            <h2 className="subhead-type text-xl">{t('priceTitle')}</h2>
             <MoneyRange
               low={estimate.rangeLow}
               high={estimate.rangeHigh}

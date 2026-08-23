@@ -228,7 +228,7 @@ export default async function PricingPage({
             </Button>
           </div>
           <div className="lg:col-span-7">
-            <h2 className="display-type text-2xl">{t('faqTitle')}</h2>
+            <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
             <Faq
               className="mt-6"
               items={[

@@ -164,7 +164,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           </section>
 
           <section className="mt-10">
-            <h2 className="display-type text-xl">{t('linesTitle')}</h2>
+            <h2 className="subhead-type text-xl">{t('linesTitle')}</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-md border-collapse text-left">
                 <thead>
@@ -209,7 +209,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
 
           {optional.length > 0 && (
             <section className="mt-10">
-              <h2 className="display-type text-xl">{t('optionalTitle')}</h2>
+              <h2 className="subhead-type text-xl">{t('optionalTitle')}</h2>
               <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-secondary">
                 {t('optionalLead')}
               </p>

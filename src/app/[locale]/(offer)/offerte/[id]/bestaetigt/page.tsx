@@ -161,7 +161,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
           job is booked, and the document is what you come back for.
         */}
         <section className="mt-10">
-          <h2 className="display-type text-xl">{signT('documentTitle')}</h2>
+          <h2 className="subhead-type text-xl">{signT('documentTitle')}</h2>
           <div className="surface-card mt-4 p-5">
             <div className="grid gap-6 sm:grid-cols-2">
               <SignatureSlot

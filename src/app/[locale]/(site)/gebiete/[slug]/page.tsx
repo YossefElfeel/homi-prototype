@@ -167,7 +167,7 @@ export default async function RegionPage({
       </Section>
 
       <Section>
-        <h2 className="display-type text-2xl">{t('otherTitle')}</h2>
+        <h2 className="subhead-type text-2xl">{t('otherTitle')}</h2>
         <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-3">
           {others.map((other) => (
             <li key={other.slug}>

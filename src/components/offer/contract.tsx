@@ -52,7 +52,7 @@ export function ContractDocument({
   return (
     <article className={cn('text-sm', className)}>
       <header className="border-b border-line-subtle pb-4">
-        <h2 className="display-type text-lg">{t('title')}</h2>
+        <h2 className="subhead-type text-lg">{t('title')}</h2>
         <p data-numeric className="mt-1 text-ink-tertiary">
           {offer.reference} · {t('versionLabel', { n: offer.version })}
         </p>
