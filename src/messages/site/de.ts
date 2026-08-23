@@ -9,6 +9,7 @@
  * Long-form editorial content (service inclusion lists, FAQs) lives in
  * src/content/services.ts — message dictionaries hold interface strings only.
  */
+
 export const siteDe = {
   home: {
     meta: {

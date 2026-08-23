@@ -13,6 +13,15 @@ import { Section, SectionHeading } from '@/components/signature/section-heading'
 import { ServiceGrid } from '@/components/site/service-grid';
 import { PlanCards } from '@/components/site/plan-cards';
 import { ReviewsSection } from '@/components/site/reviews-section';
+import { Hero as LandingHero } from '@/components/landing/Hero';
+import { Stats } from '@/components/landing/Stats';
+import { Services } from '@/components/landing/Services';
+import { Promises } from '@/components/landing/Promises';
+import { CtaBand as LandingCtaBand } from '@/components/landing/CtaBand';
+import { Steps } from '@/components/landing/Steps';
+import { Coverage } from '@/components/landing/Coverage';
+import { Plans } from '@/components/landing/Plans';
+import { Testimonials } from '@/components/landing/Testimonials';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 
 export function generateStaticParams() {
@@ -40,6 +49,35 @@ export default async function HomePage({
 
   const [theme, hasInsurance] = await Promise.all([getTheme(), getHasInsurance()]);
   const t = await getTranslations('site.home');
+
+  /*
+   * The approved design, cloned. Same sections in the same order with the same
+   * copy, motion and imagery as the design build — this page is the landing
+   * page, not a page influenced by it.
+   *
+   * Three things had to change to make a one-page comp work inside a site with
+   * seventeen routes, and nothing else did:
+   *
+   *   · the nav points at real pages instead of scrolling to anchors on this one
+   *   · "Request a quote" goes to /anfrage, the actual quote flow, rather than
+   *     to the closing band, which is a red panel with a phone number on it
+   *   · the language comes from the URL rather than from localStorage
+   */
+  if (theme === 'homivaro') {
+    return (
+      <>
+        <LandingHero />
+        <Stats />
+        <Services />
+        <Promises />
+        <LandingCtaBand />
+        <Steps />
+        <Coverage />
+        <Plans />
+        <Testimonials />
+      </>
+    );
+  }
 
   return (
     <>

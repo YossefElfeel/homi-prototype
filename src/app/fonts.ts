@@ -10,12 +10,14 @@ import {
 } from 'next/font/google';
 
 /**
- * Three themes, three typographic voices — deliberately not one neutral UI
+ * Five directions, five typographic voices — deliberately not one neutral UI
  * font across all of them. `next/font` self-hosts every file at build time,
  * so none of this costs a runtime request to Google.
  *
- * Only the default theme's faces are preloaded; the other two swap in when a
- * reviewer switches direction.
+ * Only the default direction's faces are preloaded; the rest swap in when a
+ * reviewer switches. Homivaro is the default, so Bebas and Geist are the pair
+ * that gets preloaded — they are declared further down, next to Kante, which
+ * shares them.
  */
 
 // Raster — Swiss editorial. A grotesque with real character at tight tracking.
@@ -23,7 +25,7 @@ export const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-archivo',
   display: 'swap',
-  preload: true,
+  preload: false,
 });
 
 // Zuhause — warm trust.
@@ -58,23 +60,28 @@ export const instrumentSans = Instrument_Sans({
   preload: false,
 });
 
-// Kante — the reference template's exact pairing. Bebas Neue is a caps-only
-// condensed face: enormous at tight leading, unreadable in long paragraphs.
-// That constraint shapes the whole direction, so it is deliberate, not a
-// side effect: display lines stay short and Geist carries everything else.
+// Homivaro and Kante share this pairing — Homivaro because the Figma file
+// specifies it, Kante because its reference template landed on the same two.
+// Bebas Neue is a caps-only condensed face: enormous at tight leading,
+// unreadable in long paragraphs. That constraint shapes both directions, so
+// it is deliberate, not a side effect — display lines stay short, nothing sets
+// Bebas below 36px, and Geist carries everything else.
+//
+// Preloaded because Homivaro is the default and its hero headline is the LCP
+// element on the highest-traffic page on the site.
 export const bebas = Bebas_Neue({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-bebas',
   display: 'swap',
-  preload: false,
+  preload: true,
 });
 
 export const geist = Geist({
   subsets: ['latin'],
   variable: '--font-geist',
   display: 'swap',
-  preload: false,
+  preload: true,
 });
 
 // Labels, eyebrows and every tabular figure in Raster and Goldküste.
@@ -82,7 +89,7 @@ export const jetbrains = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains',
   display: 'swap',
-  preload: true,
+  preload: false,
 });
 
 export const fontVariables = [

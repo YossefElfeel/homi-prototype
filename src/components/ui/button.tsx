@@ -21,6 +21,14 @@ const button = cva(
     'transition-[background-color,color,border-color,box-shadow,transform] ease-[var(--ease-standard)]',
     'duration-[var(--motion-base)]',
     '[&_svg]:shrink-0',
+    /* Hook for the Homivaro hover, which is CSS-only and theme-scoped in
+       globals.css. It is a class rather than a variant because nothing about
+       the component changes — the other four directions never match the
+       selector and render exactly as before. Deliberately not the design's
+       full gesture: the cursor-magnet third of it needs a spring, a spring
+       needs `motion`, and `motion` on the shared button would follow this
+       component into all 58 console screens for the sake of a hover. */
+    'hv-action',
     /* Disabled arrives two ways. A real <button> gets :disabled; an asChild
        anchor cannot — see the note in the component below — so aria-disabled
        has to carry the same weight or the styling silently does nothing. */
