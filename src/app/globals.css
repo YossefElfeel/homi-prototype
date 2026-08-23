@@ -25,6 +25,11 @@
   --brand-red-700: #a8161e;
   --brand-red-600: #d0202a;
   --brand-red-500: #e0424b;
+  /* Sampled from the approved Figma file. Deeper than the other three, and
+     dark enough to carry body-sized text — 8.7:1 on white, 7.7:1 on the
+     sunken grey — which is why Homivaro can set a red word inside a heading
+     where the brighter reds could only ever be a rule or a fill. */
+  --brand-red-800: #9c0009;
 
   /* Green — from the leaf. Sustainability cue only. */
   --brand-green-700: #2f7a2d;
@@ -63,10 +68,115 @@
   --status-danger-border: #f3c9cb;
 }
 
+/* ======================================================== THEME: HOMIVARO
+   The approved Figma design, and the only direction here that was drawn
+   rather than proposed. The four below it are wave-1 exploration and stay
+   switchable; this one holds :root.
+
+   What makes it itself:
+
+   · the page is not the ground. Navy is. The white slab floats on it at 32px
+     and the footer is the navy showing through again at the bottom.
+   · red is a verb. Buttons, the focus ring, the scroll hairline, and exactly
+     one word per heading. It is a large passive surface once per page — the
+     closing band — and that scarcity is the whole reason the band lands.
+   · Bebas at 82–118px carries the headings, which forces every headline to be
+     short. Nothing in this direction may set Bebas below 36px: it is caps-only
+     and condensed, and under that size it stops being a voice and becomes a
+     reading problem. Geist takes everything else.
+   · cards have no border until you touch them. Elevation is the hover. */
+:root,
+[data-theme='homivaro'] {
+  --surface-page: #ffffff;
+  --surface-card: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1f1f1;
+  --surface-inverse: var(--brand-navy-900);
+  --surface-accent-subtle: #f7e9ea;
+
+  --content-primary: var(--brand-navy-900);
+  /* The Figma sample sets body copy at #747474. On the #f1f1f1 card that is
+     4.14:1 — under AA, and body copy on a card is most of the page. Darkened
+     the two steps it takes to clear 4.5:1 on *both* surfaces (4.72:1 sunken,
+     5.33:1 white). A visible deviation from the file, and the alternative was
+     shipping the card text below the line. */
+  --content-secondary: #6b6b6b;
+  /* Carries eyebrows and labels at 11px, so it takes the full ratio with no
+     large-text allowance: 5.66:1 sunken, 6.39:1 white. */
+  --content-tertiary: #5f5f5f;
+  --content-inverse: #ffffff;
+  --content-inverse-secondary: #b9c2d8;
+  --content-accent: var(--brand-red-800);
+  --content-on-accent: #ffffff;
+
+  --border-subtle: #e4e4e4;
+  --border-default: #d2d2d2;
+  --border-strong: var(--brand-navy-900);
+  --border-focus: var(--brand-red-800);
+
+  /* The primary action is red and washes to navy on hover — the two brand
+     colours trading places, which is the design's one recurring gesture. */
+  --accent-solid: var(--brand-red-800);
+  --accent-solid-hover: var(--brand-navy-900);
+  --accent-on-solid: #ffffff;
+  --accent-quiet: #f7e9ea;
+  --accent-line: var(--brand-red-800);
+  --accent-eco: var(--brand-green-600);
+
+  /* axis 1 — radius. Everything is a rounded rectangle: the shell and the
+     hero at 32, cards at 24, controls fully round. 12 is the form field,
+     which is the one place a pill would fight the content (see the note on
+     .field below). */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-action: 999px;
+
+  /* axis 2 — elevation. A card is flat until hovered; these are the lift. */
+  --shadow-sm: 0 1px 2px rgb(11 27 63 / 0.05);
+  --shadow-md: 0 20px 50px -28px rgb(11 27 63 / 0.38);
+  --shadow-lg: 0 40px 90px -50px rgb(11 27 63 / 0.85);
+  --shadow-dark-md: 0 22px 54px -26px rgb(11 27 63 / 0.7);
+  --card-border-width: 0px;
+
+  /* axis 4 — rhythm. 48px gutter above 900px, 24 below, per the design. */
+  --space-section: 5rem;
+  --space-block: 3.5rem;
+  --space-gutter: 1.5rem;
+  --measure: 62ch;
+
+  /* axis 6 — motion. One easing for the whole direction: long tail, no
+     overshoot. The same curve the motion layer uses in JS, so a CSS
+     transition and a spring-free tween cannot drift apart. */
+  --motion-fast: 260ms;
+  --motion-base: 450ms;
+  --motion-slow: 1050ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* typography */
+  --font-display: var(--font-bebas), 'Arial Narrow', sans-serif;
+  --font-body: var(--font-geist), system-ui, sans-serif;
+  --font-label: var(--font-geist), system-ui, sans-serif;
+  --display-tracking: -0.045em;
+  --display-leading: 0.95;
+  --display-weight: 400;
+  --display-transform: uppercase;
+  --label-tracking: 0.06em;
+  --label-transform: uppercase;
+}
+
+@media (min-width: 900px) {
+  :root,
+  [data-theme='homivaro'] {
+    --space-gutter: 3rem;
+  }
+}
+
 /* =========================================================== THEME: RASTER
    Swiss editorial. Strict grid, generous white, hairlines instead of shadows,
    red reduced to a single rule under headings. */
-:root,
 [data-theme='raster'] {
   --surface-page: #ffffff;
   --surface-card: #ffffff;
@@ -448,6 +558,13 @@
 
 /* Per-theme warmth. Only the neutrals move — a warm theme keeps a warm ground
    so the console does not feel bolted onto a different product. */
+[data-theme='homivaro'] [data-scope='app'] {
+  --surface-page: #f5f6f8;
+  --surface-sunken: #eaebee;
+  --border-subtle: #e5e6e9;
+  --border-default: #d4d6da;
+}
+
 [data-theme='zuhause'] [data-scope='app'] {
   --surface-page: #f7f4ef;
   --surface-sunken: #efe9e0;
@@ -663,6 +780,227 @@
   border: var(--card-border-width) solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* --------------------------------------------- 5a. HOMIVARO COMPOSITES
+   Scoped to the one direction that uses them, so switching to Raster cannot
+   inherit a rounded shell or a card that lifts. Everything here reads from
+   the token layer above — no literal colour appears in this block, which is
+   what lets the same markup work if a value moves. */
+[data-theme='homivaro'] {
+  /* The page is a slab floating on navy. Its bottom corners round *into* the
+     footer, which is the same navy showing through, so the two read as one
+     surface with the content cut out of it. */
+  .hv-shell {
+    background: var(--surface-page);
+    border-radius: var(--radius-xl);
+    overflow: clip;
+  }
+
+  .hv-container {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
+    padding-inline: var(--space-gutter);
+  }
+
+  /*
+   * One hover for every card on the site, and nothing else uses it: the
+   * surface lifts to white, a shadow grows underneath and a hairline ring
+   * appears. Both stay inside the card's own radius — a ring drawn as a
+   * border would shift the layout by a pixel on hover, and an outline would
+   * square off the corners.
+   *
+   * The lift itself (y −5) belongs to the motion layer, not here: it is a
+   * spring, and a CSS transition cannot express one.
+   */
+  .hv-card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    transition:
+      background-color var(--motion-base) var(--ease-standard),
+      box-shadow var(--motion-slow) var(--ease-standard);
+  }
+
+  .hv-card-light {
+    background: var(--surface-sunken);
+  }
+
+  .hv-card-light:hover {
+    background: var(--surface-card);
+    box-shadow:
+      var(--shadow-md),
+      inset 0 0 0 1px var(--border-default);
+  }
+
+  .hv-card-dark {
+    background: var(--surface-inverse);
+    color: var(--content-inverse);
+  }
+
+  .hv-card-dark:hover {
+    box-shadow:
+      var(--shadow-dark-md),
+      inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+
+  /* One clip mask per visual line of display type. The padding keeps the clip
+     edge off the baseline gap rather than shaving the descenders of a
+     lowercase line — Bebas is caps-only, but the mask is also used on the
+     Geist lead in a couple of places. */
+  .hv-mask-line {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.012em;
+  }
+
+  /*
+   * The footer is the navy ground showing through below the shell, so it
+   * re-binds the semantic tokens for its own subtree rather than every element
+   * inside it swapping to an inverse class. This is what the token layer is
+   * for: the footer markup is identical in all five directions and only the
+   * bindings move.
+   *
+   * The accent has to leave. #9c0009 on this navy is 1.95:1 — the red that
+   * carries every action on the light page is invisible here, so the rule and
+   * the accent text both go white. A brand colour that cannot be read is not
+   * a brand colour on this surface.
+   */
+  .hv-footer {
+    --surface-sunken: var(--brand-navy-900);
+    --content-primary: #ffffff;
+    --content-secondary: #b9c2d8;
+    /* 6.6:1 on the navy — this carries the column labels at 11px. */
+    --content-tertiary: #97a2bd;
+    --border-subtle: #1e3055;
+    --border-default: #24406e;
+    --content-accent: #ffffff;
+    --accent-line: #ffffff;
+  }
+
+  /*
+   * The button hover: a plane of the *other* brand colour wipes up from the
+   * bottom, and any arrow inside walks to the right. Red washing to navy and
+   * navy washing to red is the direction's one recurring gesture — the two
+   * colours trading places.
+   *
+   * CSS-only on purpose. The design also drifts the control toward the cursor,
+   * which needs a spring and therefore a client component; this button is the
+   * same one the console uses on 58 screens, so that third of the gesture is
+   * dropped rather than paid for everywhere. The reduced-motion block in the
+   * base layer already flattens what is left.
+   */
+  .hv-action {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .hv-action::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform: translateY(100%);
+    background: var(--accent-solid-hover);
+    transition: transform var(--motion-base) var(--ease-standard);
+  }
+
+  /* The secondary button is navy-on-transparent, so its wash is the accent
+     and its label has to flip to white or it washes into itself. */
+  .hv-action:not(.bg-accent)::after {
+    background: var(--accent-solid);
+  }
+
+  .hv-action:not(.bg-accent):hover {
+    color: var(--accent-on-solid);
+    border-color: transparent;
+  }
+
+  .hv-action:hover::after {
+    transform: translateY(0);
+  }
+
+  .hv-action svg {
+    transition: transform var(--motion-base) var(--ease-standard);
+  }
+
+  .hv-action:hover svg:last-child {
+    transform: translateX(0.25rem);
+  }
+
+  /* The accent half of a heading, on the one section where the heading is
+     already white on red and recolouring it is not available. Falls back to
+     solid white anywhere -webkit-text-stroke is missing, which is the right
+     failure: an unstyled word beats an invisible one. */
+  .hv-outline-text {
+    -webkit-text-stroke: 1.5px currentColor;
+  }
+
+  @supports (-webkit-text-stroke: 1px currentColor) {
+    .hv-outline-text {
+      color: transparent;
+    }
+  }
+
+  /*
+   * The hero scrim. Four stops rather than two: a plain 50% wash would either
+   * lose the headline against a bright window or grey out the photograph, and
+   * the copy sits in the bottom third while the picture has to stay a
+   * picture at the top. Ends fully transparent so the image is untouched
+   * where nothing is written over it.
+   */
+  .hv-scrim {
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.78) 0%,
+      rgb(0 0 0 / 0.52) 42%,
+      rgb(0 0 0 / 0.34) 80%,
+      rgb(0 0 0 / 0) 100%
+    );
+  }
+
+  /* Gives the flat red closing band somewhere for the light to sit. */
+  .hv-grain {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(255 255 255 / 0.07) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+
+  /*
+   * The design contains no form. A 999px pill — the control radius everywhere
+   * else here — collapses on a textarea and reads as a search box on a single
+   * line, so fields step down to --radius-md and take the card's surface
+   * instead. The card language one level in.
+   */
+  .hv-field {
+    width: 100%;
+    background: var(--surface-sunken);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--content-primary);
+    transition:
+      border-color var(--motion-fast) var(--ease-standard),
+      background-color var(--motion-fast) var(--ease-standard);
+  }
+
+  .hv-field:hover {
+    border-color: var(--border-default);
+  }
+
+  /* Geometry stays put on focus. A field that resizes under the cursor moves
+     the text you are typing. */
+  .hv-field:focus-visible {
+    background: var(--surface-card);
+    border-color: var(--border-default);
+  }
+
+  .hv-field[aria-invalid='true'] {
+    border-color: var(--accent-solid);
+  }
 }
 
 /* ------------------------------------------------- 5b. OVERLAY MOTION

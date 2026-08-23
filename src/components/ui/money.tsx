@@ -23,6 +23,20 @@ const UNIT_SUFFIX: Record<Exclude<MoneyUnit, 'none'>, Record<'de' | 'en', string
   visit: { de: '/ Einsatz', en: '/ visit' },
 };
 
+/**
+ * The Swiss thousands separator, pinned.
+ *
+ * Node and the browser disagree about which apostrophe `de-CH` uses: Node's
+ * ICU emits U+2019 (’), Chrome emits U+0027 ('). Every four-figure price on
+ * the site therefore rendered one character differently on the server than on
+ * the client, and React threw a hydration error and re-rendered the tree —
+ * on the homepage, in the default theme, for any plan over a thousand francs.
+ *
+ * Normalising here rather than at the call sites because `formatChf` is the
+ * only place a franc is ever formatted. U+2019 is the correct Swiss form.
+ */
+const APOSTROPHES = /['’']/g;
+
 export function formatChf(amount: number, locale: Locale) {
   const formatted = new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: 'currency',
@@ -31,7 +45,15 @@ export function formatChf(amount: number, locale: Locale) {
   }).format(amount);
 
   // Swiss convention writes whole francs as "49.–", not "49.00".
-  return formatted.replace(/([.,])00$/, '$1–');
+  return swissSeparators(formatted.replace(/([.,])00$/, '$1–'));
+}
+
+/**
+ * Apostrophes only. The character between `CHF` and the figure is a separator
+ * too — a no-break space — and folding it in here would render `CHF’3’440`.
+ */
+export function swissSeparators(value: string) {
+  return value.replace(APOSTROPHES, '’');
 }
 
 interface MoneyProps {
@@ -103,9 +125,9 @@ export function MoneyRange({
   return (
     <span data-numeric className={cn('whitespace-nowrap', className)}>
       <span className="text-ink-secondary">CHF </span>
-      {number.format(low)}
+      {swissSeparators(number.format(low))}
       <span className="mx-1.5 text-ink-tertiary">–</span>
-      {number.format(high)}
+      {swissSeparators(number.format(high))}
     </span>
   );
 }

@@ -1,17 +1,26 @@
 /**
- * The three visual directions ship as data, not as forks in the code.
+ * The visual directions ship as data, not as forks in the code.
  * A theme re-binds the semantic tokens in globals.css plus seven axes:
  * radius · elevation · surface · rhythm · accent-line · motion · voice.
  *
  * Only the components under components/signature/ are allowed to branch on
- * the theme. Everything else must work in all three from tokens alone.
+ * the theme. Everything else must work in all of them from tokens alone.
+ *
+ * `homivaro` is not a fifth exploration — it is the approved Figma design, so
+ * it leads the list and holds the default. The four before it were wave 1,
+ * kept because a comparison you can still open is worth more than a
+ * screenshot of one.
  */
-export const THEMES = ['raster', 'zuhause', 'goldkueste', 'kante'] as const;
+export const THEMES = ['homivaro', 'raster', 'zuhause', 'goldkueste', 'kante'] as const;
 export type Theme = (typeof THEMES)[number];
 
-export const DEFAULT_THEME: Theme = 'raster';
+export const DEFAULT_THEME: Theme = 'homivaro';
 
 export const THEME_META: Record<Theme, { name: string; note: string }> = {
+  homivaro: {
+    name: 'Homivaro',
+    note: 'The approved design — navy ground, white shell, Bebas caps, red as the only verb',
+  },
   raster: {
     name: 'Raster',
     note: 'Swiss editorial — strict grid, hairlines, generous white, red as a rule',

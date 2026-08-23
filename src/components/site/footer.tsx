@@ -5,16 +5,32 @@ import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { SEED_SERVICES } from '@/mock/seed';
+import type { Theme } from '@/lib/theme';
+import { cn } from '@/lib/cn';
 
-export function SiteFooter() {
+export function SiteFooter({ theme }: { theme?: Theme }) {
   const t = useTranslations('footer');
   const nav = useTranslations('nav');
   const brand = useTranslations('brand');
   const year = new Date().getFullYear();
 
+  const hv = theme === 'homivaro';
+
+  /* Homivaro's footer is the same navy the shell floats on, so it re-binds the
+     tokens for its subtree (see .hv-footer) instead of every child swapping to
+     an inverse class. The markup below is shared by all five directions. */
   return (
-    <footer className="border-t border-line-subtle bg-sunken">
-      <div className="mx-auto max-w-7xl px-gutter py-block">
+    <footer
+      className={cn(
+        hv ? 'hv-footer bg-sunken' : 'border-t border-line-subtle bg-sunken',
+      )}
+    >
+      <div
+        className={cn(
+          'py-block',
+          hv ? 'hv-container' : 'mx-auto max-w-7xl px-gutter',
+        )}
+      >
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Logo />

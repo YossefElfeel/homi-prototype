@@ -51,6 +51,37 @@ export function SectionHeading({
     </p>
   );
 
+  if (theme === 'homivaro') {
+    /*
+     * No rule under the heading — at this scale, in caps, the type is the
+     * rule. The sizes are the point of this branch: Bebas is caps-only and
+     * condensed, and this direction does not set it below 36px anywhere, so
+     * the shared clamps (which bottom out at 28px) would put every interior
+     * page under the floor on a narrow screen.
+     *
+     * Section headings here are the restrained scale, not the homepage's
+     * 82px. A page that is mostly a table or a form should not open every
+     * block at poster size — the sections that earn that are composed for it,
+     * and they use <Headline> directly.
+     */
+    return (
+      <header className={cn(centred ? 'text-center' : '', className)}>
+        {eyebrow && <p className="label-type text-ink-tertiary">{eyebrow}</p>}
+        <Title
+          className={cn(
+            'display-type mt-4',
+            level === 1
+              ? 'text-[clamp(38px,6vw,88px)] leading-[0.92]'
+              : 'text-[clamp(36px,4.4vw,62px)] leading-[0.95]',
+          )}
+        >
+          {title}
+        </Title>
+        {leadNode}
+      </header>
+    );
+  }
+
   if (theme === 'goldkueste') {
     return (
       <header className={cn(centred ? 'text-center' : '', className)}>

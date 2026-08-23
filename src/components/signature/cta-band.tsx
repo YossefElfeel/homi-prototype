@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Rise, SplitReveal } from '@/components/motion/reveal';
 import type { Theme } from '@/lib/theme';
+import { CtaBand as LandingCtaBand } from '@/components/landing/CtaBand';
 
 /**
  * SIGNATURE COMPONENT — the closing ask.
@@ -17,6 +18,10 @@ export function CtaBand({ theme }: { theme: Theme }) {
   const t = useTranslations('site.home.finalCta');
   const brand = useTranslations('brand');
   const phone = brand('phone');
+
+  /* The cloned design ships its own closing band — the same one the homepage
+     uses, so every page in this direction ends the same way. */
+  if (theme === 'homivaro') return <LandingCtaBand />;
 
   if (theme === 'goldkueste') {
     return (
