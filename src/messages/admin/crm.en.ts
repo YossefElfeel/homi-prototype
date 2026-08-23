@@ -297,8 +297,13 @@ export const adminCrmEn: typeof adminCrmDe = {
     back: 'All properties',
     editAction: 'Edit',
     specsTitle: 'Key facts',
+    kindLabel: 'Property type',
+    zoneLabel: 'Zone',
     accessTitle: 'Access',
     keysTitle: 'Keys',
+    keysLead: 'What we hold for this property — and what has gone back.',
+    keysEmptyBody:
+      'We hold no key for this property. Access runs through the method above.',
     notesTitle: 'Standing notes',
     notesHint: 'Shown on every job at this property.',
     notesPlaceholder: 'e.g. dog in the living room, very friendly …',
