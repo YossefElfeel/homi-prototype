@@ -138,7 +138,7 @@ export function Testimonials() {
                 style={{
                   width: `calc(${100 / perView}% - ${(GAP * (perView - 1)) / perView}px)`,
                 }}
-                className="hv-card hv-hv-card-dark group shrink-0 rounded-2xl p-6 select-none"
+                className="hv-card hv-card-dark group shrink-0 rounded-2xl p-6 select-none"
               >
                 <p className="text-[15px] leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
                   <span className="text-ink-inverse">{item.lead}</span>{" "}
