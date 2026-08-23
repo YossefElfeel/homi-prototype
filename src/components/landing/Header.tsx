@@ -18,18 +18,27 @@ const MotionNavLink = motion.create(Link);
 /**
  * Sits inside the hero card at rest. Once the hero scrolls away it detaches
  * into a floating frosted bar — same pills, new ground.
+ *
+ * At rest the bar is transparent with white type, because in the design it is
+ * lying on a photograph. Only the homepage has that photograph. On the other
+ * sixteen routes the same bar would be white type on a white page, so it
+ * starts detached there and the page reserves its height — a fixed bar over a
+ * page with no hero otherwise sits on top of the first heading.
  */
 export function Header() {
   const t = useContent();
   const { scrollY } = useScroll();
-  const [stuck, setStuck] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   /* The design tracked the section in view, because it was one page. These
      six items point at six routes now, so the active one is the route you are
      on — same pill, a question that actually has an answer here. */
-  const activeHref = usePathname();
+  const pathname = usePathname();
+  const activeHref = pathname;
+  const overHero = pathname === "/";
+  const stuck = !overHero || scrolled;
 
-  useMotionValueEvent(scrollY, "change", (v) => setStuck(v > 140));
+  useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 140));
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -167,6 +176,8 @@ export function Header() {
           </motion.div>
         </div>
       </motion.header>
+
+      {!overHero ? <div aria-hidden className="h-[76px] sm:h-[88px]" /> : null}
 
       <AnimatePresence>
         {open ? (
