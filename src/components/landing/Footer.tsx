@@ -60,7 +60,7 @@ export function Footer() {
               />
             </span>
 
-            <h2 className="display-type mt-14 text-[clamp(32px,4vw,52px)] leading-[0.95] text-ink-inverse">
+            <h2 className="display-type mt-14 text-[clamp(36px,4vw,52px)] leading-[0.95] text-ink-inverse">
               <DisplayLines key={locale} each={0.08}>
                 {t.footer.tagline.map((line) => (
                   <span key={line}>{line}</span>

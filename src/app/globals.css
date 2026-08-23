@@ -107,6 +107,11 @@
   --content-inverse: #ffffff;
   --content-inverse-secondary: #b9c2d8;
   --content-accent: var(--brand-red-800);
+  /* The deep red is 1.95:1 on the navy — the accent half of a heading on a
+     dark masthead was very nearly invisible. This is the same red one step
+     lighter, which clears 4:1 there. The dark red stays the accent on light
+     ground, where it is 8.7:1 and the darker tone is the better one. */
+  --content-accent-inverse: var(--brand-red-500);
   --content-on-accent: #ffffff;
 
   --border-subtle: #e4e4e4;
@@ -205,6 +210,9 @@
   --content-inverse: #ffffff;
   --content-inverse-secondary: #b9c2d8;
   --content-accent: var(--brand-navy-700);
+  /* Accent on a dark ground. The light themes rarely need it, but a token
+     that exists in one theme only is a trap. */
+  --content-accent-inverse: var(--brand-red-500);
   --content-on-accent: #ffffff;
 
   --border-subtle: #e6e6e1;
@@ -276,6 +284,9 @@
   --content-inverse: #ffffff;
   --content-inverse-secondary: #c3cbdb;
   --content-accent: var(--brand-navy-700);
+  /* Accent on a dark ground. The light themes rarely need it, but a token
+     that exists in one theme only is a trap. */
+  --content-accent-inverse: var(--brand-red-500);
   --content-on-accent: #ffffff;
 
   --border-subtle: #ece5da;
@@ -347,6 +358,9 @@
   --content-inverse: #f6f7fa;
   --content-inverse-secondary: #a8b2cc;
   --content-accent: var(--brand-navy-900);
+  /* Accent on a dark ground. The light themes rarely need it, but a token
+     that exists in one theme only is a trap. */
+  --content-accent-inverse: var(--brand-red-500);
   --content-on-accent: #ffffff;
 
   --border-subtle: #e9e7e1;
@@ -561,6 +575,7 @@
   --color-ink-inverse: var(--content-inverse);
   --color-ink-inverse-secondary: var(--content-inverse-secondary);
   --color-ink-accent: var(--content-accent);
+  --color-ink-accent-inverse: var(--content-accent-inverse);
   --color-on-accent: var(--content-on-accent);
 
   --color-line-subtle: var(--border-subtle);
