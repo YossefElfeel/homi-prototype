@@ -11,6 +11,8 @@ import {
   FileText,
   Home,
   Pencil,
+  Power,
+  PowerOff,
   Receipt,
   Send,
   ShieldCheck,
@@ -71,15 +73,29 @@ export const ActionIcon = {
 
   /* Reversible pairs. Each reversal is a distinct glyph rather than the same
      one greyed out, because the strip shows only one of the pair at a time —
-     the icon *is* the answer to "which state is this row in".
-
-     Active/inactive is deliberately not here: two states that are the two
-     ends of one axis are a Switch in the row, not a pair of glyphs in the
-     strip. The strip is for the decisions that need a confirm. */
+     the icon *is* the answer to "which state is this row in". */
   block: Ban,
   unblock: ShieldCheck,
   archive: Archive,
   restore: ArchiveRestore,
+
+  /*
+   * Putting a service on sale, and taking it off again.
+   *
+   * The original note here said this pair did not belong: two ends of one axis
+   * are a Switch in the row, not glyphs in a menu. That turned out to be right
+   * about the *list* and wrong about everywhere else. /admin/leistungen gives
+   * availability a column with a Switch in it — and the Switch does not apply
+   * on the click, it opens the confirm, because publishing a price is not
+   * something a control should promise is instant.
+   *
+   * So these two are not menu items any more. They label the buttons on the
+   * service's details screen, which is the phone's path to the same decision:
+   * below lg the list renders as cards, and a card's body is one <button>, so
+   * a Switch cannot live inside it.
+   */
+  activate: Power,
+  deactivate: PowerOff,
 
   /* Giving a held thing back to whoever owns it. Deliberately not `restore`:
      that one is the reversal of `archive` and puts the row back where it was,

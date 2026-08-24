@@ -3,8 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
-import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid';
+import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { SEED_SERVICES } from '@/mock/seed';
+import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 /**
@@ -34,21 +35,18 @@ export async function PriceList({
   display?: boolean;
 }) {
   const t = await getTranslations('site.pricing');
-  const services = SEED_SERVICES.filter((s) => s.active).sort((a, b) => a.order - b.order);
+  const services = SEED_SERVICES.filter(isOffered).sort((a, b) => a.order - b.order);
 
   return (
     <ul className="surface-card divide-y divide-line overflow-hidden">
-      {services.map((service) => {
-        const Icon = SERVICE_ICONS[service.slug];
-
-        return (
+      {services.map((service) => (
           <li key={service.slug}>
             <Link
               href={`/leistungen/${service.slug}`}
               className="group flex items-center gap-5 p-5 transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:gap-6 sm:p-6"
             >
               <span className="bg-accent-subtle text-ink-accent grid size-11 shrink-0 place-items-center rounded-full">
-                <Icon className="size-5" aria-hidden />
+                <ServiceIcon slug={service.slug} className="size-5" />
               </span>
 
               <span className="min-w-0 flex-1">
@@ -79,8 +77,7 @@ export async function PriceList({
               </span>
             </Link>
           </li>
-        );
-      })}
+      ))}
     </ul>
   );
 }

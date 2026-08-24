@@ -712,6 +712,82 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'catalogue',
+    de: 'Leistungskatalog',
+    en: 'Service catalogue',
+    actors: ['owner'],
+    entries: [
+      ok('Katalog-Übersicht', '/admin/leistungen'),
+      added(
+        'Neue Leistung',
+        '/admin/leistungen/neu',
+        'Der Katalog war so lang, wie der Seed ihn geschrieben hatte. Eine achte Leistung anzubieten war kein ungebauter Bildschirm, sondern ein Deploy',
+      ),
+      added(
+        'Suchen und filtern',
+        '/admin/leistungen',
+        'Bei sieben Zeilen Bequemlichkeit. Sobald sich der Katalog erweitern lässt, ist es die einzige Art, eine Leistung zu finden — und der einzige Weg, alle Entwürfe auf einmal zu sehen',
+      ),
+    ],
+    actions: [
+      added(
+        'Details ansehen, ohne etwas zu ändern',
+        '/admin/leistungen/grundreinigung/details',
+        'Der Editor speichert bei jedem Tastendruck. Nachschlagen, wie eine Leistung abgerechnet wird, darf nicht dort stattfinden — und ein eigener Bildschirm hat eine Adresse, die man verschicken kann',
+      ),
+      ok('In vier Sprachen bearbeiten', '/admin/leistungen/grundreinigung'),
+      added(
+        'Kurzbeschreibung bearbeiten',
+        '/admin/leistungen/grundreinigung',
+        '`short` steht auf jeder Leistungsseite und in jeder Kachel der Startseite — und stand auf keinem Bildschirm. Der erste Satz, den ein Kunde liest, war der einzige, den der Inhaber nicht ändern konnte',
+      ),
+      added(
+        'Abrechnungsart bestimmen',
+        '/admin/leistungen/grundreinigung',
+        'Pro Stunde, pro Stück oder pauschal. `calc` war ein Dreier-Union, das nur der Seed setzen konnte — und die Liste zeigte ihn mit einem Zweier-Ternär an',
+      ),
+      added(
+        'Aufschalten und deaktivieren, mit Rückfrage',
+        '/admin/leistungen',
+        'Ein Schalter in eigener Spalte, damit der Stand ohne Öffnen lesbar ist — aber er wirkt nicht beim Klicken, sondern öffnet die Rückfrage. Beides ändert, was ein Kunde sieht',
+      ),
+    ],
+    exits: [
+      added(
+        'Als Entwurf abgelegt',
+        '/admin/leistungen/neu',
+        'Erscheint nirgends ausser im Katalog. Vorher gab es diesen Zustand nicht: `active` war ein Boolean, und «noch nicht fertig» und «zurückgezogen» waren dieselbe Zeile',
+      ),
+      added(
+        'Aufgeschaltet — steht in der Anfragestrecke',
+        '/anfrage/leistung',
+        'Website, Preisliste, Anfragestrecke und sitemap.xml lesen jetzt alle dieselbe Funktion, damit «aufgeschaltet» überall dasselbe heisst',
+      ),
+      added(
+        'Deaktiviert — auch die eigene URL antwortet nicht mehr',
+        '/admin/leistungen',
+        '/leistungen/[slug] hat vorher jede Leistung ausgeliefert, gefiltert wurde nur in den Menüs. Deaktivieren hiess damit: aus der Navigation verschwinden und weiter buchbar bleiben',
+      ),
+      open(
+        'Aufschalten wirkt sofort auf den Marketing-Seiten',
+        'Die Anfragestrecke liest den Katalog aus dem Store und zieht sofort nach. /leistungen, /preise, Startseite und Footer werden statisch aus dem Seed gerendert — sie folgen erst beim nächsten Build. Das ist die Grenze eines Prototyps ohne Backend, kein fehlender Bildschirm, und die Texte im Panel sagen es inzwischen genauso',
+      ),
+      added(
+        'Gelöscht — oder mit Begründung verweigert',
+        '/admin/leistungen',
+        'Verweigert, sobald eine Anfrage, ein Auftrag oder ein Abo darauf zeigt. Die Rückfrage nennt die Zahl und schlägt Deaktivieren vor, statt nur «geht nicht» zu sagen',
+      ),
+      open(
+        'Reihenfolge auf der Website ändern',
+        '`order` bestimmt, wie die Leistungen auf der Startseite und unter /leistungen stehen. Neue Leistungen landen hinten, und es gibt keinen Bildschirm, der die sieben bestehenden umsortiert — sinnvoll wäre Drag-and-drop in der Liste, und das ist mehr, als diese Welle abschliessen kann',
+      ),
+      open(
+        'Symbol pro Leistung wählen',
+        'Die sieben Seed-Leistungen haben ein festes Symbol im Code. Eine selbst angelegte bekommt das Ersatzsymbol — kein Absturz mehr, aber auch keine Wahl. Steht auf /open-questions',
+      ),
+    ],
+  },
+  {
     id: 'hiring',
     de: 'Bewerbung & Team',
     en: 'Hiring & team',

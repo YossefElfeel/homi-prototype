@@ -3,18 +3,94 @@ import type { adminContentDe } from './content.de';
 export const adminContentEn: typeof adminContentDe = {
   services: {
     title: 'Services & pricing',
-    lead: 'Changes here appear immediately on the website and in the request flow.',
+    lead: 'Active services are selectable in the request flow straight away. Drafts stay internal until you put them on sale.',
+    search: 'Search services',
+    searchPlaceholder: 'Name, slug or short description',
     colName: 'Service',
+    colType: 'Type',
     colCalc: 'Billing',
     colBase: 'Rate',
     colMin: 'Minimum',
     colStatus: 'Status',
-    active: 'Active',
-    inactive: 'Disabled',
+    colActivate: 'Activate',
+    /* Not "i18n". The column was named by whoever writes the code — to
+       everybody else it is not a word. It was also the one column header on
+       this screen that was never a translation key at all. */
+    colLanguages: 'Languages',
+    filterStatus: 'Status',
+    filterType: 'Type',
+    filterAll: 'all',
     calcHourly: 'By the hour',
     calcPerUnit: 'By count',
+    calcFlat: 'Flat rate',
     guarantee: 'With handover guarantee',
     translationGap: '{n} translations missing',
+
+    createAction: 'Add a service',
+
+    rowOpen: 'View details',
+    rowEdit: 'Edit',
+    rowCustomerView: 'View on the website',
+    rowActivate: 'Activate',
+    rowDeactivate: 'Deactivate',
+    rowDelete: 'Delete',
+
+    /* The title names the service, not the act — the act is already on the
+       button. What a reader of the confirm needs first is which of the eight
+       rows this is about. */
+    activateTitle: 'Activate “{name}”?',
+    activateBody:
+      'It becomes a choice in the request flow at the rate you have set, which is the rate customers are then quoted. The marketing pages are generated from the catalogue at build time and follow on the next deploy.',
+    activateConfirm: 'Activate',
+    activateDone: '“{name}” is live.',
+
+    deactivateTitle: 'Deactivate “{name}”?',
+    deactivateBody:
+      'It disappears from the request flow and nobody can ask for it any more. Jobs and invoices already raised are untouched — they have been agreed.',
+    deactivateConfirm: 'Deactivate',
+    deactivateDone: '“{name}” is disabled.',
+
+    deleteTitle: 'Delete “{name}”?',
+    deleteBody:
+      'This is permanent. If you only want to stop offering it for now, deactivate instead — the service and its price stay.',
+    deleteConfirm: 'Delete permanently',
+    deleteDone: '“{name}” has been deleted.',
+    /* States the number rather than just "cannot": a service with fourteen
+       jobs behind it is a different case from one with a single job, and the
+       owner decides between deactivating and finishing the work on that. */
+    deleteBlockedTitle: '“{name}” cannot be deleted',
+    deleteBlockedBody:
+      '{n} requests, jobs or plans point at it. Remove the service and each of them holds a name nothing can resolve. Deactivating takes it off the market just as well and keeps the history readable.',
+    deleteBlocked: 'This service is still in use.',
+
+    detailsTitle: 'Service at a glance',
+    detailsBack: 'All services',
+    detailsLocaleHint:
+      'German and English are maintained. French and Italian exist but are not translated — the website shows the German text there (§20.6).',
+    detailsFallback: 'not translated — shows German',
+    detailsUsageHint: 'What points at this service, and therefore what stands in the way of deleting it.',
+    detailsUsageRequests: 'Requests',
+    detailsUsageBookings: 'Jobs',
+    detailsUsagePlans: 'Plans',
+    detailsDangerTitle: 'Delete this service',
+    detailsSlug: 'Slug (URL)',
+    detailsNames: 'Name',
+    detailsShort: 'Short description',
+    detailsPricing: 'Billing',
+    detailsProfile: 'Duration estimate',
+    detailsGuarantee: 'Handover guarantee',
+    detailsGuaranteeYes: 'Yes — a free re-clean if the inspection is not passed',
+    detailsGuaranteeNo: 'No',
+    detailsMissing: 'missing — the website shows German',
+    detailsUsage: 'In use',
+    detailsUsageBody: '{n} requests, jobs and plans point at it.',
+    detailsUsageNone: 'Not used anywhere yet.',
+    close: 'Close',
+
+    filterEmptyTitle: 'No service matches',
+    filterEmptyBody:
+      'The search term and the filters together leave no rows. The catalogue itself is not empty.',
+    filterReset: 'Clear the filters',
     emptyTitle: 'No services',
     emptyBody: 'Without a service nobody can send a request. Add at least one.',
   },
@@ -24,9 +100,23 @@ export const adminContentEn: typeof adminContentDe = {
     nameTitle: 'Name',
     nameHint: 'Appears on the website and in the quote, in the customer’s language.',
     shortTitle: 'Short description',
+    shortHint:
+      'The line under the name on the service page and in the tile on the homepage.',
     pricingTitle: 'Price',
-    basePrice: 'Hourly rate',
+    pricingHint:
+      'What it bills by decides what the rate means — per hour, per counted item, or once for the whole job.',
+    calcLabel: 'Billing method',
+    calcHourly: 'By the hour — rate × estimated duration',
+    calcPerUnit: 'By count — counted items are converted into hours',
+    calcFlat: 'Flat rate — one fixed price for the whole job',
+    basePrice: 'Rate',
+    basePriceHourly: 'Francs per hour.',
+    basePricePerUnit: 'Francs per hour; the counted items produce the hours (§5.1).',
+    basePriceFlat: 'Francs for the whole job, however long it takes.',
     minDuration: 'Minimum duration in hours',
+    minDurationHint: 'The floor is 2 hours; this can only move it up.',
+    slugLabel: 'Slug (URL)',
+    slugHint: 'Derived from the German name and fixed after that — links to it should hold.',
     profileTitle: 'Duration estimate',
     profileHint:
       'Decides which column of the duration table the system proposes hours from.',
@@ -37,12 +127,36 @@ export const adminContentEn: typeof adminContentDe = {
     profileNone: 'None — by count',
     guaranteeLabel: 'Offer the handover guarantee',
     guaranteeHint: 'Commits to a free re-clean if the inspection is not passed.',
-    activeLabel: 'Offer on the website',
+    statusTitle: 'Visibility',
+    statusHint:
+      'Only “Active” is offered to customers in the request flow, and only “Active” goes onto the marketing pages at the next build. Draft and Disabled are both invisible — the difference is whether the service has never been out yet or has been withdrawn.',
+    statusPending: 'Pending change: {from} → {to}',
+    statusApply: 'Apply the change',
+    statusDiscard: 'Discard',
     missingTitle: 'Missing translations',
     missingBody:
       'Where a language is missing the website shows the German text. That is the intended fallback, but it is noticeable.',
     save: 'Save',
     saved: 'Saved',
+  },
+
+  serviceNew: {
+    title: 'New service',
+    lead: 'Nothing is written until you save below. Saved as a draft, the service stays internal until the price and the copy are settled.',
+    back: 'All services',
+    nameRequired: 'Without a German name there is neither a name nor a slug.',
+    slugPreview: 'The URL will be /leistungen/{slug}',
+    saveDraft: 'Save as a draft',
+    saveActive: 'Create and activate',
+    createNote:
+      'A draft appears nowhere but here. Activating puts the service into the request flow at once.',
+    createdDraft: '“{name}” saved as a draft.',
+    createdActive: '“{name}” created and live.',
+    activateTitle: 'Put “{name}” on sale straight away?',
+    activateBody:
+      'It becomes a choice in the request flow immediately — at the rate above. Saving it as a draft is the alternative, and you can activate it whenever you like afterwards.',
+    activateConfirm: 'Create and activate',
+    dismiss: 'Back',
   },
 
   addons: {

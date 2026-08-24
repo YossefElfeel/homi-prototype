@@ -4,6 +4,7 @@ import { routing, TRANSLATED_LOCALES } from '@/i18n/routing';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { LEGAL_SLUGS } from '@/content/legal';
 import { SEED_SERVICES } from '@/mock/seed';
+import { isOffered } from '@/lib/service-catalogue';
 
 const ORIGIN = 'https://homivaro.ch';
 
@@ -24,7 +25,7 @@ const ORIGIN = 'https://homivaro.ch';
  * deliberately absent: they are either private or single-use.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const services = SEED_SERVICES.filter((s) => s.active).sort((a, b) => a.order - b.order);
+  const services = SEED_SERVICES.filter(isOffered).sort((a, b) => a.order - b.order);
 
   const paths: { path: string; priority: number; frequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
     { path: '', priority: 1, frequency: 'weekly' },

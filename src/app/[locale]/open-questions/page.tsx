@@ -238,6 +238,14 @@ const ENTRIES: Entry[] = [
     screens: '71a, 72',
     state: 'open',
   },
+  {
+    ref: '§17.2a',
+    question: 'What does a service the owner adds herself look like on the website?',
+    decision:
+      'OPEN, and the prototype ships the honest half. The catalogue can now be added to, and a new service reaches the site with everything the seven seeded ones have except two things the code holds rather than the record: its icon and its long-form page copy. The icon falls back to a neutral glyph — deliberately not a crash and deliberately not a guess. The copy — the lead paragraph, the included list, the «what is not included» block, the FAQ — lives in `content/services.ts`, keyed by the seven slugs, which is why an added service is publishable but has no page of its own on the marketing site: /leistungen/[slug] renders only what is offered *and* seeded. Two ways out and the business has to pick one. Either the long copy becomes part of the record and the editor grows a section per block, which makes the catalogue the whole source and the content file redundant. Or an added service stays a request-flow and price-list entity and never gets a marketing page, which is defensible for a call-out fee and wrong for «Teppichreinigung». Until then the seeded draft is the demonstration: it can be priced, activated, booked and billed, and it is not linked from the marketing site.',
+    screens: '2, 73, 73a, 74',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

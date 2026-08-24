@@ -14,6 +14,7 @@
  * writing it down.
  */
 
+import { isOffered } from '@/lib/service-catalogue';
 import type {
   ID,
   Plan,
@@ -104,7 +105,7 @@ export function plansByService(
     .sort((a, b) => a.order - b.order);
 
   return services
-    .filter((s) => s.active)
+    .filter(isOffered)
     .sort((a, b) => a.order - b.order)
     .map((service) => ({
       service,

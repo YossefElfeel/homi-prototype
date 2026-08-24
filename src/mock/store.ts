@@ -35,7 +35,7 @@ import type {
   SavedMethodKind,
   Service,
   ServiceRequest,
-  ServiceSlug,
+  ServiceStatus,
   Settings,
   SlotHold,
   ISODate,
@@ -44,6 +44,7 @@ import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
 import { cancelBlock, type CancelBlock } from '@/lib/plan-facts';
 import { propertyUsage } from '@/lib/property-facts';
+import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -182,8 +183,22 @@ Marco Brunner`;
    it fills in whole collections that are missing, not a field missing from
    every row of one that is present. The new «Erstellt» column would then read
    «Invalid Date» on every invoice, and sorting the list by it would order them
-   at random. */
-const SCHEMA_VERSION = 22;
+   at random.
+
+   23: `Service.active` became `Service.status`. A blob from 22 has seven
+   services each carrying a boolean the code no longer reads: `isOffered` would
+   find no `status` on any of them, every service would drop off the website
+   and out of the request flow, and the new status filter would return nothing
+   for all three states. Silent and total — the worst shape a stale store
+   takes.
+
+   24: The shape held and the data moved — the catalogue gained a draft row and
+   a deactivated one, so each of the three states has a service in it. `merge`
+   cannot help here either: `services` is present in a blob from 23, so it is
+   kept whole and the two new rows never arrive. The result reads as the bug
+   this seed exists to disprove — two of the three filter options returning an
+   empty table on a screen built to show all three. */
+const SCHEMA_VERSION = 24;
 
 /**
  * §10 — the default payment term.
@@ -428,7 +443,7 @@ interface StoreState {
     input: {
       customerId: ID;
       propertyId: ID;
-      serviceSlug: ServiceSlug;
+      serviceSlug: string;
       addOnIds: ID[];
       windowCount?: number | null;
       furniturePieces?: number | null;
@@ -812,8 +827,49 @@ interface StoreState {
   deleteTemplate: (id: ID, replacementId?: ID) => void;
   /** Promote one template of an event over its siblings. */
   setDefaultTemplate: (id: ID) => void;
-  /** §17.2 — the catalogue is editable, and edits reach the site immediately. */
+  /**
+   * §17.2 — the whole catalogue at once.
+   *
+   * Kept for the callers that genuinely replace the list; a screen editing one
+   * service should use `updateService`, which cannot write its own stale copy
+   * of the other seven back over a change made in another tab.
+   *
+   * "Edits reach the site immediately" is what this comment used to claim and
+   * it is only half true: the request flow reads the store and follows at
+   * once, while /leistungen, /preise and the homepage are rendered statically
+   * from the seed and move at the next build.
+   */
   setServices: (services: Service[]) => void;
+  /**
+   * A service the owner wrote, rather than one the seed shipped.
+   *
+   * There was no way to add one. The catalogue screen could edit seven rows
+   * and change nothing about how many there were — so «wir machen jetzt auch
+   * Teppichreinigung» was a code change, and the price list the business
+   * actually sells from lived somewhere this app has never seen.
+   *
+   * Returns the created record so the caller can route to it by slug: the slug
+   * is derived here from the German name and may have been suffixed to avoid a
+   * collision, which means the caller cannot know it in advance.
+   */
+  createService: (input: Omit<Service, 'id' | 'slug' | 'order'>) => Service;
+  /** One record, by id — so a screen editing a service cannot rewrite the rest. */
+  updateService: (id: ID, patch: Partial<Omit<Service, 'id'>>) => void;
+  /**
+   * Draft → active → inactive, on its own rather than through `updateService`.
+   *
+   * Publishing is the one edit on this screen with an audience: it puts a price
+   * on the website and opens the service in the request flow. It is logged as
+   * the decision it is instead of coalescing into «Leistungskatalog
+   * bearbeitet» with the twelve keystrokes that preceded it.
+   */
+  setServiceStatus: (id: ID, status: ServiceStatus) => void;
+  /**
+   * Refuses when a request, booking or plan still names the slug — see
+   * `serviceUsage`. Returns false so the caller can say why rather than
+   * silently doing nothing.
+   */
+  deleteService: (id: ID) => boolean;
   setAddOns: (addOns: AddOn[]) => void;
   /* ---- the calendar's own entries (screens 58a, 63a) ----
      A booking could only ever come out of a paid quote, and the calendar could
@@ -836,7 +892,7 @@ interface StoreState {
     input: {
       customerId: ID;
       propertyId: ID;
-      serviceSlug: ServiceSlug;
+      serviceSlug: string;
       start: ISODate;
       /** Minutes. */
       duration: number;
@@ -3434,6 +3490,104 @@ export const useStore = create<StoreState>()(
           summary: 'Leistungskatalog bearbeitet',
           coalesce: true,
         });
+      },
+
+      createService: (input) => {
+        const s = get();
+        const slug = uniqueSlug(
+          /* An owner who has typed a German name and nothing else still gets a
+             usable URL. Falling back to the id would give «leistung-m3k7» on
+             the website, which is worse than a duplicate to disambiguate. */
+          slugify(input.name.de) || 'leistung',
+          s.services,
+        );
+        /*
+         * §20.6 makes German the fallback for an untranslated locale, and the
+         * seed spells that out per record — `l()` writes the German string
+         * into `fr` and `it`. A service typed into the create form did not:
+         * the two locales came through as empty strings, which is not the same
+         * thing as absent. `name.fr` is read straight into a heading, so a
+         * French visitor would have got a blank `<h1>` rather than the German
+         * one the fallback promises.
+         */
+        const fallback = (text: Record<Locale, string>): Record<Locale, string> => ({
+          de: text.de,
+          en: text.en || text.de,
+          fr: text.fr || text.de,
+          it: text.it || text.de,
+        });
+
+        const service: Service = {
+          ...input,
+          name: fallback(input.name),
+          short: fallback(input.short),
+          id: `svc_${Date.now().toString(36)}`,
+          slug,
+          /* Last in the list. The order column is what the website sorts by,
+             and dropping a new service into the middle of a running catalogue
+             would silently re-rank the seven that are already selling. */
+          order: Math.max(0, ...s.services.map((x) => x.order)) + 1,
+        };
+        set({ services: [...s.services, service] });
+        get().logChange({
+          entity: 'service',
+          entityId: service.id,
+          summary:
+            service.status === 'draft'
+              ? `"${service.name.de}" als Entwurf angelegt`
+              : `"${service.name.de}" angelegt und aufgeschaltet`,
+        });
+        return service;
+      },
+
+      updateService: (id, patch) => {
+        set((s) => ({
+          services: s.services.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+        }));
+        const service = get().services.find((x) => x.id === id);
+        get().logChange({
+          entity: 'service',
+          entityId: id,
+          summary: `"${service?.name.de ?? id}" bearbeitet`,
+          /* The editor autosaves per keystroke, so without this the log is
+             one entry per letter typed into the price field. */
+          coalesce: true,
+        });
+      },
+
+      setServiceStatus: (id, status) => {
+        const service = get().services.find((x) => x.id === id);
+        if (!service || service.status === status) return;
+        set((s) => ({
+          services: s.services.map((x) => (x.id === id ? { ...x, status } : x)),
+        }));
+        const WORD: Record<ServiceStatus, string> = {
+          active: 'aufgeschaltet',
+          inactive: 'deaktiviert',
+          draft: 'zurück auf Entwurf gesetzt',
+        };
+        get().logChange({
+          entity: 'service',
+          entityId: id,
+          summary: `"${service.name.de}" ${WORD[status]}`,
+        });
+      },
+
+      deleteService: (id) => {
+        const s = get();
+        const service = s.services.find((x) => x.id === id);
+        if (!service) return false;
+        /* Re-checked here rather than trusted from the menu: the confirm panel
+           read the count one render ago, and the store is the only place that
+           can be sure nothing has since been booked against it. */
+        if (serviceUsage(service.slug, s.data, s.plans).total > 0) return false;
+        set({ services: s.services.filter((x) => x.id !== id) });
+        get().logChange({
+          entity: 'service',
+          entityId: id,
+          summary: `"${service.name.de}" gelöscht`,
+        });
+        return true;
       },
 
       setAddOns: (addOns) => {

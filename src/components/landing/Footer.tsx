@@ -19,10 +19,11 @@ import { contact, socialAccounts, type SocialKey } from "@/content/landing";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
 import { Link } from "@/i18n/navigation";
 import { SEED_SERVICES } from "@/mock/seed";
+import { isOffered } from '@/lib/service-catalogue';
 
 /* The footer's service list is seven labels in the design and seven real
    service pages here, in the order the seed defines them. */
-const SERVICE_SLUGS = SEED_SERVICES.filter((s) => s.active)
+const SERVICE_SLUGS = SEED_SERVICES.filter(isOffered)
   .sort((a, b) => a.order - b.order)
   .map((s) => s.slug);
 

@@ -152,6 +152,13 @@ export const de = {
       held: 'In Aufbewahrung',
       returned: 'Zurückgegeben',
     },
+    /* «Deaktiviert» statt «Inaktiv»: der Zustand ist das Ergebnis einer
+       Entscheidung, nicht ein Zustand, in den die Leistung von selbst gerät. */
+    service: {
+      draft: 'Entwurf',
+      active: 'Aktiv',
+      inactive: 'Deaktiviert',
+    },
     /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
        vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
        Zahlschritt der Offerte und einmal als `admin.offers.method`, also
