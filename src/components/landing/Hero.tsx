@@ -160,7 +160,7 @@ function HeroBadge() {
             </motion.span>
           ))}
         </div>
-        <span className="display-type text-ink text-2xl normal-case tracking-normal">
+        <span data-numeric className="display-type text-ink text-2xl normal-case tracking-normal">
           {t.hero.badge.count}
         </span>
       </div>

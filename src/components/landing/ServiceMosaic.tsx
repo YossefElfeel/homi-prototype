@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import { useLocale } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { Money } from "@/components/ui/money";
 import { ArrowUpRight } from "@/components/landing/icons";
-import { cardRise, inViewLoose, stagger } from "@/components/landing/motion";
+import { EASE, inViewLoose } from "@/components/landing/motion";
 import { SERVICE_ICONS, serviceFromPrice } from "@/components/site/service-grid";
 import { SEED_SERVICES } from "@/mock/seed";
 
@@ -17,6 +17,31 @@ const PHOTO: Partial<Record<string, string>> = {
   unterhaltsreinigung: "/img/service-1.webp",
   umzugsreinigung: "/img/service-2.webp",
   moebelmontage: "/img/service-3.webp",
+};
+
+/**
+ * The shared `cardRise` under `stagger` puts the trigger on the container,
+ * which is wrong for a grid this tall — 1527px on /leistungen, 2469px stacked.
+ * `amount` counts a fraction of the *element*, so 15% of 1527px asks for
+ * 229px on screen; the grid opens 678px down, leaving 122px on an 800px-tall
+ * laptop. The first two cards sat at `opacity: 0` while fully in view until a
+ * scroll released them, which is a bug and not an effect — see
+ * ../motion/motion-root.tsx.
+ *
+ * So each card triggers on itself. The two on the first screen rise on load,
+ * the rest rise as they are reached, and the 1500px of scroll below the fold
+ * keeps something to do instead of arriving pre-played. `custom` carries the
+ * column, because a mosaic row holds two cells: a delay indexed off the flat
+ * list would keep accumulating down a grid that no longer reveals as one.
+ */
+const tileRise: Variants = {
+  hidden: { opacity: 0, y: 34, scale: 0.985 },
+  show: (col: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.8, ease: EASE, delay: col * 0.07 },
+  }),
 };
 
 /**
@@ -39,11 +64,7 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
   );
 
   return (
-    <motion.ul
-      initial="hidden"
-      whileInView="show"
-      viewport={inViewLoose}
-      variants={stagger(0.07)}
+    <ul
       /* items-start, so a text tile beside a photo tile keeps its own height.
          Stretching them to match left roughly 150px of void between the body
          and the price on every light card — the grid filling space the design
@@ -62,7 +83,11 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
         return (
           <motion.li
             key={service.slug}
-            variants={cardRise}
+            initial="hidden"
+            whileInView="show"
+            viewport={inViewLoose}
+            variants={tileRise}
+            custom={i % 2}
             whileHover={{ y: -6 }}
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
             className={`hv-card group overflow-hidden ${
@@ -133,6 +158,6 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
           </motion.li>
         );
       })}
-    </motion.ul>
+    </ul>
   );
 }
