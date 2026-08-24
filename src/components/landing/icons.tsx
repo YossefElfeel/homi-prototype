@@ -81,6 +81,27 @@ export function Star(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/**
+ * The Swiss flag, drawn rather than set as an emoji.
+ *
+ * 🇨🇭 is a regional-indicator pair, and Windows renders those as the letters
+ * "CH" in a box — no flag at all, on the platform most of this audience is
+ * reading from. Drawing it also lets it keep the brand's own red instead of
+ * whatever red the system font vendor picked.
+ *
+ * Official construction: a square field, the cross arms one sixth longer than
+ * they are wide. On a 32-unit square that is a bar 6 thick and 20 long, which
+ * is what the two rects below are — not an eyeballed plus sign.
+ */
+export function SwissFlag(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden {...props}>
+      <rect width="32" height="32" rx="3" className="fill-accent" />
+      <path d="M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7V6Z" fill="#fff" />
+    </svg>
+  );
+}
+
 const social = {
   fill: "currentColor",
   viewBox: "0 0 24 24",

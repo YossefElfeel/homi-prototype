@@ -2,12 +2,20 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { useState } from "react";
+import type { SVGProps } from "react";
 import { DisplayLines } from "@/components/landing/DisplayLines";
-import { Reveal } from "@/components/landing/Reveal";
-import { ArrowRight, Chat, Mail, Phone } from "@/components/landing/icons";
+import {
+  Chat,
+  Facebook,
+  Instagram,
+  LinkedIn,
+  Mail,
+  Phone,
+  SwissFlag,
+  YouTube,
+} from "@/components/landing/icons";
 import { EASE, inViewLoose, stagger } from "@/components/landing/motion";
-import { contact } from "@/content/landing";
+import { contact, socialAccounts, type SocialKey } from "@/content/landing";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
 import { Link } from "@/i18n/navigation";
 import { SEED_SERVICES } from "@/mock/seed";
@@ -22,24 +30,24 @@ const COMPANY_ROUTES = ["/ueber-uns", "/referenzen", "/preise", "/abos", "/jobs"
 const LEGAL_ROUTES = ["/rechtliches/datenschutz", "/rechtliches/agb", "/rechtliches/impressum"];
 
 /**
- * The design draws five social icons, all of them `href="#"` — it was a
- * one-page comp with nowhere to point. The business has no accounts on any of
- * these yet, and five dead links in a footer is a worse first impression than
- * no row: they look live, they get clicked, and they go nowhere.
+ * Each account's own mark, not a generic glyph.
  *
- * So the row renders whatever has a real destination and disappears when
- * nothing does — which is today. Adding a profile is adding an `href` here,
- * and the design comes back exactly as drawn.
- *
- * WhatsApp is the exception: the number is real, it is the channel this
- * business actually answers on, and it is already in `contact`.
+ * The row used to render WhatsApp behind the speech-bubble icon the support
+ * column also uses, so the one social link on the page did not look like a
+ * social link at all. A brand mark is the whole reason this row reads as a row
+ * — nobody parses the labels, they recognise the shapes.
  */
-const socials: { Icon: typeof Chat; label: string; href: string }[] = [
-  { Icon: Chat, label: "WhatsApp", href: `https://wa.me/${contact.mobile.replace(/\D/g, "")}` },
-  // Facebook, LinkedIn, Twitter, Instagram and YouTube are drawn in the design
-  // and have no account behind them. They come back the moment one exists —
-  // the icons are all still in ./icons.
-].filter((s) => s.href.length > 0);
+const SOCIAL_ICONS: Record<SocialKey, (props: SVGProps<SVGSVGElement>) => React.ReactElement> = {
+  whatsapp: Chat,
+  instagram: Instagram,
+  facebook: Facebook,
+  linkedin: LinkedIn,
+  youtube: YouTube,
+};
+
+/* Only the accounts that exist. See `socialAccounts` for why an empty `href`
+   is skipped rather than pointed at `#`. */
+const socials = socialAccounts.filter((account) => account.href.length > 0);
 
 export function Footer() {
   const t = useContent();
@@ -67,6 +75,13 @@ export function Footer() {
                 ))}
               </DisplayLines>
             </h2>
+
+            {/* Under the tagline, not in the bottom bar.
+                Down there it sat level with the copyright and the legal links —
+                the row of the page reserved for the things nobody is meant to
+                read. A social account is somewhere we want people to go, so it
+                belongs with the name and the claim, not with the small print. */}
+            {socials.length > 0 ? <Socials label={t.footer.social} /> : null}
           </div>
 
           <div className="grid gap-12 sm:grid-cols-3">
@@ -116,64 +131,30 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 grid gap-10 border-t border-page/12 pt-9 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:gap-16">
-          {socials.length > 0 ? (
+        <div className="mt-14 flex flex-col gap-6 border-t border-page/12 pt-9 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[15px]">{t.footer.social}</p>
-            <motion.ul
-              initial="hidden"
-              whileInView="show"
-              viewport={inViewLoose}
-              variants={stagger(0.07)}
-              className="mt-3 flex gap-2.5"
-            >
-              {socials.map(({ Icon, label, href }) => (
-                <motion.li
-                  key={label}
-                  variants={{
-                    hidden: { opacity: 0, y: 12, scale: 0.8 },
-                    show: {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      transition: { duration: 0.45, ease: EASE },
-                    },
-                  }}
-                >
-                  <a
-                    href={href}
-                    aria-label={label}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-ink hover:bg-accent grid h-10 w-10 place-items-center rounded-full bg-page transition-[background-color,color,transform] duration-300 hover:-translate-y-1 hover:text-ink-inverse"
+            <p className="text-[15px] text-ink-inverse/70">{t.footer.copyright}</p>
+            <ul className="mt-2 flex flex-wrap gap-5 text-[15px] text-ink-inverse/70">
+              {t.footer.legal.map((item, i) => (
+                <li key={item}>
+                  <Link
+                    href={LEGAL_ROUTES[i] ?? '/'}
+                    className="relative transition-colors after:absolute after:-bottom-0.5 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-page after:transition-transform after:duration-400 hover:text-ink-inverse hover:after:origin-left hover:after:scale-x-100"
                   >
-                    <Icon className="h-[18px] w-[18px]" />
-                  </a>
-                </motion.li>
+                    {item}
+                  </Link>
+                </li>
               ))}
-            </motion.ul>
+            </ul>
           </div>
-          ) : null}
 
-          <div className="grid gap-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-            <div>
-              <p className="text-[15px] text-ink-inverse/70">{t.footer.copyright}</p>
-              <ul className="mt-2 flex flex-wrap gap-5 text-[15px] text-ink-inverse/70">
-                {t.footer.legal.map((item, i) => (
-                  <li key={item}>
-                    <Link
-                      href={LEGAL_ROUTES[i] ?? '/'}
-                      className="relative transition-colors after:absolute after:-bottom-0.5 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-page after:transition-transform after:duration-400 hover:text-ink-inverse hover:after:origin-left hover:after:scale-x-100"
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <Newsletter />
-          </div>
+          {/* The flag is the statement, so it is not `aria-hidden` with the
+              words repeated beside it — the words *are* the alt text, and the
+              mark reads as one thing to a screen reader instead of two. */}
+          <p className="text-ink-inverse/70 flex shrink-0 items-center gap-2.5 text-[15px]">
+            <SwissFlag className="h-4 w-4 shrink-0" />
+            {t.footer.madeIn}
+          </p>
         </div>
       </div>
     </footer>
@@ -215,47 +196,52 @@ function FooterColumn({
   );
 }
 
-function Newsletter() {
-  const t = useContent();
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-
+/**
+ * The accounts we actually have, as their own marks.
+ *
+ * The list renders whatever `socialAccounts` gives it, so this component never
+ * has to know which platforms exist — and the day one is opened, the row grows
+ * without anything here changing.
+ */
+function Socials({ label }: { label: string }) {
   return (
-    <Reveal delay={0.1}>
-      <p className="text-[17px]">{t.footer.newsletter}</p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!email) return;
-          setSent(true);
-          setEmail("");
-        }}
-        className="mt-3 flex flex-col gap-2 rounded-3xl bg-page p-2 focus-within:ring-2 focus-within:ring-page/40 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-4"
+    <div className="mt-10">
+      <p className="text-[15px] text-ink-inverse/70">{label}</p>
+      <motion.ul
+        initial="hidden"
+        whileInView="show"
+        viewport={inViewLoose}
+        variants={stagger(0.07)}
+        className="mt-3 flex flex-wrap gap-2.5"
       >
-        <span className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-0">
-          <Mail className="text-ink-secondary h-4 w-4 shrink-0" />
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setSent(false);
-            }}
-            placeholder={t.footer.emailPlaceholder}
-            aria-label={t.footer.emailPlaceholder}
-            className="text-ink placeholder:text-ink-secondary min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none"
-          />
-        </span>
-        <motion.button
-          type="submit"
-          whileTap={{ scale: 0.96 }}
-          className="bg-inverse hover:bg-accent inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium whitespace-nowrap text-ink-inverse transition-colors duration-300"
-        >
-          {sent ? t.footer.subscribed : t.actions.startPlan}
-          {!sent ? <ArrowRight className="h-4 w-4" /> : null}
-        </motion.button>
-      </form>
-    </Reveal>
+        {socials.map((account) => {
+          const Icon = SOCIAL_ICONS[account.key];
+          return (
+            <motion.li
+              key={account.key}
+              variants={{
+                hidden: { opacity: 0, y: 12, scale: 0.8 },
+                show: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: { duration: 0.45, ease: EASE },
+                },
+              }}
+            >
+              <a
+                href={account.href}
+                aria-label={account.label}
+                target="_blank"
+                rel="noreferrer"
+                className="text-ink hover:bg-accent grid h-10 w-10 place-items-center rounded-full bg-page transition-[background-color,color,transform] duration-300 hover:-translate-y-1 hover:text-ink-inverse"
+              >
+                <Icon className="h-[18px] w-[18px]" />
+              </a>
+            </motion.li>
+          );
+        })}
+      </motion.ul>
+    </div>
   );
 }
