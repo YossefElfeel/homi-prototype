@@ -235,6 +235,9 @@ export const siteDe = {
     story2:
       'Wir sind bewusst klein geblieben und arbeiten in acht Gemeinden. Kurze Wege bedeuten pünktliche Termine. Und ein überschaubarer Kundenkreis bedeutet, dass wir wissen, wo bei Ihnen der Schlüssel liegt und dass der Hund im Wohnzimmer Nala heisst.',
     valuesTitle: 'Wofür wir stehen',
+    /* Describes the work, not the person — the photograph is of a finished
+       job. Alt text that claimed a portrait would be the wrong caption. */
+    imageAlt: 'Ein Wohnzimmer nach einem Einsatz von Homivaro',
     v1Title: 'Verbindlichkeit',
     v1Body: 'Ein genannter Preis und ein zugesagter Termin gelten.',
     v2Title: 'Diskretion',
@@ -341,6 +344,8 @@ export const siteDe = {
       includedLines: [{ lead: 'Was drin ist —' }, { accent: 'und was nicht.' }] as HeadlineLine[],
       addOnsLines: [{ lead: 'Kann' }, { accent: 'dazukommen.' }] as HeadlineLine[],
       faqLines: [{ lead: 'Häufige' }, { accent: 'Fragen.' }] as HeadlineLine[],
+      factServices: 'Leistungen, jede einzeln offeriert',
+      factFrom: 'Günstigster Einstieg — zwei Stunden zum Stundensatz',
     },
     pricing: {
       lines: [{ lead: 'Ein Stundensatz.' }, { accent: 'Keine Pauschalen.' }] as HeadlineLine[],
@@ -352,6 +357,8 @@ export const siteDe = {
     plans: {
       lines: [{ lead: 'Regelmässig sauber,' }, { lead: 'ohne', accent: 'Planung.' }] as HeadlineLine[],
       compareLines: [{ lead: 'Im' }, { accent: 'Vergleich.' }] as HeadlineLine[],
+      factCancel: 'Tage Widerrufsfrist, solange kein Einsatz stattgefunden hat',
+      factSkip: 'Einsatz pro Monat kostenlos verschiebbar',
       faqLines: [{ lead: 'Fragen' }, { accent: 'zum Abo.' }] as HeadlineLine[],
     },
     gallery: {
@@ -376,6 +383,8 @@ export const siteDe = {
     },
     careers: {
       lines: [{ lead: 'Leute, denen man' }, { accent: 'den Schlüssel gibt.' }] as HeadlineLine[],
+      howLines: [{ lead: 'So läuft die' }, { accent: 'Bewerbung.' }] as HeadlineLine[],
+      openLines: [{ lead: 'Offene' }, { accent: 'Stellen.' }] as HeadlineLine[],
     },
     regionsIndex: {
       lines: [{ accent: 'Acht Gemeinden' }, { lead: 'am rechten Ufer.' }] as HeadlineLine[],

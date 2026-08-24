@@ -216,6 +216,7 @@ export const siteEn: typeof siteDe = {
     story2:
       'We have stayed deliberately small and work across eight municipalities. Short distances mean punctual appointments. And a manageable set of customers means we know where your key is kept, and that the dog in the living room is called Nala.',
     valuesTitle: 'What we stand for',
+    imageAlt: 'A living room after a Homivaro visit',
     v1Title: 'Commitment',
     v1Body: 'A quoted price and an agreed slot hold.',
     v2Title: 'Discretion',
@@ -313,6 +314,8 @@ export const siteEn: typeof siteDe = {
       includedLines: [{ lead: 'What is in —' }, { accent: 'and what is not.' }],
       addOnsLines: [{ lead: 'Can be' }, { accent: 'added.' }],
       faqLines: [{ lead: 'Common' }, { accent: 'questions.' }],
+      factServices: 'Services, each quoted on its own',
+      factFrom: 'Cheapest entry — two hours at the hourly rate',
     },
     pricing: {
       lines: [{ lead: 'One hourly rate.' }, { accent: 'No flat fees.' }],
@@ -324,6 +327,8 @@ export const siteEn: typeof siteDe = {
     plans: {
       lines: [{ lead: 'Regularly clean,' }, { lead: 'without the', accent: 'planning.' }],
       compareLines: [{ lead: 'Side' }, { accent: 'by side.' }],
+      factCancel: 'Days to cancel, as long as no visit has happened',
+      factSkip: 'Visit a month you can move at no charge',
       faqLines: [{ lead: 'Questions' }, { accent: 'about plans.' }],
     },
     gallery: {
@@ -345,6 +350,8 @@ export const siteEn: typeof siteDe = {
     },
     careers: {
       lines: [{ lead: 'People you would' }, { accent: 'hand a key to.' }],
+      howLines: [{ lead: 'How applying' }, { accent: 'works.' }],
+      openLines: [{ lead: 'Open' }, { accent: 'roles.' }],
     },
     regionsIndex: {
       lines: [{ accent: 'Eight municipalities' }, { lead: 'on the right shore.' }],

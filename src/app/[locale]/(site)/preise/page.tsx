@@ -14,6 +14,8 @@ import { Section, SectionHeading } from '@/components/signature/section-heading'
 import { CtaBand } from '@/components/signature/cta-band';
 import { serviceFromPrice } from '@/components/site/service-grid';
 import { Masthead } from '@/components/landing/Masthead';
+import { SectionHead } from '@/components/landing/PageSection';
+import { formatChf } from '@/components/ui/money';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -54,7 +56,18 @@ export default async function PricingPage({
   return (
     <>
       {hv ? (
-        <Masthead lines={d.raw('lines')} lead={t('lead')} />
+        /* The rate and the minimum were two hairline boxes under the heading.
+           They are the two facts the page exists to state, so they move into
+           the masthead's fact column — which is also what fills the half of
+           the card that used to be bare navy. */
+        <Masthead
+          lines={d.raw('lines')}
+          lead={t('lead')}
+          stats={[
+            { value: formatChf(s.hourlyRate, locale as Locale), label: t('rateLabel') },
+            { value: t('minimumValue'), label: t('minimumLabel') },
+          ]}
+        />
       ) : null}
 
       <Section>
@@ -69,6 +82,7 @@ export default async function PricingPage({
           />
         ) : null}
 
+        {!hv ? (
         <dl className="mt-12 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2">
           <div className="bg-page p-7">
             <dt className="label-type text-ink-tertiary">{t('rateLabel')}</dt>
@@ -83,10 +97,15 @@ export default async function PricingPage({
             </dd>
           </div>
         </dl>
+        ) : null}
       </Section>
 
       <Section tone="sunken">
-        <SectionHeading theme={theme} title={t('tableTitle')} align="start" />
+        {hv ? (
+          <SectionHead lines={d.raw('tableLines')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('tableTitle')} align="start" />
+        )}
         <div className="mt-8 overflow-x-auto">
           <table className="w-full min-w-lg border-collapse text-left">
             <thead>
@@ -119,7 +138,13 @@ export default async function PricingPage({
                       {service.calc === 'perUnit' ? t('methodPerUnit') : t('methodHourly')}
                     </td>
                     <td className="py-4 text-right">
-                      <Money amount={serviceFromPrice(service.minDuration)} />
+                      <span
+                        className={
+                          hv ? 'display-type text-[36px] leading-none' : undefined
+                        }
+                      >
+                        <Money amount={serviceFromPrice(service.minDuration)} />
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -129,12 +154,16 @@ export default async function PricingPage({
       </Section>
 
       <Section>
-        <SectionHeading
-          theme={theme}
-          title={t('durationTitle')}
-          lead={t('durationLead')}
-          align="start"
-        />
+        {hv ? (
+          <SectionHead lines={d.raw('durationLines')} lead={t('durationLead')} />
+        ) : (
+          <SectionHeading
+            theme={theme}
+            title={t('durationTitle')}
+            lead={t('durationLead')}
+            align="start"
+          />
+        )}
         <div className="mt-8 overflow-x-auto">
           <table className="w-full min-w-lg border-collapse text-left">
             <thead>
@@ -177,7 +206,11 @@ export default async function PricingPage({
       </Section>
 
       <Section tone="sunken">
-        <SectionHeading theme={theme} title={t('extrasTitle')} align="start" />
+        {hv ? (
+          <SectionHead lines={d.raw('extrasLines')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('extrasTitle')} align="start" />
+        )}
         <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="font-medium">{t('extraTravelTitle')}</dt>
@@ -228,7 +261,11 @@ export default async function PricingPage({
             </Button>
           </div>
           <div className="lg:col-span-7">
-            <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
+            {hv ? (
+              <SectionHead lines={d.raw('faqLines')} />
+            ) : (
+              <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
+            )}
             <Faq
               className="mt-6"
               items={[

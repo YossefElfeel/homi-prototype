@@ -9,6 +9,10 @@ import { CtaBand } from '@/components/signature/cta-band';
 import { Masthead } from '@/components/landing/Masthead';
 import { PageSection } from '@/components/landing/PageSection';
 import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
+import { serviceFromPrice } from '@/components/site/service-grid';
+import { formatChf } from '@/components/ui/money';
+import { SEED_SERVICES } from '@/mock/seed';
+import type { Locale } from '@/i18n/routing';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -35,6 +39,7 @@ export default async function ServicesIndexPage({
   const t = await getTranslations('site.services');
   const d = await getTranslations('site.display.services');
   const home = await getTranslations('site.home.hero');
+  const active = SEED_SERVICES.filter((svc) => svc.active);
 
   if (theme === 'homivaro') {
     return (
@@ -43,6 +48,18 @@ export default async function ServicesIndexPage({
           lines={d.raw('lines')}
           lead={t('listLead')}
           action={{ label: home('primary'), href: '/anfrage' }}
+          /* Counted and computed, never typed: retire a service in the panel
+             and this says six. */
+          stats={[
+            { value: String(active.length), label: d('factServices') },
+            {
+              value: formatChf(
+                Math.min(...active.map((svc) => serviceFromPrice(svc.minDuration))),
+                locale as Locale,
+              ),
+              label: d('factFrom'),
+            },
+          ]}
         />
         <PageSection>
           <ServiceMosaic />

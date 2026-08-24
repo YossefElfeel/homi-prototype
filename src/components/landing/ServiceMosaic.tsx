@@ -44,10 +44,19 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
       whileInView="show"
       viewport={inViewLoose}
       variants={stagger(0.07)}
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      /* items-start, so a text tile beside a photo tile keeps its own height.
+         Stretching them to match left roughly 150px of void between the body
+         and the price on every light card — the grid filling space the design
+         never asked it to fill. Ragged bottoms are the correct reading of a
+         mosaic. */
+      className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3"
     >
-      {items.map((service) => {
+      {items.map((service, i) => {
         const photo = PHOTO[service.slug];
+        /* Next flagged this one as the Largest Contentful Paint on
+           /leistungen and it was loading lazily. Only the first tile: marking
+           all three would have them compete for the same early bandwidth. */
+        const isLcp = i === 0 && Boolean(photo);
         const Icon = SERVICE_ICONS[service.slug];
 
         return (
@@ -70,6 +79,7 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
                     src={photo}
                     alt=""
                     fill
+                    priority={isLcp}
                     sizes="(max-width: 640px) 100vw, 66vw"
                     className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                   />
@@ -87,7 +97,7 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
                   {service.name[locale]}
                 </span>
                 <span
-                  className={`mt-3 flex-1 text-[15px] leading-[1.6] transition-colors duration-[var(--motion-base)] ${
+                  className={`mt-3 text-[15px] leading-[1.6] transition-colors duration-[var(--motion-base)] ${
                     photo
                       ? "text-ink-inverse/70 group-hover:text-ink-inverse"
                       : "text-ink-secondary group-hover:text-ink"

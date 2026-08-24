@@ -14,6 +14,7 @@ import { PlanComparison } from '@/components/site/plan-comparison';
 import { Masthead } from '@/components/landing/Masthead';
 import { PageSection, SectionHead } from '@/components/landing/PageSection';
 import { Plans } from '@/components/landing/Plans';
+import { SEED_SETTINGS } from '@/mock/seed';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -61,7 +62,16 @@ export default async function PlansPage({
   if (theme === 'homivaro') {
     return (
       <>
-        <Masthead lines={d.raw('lines')} lead={t('lead')} />
+        <Masthead
+          lines={d.raw('lines')}
+          lead={t('lead')}
+          /* The two facts a buyer actually weighs before a year paid up front,
+             both read from settings rather than written here. */
+          stats={[
+            { value: String(SEED_SETTINGS.planCancellationDays), label: d('factCancel') },
+            { value: String(SEED_SETTINGS.monthlyFreeSkips), label: d('factSkip') },
+          ]}
+        />
 
         {/* The commitment notice comes before the cards, not after them. It is
             the one fact that decides whether a plan is the right purchase, and
