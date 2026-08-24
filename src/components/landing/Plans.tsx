@@ -7,6 +7,7 @@ import { DisplayLines } from "@/components/landing/DisplayLines";
 import { Check } from "@/components/landing/icons";
 import { EASE, inViewLoose, stagger } from "@/components/landing/motion";
 import { Counter } from "@/components/landing/Counter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
 import { Money, formatChf } from "@/components/ui/money";
 import { planRhythm } from "@/lib/offer-facts";
@@ -128,50 +129,77 @@ export function Plans({
 
         {byService ? (
           <div id="pricing" className="scroll-mt-28">
-            {/* Jump links, once there is more than one service to jump between.
-                Two rails of cards stacked to nearly three screens with no way
-                to tell from the top that the second one existed — somebody
-                looking for an office plan had to scroll past every household
-                plan to find out we sell one. */}
+            {/*
+             * Tabs, once there is more than one service.
+             *
+             * Stacked, the two rails ran to nearly three screens and nothing at
+             * the top said the second one was down there — somebody looking for
+             * an office plan had to scroll past every household plan to find
+             * out we sell one. Jump links fixed the finding and not the
+             * reading: you still landed in a wall of five cards with no way to
+             * put the ones that are not yours out of view.
+             *
+             * Radix Tabs rather than a hand-rolled strip, for the arrow-key and
+             * Home/End behaviour — and because the panel it opens is a real
+             * tabpanel, so the rail is announced as the content of the tab
+             * rather than as five more articles on the page.
+             */}
             {groups.length > 1 ? (
-              <nav aria-label={p("byServiceNav")} className="mt-12 flex flex-wrap gap-2">
-                {groups.map((group) => (
-                  <a
-                    key={group.service.slug}
-                    href={`#abo-${group.service.slug}`}
-                    className="border-line hover:border-line-strong hover:bg-sunken inline-flex items-center rounded-full border px-4 py-2 text-[15px] transition-colors"
-                  >
-                    {group.service.name[routingLocale]}
-                    <span data-numeric className="text-ink-tertiary ml-2">
-                      {group.plans.length}
-                    </span>
-                  </a>
-                ))}
-              </nav>
-            ) : null}
+              <Tabs defaultValue={groups[0]!.service.slug} className="mt-12">
+                <TabsList aria-label={p("byServiceNav")}>
+                  {groups.map((group) => (
+                    <TabsTrigger key={group.service.slug} value={group.service.slug}>
+                      {group.service.name[routingLocale]}
+                      <span data-numeric className="opacity-60">
+                        {group.plans.length}
+                      </span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-            {groups.map((group, gi) => (
-              <div
-                key={group.service.slug}
-                id={`abo-${group.service.slug}`}
-                className={`scroll-mt-28 ${gi === 0 ? "mt-12" : "mt-20"}`}
-              >
-                {/* Named even when there is only one group. The question this
-                    answers — "does this plan cover *my* job?" — is the same
-                    whether the page carries one service or five, and it went
-                    unanswered on a page whose three cards were all household
-                    cleaning. */}
+                {groups.map((group) => (
+                  <TabsContent key={group.service.slug} value={group.service.slug} className="mt-8">
+                    {/* The service still gets said in words inside the panel.
+                        The tab is a control, and a control is not a caption —
+                        with the strip scrolled off, the rail would once again
+                        be five prices with nothing saying what they buy. */}
+                    <p className="text-ink-secondary max-w-[70ch] text-[15px]">
+                      {group.service.short[routingLocale]}
+                    </p>
+                    {/* Not force-mounted, unlike the comparison table below.
+                        These cards reveal on scroll, and a panel that mounts
+                        while `display: none` never intersects anything — it
+                        would open on five cards frozen at `opacity: 0`. The
+                        comparison keeps every plan in the DOM for the readers
+                        this costs. */}
+                    <PlanRail
+                      plans={group.plans}
+                      keyed={`${locale}-${group.service.slug}`}
+                      immediate
+                    />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              <div className="mt-12">
+                {/* Named even with one group. The question this answers — "does
+                    this plan cover *my* job?" — is the same whether the page
+                    carries one service or five, and it went unanswered on a
+                    page whose three cards were all household cleaning. */}
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                   <h3 className="text-ink text-2xl tracking-[0.01em]">
-                    {group.service.name[routingLocale]}
+                    {groups[0]!.service.name[routingLocale]}
                   </h3>
                   <p className="text-ink-secondary text-[15px]">
-                    {group.service.short[routingLocale]}
+                    {groups[0]!.service.short[routingLocale]}
                   </p>
                 </div>
-                <PlanRail plans={group.plans} keyed={`${locale}-${group.service.slug}`} />
+                <PlanRail
+                  plans={groups[0]!.plans}
+                  keyed={`${locale}-${groups[0]!.service.slug}`}
+                />
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <PlanRail plans={teaser} keyed={locale} id="pricing" className="mt-16 scroll-mt-28" />
@@ -187,19 +215,35 @@ function PlanRail({
   keyed,
   id,
   className = "mt-8",
+  immediate = false,
 }: {
   plans: Plan[];
   keyed: string;
   id?: string;
   className?: string;
+  /**
+   * Reveal on mount instead of on scroll.
+   *
+   * Set inside a tab panel, where "once it scrolls into view" is the wrong
+   * question: the reader has just clicked the tab, so the answer is now. A
+   * scroll trigger there is also one bad frame away from the failure this
+   * codebase has already been bitten by twice — a panel that mounts without a
+   * frame never intersects anything, and the rail opens on cards frozen at
+   * `opacity: 0`. On the page itself the scroll trigger is still right, and
+   * still what runs.
+   */
+  immediate?: boolean;
 }) {
+  const reveal = immediate
+    ? ({ animate: "show" } as const)
+    : ({ whileInView: "show", viewport: { once: true, amount: 0.12 } } as const);
+
   return (
     <motion.div
       id={id}
       key={keyed}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.12 }}
+      {...reveal}
       variants={stagger(0.12)}
       className={`grid items-center gap-y-10 lg:gap-4 ${
         /* The design's asymmetric three columns raise the middle card. With two
@@ -225,13 +269,22 @@ function PlanRail({
              plans the old `> 1` crowned the cheaper one, which is not a
              recommendation, it is an accident of rounding an index. */
           featured={plans.length >= 3 && index === Math.floor((plans.length - 1) / 2)}
+          immediate={immediate}
         />
       ))}
     </motion.div>
   );
 }
 
-function PlanCard({ plan, featured }: { plan: Plan; featured: boolean }) {
+function PlanCard({
+  plan,
+  featured,
+  immediate,
+}: {
+  plan: Plan;
+  featured: boolean;
+  immediate: boolean;
+}) {
   const t = useContent();
   const p = useTranslations("site.plans");
   const rhythmT = useTranslations("admin.rhythm");
@@ -255,8 +308,9 @@ function PlanCard({ plan, featured }: { plan: Plan; featured: boolean }) {
       {featured ? (
         <motion.span
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={inViewLoose}
+          {...(immediate
+            ? { animate: { opacity: 1, y: 0, scale: 1 } }
+            : { whileInView: { opacity: 1, y: 0, scale: 1 }, viewport: inViewLoose })}
           transition={{ delay: 0.35, type: "spring", stiffness: 300, damping: 20 }}
           className="bg-accent absolute -top-5 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 text-[15px] font-medium whitespace-nowrap text-ink-inverse"
         >
@@ -312,8 +366,9 @@ function PlanCard({ plan, featured }: { plan: Plan; featured: boolean }) {
 
       <motion.ul
         initial="hidden"
-        whileInView="show"
-        viewport={inViewLoose}
+        {...(immediate
+          ? { animate: "show" as const }
+          : { whileInView: "show" as const, viewport: inViewLoose })}
         variants={stagger(0.08, 0.25)}
         className="space-y-4"
       >

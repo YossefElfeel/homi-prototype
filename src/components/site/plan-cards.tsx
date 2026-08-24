@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
 import { planSaving, plansByService } from '@/lib/plan-facts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Plan } from '@/mock/schema';
 import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -42,6 +43,7 @@ export function PlanCards({
   compact?: boolean;
   byService?: boolean;
 }) {
+  const t = useTranslations('site.plans');
   const locale = useLocale() as Locale;
   const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
@@ -49,23 +51,40 @@ export function PlanCards({
   const groups = plansByService(plans, services);
   if (groups.length === 0) return null;
 
+  /* Tabbed, matching the comparison below it — the two blocks answer the same
+     question about the same five plans, and reading one as a switcher and the
+     other as a stack makes them look like different sets. Nothing here reveals
+     on scroll, so the panels can stay mounted. */
   if (byService && groups.length > 1) {
     return (
-      <div className="space-y-12">
+      <Tabs defaultValue={groups[0]!.service.slug}>
+        <TabsList aria-label={t('byServiceNav')}>
+          {groups.map((group) => (
+            <TabsTrigger key={group.service.slug} value={group.service.slug}>
+              {group.service.name[locale]}
+              <span data-numeric className="opacity-60">
+                {group.plans.length}
+              </span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
         {groups.map((group) => (
-          <section key={group.service.slug}>
-            <h3 className="subhead-type text-xl">{group.service.name[locale]}</h3>
-            <p className="mt-1.5 text-sm text-ink-secondary">{group.service.short[locale]}</p>
-            <div className="mt-6">
-              <Rail plans={group.plans} compact={compact} />
-            </div>
-          </section>
+          <TabsContent
+            key={group.service.slug}
+            value={group.service.slug}
+            forceMount
+            className="data-[state=inactive]:hidden"
+          >
+            <p className="mb-6 text-sm text-ink-secondary">{group.service.short[locale]}</p>
+            <Rail plans={group.plans} compact={compact} />
+          </TabsContent>
         ))}
-      </div>
+      </Tabs>
     );
   }
 
-  return <Rail plans={byService ? groups.flatMap((g) => g.plans) : groups[0]!.plans} compact={compact} />;
+  return <Rail plans={groups[0]!.plans} compact={compact} />;
 }
 
 function Rail({ plans: shown, compact }: { plans: Plan[]; compact: boolean }) {

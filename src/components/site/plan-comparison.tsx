@@ -7,6 +7,7 @@ import type { Plan } from '@/mock/schema';
 import { formatChf } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
 import { planSaving, plansByService } from '@/lib/plan-facts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
@@ -31,6 +32,7 @@ import { cn } from '@/lib/cn';
  * printing a column of dashes.
  */
 export function PlanComparison() {
+  const t = useTranslations('site.plans');
   const locale = useLocale() as Locale;
   const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
@@ -38,15 +40,45 @@ export function PlanComparison() {
   const groups = plansByService(plans, services);
   if (groups.length === 0) return null;
 
+  /* One service, no tabs. A tab strip with a single tab is a control that
+     cannot be operated, and it would still take a row of the page to say so. */
+  if (groups.length === 1) return <ComparisonTable plans={groups[0]!.plans} />;
+
   return (
-    <div className="space-y-12">
+    <Tabs defaultValue={groups[0]!.service.slug}>
+      <TabsList tone="card" aria-label={t('compareTabsLabel')}>
+        {groups.map((group) => (
+          <TabsTrigger key={group.service.slug} tone="card" value={group.service.slug}>
+            {group.service.name[locale]}
+            <span data-numeric className="opacity-60">
+              {group.plans.length}
+            </span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
       {groups.map((group) => (
-        <section key={group.service.slug}>
-          <h3 className="subhead-type text-xl">{group.service.name[locale]}</h3>
+        <TabsContent
+          key={group.service.slug}
+          value={group.service.slug}
+          /*
+           * Kept in the DOM when it is not the open tab.
+           *
+           * Tabs hide content, and this is the only place on the site where an
+           * office plan's visits, term and saving are written out — the rails
+           * above show one service at a time too. Unmounted, a crawler and a
+           * reader with the page saved to a file would both see three
+           * household plans and no sign the other two exist. There is no
+           * reveal animation on a table, so nothing here depends on the panel
+           * having been on screen when it mounted.
+           */
+          forceMount
+          className="data-[state=inactive]:hidden"
+        >
           <ComparisonTable plans={group.plans} />
-        </section>
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   );
 }
 
