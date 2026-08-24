@@ -60,7 +60,7 @@ export function PlanComparison() {
                 &nbsp;
               </th>
               {shown.map((plan) => (
-                <th key={plan.id} scope="col" className="display-type py-4 pr-4 text-xl">
+                <th key={plan.id} scope="col" className="subhead-type py-4 pr-4 text-xl">
                   {plan.name[locale]}
                 </th>
               ))}

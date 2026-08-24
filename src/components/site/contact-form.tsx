@@ -69,7 +69,7 @@ export function ContactForm() {
         <span className="inline-flex size-11 items-center justify-center rounded-full bg-status-success text-status-success-fg">
           <Check className="size-5" aria-hidden />
         </span>
-        <h2 className="display-type mt-5 text-2xl">{t('successTitle')}</h2>
+        <h2 className="subhead-type mt-5 text-2xl">{t('successTitle')}</h2>
         <p className="mt-3 text-ink-secondary">{t('successBody')}</p>
         <Button variant="secondary" className="mt-7" onClick={() => setState('idle')}>
           {t('successAgain')}
