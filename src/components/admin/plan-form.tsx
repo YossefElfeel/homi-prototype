@@ -105,6 +105,11 @@ export function PlanForm({
           name: localised(draft.name.de.trim()),
           description: localised(draft.description.de.trim()),
           features,
+          /* A list price at or below the price is not a saving, so it is
+             dropped rather than stored. Storing it would leave the field
+             looking set while every screen ignored it — the worst of both. */
+          listPrice:
+            draft.listPrice && draft.listPrice > draft.price ? draft.listPrice : undefined,
           // A retired plan cannot be on the site — the same rule the store
           // enforces, applied here so the form never submits a state it would
           // then silently correct.
@@ -173,6 +178,31 @@ export function PlanForm({
               required
               value={draft.price}
               onChange={(e) => patch({ price: Number(e.target.value) })}
+            />
+          )}
+        </Field>
+
+        {/* Directly under the price, because it is only meaningful next to
+            it — and because the one way to get this wrong is to change one of
+            the two and not the other. The error says so rather than letting a
+            saving of nought per cent reach the card. */}
+        <Field
+          label={t('listPrice')}
+          hint={t('listPriceHint')}
+          error={
+            draft.listPrice && draft.listPrice > 0 && draft.listPrice <= draft.price
+              ? t('listPriceTooLow')
+              : undefined
+          }
+        >
+          {(props) => (
+            <Input
+              {...props}
+              type="number"
+              min={0}
+              step={10}
+              value={draft.listPrice ?? 0}
+              onChange={(e) => patch({ listPrice: Number(e.target.value) || undefined })}
             />
           )}
         </Field>

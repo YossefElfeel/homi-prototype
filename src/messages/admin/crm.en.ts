@@ -463,6 +463,10 @@ export const adminCrmEn: typeof adminCrmDe = {
     serviceHint: 'What the included visits are drawn against.',
     price: 'Price (CHF)',
     priceHint: 'Paid once, at sign-up.',
+    listPrice: 'Bought one visit at a time (CHF)',
+    listPriceHint:
+      'What these visits cost outside a plan. The site strikes it through above the price and works the saving out from it. Leave at 0 to claim no saving.',
+    listPriceTooLow: 'Must be higher than the price, or there is no saving to show.',
     includedVisits: 'Visits included',
     validityMonths: 'Valid for (months)',
     validityHint: 'After this the package lapses, with or without visits left.',

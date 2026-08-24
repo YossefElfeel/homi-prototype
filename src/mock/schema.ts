@@ -578,6 +578,16 @@ export interface Plan {
   features: Record<Locale, string>[];
   /** Paid once, at sign-up — not per month. */
   price: number;
+  /**
+   * What the same visits cost bought one at a time — the figure `price` is
+   * measured against, and the only honest way to put a saving on the card.
+   *
+   * Optional, and it has to stay optional. A plan whose price is simply its
+   * price has no "before", and manufacturing one is the discount theatre this
+   * brand cannot afford. Where it is set it must exceed `price`; the site
+   * ignores it otherwise rather than advertising a negative saving.
+   */
+  listPrice?: number;
   /** How many visits that price buys. */
   includedVisits: number;
   /** How long those visits stay usable, from the day the plan is paid for. */

@@ -17,6 +17,7 @@
 import type {
   ID,
   Plan,
+  Service,
   Settings,
   Subscription,
   SubscriptionStatus,
@@ -24,6 +25,92 @@ import type {
 
 export function planOf(subscription: Subscription, plans: Plan[]): Plan | undefined {
   return plans.find((p) => p.id === subscription.planId);
+}
+
+/**
+ * The plan a group leads with, or nothing when the group has no middle.
+ *
+ * The middle one, not the dearest one: a "recommended" badge on the top tier
+ * reads as a sales tactic to this audience, and picking by position rather
+ * than by name is what lets the office add or retire a plan without the ribbon
+ * landing on nothing. Three or more, because a pair has no middle — on two
+ * plans the old test crowned the cheaper one, which is an accident of rounding
+ * an index rather than a recommendation.
+ *
+ * Derived here rather than computed in each view, because three views make the
+ * claim: the marketing rail, the other direction's rail, and the comparison
+ * table. Two of them had the rule written out and the third had nothing at
+ * all, so the table gave no sign which column the cards above it had just
+ * pointed at. Three copies of a rule is two chances to change one and not the
+ * others.
+ */
+export function recommendedPlan(plans: Plan[]): Plan | undefined {
+  if (plans.length < 3) return undefined;
+  return plans[Math.floor((plans.length - 1) / 2)];
+}
+
+/**
+ * What the package saves against buying the same visits one at a time, or
+ * nothing if it saves nothing.
+ *
+ * Derived rather than stored, for the usual reason: a stored percentage and a
+ * changed price drift apart the first time somebody edits one and not the
+ * other, and the screen that shows them both is the screen that has to be
+ * right. It is `null` — not zero — when `listPrice` is missing or is not
+ * actually higher, so a card cannot render a struck-through price equal to the
+ * one beside it, or a saving of nought per cent.
+ */
+export function planSaving(
+  plan: Plan,
+): { listPrice: number; saved: number; percent: number } | null {
+  const listPrice = plan.listPrice;
+  if (listPrice === undefined || listPrice <= plan.price) return null;
+
+  const saved = listPrice - plan.price;
+  /*
+   * Rounded to the nearest point, not down.
+   *
+   * Down was the first instinct — never overstate a saving — and on real
+   * numbers it read as a lie in the other direction: Basic saves 9.99 % and
+   * the card said "Save 9%" for a package the business sells as ten. Nearest
+   * is what a reader does with a percentage anyway, and it still refuses to
+   * round 9.4 up. The guard against overstating is `listPrice` being a figure
+   * the office entered, not this line.
+   */
+  return { listPrice, saved, percent: Math.round((saved / listPrice) * 100) };
+}
+
+/**
+ * The plans a visitor can buy, grouped by the service they buy it for.
+ *
+ * A plan has always named a `serviceSlug` and no marketing screen has ever
+ * shown it, so /abos read as three plans for the whole business when all three
+ * were regular household cleaning. Somebody asking about their office found
+ * household rhythms, a household price, and no way to tell that none of it
+ * applied to them.
+ *
+ * Grouped rather than filtered by a picker: the number of services carrying
+ * plans is two and might be one tomorrow, and a filter whose control has a
+ * single option is a control that should not be there. A group with no plans
+ * never appears — not every service *can* carry one, since a plan is a rhythm
+ * and a move-out clean happens once.
+ */
+export function plansByService(
+  plans: Plan[],
+  services: Service[],
+): { service: Service; plans: Plan[] }[] {
+  const sellable = plans
+    .filter((p) => p.active && p.visibleOnSite)
+    .sort((a, b) => a.order - b.order);
+
+  return services
+    .filter((s) => s.active)
+    .sort((a, b) => a.order - b.order)
+    .map((service) => ({
+      service,
+      plans: sellable.filter((p) => p.serviceSlug === service.slug),
+    }))
+    .filter((group) => group.plans.length > 0);
 }
 
 /**

@@ -56,12 +56,14 @@ export function CtaBand() {
           transition={{ duration: 0.75, ease: EASE, delay: 0.28 }}
           className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
-          <Button href="/anfrage" variant="navy">
+          {/* Both sit on the red band, so neither may wash red. */}
+          <Button href="/anfrage" variant="navy" surface="accent">
             {t.actions.quote}
           </Button>
           <Button
             href={contact.phoneHref}
             variant="white"
+            surface="accent"
             arrow={false}
             icon={<Phone className="h-4 w-4" />}
             className="flex-row-reverse"

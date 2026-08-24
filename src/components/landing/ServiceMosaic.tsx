@@ -19,20 +19,63 @@ const PHOTO: Partial<Record<string, string>> = {
   moebelmontage: "/img/service-3.webp",
 };
 
+const COLUMNS = 3;
+
 /**
- * The shared `cardRise` under `stagger` puts the trigger on the container,
- * which is wrong for a grid this tall — 1527px on /leistungen, 2469px stacked.
- * `amount` counts a fraction of the *element*, so 15% of 1527px asks for
- * 229px on screen; the grid opens 678px down, leaving 122px on an 800px-tall
- * laptop. The first two cards sat at `opacity: 0` while fully in view until a
- * scroll released them, which is a bug and not an effect — see
- * ../motion/motion-root.tsx.
+ * Spelled out rather than interpolated, because Tailwind reads class names as
+ * literals — `lg:col-span-${span}` compiles to nothing at all and the tile
+ * silently falls back to one column.
  *
- * So each card triggers on itself. The two on the first screen rise on load,
- * the rest rise as they are reached, and the 1500px of scroll below the fold
- * keeps something to do instead of arriving pre-played. `custom` carries the
- * column, because a mosaic row holds two cells: a delay indexed off the flat
- * list would keep accumulating down a grid that no longer reveals as one.
+ * A closing tile does take all three: with seven services the last one is
+ * alone on its row, and without the span-3 entry here it sat at one third
+ * width with two empty cells beside it — the hole `bentoCells` exists to
+ * prevent, reintroduced one layer down.
+ */
+const SPAN_CLASS: Record<number, string> = {
+  1: '',
+  2: 'sm:col-span-2',
+  3: 'sm:col-span-2 lg:col-span-3',
+};
+
+/**
+ * How wide each tile sits, so the bento tiles cleanly whatever the office
+ * leaves active.
+ *
+ * A bento with a hole in it is not a bento, it is a grid that failed — and the
+ * hole is exactly what a fixed list of spans produces the first time somebody
+ * retires a service in the panel. So the widths are computed: a repeating
+ * wide-narrow-narrow-wide rhythm, narrowed wherever a wide tile would overhang
+ * the row it is in, and the closing tile stretched to whatever its row has
+ * left. No number of services can leave a gap.
+ */
+function bentoCells(count: number): { span: number; column: number }[] {
+  const rhythm = [2, 1, 1, 2];
+  const cells: { span: number; column: number }[] = [];
+  let filled = 0;
+
+  for (let i = 0; i < count; i++) {
+    const column = filled % COLUMNS;
+    let span = rhythm[i % rhythm.length]!;
+
+    if (column + span > COLUMNS) span = COLUMNS - column;
+    // The closing tile takes the rest of its row — the wide bottom edge a
+    // bento wants, and the only way to end without a stub.
+    if (i === count - 1) span = COLUMNS - column;
+
+    cells.push({ span, column });
+    filled += span;
+  }
+
+  return cells;
+}
+
+/**
+ * `amount` counts a fraction of the *element*, and these tiles are tall, so a
+ * container-level trigger asks for more of the grid on screen than a laptop
+ * has — which is how the first tiles came to sit at `opacity: 0` while fully
+ * in view. Each tile triggers on itself, and the delay is indexed off its
+ * column so a row reveals as a row instead of accumulating down a grid that no
+ * longer reads as one.
  */
 const tileRise: Variants = {
   hidden: { opacity: 0, y: 34, scale: 0.985 },
@@ -45,38 +88,52 @@ const tileRise: Variants = {
 };
 
 /**
- * The seven services, as an editorial mosaic rather than a uniform grid.
+ * The services as a bento of photo tiles.
  *
- * A seven-cell grid of identical cards reads as a table of contents; this is
- * the page where somebody chooses. So the three services that came with a
- * photograph take a wide cell and lead each row, and the four without take a
- * narrow one — which also means no service is ever shown under a photograph of
- * a different job, and no cell falls back to a placeholder.
+ * The card is one shape now — photograph edge to edge, the name and the
+ * from-price sitting on it at the bottom left, the arrow in a red disc at the
+ * bottom right. It was two shapes before: a photo tile put its picture in a
+ * 220px band above a block of text while a flat tile had no picture at all, so
+ * a row read as a banner standing next to a card rather than as one grid. The
+ * rhythm comes from the cell widths now, which is where a bento is meant to
+ * get it.
+ *
+ * **Four of the seven services have no photograph, and they are not given
+ * one.** They take the same tile in navy with the service's icon where the
+ * picture would be. Borrowing a kitchen for "Window cleaning" would be the one
+ * dishonest thing on a page whose whole job is to say what we do. The gap is
+ * deliberate and it closes the day the photographs arrive: add the file to
+ * `PHOTO` and nothing else here changes.
  *
  * The price is set in Bebas. A price is a numeral, so it clears the rule that
  * nothing in this direction sets Bebas below 36px for reading.
  */
-export function ServiceMosaic({ exclude }: { exclude?: string }) {
+export function ServiceMosaic({
+  exclude,
+  /** How many tiles to show. The bento re-tiles itself around whatever it gets. */
+  limit,
+}: {
+  exclude?: string;
+  limit?: number;
+}) {
   const locale = useLocale() as Locale;
 
-  const items = SEED_SERVICES.filter((s) => s.active && s.slug !== exclude).sort(
+  const all = SEED_SERVICES.filter((s) => s.active && s.slug !== exclude).sort(
     (a, b) => a.order - b.order,
   );
+  const items = limit ? all.slice(0, limit) : all;
+
+  const cells = bentoCells(items.length);
 
   return (
-    <ul
-      /* items-start, so a text tile beside a photo tile keeps its own height.
-         Stretching them to match left roughly 150px of void between the body
-         and the price on every light card — the grid filling space the design
-         never asked it to fill. Ragged bottoms are the correct reading of a
-         mosaic. */
-      className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3"
-    >
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((service, i) => {
         const photo = PHOTO[service.slug];
-        /* Next flagged this one as the Largest Contentful Paint on
-           /leistungen and it was loading lazily. Only the first tile: marking
-           all three would have them compete for the same early bandwidth. */
+        const { span, column } = cells[i]!;
+
+        /* Next flagged the first tile as the Largest Contentful Paint on
+           /leistungen and it was loading lazily. Only the first: marking all
+           three would have them compete for the same early bandwidth. */
         const isLcp = i === 0 && Boolean(photo);
         const Icon = SERVICE_ICONS[service.slug];
 
@@ -87,71 +144,76 @@ export function ServiceMosaic({ exclude }: { exclude?: string }) {
             whileInView="show"
             viewport={inViewLoose}
             variants={tileRise}
-            custom={i % 2}
+            custom={column}
             whileHover={{ y: -6 }}
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
-            className={`hv-card group overflow-hidden ${
-              photo ? "hv-card-dark sm:col-span-2 lg:col-span-2" : "hv-card-light"
-            }`}
+            className={`hv-card group relative min-h-[300px] overflow-hidden sm:min-h-[340px] lg:min-h-[380px] ${
+              photo ? "bg-inverse" : "hv-card-dark"
+            } ${SPAN_CLASS[span] ?? ""}`}
           >
+            {photo ? (
+              <>
+                <Image
+                  src={photo}
+                  alt=""
+                  fill
+                  priority={isLcp}
+                  sizes={
+                    span === 2
+                      ? "(max-width: 640px) 100vw, 66vw"
+                      : "(max-width: 640px) 100vw, 33vw"
+                  }
+                  className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                />
+                {/* The scrim is the type's background, not a mood. Without it
+                    a white name lands on whatever the photograph happens to be
+                    doing at the bottom of the frame — on service-2 that is a
+                    pale wall. Weighted to the bottom so the picture keeps the
+                    top two thirds of the tile. */}
+                <span
+                  aria-hidden
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(6,17,44,0.92) 0%, rgba(6,17,44,0.72) 26%, rgba(6,17,44,0.24) 58%, rgba(6,17,44,0.05) 100%)",
+                  }}
+                />
+              </>
+            ) : null}
+
             <Link
               href={`/leistungen/${service.slug}`}
-              className="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              className="relative flex h-full flex-col justify-between p-7 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-line-focus"
             >
-              {photo ? (
-                <span className="relative block h-[220px] overflow-hidden">
-                  <Image
-                    src={photo}
-                    alt=""
-                    fill
-                    priority={isLcp}
-                    sizes="(max-width: 640px) 100vw, 66vw"
-                    className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                  />
-                </span>
-              ) : null}
+              {/* The icon stands in for the photograph, so it sits where the
+                  photograph would begin rather than immediately above the
+                  name. */}
+              <span>
+                {!photo ? <Icon className="text-ink-accent-inverse h-8 w-8" aria-hidden /> : null}
+              </span>
 
-              <span className="flex flex-1 flex-col p-7">
-                {!photo ? <Icon className="text-ink-accent mb-6 h-7 w-7" aria-hidden /> : null}
-
-                <span
-                  className={`text-xl leading-snug font-medium ${
-                    photo ? "text-ink-inverse" : "text-ink"
-                  }`}
-                >
-                  {service.name[locale]}
-                </span>
-                <span
-                  className={`mt-3 text-[15px] leading-[1.6] transition-colors duration-[var(--motion-base)] ${
-                    photo
-                      ? "text-ink-inverse/70 group-hover:text-ink-inverse"
-                      : "text-ink-secondary group-hover:text-ink"
-                  }`}
-                >
-                  {service.short[locale]}
-                </span>
-
-                <span className="mt-7 flex items-end justify-between gap-4">
+              <span className="flex items-end justify-between gap-4">
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-ink-inverse/85 text-[15px] leading-snug sm:text-base">
+                    {service.name[locale]}
+                  </span>
                   <span
                     data-numeric
                     /* Money renders its "ab"/"from" prefix in tertiary grey,
-                       which is 2.65:1 on the dark card. Lift it with the rest
+                       which is 2.65:1 over a photograph. Lift it with the rest
                        of the price rather than leaving the qualifier the one
                        unreadable word on the tile. */
-                    className={`display-type text-[clamp(30px,3vw,40px)] leading-[0.85] ${
-                      photo
-                        ? "text-ink-inverse [&_span]:text-ink-inverse/70"
-                        : "text-ink"
-                    }`}
+                    className="display-type text-ink-inverse mt-1.5 text-[clamp(30px,3vw,42px)] leading-[0.85] [&_span]:text-ink-inverse/70"
                   >
                     <Money amount={serviceFromPrice(service.minDuration)} from />
                   </span>
-                  <span
-                    aria-hidden
-                    className="bg-accent text-ink-inverse grid h-10 w-10 shrink-0 place-items-center rounded-full transition-transform duration-400 group-hover:scale-110"
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                  </span>
+                </span>
+
+                <span
+                  aria-hidden
+                  className="bg-accent text-ink-inverse grid h-11 w-11 shrink-0 place-items-center rounded-full transition-transform duration-400 group-hover:scale-110"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
                 </span>
               </span>
             </Link>

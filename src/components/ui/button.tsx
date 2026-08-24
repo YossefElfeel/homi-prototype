@@ -28,7 +28,7 @@ const button = cva(
        full gesture: the cursor-magnet third of it needs a spring, a spring
        needs `motion`, and `motion` on the shared button would follow this
        component into all 58 console screens for the sake of a hover. */
-    'hv-action',
+    /* Not on `link` — see the compound variant below. */
     /* Disabled arrives two ways. A real <button> gets :disabled; an asChild
        anchor cannot — see the note in the component below — so aria-disabled
        has to carry the same weight or the styling silently does nothing. */
@@ -47,7 +47,10 @@ const button = cva(
         ghost: 'bg-transparent text-ink-secondary hover:bg-sunken hover:text-ink',
         danger:
           'border border-status-danger-line bg-status-danger text-status-danger-fg hover:brightness-97',
-        link: 'text-ink-accent underline decoration-from-font underline-offset-4 hover:decoration-2',
+        /* Keeps the arrow nudge it used to inherit from `hv-action`, which a
+           link no longer carries — without it a link with a trailing arrow was
+           the only control on the site that did nothing at all on hover. */
+        link: 'text-ink-accent underline decoration-from-font underline-offset-4 hover:decoration-2 [&_svg:last-child]:transition-transform hover:[&_svg:last-child]:translate-x-1',
       },
       size: {
         sm: 'h-9 px-3 text-sm',
@@ -60,6 +63,22 @@ const button = cva(
     },
     compoundVariants: [
       { variant: 'link', class: 'h-auto p-0' },
+      /*
+       * `hv-action` on every variant but `link`.
+       *
+       * It is the Homivaro hover: a red wash wiping up from the bottom out of
+       * an `::after` at `inset: 0`, with `overflow: hidden` on the control. On
+       * a filled button that is the whole gesture. On a link — `h-auto p-0`,
+       * so the box is exactly the text — the wash is a red rectangle the size
+       * of the words, and the rule that flips the label to white on hover left
+       * white text on red where an inline link had been. It read as a broken
+       * button, which is precisely what it had become.
+       */
+      { variant: 'primary', class: 'hv-action' },
+      { variant: 'secondary', class: 'hv-action' },
+      { variant: 'quiet', class: 'hv-action' },
+      { variant: 'ghost', class: 'hv-action' },
+      { variant: 'danger', class: 'hv-action' },
       /* A press should feel like a press. Not on link — nudging inline text
          down a pixel reads as a rendering glitch, not as feedback. */
       { variant: 'primary', class: 'active:translate-y-px' },

@@ -128,11 +128,16 @@ export function Header() {
                         className="absolute inset-0 rounded-full bg-page"
                       />
                     ) : (
+                      /* Nothing behind the item at rest. A resting tint on all
+                         six made the bar read as six buttons with one of them
+                         merely lighter, which is the opposite of what the pill
+                         is for: the pill says *where you are*, and it can only
+                         say it if it is the only fill on the bar. Hover keeps
+                         its own tint, because that answers a different
+                         question — what would happen if I clicked. */
                       <span
                         className={`absolute inset-0 rounded-full transition-colors duration-300 ${
-                          stuck
-                            ? "bg-inverse/4 group-hover:bg-inverse/8"
-                            : "bg-page/10 group-hover:bg-page/20"
+                          stuck ? "group-hover:bg-inverse/8" : "group-hover:bg-page/15"
                         }`}
                       />
                     )}

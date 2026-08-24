@@ -88,11 +88,16 @@ export default async function PlansPage({
           </div>
         </PageSection>
 
-        {/* The homepage block, unchanged. Somebody arriving from the CTA there
-            has to land on the thing they clicked. */}
-        <Plans />
+        {/* The same block the homepage shows, so somebody arriving from the
+            CTA there lands on the thing they clicked — but split by service.
+            The homepage teases plans; this page has to answer which service
+            each one buys, and three cards under one heading answered it for
+            household cleaning only. */}
+        <Plans byService />
 
-        <PageSection tone="sunken">
+        {/* The target of "compare plans" in the block above, which until now
+            was a link to this page from this page. */}
+        <PageSection tone="sunken" id="vergleich">
           <SectionHead lines={d.raw('compareLines')} />
           <div className="mt-12">
             <PlanComparison />
@@ -142,7 +147,7 @@ export default async function PlansPage({
         </div>
 
         <div className="mt-12">
-          <PlanCards />
+          <PlanCards byService />
         </div>
       </Section>
 

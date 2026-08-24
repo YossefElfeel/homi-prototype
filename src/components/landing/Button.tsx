@@ -16,19 +16,54 @@ const MotionLink = motion.create(Link);
 type Variant = "red" | "navy" | "white" | "outline";
 type Size = "md" | "lg";
 
-const variants: Record<Variant, string> = {
-  red: "bg-accent text-ink-inverse",
-  navy: "bg-inverse text-ink-inverse",
-  white: "bg-page text-ink",
-  outline: "border border-line text-ink bg-transparent",
+/**
+ * The plane the button is standing on. Only the three flat ones are named —
+ * the hero photograph is not a plane, and no wash disappears into it.
+ */
+type Surface = "page" | "inverse" | "accent";
+
+type Wash = "navy" | "red" | "white";
+
+const WASH_FILL: Record<Wash, string> = {
+  navy: "bg-inverse",
+  red: "bg-accent",
+  white: "bg-page",
 };
 
-/** The sliding colour wash revealed on hover, per variant. */
-const washes: Record<Variant, string> = {
-  red: "bg-inverse",
-  navy: "bg-accent",
-  white: "bg-inverse",
-  outline: "bg-inverse",
+/** What the label has to become once the wash has covered the button. */
+const WASH_LABEL: Record<Wash, string> = {
+  navy: "hover:text-ink-inverse",
+  red: "hover:text-ink-inverse",
+  white: "hover:text-ink",
+};
+
+/** The wash a given surface would swallow whole. */
+const SURFACE_WASH: Record<Surface, Wash> = {
+  page: "white",
+  inverse: "navy",
+  accent: "red",
+};
+
+/**
+ * Hover wipes a colour up from the bottom — and which colour is not a property
+ * of the button alone. The wash has to differ from the surface the button
+ * stands on, or the control dissolves into its background at the exact moment
+ * the pointer says it is live.
+ *
+ * That was happening in three places at once, because the washes were written
+ * as if every button sat on the white page. The navy button on the red CTA
+ * band washed accent red — the band's own colour. The red button on the navy
+ * masthead, and the red button on the featured (navy) plan card, both washed
+ * navy. In all three the button vanished on hover and left only its own edge.
+ *
+ * So each variant carries a second choice, and the surface decides. Nothing
+ * changes for a button on the white page: those already contrasted.
+ */
+const variants: Record<Variant, { base: string; wash: Wash; alt: Wash }> = {
+  red: { base: "bg-accent text-ink-inverse", wash: "navy", alt: "white" },
+  navy: { base: "bg-inverse text-ink-inverse", wash: "red", alt: "white" },
+  white: { base: "bg-page text-ink", wash: "navy", alt: "red" },
+  outline: { base: "border border-line text-ink bg-transparent", wash: "navy", alt: "red" },
 };
 
 const sizes: Record<Size, string> = {
@@ -45,6 +80,8 @@ type AnchorProps = Omit<
 type Props = AnchorProps & {
   variant?: Variant;
   size?: Size;
+  /** The plane this button is placed on, so the hover wash cannot match it. */
+  surface?: Surface;
   arrow?: boolean;
   icon?: ReactNode;
   children: ReactNode;
@@ -58,6 +95,7 @@ type Props = AnchorProps & {
 export function Button({
   variant = "red",
   size = "lg",
+  surface = "page",
   arrow = true,
   icon,
   children,
@@ -83,8 +121,8 @@ export function Button({
     my.set(0);
   }
 
-  // Dark wash under dark-on-light variants means the label has to flip to white.
-  const flipsToWhite = variant === "white" || variant === "outline";
+  const v = variants[variant];
+  const wash = v.wash === SURFACE_WASH[surface] ? v.alt : v.wash;
 
   const internal = typeof rest.href === "string" && rest.href.startsWith("/");
   const Comp = internal ? MotionLink : motion.a;
@@ -97,13 +135,13 @@ export function Button({
       onMouseLeave={onLeave}
       whileTap={{ scale: 0.97 }}
       className={`group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full font-medium whitespace-nowrap transition-colors duration-300 ${
-        variants[variant]
-      } ${sizes[size]} ${flipsToWhite ? "hover:text-ink-inverse" : ""} ${className}`}
+        v.base
+      } ${sizes[size]} ${WASH_LABEL[wash]} ${className}`}
       {...rest}
     >
       <span
         aria-hidden
-        className={`absolute inset-0 translate-y-full rounded-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 ${washes[variant]}`}
+        className={`absolute inset-0 translate-y-full rounded-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 ${WASH_FILL[wash]}`}
       />
       <span className="relative z-10">{children}</span>
       {icon ? <span className="relative z-10">{icon}</span> : null}

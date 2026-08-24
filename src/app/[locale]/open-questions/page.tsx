@@ -199,6 +199,14 @@ const ENTRIES: Entry[] = [
     state: 'decided',
   },
   {
+    ref: '§21.9',
+    question: 'What does an office plan cost, and which other services get one?',
+    decision:
+      'OPEN. /abos now groups plans by the service they buy, and the two office plans that make that visible are priced by the same arithmetic as the household ones — an office visit at two and a half hours times the CHF 49 rate, less the package discount. The duration is our estimate, not a figure the business gave us, so both prices need confirming. The wider question is which of the seven services can carry a plan at all: a plan is a rhythm, and a move-out clean, a one-off clean and a furniture assembly each happen once. Window and deep cleaning could, but only quarterly — and `RhythmKey` has no quarterly, so neither can be modelled today.',
+    screens: '4, 70',
+    state: 'open',
+  },
+  {
     ref: '§19.1',
     question: 'Company legal details for the Imprint?',
     decision:

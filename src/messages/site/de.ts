@@ -144,6 +144,8 @@ export const siteDe = {
     tableService: 'Leistung',
     tableMethod: 'Abrechnung',
     tableFrom: 'Ab',
+    tableFloor:
+      'Jeder Betrag ist die Untergrenze: die zwei Stunden Minimum zum Stundensatz oder das höhere Minimum der Leistung. Bezahlt werden die tatsächlich geleisteten Stunden — offeriert, bevor jemand kommt.',
     methodHourly: 'Nach Stunden',
     methodPerUnit: 'Nach Anzahl',
     durationTitle: 'Woraus wir die Dauer schätzen',
@@ -157,6 +159,9 @@ export const siteDe = {
     durationExtras:
       'Dazu je eine halbe Stunde pro zusätzlichem Bad, eine halbe Stunde bei Haustieren und eine Stunde, wenn der Zustand deutlich mehr Aufwand erfordert.',
     extrasTitle: 'Was dazukommen kann',
+    extraFree: 'Gratis',
+    extraFrom: 'Ab {time} Uhr.',
+    vatBadge: 'Keine',
     extraTravelTitle: 'Anfahrt',
     extraTravelBody:
       'Innerhalb des Einsatzgebiets kostenlos. Weiter entfernt prüfen wir die Anfrage von Hand und weisen die Anfahrt separat aus.',
@@ -168,6 +173,7 @@ export const siteDe = {
     vatTitle: 'Mehrwertsteuer',
     vatBody:
       'Homivaro ist nicht mehrwertsteuerpflichtig. Der Betrag in der Offerte ist der Endbetrag.',
+    allPricesCta: 'Alle Preise ansehen',
     noticeTitle: 'Der verbindliche Preis steht in der Offerte',
     noticeBody:
       'Die Zahlen hier sind Richtwerte. Nach Ihrer Anfrage prüfen wir das Objekt und senden innert 24 Stunden eine schriftliche Offerte mit allen Positionen.',
@@ -186,10 +192,15 @@ export const siteDe = {
     eyebrow: 'Abos',
     title: 'Regelmässig reinigen lassen, ohne jedes Mal neu zu planen',
     lead: 'Ein Paket Einsätze, einmal bezahlt, ein Jahr gültig. Den Termin schlagen wir vor, verschieben können Sie ihn jederzeit.',
-    recommended: 'Für die meisten Haushalte',
+    recommended: 'Unsere Empfehlung',
+    wasPrice: 'Einzeln gebucht:',
+    saveBadge: '{percent}% sparen',
     priceNote: '{visits} Einsätze · {months} Monate gültig · einmalig zahlbar',
+    byServiceNav: 'Abos nach Leistung',
+    compareTabsLabel: 'Abos nach Leistung vergleichen',
     compareTitle: 'Im Vergleich',
     rowPrice: 'Preis',
+    rowSaving: 'Sie sparen',
     rowVisits: 'Enthaltene Einsätze',
     rowFrequency: 'Rhythmus',
     rowTerm: 'Gültigkeit',
@@ -219,6 +230,11 @@ export const siteDe = {
     lead: 'Alle Bilder sind mit ausdrücklicher schriftlicher Zustimmung der Kundschaft veröffentlicht.',
     before: 'Vorher',
     after: 'Nachher',
+    compare: 'Zum Vergleichen ziehen — vorher und nachher',
+    compareHint:
+      'Ziehen Sie den Trenner oder verwenden Sie die Pfeiltasten, um zwischen vorher und nachher zu wechseln.',
+    expand: 'Grösser ansehen',
+    close: 'Schliessen',
     emptyTitle: 'Noch keine freigegebenen Bilder',
     emptyBody:
       'Wir fotografieren jeden Einsatz vor und nach der Arbeit — veröffentlicht wird nur, was die Kundschaft ausdrücklich freigibt. Diese Galerie füllt sich, sobald die ersten Freigaben vorliegen.',
@@ -228,6 +244,8 @@ export const siteDe = {
   about: {
     meta: { title: 'Über uns' },
     eyebrow: 'Über uns',
+    factResponse: 'Bis Sie an einem Werktag Antwort haben',
+    factRegions: 'Gemeinden, in denen wir arbeiten',
     title: 'Eine Person, ein Einsatzgebiet, klare Regeln.',
     storyTitle: 'Warum es Homivaro gibt',
     story1:
@@ -267,6 +285,8 @@ export const siteDe = {
     eyebrow: 'Kontakt',
     title: 'Sprechen Sie mit uns',
     lead: 'Für Fragen zu einer laufenden Buchung oder wenn etwas nicht gepasst hat.',
+    factResponse: 'Bis Sie an einem Werktag Antwort haben',
+    factRegions: 'Gemeinden, in denen wir arbeiten',
     quoteHintTitle: 'Sie möchten einen Preis?',
     quoteHintBody:
       'Über das Anfrageformular geht es schneller — dort erfassen wir alles, was wir zum Rechnen brauchen.',
@@ -366,6 +386,8 @@ export const siteDe = {
     },
     about: {
       lines: [{ lead: 'Eine Person, ein Gebiet,' }, { accent: 'klare Regeln.' }] as HeadlineLine[],
+      storyLines: [{ lead: 'Warum es' }, { accent: 'Homivaro gibt.' }] as HeadlineLine[],
+      commitmentsLines: [{ lead: 'Worauf Sie uns' }, { accent: 'behaften können.' }] as HeadlineLine[],
       valuesLines: [{ lead: 'Wofür wir' }, { accent: 'stehen.' }] as HeadlineLine[],
       regionLines: [{ lead: 'Wo wir' }, { accent: 'arbeiten.' }] as HeadlineLine[],
       careersLines: [{ lead: 'Bei uns' }, { accent: 'arbeiten.' }] as HeadlineLine[],

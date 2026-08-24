@@ -804,6 +804,35 @@
     background: var(--surface-sunken);
   }
 
+  /*
+   * The "before" half of a gallery pair, until real before-photographs exist.
+   *
+   * TODO:asset — deleted the day the pairs arrive; nothing else has to change,
+   * because the slider reads two photo records and does not care that they
+   * currently point at one file.
+   *
+   * A dulled, slightly yellowed, softly focused version of the same room. Not
+   * a grey wash: a grey wash reads as "image failed to load", and the point of
+   * the left half is that a visitor recognises it as the same place in a worse
+   * state. Kept in CSS rather than a component so no hex reaches a component
+   * file, and so it is one deletion when the photographs land.
+   */
+  .hv-unclean {
+    filter: saturate(0.62) contrast(0.88) brightness(0.94) blur(0.4px);
+  }
+
+  .hv-unclean::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      160deg,
+      rgb(146 122 74 / 0.22) 0%,
+      rgb(110 104 92 / 0.16) 55%,
+      rgb(70 68 64 / 0.24) 100%
+    );
+  }
+
   .hv-container {
     width: 100%;
     max-width: 90rem;

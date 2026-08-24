@@ -6,10 +6,20 @@ import { EASE } from "@/components/landing/motion";
 
 type Props = {
   to: number;
-  /** Digits after the decimal point. */
+  /** Digits after the decimal point. Ignored when `format` is given. */
   decimals?: number;
   duration?: number;
   className?: string;
+  /**
+   * How to write the value at each tick.
+   *
+   * A price is not a bare figure — it carries a currency and Swiss thousands
+   * separators — and a counter that dropped those would animate `3440` into
+   * place under a heading that promised `CHF 3'440.–`. Formatting on the tick
+   * keeps the counting figure and the resting figure identical in every
+   * respect but the digits.
+   */
+  format?: (value: number) => string;
 };
 
 /**
@@ -28,10 +38,22 @@ type Props = {
  * value: the tick goes straight to the DOM instead of re-rendering the section
  * sixty times a second, and the initial paint stays server-truthful.
  */
-export function Counter({ to, decimals = 0, duration = 1.6, className }: Props) {
+export function Counter({ to, decimals = 0, duration = 1.6, className, format }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
   const visible = useInView(ref, { once: true, amount: 0.6 });
   const reduce = useReducedMotion();
+
+  const write = format ?? ((v: number) => v.toFixed(decimals));
+  /* Held in a ref rather than listed as a dependency. A caller writes the
+     formatter inline, so it is a new function on every render of the parent —
+     as a dependency it would restart the count from zero each time the store
+     around it changed, which on the plans section is mid-animation. Written in
+     an effect, not during render: a ref written during render is read by a
+     concurrent re-render that was never committed. */
+  const writeRef = useRef(write);
+  useEffect(() => {
+    writeRef.current = write;
+  });
 
   useEffect(() => {
     const node = ref.current;
@@ -41,21 +63,21 @@ export function Counter({ to, decimals = 0, duration = 1.6, className }: Props) 
       duration,
       ease: EASE,
       onUpdate: (v) => {
-        node.textContent = v.toFixed(decimals);
+        node.textContent = writeRef.current(v);
       },
       // Land exactly on the value the markup already had, so a rounding wobble
       // on the last frame cannot leave 23 on screen.
       onComplete: () => {
-        node.textContent = to.toFixed(decimals);
+        node.textContent = writeRef.current(to);
       },
     });
 
     return () => controls.stop();
-  }, [visible, reduce, to, duration, decimals]);
+  }, [visible, reduce, to, duration]);
 
   return (
     <span ref={ref} className={className}>
-      {to.toFixed(decimals)}
+      {write(to)}
     </span>
   );
 }

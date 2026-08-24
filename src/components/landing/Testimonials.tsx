@@ -140,7 +140,17 @@ export function Testimonials() {
                 }}
                 className="hv-card hv-card-dark group shrink-0 rounded-2xl p-6 select-none"
               >
-                <p className="text-[15px] leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
+                {/* The score the person actually gave, on the card that
+                    carries their words. The 5.0 beside the headline is an
+                    average of two hundred reviews and says nothing about
+                    this one — a quote with no score next to it is a quote a
+                    reader has to take on trust. */}
+                <Stars
+                  rating={item.rating ?? 5}
+                  label={t.testimonials.starsLabel.replace("{n}", String(item.rating ?? 5))}
+                />
+
+                <p className="mt-5 text-[15px] leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
                   <span className="text-ink-inverse">{item.lead}</span>{" "}
                   {item.quote.startsWith(item.lead)
                     ? item.quote.slice(item.lead.length).trim()
@@ -185,6 +195,33 @@ export function Testimonials() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Five stars, filled to the score.
+ *
+ * All five are drawn rather than only the earned ones: a row of four stars
+ * next to a row of five reads as a smaller row, not as a lower score, and the
+ * empty two are the only thing that says what the scale was.
+ */
+function Stars({ rating, label }: { rating: number; label: string }) {
+  return (
+    <span className="flex gap-0.5" role="img" aria-label={label}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, scale: 0.4 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={inViewLoose}
+          transition={{ delay: 0.1 + i * 0.06, type: "spring", stiffness: 400, damping: 17 }}
+        >
+          <Star
+            className={`h-4 w-4 ${i < rating ? "text-ink-accent-inverse" : "text-ink-inverse/20"}`}
+          />
+        </motion.span>
+      ))}
+    </span>
   );
 }
 

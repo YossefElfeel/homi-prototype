@@ -3,9 +3,11 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ArrowRight, Check } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
-import { routing } from '@/i18n/routing';
+import { routing, type Locale } from '@/i18n/routing';
 import { getHasInsurance, getTheme } from '@/lib/theme-server';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
+import { SEED_SETTINGS } from '@/mock/seed';
+import { formatChf } from '@/components/ui/money';
 import { Button } from '@/components/ui/button';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
@@ -49,6 +51,7 @@ export default async function AboutPage({
 
   const [theme, hasInsurance] = await Promise.all([getTheme(), getHasInsurance()]);
   const t = await getTranslations('site.about');
+  const pricing = await getTranslations('site.pricing');
 
   const commitments = [
     t('c1'),
@@ -63,10 +66,34 @@ export default async function AboutPage({
 
   return (
     <>
-      {hv ? <Masthead lines={d.raw('lines')} lead={t('lead')} /> : null}
+      {hv ? (
+        /* The three numbers this page is asking to be believed on, in the
+           column that was empty navy. A page of reassurance whose masthead
+           states no fact is asking for trust and offering none — and all three
+           are read from settings and the coverage list rather than typed here,
+           so none of them can drift from what the rest of the site says. */
+        <Masthead
+          lines={d.raw('lines')}
+          lead={t('lead')}
+          stats={[
+            {
+              value: formatChf(SEED_SETTINGS.hourlyRate, locale as Locale),
+              label: pricing('rateLabel'),
+            },
+            { value: `${SEED_SETTINGS.responseTimeHours} h`, label: t('factResponse') },
+            { value: String(SERVED_REGIONS.length), label: t('factRegions') },
+          ]}
+        />
+      ) : null}
 
       <Section>
-        <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
+        {/* Stretched, not top-aligned.
+            The story is two short paragraphs and the photograph was locked to
+            4:5, so the row was as tall as the picture and the left column
+            ended two thirds of the way up — around 400px of nothing under the
+            text on a desktop. The picture fills the row now and the row is as
+            tall as whichever side needs more. */}
+        <div className="grid gap-12 lg:grid-cols-12 lg:items-stretch">
           <div className="lg:col-span-7">
             {/* The masthead above already carries the h1 in this direction,
                 and a page with two of them has no outline. */}
@@ -79,7 +106,12 @@ export default async function AboutPage({
                 level={1}
               />
             ) : null}
-            <div className="mt-8 space-y-5 text-lg text-ink-secondary">
+            {/* The story had no heading of its own in this direction — the
+                masthead carries the h1, so the column opened on body copy with
+                nothing to say what it was. `storyTitle` already existed and
+                only the other direction was using it. */}
+            {hv ? <SectionHead lines={d.raw('storyLines')} /> : null}
+            <div className={`space-y-5 text-lg text-ink-secondary ${hv ? 'mt-6' : 'mt-8'}`}>
               <p className="max-w-[var(--measure)]">{t('story1')}</p>
               <p className="max-w-[var(--measure)]">{t('story2')}</p>
             </div>
@@ -95,7 +127,7 @@ export default async function AboutPage({
              * geometric panel in a navy-and-red system belongs to no one. The
              * moment a portrait exists this is a one-line swap.
              */
-            <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-lg)] lg:col-span-5">
+            <div className="relative aspect-4/3 min-h-[320px] overflow-hidden rounded-[var(--radius-lg)] lg:col-span-5 lg:aspect-auto">
               <Image
                 src="/img/service-1.webp"
                 alt={t('imageAlt')}
@@ -120,10 +152,24 @@ export default async function AboutPage({
         ) : (
           <SectionHeading theme={theme} title={t('valuesTitle')} align="start" />
         )}
-        <dl className="mt-10 grid gap-8 sm:grid-cols-3">
-          {(['v1', 'v2', 'v3'] as const).map((key) => (
-            <div key={key}>
-              <dt className="subhead-type text-xl">{t(`${key}Title`)}</dt>
+        {/* Cards, and numbered.
+            Three headings and three paragraphs loose on a grey slab read as
+            one block of prose that happens to be in columns — nothing said
+            where a value ended, and nothing said there were three of them.
+            The numeral is the cheapest way to say "three things, in order",
+            and it is set in the display face because that is what this
+            direction does with numerals. */}
+        <dl className="mt-10 grid gap-4 sm:grid-cols-3">
+          {(['v1', 'v2', 'v3'] as const).map((key, i) => (
+            <div key={key} className="surface-card flex flex-col p-7">
+              <span
+                data-numeric
+                aria-hidden
+                className={hv ? 'display-type text-ink-accent text-4xl leading-none' : 'label-type text-ink-accent'}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <dt className="subhead-type mt-5 text-xl">{t(`${key}Title`)}</dt>
               <dd className="mt-3 text-ink-secondary">{t(`${key}Body`)}</dd>
             </div>
           ))}
@@ -141,14 +187,20 @@ export default async function AboutPage({
             <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">
               {t('regionBody')}
             </p>
-            <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2">
+            {/* Chips, matching /kontakt and /gebiete. Eight underlined words
+                wrapped across two lines read as a sentence somebody had
+                linkified, not as eight places you can go. */}
+            <ul className="mt-6 flex flex-wrap gap-2">
               {SERVED_REGIONS.map((region) => (
                 <li key={region.slug}>
                   <Link
                     href={`/gebiete/${region.slug}`}
-                    className="text-sm text-ink-secondary underline decoration-line underline-offset-4 transition-colors hover:text-ink"
+                    className="border-line inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-colors hover:border-line-strong hover:bg-sunken"
                   >
                     {region.name}
+                    <span data-numeric className="text-ink-tertiary">
+                      {region.postcode}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -156,11 +208,26 @@ export default async function AboutPage({
           </div>
 
           <div className="lg:col-span-7">
-            <h2 className="subhead-type text-2xl">{t('commitmentsTitle')}</h2>
-            <ul className="mt-6 divide-y divide-line-subtle border-y border-line-subtle">
+            {/* Bebas, like every other heading in this direction. It was the
+                one section heading on the page still set in Geist at 24px, and
+                it stood over the list the whole page is built to deliver —
+                the quietest heading carrying the loudest content. */}
+            {hv ? (
+              <SectionHead lines={d.raw('commitmentsLines')} />
+            ) : (
+              <h2 className="subhead-type text-2xl">{t('commitmentsTitle')}</h2>
+            )}
+            {/* On a card, and the tick in the accent rather than the eco
+                green. Five promises on hairline rules over white was the
+                quietest presentation on the page, and it is the list the page
+                is *for* — "دي صفحة طمأنة" is a list of things somebody can
+                hold us to, not a footnote. */}
+            <ul className="surface-card mt-6 divide-y divide-line">
               {commitments.map((commitment) => (
-                <li key={commitment} className="flex gap-3 py-4">
-                  <Check className="mt-1 size-4 shrink-0 text-eco" aria-hidden />
+                <li key={commitment} className="flex gap-3.5 p-5">
+                  <span className="bg-accent-subtle text-ink-accent mt-0.5 grid size-6 shrink-0 place-items-center rounded-full">
+                    <Check className="size-3.5" aria-hidden />
+                  </span>
                   <span className="text-ink-secondary">{commitment}</span>
                 </li>
               ))}
