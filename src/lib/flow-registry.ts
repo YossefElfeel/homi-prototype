@@ -475,7 +475,14 @@ export const FLOWS: Flow[] = [
     de: 'Rechnungen & Abos',
     en: 'Invoices & plans',
     actors: ['owner', 'customer'],
-    entries: [ok('Rechnung aus Einsatz', '/admin/rechnungen')],
+    entries: [
+      ok('Rechnung aus Einsatz', '/admin/rechnungen/neu'),
+      added(
+        'Rechnung frei erstellen',
+        '/admin/rechnungen/neu',
+        'Der Einsatz war der einzige Weg herein, also hatte alles, was diese Firma sonst noch verrechnet — Anfahrt, Material, eine Korrektur nach einer Reklamation — überhaupt keinen Weg in die App. Das wurde in der Buchhaltung geschrieben, und so hält eine Kundin am Ende eine Rechnung in der Hand, von der die App nie gehört hat. Der Einsatz ist jetzt ein Feld im Formular statt die Tür',
+      ),
+    ],
     actions: [
       ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
       ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
@@ -483,6 +490,26 @@ export const FLOWS: Flow[] = [
         'Zahlweg beim Erfassen angeben',
         '/admin/rechnungen/inv_paid',
         '«Als bezahlt markieren» schrieb den Status und sonst nichts — kein `Payment`, also stand nirgends, wie das Geld gekommen ist. `PaymentMethod` kannte dafür auch die zwei Wege nicht, über die eine Rechnung hier tatsächlich zurückkommt: QR-Rechnung und bar',
+      ),
+      added(
+        'Menge pro Position hoch und runter',
+        '/admin/rechnungen/inv_draft',
+        '«Eine Stunde weniger verrechnen» hiess: Zelle anwählen, Zahl neu tippen. Am Schreibtisch geht das, auf dem Telefon ist es eine Zifferntastatur über einer Tabelle — für eine Änderung, die fast immer ±1 ist',
+      ),
+      added(
+        'Suchen und nach Status filtern',
+        '/admin/rechnungen',
+        'Die Liste war sechs Spalten ohne Suche und ohne Filter. Gesucht wird auch über die QR-Referenz, weil das die Nummer ist, die auf dem Kontoauszug steht — «zu welcher Rechnung gehört diese Zahlung» war vorher gar nicht beantwortbar. «Offen» steht neben den fünf Status, weil es die Frage dahinter ist und keiner davon',
+      ),
+      added(
+        'Aktionen direkt in der Zeile',
+        '/admin/rechnungen',
+        'Jede Zeile konnte genau eines: sich öffnen. Freigeben, stornieren und löschen hiessen erst öffnen — darum gab es die Sammel-Freigabe per Checkbox, eine Massenaktion als Ersatz für die fehlenden Zeilenaktionen. Was eine Zeile nicht kann, bleibt im Menü stehen und trägt statt des Namens den Grund',
+      ),
+      added(
+        'Nach der Freigabe nicht mehr ändern',
+        '/admin/rechnungen/inv_sent',
+        'Stand nirgends. Der Entwurfseditor sperrte sich zwar, sagte aber nicht, was stattdessen zu tun ist — jetzt gibt es «stornieren und neu erstellen»: die alte Rechnung wird storniert, ein Entwurf mit denselben Positionen geht auf, und beide Belege verweisen aufeinander',
       ),
     ],
     exits: [
@@ -496,6 +523,16 @@ export const FLOWS: Flow[] = [
       open(
         'Rückerstattung',
         'Bewusst auf die nächste Welle geschoben. Bis jetzt war sie gar nicht baubar: eine bezahlte Rechnung hatte keinen `Payment`-Datensatz, also gab es nichts, worauf sich eine Erstattung beziehen könnte. Den gibt es seit dieser Welle — `refunded` steht in `PaymentStatus` und in der Statusfarbtabelle, und die Offerten-Seite zeigt ihn bereits für eine Offert-Zahlung. Für eine Rechnung führt noch kein Knopf dahin',
+      ),
+      added(
+        'Entwurf gelöscht',
+        '/admin/rechnungen',
+        '§15 behält alles, was bei einer Kundin war — ein Entwurf war bei niemandem. Ihn für immer als «storniert» mitzuschleppen begräbt die echten Stornos unter Bürokram. Nur im Entwurf, und der Store prüft das noch einmal selbst',
+      ),
+      added(
+        'Storniert und ersetzt',
+        '/admin/rechnungen/inv_sent',
+        'Storniert war vorher eine Sackgasse: der Einsatz blieb auf `invoiced` stehen, und die Liste der verrechenbaren Einsätze sind «abgeschlossene ohne Rechnung» — eine falsch gestellte Rechnung machte ihren Einsatz also für immer unverrechenbar. Ein Storno gibt den Einsatz jetzt zurück',
       ),
       added(
         'Erstattet',

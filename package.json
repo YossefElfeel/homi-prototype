@@ -13,7 +13,8 @@
     "test:crm": "npx --yes tsx@4 scripts/crm-test.mts",
     "test:messages": "npx --yes tsx@4 scripts/message-test.mts",
     "test:plans": "npx --yes tsx@4 scripts/plan-test.mts",
-    "test:properties": "npx --yes tsx@4 scripts/property-test.mts"
+    "test:properties": "npx --yes tsx@4 scripts/property-test.mts",
+    "test:invoices": "npx --yes tsx@4 scripts/invoice-test.mts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

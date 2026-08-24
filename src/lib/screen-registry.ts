@@ -416,11 +416,25 @@ export const TRACKS: Track[] = [
         'expired',
         'renewed once',
       ], 'One customer on one plan — history, payments and the cancellation rule'),
-      done('71', 'Rechnungen', 'Invoices', '/admin/rechnungen', ['empty', 'overdue']),
+      done('71', 'Rechnungen', 'Invoices', '/admin/rechnungen', [
+        'empty',
+        'nothing matches the filter',
+        'overdue',
+      ], 'Search takes the QR reference as well as the number, because that is what a bank statement shows. Every row carries its own menu, gated on status and role'),
+      done(
+        '71a',
+        'Rechnung erstellen',
+        'Create invoice',
+        '/admin/rechnungen/neu',
+        ['no billable job', 'no customers'],
+        'The job is an optional input, not the way in — everything a company bills that is not a finished job had no route into the product before this',
+      ),
       done('72', 'Rechnung bearbeiten', 'Edit invoice', '/admin/rechnungen/inv_draft', [
         'draft awaiting approval',
         'sent',
-      ], 'The QR-bill is drawn to the real Swiss payment-part proportions'),
+        'overdue',
+        'cancelled with a reason',
+      ], 'The QR-bill is drawn to the real Swiss payment-part proportions, and labelled as the customer’s document rather than the owner’s'),
       done('73', 'Leistungen & Preise', 'Services & pricing', '/admin/leistungen', [
         'translation gap',
       ]),

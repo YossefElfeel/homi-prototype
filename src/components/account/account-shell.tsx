@@ -18,6 +18,7 @@ import {
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { AccessGate } from '@/components/app/access-gate';
+import { effectiveInvoiceStatus } from '@/lib/invoice-permissions';
 import { AppShell, type AppNavGroup } from '@/components/app/app-shell';
 import { Button } from '@/components/ui/button';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -146,7 +147,11 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
     ? invoices.filter(
         (i) =>
           i.customerId === customerId &&
-          (i.status === 'overdue' || (i.status === 'sent' && new Date(i.dueAt) < now)),
+          /* Was this expression written out inline, one of three copies of it
+             across the app. One of the three had drifted: the admin list
+             derived «überfällig» for a column while the badge beside it still
+             read the stored status. */
+          effectiveInvoiceStatus(i, now) === 'overdue',
       )
     : [];
 
