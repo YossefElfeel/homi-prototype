@@ -214,6 +214,22 @@ const ENTRIES: Entry[] = [
     screens: '16, 22, 51, 52, 56, 64',
     state: 'overridden',
   },
+  {
+    ref: '§10a',
+    question: 'Is there anybody but the owner who may raise, approve or cancel an invoice?',
+    decision:
+      'OPEN, and the prototype assumes not. Billing is owner-only: AdminShell keeps every other role out of the panel entirely, and lib/invoice-permissions writes the same answer out per action so the rule is one table rather than eleven inline conditions. Two things could change it and neither is ours to decide. The hiring track exists to produce a second pair of hands — a contractor who finishes a job is the person who knows what to bill for it, and today they cannot see the invoice at all. And a bookkeeper is the ordinary Swiss arrangement for a company this size: somebody who may raise and send but not cancel, because cancelling is the decision that moves money. Inventing either would mean inventing an approval hierarchy nobody has asked for; the table is written so that adding one is a change in one file.',
+    screens: '71, 71a, 72',
+    state: 'open',
+  },
+  {
+    ref: '§10b',
+    question: 'Are payment terms fixed at thirty days, or set per invoice?',
+    decision:
+      'Per invoice, chosen at creation, defaulting to thirty. Thirty days was a constant in the store and the only term the product could express, which is what a prototype does before anyone asks — but the two ends the office actually reaches for are a shorter term for a customer who has been slow before and a longer one for a commercial contract that pays on its own cycle. What is deliberately not built: a default term stored per customer. That is the version that stops the owner choosing every time, and it needs the business to say whether a customer’s terms are a standing agreement or a per-job decision. The term counts from approval rather than from creation, because that is the day the customer receives the bill.',
+    screens: '71a, 72',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

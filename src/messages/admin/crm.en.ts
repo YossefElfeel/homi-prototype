@@ -600,18 +600,40 @@ export const adminCrmEn: typeof adminCrmDe = {
   invoices: {
     title: 'Invoices',
     lead: 'What has been issued and what is still outstanding. Drafts can be approved together.',
+    search: 'Number, QR reference or name',
+    filterStatus: 'Status',
     filterAll: 'All',
+    /* "Open" is not a status but the question behind them: draft, sent and
+       overdue are all money that has not arrived. */
+    filterOutstanding: 'Open',
+    filterReset: 'Clear filters',
     colReference: 'Number',
     colCustomer: 'Customer',
     colAmount: 'Amount',
-    colIssued: 'Issued',
+    colMethod: 'Method',
+    colCreated: 'Raised',
     colDue: 'Due',
     colStatus: 'Status',
     overdueBy: '{days} d overdue',
     dueIn: 'in {days} d',
+    rowOpen: 'Open invoice',
+    rowEdit: 'Edit line items',
+    /* The reason goes in the name. A greyed line with the same word on it
+       explains nothing, and a tooltip never fires on a disabled menu item. */
+    rowEditLocked: 'Not editable — only a draft can be changed',
+    rowCustomerView: 'Open the customer view',
+    rowDelete: 'Delete draft',
+    cancelLead: '{reference} will be recorded as cancelled. The reason stays on the document.',
+    deleteConfirm:
+      'Delete draft {reference} for good? It has been in front of nobody and leaves no trace.',
+    deleteBlocked: 'No longer deletable — the invoice has been sent in the meantime.',
+    deleteDone: 'Draft {reference} deleted.',
     emptyTitle: 'No invoices yet',
     emptyBody:
-      'An invoice is created automatically after a completed job and waits here for your approval.',
+      'An invoice comes out of a completed job, or is raised here by hand — and then waits for your approval.',
+    filterEmptyTitle: 'No invoice matches',
+    filterEmptyBody:
+      'The search and filters rule out every invoice. Clearing them brings them all back.',
   },
 
   invoice: {
@@ -640,6 +662,7 @@ export const adminCrmEn: typeof adminCrmDe = {
     sending: 'Sending …',
     sentTitle: 'The invoice has been sent.',
     cancelAction: 'Cancel the invoice',
+    cancelledTitle: 'This invoice is cancelled',
     cancelReason: 'Reason for cancelling',
     cancelConfirmTitle: 'Cancel this invoice?',
     cancelConfirmBody:
@@ -647,11 +670,35 @@ export const adminCrmEn: typeof adminCrmDe = {
     cancelConfirmAction: 'Record the cancellation',
     cancelDone: 'Invoice cancelled.',
     cancelledNote: 'Cancelled: {reason}',
+    closeTitle: 'Corrections and closing',
+    closeLead:
+      'Everything that ends this document. An invoice is freely editable until it is approved and not afterwards — a sent invoice is one the customer is holding, and two papers wearing one number are worse than a correction.',
+    reissueAction: 'Cancel and reissue',
+    reissueConfirmTitle: 'Replace this invoice?',
+    reissueConfirmBody:
+      'This invoice is cancelled and a new draft opens with the same lines. Both keep their own number and each points at the other.',
+    reissueConfirmAction: 'Replace it',
+    reissueDone: 'Replaced by draft {reference}.',
+    reissueFailed: 'Only a sent or overdue invoice can be replaced.',
+    deleteAction: 'Delete draft',
+    deleteConfirm:
+      'Delete draft {reference} for good? It has been in front of nobody and leaves no trace.',
+    deleteBlocked: 'No longer deletable — the invoice has been sent in the meantime.',
+    deleteDone: 'Draft {reference} deleted.',
+    overdueTitle: 'Overdue',
+    overdueBody: 'This invoice was due on {date} and has not been paid.',
+    customerView: 'Customer view',
+    quantityDown: 'Decrease quantity',
+    quantityUp: 'Increase quantity',
     bookingLink: 'Go to the job',
     subscriptionLink: 'Go to the plan',
     dismiss: 'Never mind',
     editHint: 'While the invoice is a draft, every line can be changed.',
-    lockedHint: 'A sent invoice can no longer be edited.',
+    lockedHint:
+      'Only a draft can be changed. This one is approved — corrections are further down.',
+    missingTitle: 'There is no such invoice',
+    missingBody:
+      'The draft may have been deleted, or the link may be out of date. The list holds every invoice.',
     linePlaceholder: 'Description',
     removeLine: 'Remove line',
     sentDone: 'Invoice sent.',
@@ -673,13 +720,36 @@ export const adminCrmEn: typeof adminCrmDe = {
     markPaidDone: 'Invoice recorded as paid.',
     paidOn: 'Paid on {date}',
     paidVia: 'Paid on {date} by {method}.',
-    createTitle: 'Create an invoice',
-    createLead: 'For a completed job — the lines come from the accepted quote.',
     createAction: 'Create invoice',
     createDone: 'Draft {reference} created.',
-    createPick: 'Job',
-    createEmptyTitle: 'Nothing to invoice',
-    createEmptyBody:
-      'Invoices come from completed jobs. As soon as a job is finished it appears here.',
+  },
+
+  /* Screen 71a. Its own namespace rather than `invoice.create*`: that was a
+     dialog with one select in it, this is a form with line items. */
+  invoiceNew: {
+    title: 'Create an invoice',
+    lead: 'For a completed job or free-standing — everything is editable before the invoice exists.',
+    aboutTitle: 'What for and for whom',
+    aboutLead: 'The job is optional. Without one this is a standalone invoice.',
+    customer: 'Customer',
+    customerPlaceholder: 'Please choose',
+    customerRequired: 'An invoice needs somebody to go to.',
+    booking: 'Job',
+    bookingNone: 'No job',
+    bookingHint: 'Fills the lines in from the accepted quote.',
+    bookingHintNone: 'This customer has no finished job waiting to be billed.',
+    bookingHintNoCustomer: 'Choose the customer first.',
+    term: 'Payment terms',
+    termHint: 'Counted from approval, not from today.',
+    termDays: '{days} days',
+    lineLabelRequired:
+      'Every line needs a description — a row with an amount and no words is a charge nobody can check.',
+    createNote: 'Raised as a draft, and goes out only once you approve it.',
+    failed: 'The invoice could not be created.',
+    deniedTitle: 'Not permitted',
+    deniedBody: 'Only the owner raises invoices.',
+    noCustomersTitle: 'No customers yet',
+    noCustomersBody:
+      'An invoice needs somebody to go to. Add a customer first.',
   },
 };

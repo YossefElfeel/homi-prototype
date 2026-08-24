@@ -3,13 +3,15 @@
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowLeft, Download } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Download, FileQuestion } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { effectiveInvoiceStatus, mayInvoice } from '@/lib/invoice-permissions';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow } from '@/mock/store';
 
@@ -41,12 +43,39 @@ export default function AccountInvoicePage({
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
   const invoice = invoices.find((i) => i.id === id);
-  if (!invoice) return <p className="text-ink-tertiary">—</p>;
+  /*
+   * §10 — an unapproved invoice is the office's own document and its amount can
+   * still change. The list filtered drafts out for exactly that reason and this
+   * screen did not, so a draft's id typed into the address bar showed a
+   * customer a number nobody had agreed to. The rule is `invoice-permissions`
+   * now, the same table the panel reads, and it is asked from the *customer's*
+   * side no matter who is looking: this page is the customer's view, and an
+   * owner opening it to check what was sent has to see what was sent.
+   *
+   * A missing invoice and a withheld one land in the same place on purpose.
+   * Telling somebody «diese Rechnung existiert, Sie dürfen sie nur nicht
+   * sehen» leaks the amount's existence and answers a question they cannot
+   * act on.
+   */
+  if (!invoice || !mayInvoice('read', 'customer', invoice.status)) {
+    return (
+      <EmptyState
+        icon={FileQuestion}
+        headingLevel={1}
+        title={t('missingTitle')}
+        body={t('missingBody')}
+        action={
+          <Button asChild variant="secondary">
+            <Link href="/konto/rechnungen">{t('back')}</Link>
+          </Button>
+        }
+      />
+    );
+  }
 
   const total = invoice.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
-  const overdue =
-    invoice.status === 'overdue' ||
-    (invoice.status === 'sent' && new Date(invoice.dueAt) < now);
+  const status = effectiveInvoiceStatus(invoice, now);
+  const overdue = status === 'overdue';
 
   return (
     <div>
@@ -61,7 +90,10 @@ export default function AccountInvoicePage({
         <h1 data-numeric className="display-type text-3xl">
           {invoice.reference}
         </h1>
-        <StatusBadge entity="invoice" state={invoice.status} />
+        {/* The derived status, so a bill past its date does not greet the
+            person who owes it with a neutral «Versendet» above a red overdue
+            notice. */}
+        <StatusBadge entity="invoice" state={status} />
       </div>
 
       {overdue && (

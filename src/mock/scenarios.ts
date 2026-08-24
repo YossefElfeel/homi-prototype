@@ -986,6 +986,7 @@ function baseData(now: Date): DataSet {
       lines: [{ label: 'Unterhaltsreinigung', quantity: 5, unitPrice: 49 }],
       // §10 — generated automatically after the job, then waits for approval.
       status: 'draft',
+      createdAt: iso(days(now, -1)),
       issuedAt: iso(days(now, -1)),
       dueAt: iso(days(now, 29)),
       qrReference: '21 00000 00003 13947 14300 09017',
@@ -997,6 +998,7 @@ function baseData(now: Date): DataSet {
       bookingId: 'bkg_2',
       lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
       status: 'paid',
+      createdAt: iso(days(now, -27)),
       issuedAt: iso(days(now, -26)),
       dueAt: iso(days(now, 4)),
       paidAt: iso(days(now, -19)),
@@ -1009,6 +1011,7 @@ function baseData(now: Date): DataSet {
       bookingId: 'bkg_3',
       lines: [{ label: 'Fensterreinigung', quantity: 2, unitPrice: 49 }],
       status: 'sent',
+      createdAt: iso(days(now, -6)),
       issuedAt: iso(days(now, -5)),
       dueAt: iso(days(now, 25)),
       qrReference: '21 00000 00003 13947 14300 09008',
@@ -1025,6 +1028,7 @@ function baseData(now: Date): DataSet {
       bookingId: 'bkg_8',
       lines: [{ label: 'Einmalreinigung — kein Zutritt (50%)', quantity: 1.5, unitPrice: 49 }],
       status: 'sent',
+      createdAt: iso(days(now, -12)),
       issuedAt: iso(days(now, -11)),
       dueAt: iso(days(now, 19)),
       qrReference: '21 00000 00003 13947 14300 09024',
@@ -1039,6 +1043,7 @@ function baseData(now: Date): DataSet {
       bookingId: 'bkg_10',
       lines: [{ label: 'Büroreinigung', quantity: 6, unitPrice: 55 }],
       status: 'paid',
+      createdAt: iso(days(now, -14)),
       issuedAt: iso(days(now, -13)),
       dueAt: iso(days(now, 17)),
       paidAt: iso(days(now, -12)),
@@ -1060,6 +1065,7 @@ function baseData(now: Date): DataSet {
       subscriptionId: 'sub_2',
       lines: [{ label: 'Abo Basic — 26 Einsätze, 12 Monate', quantity: 1, unitPrice: 3440 }],
       status: 'paid',
+      createdAt: iso(days(now, -400)),
       issuedAt: iso(days(now, -400)),
       dueAt: iso(days(now, -400)),
       paidAt: iso(days(now, -400)),
@@ -1072,6 +1078,7 @@ function baseData(now: Date): DataSet {
       subscriptionId: 'sub_2',
       lines: [{ label: 'Abo Basic — Verlängerung 12 Monate', quantity: 1, unitPrice: 3440 }],
       status: 'paid',
+      createdAt: iso(days(now, -35)),
       issuedAt: iso(days(now, -35)),
       dueAt: iso(days(now, -35)),
       paidAt: iso(days(now, -35)),
@@ -1084,6 +1091,7 @@ function baseData(now: Date): DataSet {
       subscriptionId: 'sub_1',
       lines: [{ label: 'Abo Premium — 52 Einsätze, 12 Monate', quantity: 1, unitPrice: 6500 }],
       status: 'paid',
+      createdAt: iso(days(now, -60)),
       issuedAt: iso(days(now, -60)),
       dueAt: iso(days(now, -60)),
       paidAt: iso(days(now, -60)),
@@ -1098,6 +1106,7 @@ function baseData(now: Date): DataSet {
         { label: 'Abo Büro Kompakt — 12 Einsätze, 12 Monate', quantity: 1, unitPrice: 1980 },
       ],
       status: 'paid',
+      createdAt: iso(days(now, -90)),
       issuedAt: iso(days(now, -90)),
       dueAt: iso(days(now, -90)),
       paidAt: iso(days(now, -90)),
@@ -3078,6 +3087,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
             bookingId,
             lines: [{ label: 'Reinigung', quantity: 3 + si, unitPrice: SEED_SETTINGS.hourlyRate }],
             status: bookingStatus === 'closed' ? 'paid' : 'sent',
+            createdAt: iso(days(now, -(si + 2))),
             issuedAt: iso(days(now, -(si + 1))),
             dueAt: iso(days(now, 29 - si)),
             paidAt: bookingStatus === 'closed' ? iso(days(now, -si)) : undefined,
@@ -3389,6 +3399,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_completed',
       lines: [{ label: 'Einmalreinigung', quantity: 4, unitPrice: 49 }],
       status: 'sent',
+      createdAt: iso(days(now, -5)),
       issuedAt: iso(days(now, -4)),
       dueAt: iso(days(now, 26)),
       qrReference: '21 00000 00003 13947 14300 09121',
@@ -3403,6 +3414,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         { label: 'Backofenreinigung', quantity: 1, unitPrice: 45 },
       ],
       status: 'overdue',
+      createdAt: iso(days(now, -53)),
       issuedAt: iso(days(now, -52)),
       dueAt: iso(days(now, -22)),
       qrReference: '21 00000 00003 13947 14300 09088',
@@ -3414,6 +3426,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_cancelled',
       lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
       status: 'cancelled',
+      createdAt: iso(days(now, -15)),
       issuedAt: iso(days(now, -14)),
       dueAt: iso(days(now, 16)),
       cancelReason: 'Einsatz storniert — Objekt verkauft, nie erbracht.',
@@ -3436,6 +3449,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_closed',
       lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
       status: 'paid',
+      createdAt: iso(days(now, -48)),
       issuedAt: iso(days(now, -47)),
       dueAt: iso(days(now, -17)),
       paidAt: iso(days(now, -47)),
@@ -3901,6 +3915,11 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           /* Behind us it is finished, ahead of us it is booked. A fortnight
              where every job reads "scheduled" would make the past look like a
              backlog nobody has done. */
+          /* `invoiced` only where an invoice is written for it below. It used
+             to be every fifth past job unconditionally, and nothing raised the
+             bill — so those jobs read «verrechnet» with no invoice anywhere,
+             and the create screen offers «finished jobs with no live invoice»,
+             which means they could never be billed either. */
           status: past ? (i % 5 === 0 ? 'invoiced' : 'completed') : 'scheduled',
           photoIds: [],
           history: [
@@ -3915,6 +3934,57 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           ],
         } satisfies Booking;
       });
+
+      /*
+       * The bills behind the jobs marked «verrechnet».
+       *
+       * A busy week is also a busy invoice list, and this scenario had the same
+       * nine invoices as the quiet one — so the list's search, its status
+       * filter and its second page had nothing here to work on. Statuses are
+       * spread rather than uniform: one still out, one past its date, one
+       * settled in cash, which is what the «Zahlweg» column and the «offen»
+       * filter exist to tell apart.
+       */
+      const busyInvoiced = busyBookings.filter((b) => b.status === 'invoiced');
+      const busyInvoices: Invoice[] = busyInvoiced.map((booking, i) => {
+        const age = 30 + i * 12;
+        const paid = i % 3 === 2;
+        return {
+          id: `inv_bz_${i}`,
+          reference: `RE-2026-02${String(10 + i).padStart(2, '0')}`,
+          customerId: booking.customerId,
+          bookingId: booking.id,
+          lines: [
+            {
+              label: 'Reinigung',
+              quantity: booking.duration / 60,
+              unitPrice: SEED_SETTINGS.hourlyRate,
+            },
+          ],
+          /* The middle one is past its due date and still says `sent`: overdue
+             is derived when the list is read, never stored — see
+             `effectiveInvoiceStatus`. Storing it would need a nightly sweep. */
+          status: paid ? 'paid' : 'sent',
+          createdAt: iso(days(now, -(age + 1))),
+          issuedAt: iso(days(now, -age)),
+          dueAt: iso(days(now, 30 - age)),
+          paidAt: paid ? iso(days(now, -(age - 4))) : undefined,
+          qrReference: `21 00000 00003 13947 14300 093${String(10 + i)}`,
+        };
+      });
+      /* A paid invoice with no payment behind it prints a dash in the «Zahlweg»
+         column next to a green «Bezahlt» badge — which looks like data. */
+      const busyPayments: Payment[] = busyInvoices
+        .filter((invoice) => invoice.status === 'paid')
+        .map((invoice, i) => ({
+          id: `pay_bz_${i}`,
+          invoiceId: invoice.id,
+          amount: invoice.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0),
+          method: 'cash' as const,
+          at: invoice.paidAt!,
+          status: 'succeeded' as const,
+          gatewayRef: `manual_${invoice.reference}`,
+        }));
 
       /* Calls between the jobs, which is what a busy week actually looks like
          — the phone does not stop because the calendar is full. */
@@ -3941,6 +4011,8 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
         ...data,
         requests: [...data.requests, ...extra],
         bookings: [...data.bookings, ...busyBookings],
+        invoices: [...busyInvoices, ...data.invoices],
+        payments: [...data.payments, ...busyPayments],
         events: [...data.events, ...busyEvents],
         reviews,
         photos: [...data.photos, ...consented],
@@ -3954,9 +4026,19 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           id: 'inv_1',
           reference: 'RE-2026-0044',
           customerId: 'cus_2',
-          bookingId: 'bkg_2',
+          /*
+           * Deliberately no `bookingId`.
+           *
+           * It used to carry `bkg_2`, and the base data this scenario appends
+           * to already bills that job with `inv_paid` — so the seed held two
+           * live invoices against one visit, one settled and one being chased.
+           * The chasing events name this reference and this customer, and
+           * neither needs a job behind it: a standalone invoice is a first
+           * class thing since the create screen stopped requiring one.
+           */
           lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
           status: 'overdue',
+          createdAt: iso(days(now, -45)),
           issuedAt: iso(days(now, -44)),
           dueAt: iso(days(now, -14)),
           qrReference: '21 00000 00003 13947 14300 09017',

@@ -747,6 +747,16 @@ export interface Invoice {
   subscriptionId?: ID;
   lines: InvoiceLine[];
   status: InvoiceStatus;
+  /**
+   * When the draft was raised — which is not when it was issued.
+   *
+   * `sendInvoice` re-stamps `issuedAt` on approval so the payment term counts
+   * from the day the customer actually got the bill. That made `issuedAt` the
+   * only date on the record and a moving one, so «dieser Entwurf liegt seit
+   * drei Wochen hier» — the one thing an invoice list exists to catch — could
+   * not be asked at all. This one never moves.
+   */
+  createdAt: ISODate;
   issuedAt: ISODate;
   dueAt: ISODate;
   paidAt?: ISODate;

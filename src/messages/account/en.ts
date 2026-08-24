@@ -186,6 +186,12 @@ export const accountEn: typeof accountDe = {
 
   invoice: {
     back: 'All invoices',
+    /* An invoice that does not exist and one that is not approved yet land on
+       the same words on purpose: "it exists, you may just not see it" gives
+       away precisely what is being withheld. */
+    missingTitle: 'We cannot find this invoice',
+    missingBody:
+      'The link may be out of date. Your overview lists every invoice that belongs to your account.',
     issued: 'Invoice date',
     due: 'Payable by',
     paidOn: 'Paid on',

@@ -176,13 +176,22 @@ Marco Brunner`;
    the blob. Nothing crashes and nothing says why, which makes it exactly the
    "reviewer quietly looking at the old product" case 18 and 19 were bumped
    for — and it was caught by a reviewer reporting the row count had not
-   moved, not by the build. */
-const SCHEMA_VERSION = 21;
+   moved, not by the build.
+
+   22: `Invoice.createdAt`. A blob from 21 has none, and `merge` cannot help —
+   it fills in whole collections that are missing, not a field missing from
+   every row of one that is present. The new «Erstellt» column would then read
+   «Invalid Date» on every invoice, and sorting the list by it would order them
+   at random. */
+const SCHEMA_VERSION = 22;
 
 /**
- * §10 — payment term. Not in Settings: the settings screen is the owner's, and
- * nothing in the specification lets them move this. The seeded invoices use
- * the same 30 days.
+ * §10 — the default payment term.
+ *
+ * Not in Settings: the settings screen is the owner's, and nothing in the
+ * specification lets them move this. It is no longer the *only* term — the
+ * create screen offers four and this is what it opens on, and what a reissued
+ * invoice inherits. The seeded invoices use the same 30 days.
  */
 const INVOICE_TERM_DAYS = 30;
 
@@ -209,6 +218,49 @@ const EVENT_STATUS_EVENT: Record<CalendarEventStatus, string> = {
 function buildQrReference(seq: number) {
   const body = String(seq).padStart(21, '0');
   return `21 ${body.slice(0, 5)} ${body.slice(5, 10)} ${body.slice(10, 15)} ${body.slice(15, 20)} ${body.slice(20)}0000`.trim();
+}
+
+/**
+ * The next invoice number.
+ *
+ * Was `52 + invoices.length` — a headcount, so a scenario seeded with numbers
+ * in the 0100s produced RE-2026-0060 next and two invoices apparently issued
+ * years apart sat side by side in the list. Highest ever seen plus one, with
+ * the seed's own first number as the floor.
+ *
+ * Deleting the newest draft does hand its number back to the next invoice.
+ * That is survivable exactly because deleting is draft-only: a draft's number
+ * has been in front of nobody. Anything that has been sent can only be
+ * cancelled, and a cancelled invoice stays in the list holding its number.
+ */
+function nextInvoiceSeq(invoices: Invoice[]) {
+  return (
+    invoices.reduce((highest, invoice) => {
+      const tail = Number(invoice.reference.slice(invoice.reference.lastIndexOf('-') + 1));
+      return Number.isFinite(tail) ? Math.max(highest, tail) : highest;
+    }, 51) + 1
+  );
+}
+
+/**
+ * Give the job back.
+ *
+ * `createInvoice` moves a booking to `invoiced`, and the create screen offers
+ * «finished jobs with no live invoice». Cancelling or deleting that invoice
+ * without undoing the move left the job billed according to the booking and
+ * unbilled according to the invoices — and reachable from neither screen, so a
+ * job wrongly invoiced once could never be invoiced correctly.
+ *
+ * `closed` is deliberately left alone: that state was reached by the money
+ * arriving, and a cancellation does not un-arrive it.
+ */
+function releaseBooking(bookings: Booking[], invoice: Invoice): Booking[] {
+  if (!invoice.bookingId) return bookings;
+  return bookings.map((b) =>
+    b.id !== invoice.bookingId || b.status !== 'invoiced'
+      ? b
+      : { ...b, status: 'completed' as const },
+  );
 }
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
@@ -504,10 +556,58 @@ interface StoreState {
     coalesce?: boolean;
   }) => void;
 
-  /* ---- invoicing (screens 71–72) ----
+  /* ---- invoicing (screens 71, 71a, 72) ----
      data.invoices used to be read-only: no path created one, no path edited a
-     draft, and the word "paid" appeared nowhere outside the seed. */
-  createInvoiceForBooking: (bookingId: ID, now: Date) => ID | null;
+     draft, and the word "paid" appeared nowhere outside the seed. Then there
+     was one path, and it started from a finished job — so the half of billing
+     that is not a finished job still had none. */
+  /**
+   * The one way an invoice comes into being.
+   *
+   * It used to be `createInvoiceForBooking(bookingId)` and nothing else, so
+   * everything a cleaning company bills that is not a finished job — a
+   * call-out fee, a material charge, a correction after a complaint — had no
+   * route into the product at all. The office's answer is to write those in
+   * the accounting system, which is how a customer ends up holding an invoice
+   * this app has never heard of.
+   *
+   * So the job became an *input* rather than the entry point. Given one, the
+   * invoice hangs off it and moves it to `invoiced`; without one it is a
+   * standalone bill. Seeding the lines from the accepted quote stayed on the
+   * screen — it is the screen that can turn a catalogue slug into a name in
+   * the reader's language, and by the time this runs the owner has edited
+   * them anyway.
+   */
+  createInvoice: (
+    input: {
+      customerId: ID;
+      bookingId?: ID;
+      lines: InvoiceLine[];
+      /** Days until it is due, counted from approval. */
+      termDays: number;
+    },
+    now: Date,
+  ) => ID | null;
+  /**
+   * Off the record entirely — draft only.
+   *
+   * §15 keeps anything that has been in front of a customer, so a sent invoice
+   * is cancelled and never deleted. A draft has been in front of nobody: it is
+   * a number the office typed and does not want, and forcing it to live for
+   * ever as «storniert» buries the real cancellations under clerical noise.
+   * Returns false when the invoice is past draft, so the screen cannot talk
+   * the store into it.
+   */
+  deleteInvoice: (id: ID) => boolean;
+  /**
+   * Cancel this one and open its replacement in the same move.
+   *
+   * The honest answer to "can I fix a sent invoice": no — but the correction
+   * has to go somewhere. Cancelling alone left the owner to rebuild every line
+   * by hand on a new draft, which is exactly when a wrong amount gets typed
+   * twice. Both documents keep their own number and each points at the other.
+   */
+  reissueInvoice: (id: ID, now: Date, reason: string) => ID | null;
   updateInvoice: (id: ID, patch: Partial<Invoice>) => void;
   updateInvoiceLine: (id: ID, index: number, patch: Partial<InvoiceLine>) => void;
   addInvoiceLine: (id: ID) => void;
@@ -521,6 +621,15 @@ interface StoreState {
    * either guess from the customer's saved card or leave the column blank.
    */
   markInvoicePaid: (id: ID, now: Date, method: PaymentMethod) => void;
+  /**
+   * The booking goes back to `completed` when its invoice is cancelled.
+   *
+   * It was left on `invoiced`, and the invoice screen's billable list is
+   * «completed jobs with no invoice» — so cancelling the only invoice for a
+   * job made that job permanently unbillable in the app. A wrongly-issued
+   * invoice is the ordinary case for cancelling, and re-issuing it is the
+   * ordinary thing to do next.
+   */
   cancelInvoice: (id: ID, reason: string) => void;
 
   /* ---- field check in / out (screen 87) ----
@@ -2106,50 +2215,63 @@ export const useStore = create<StoreState>()(
         }),
 
       /**
-       * §10 — the invoice a completed job produces.
+       * §10 — the invoice, whether a finished job produced it or somebody
+       * typed it.
        *
-       * There was no create path at all: the screens could send, cancel and
-       * read an invoice, but the only invoices that ever existed were the two
-       * in the seed. Lines come from the accepted quote, so what the customer
-       * agreed to and what they are billed cannot silently diverge.
+       * There was no create path at all once: the screens could send, cancel
+       * and read an invoice, but the only ones that ever existed came from the
+       * seed. Then there was exactly one — «bill this finished job», lines
+       * copied from the accepted quote — which is the common case and not the
+       * only one. Everything else a cleaning company charges for went into the
+       * accounting system by hand instead.
+       *
+       * Lines arrive already resolved and already edited: the create screen
+       * seeds them from the accepted quote when a job is picked, because it is
+       * the screen that can turn a catalogue slug into a name in the reader's
+       * language. What is enforced here is what a screen must not be trusted
+       * with — the customer exists, the job is not being billed twice, and the
+       * thing that comes out is a draft.
        */
-      createInvoiceForBooking: (bookingId, now) => {
+      createInvoice: ({ customerId, bookingId, lines, termDays }, now) => {
         const s = get();
-        const booking = s.data.bookings.find((b) => b.id === bookingId);
-        if (!booking) return null;
+        if (!s.data.customers.some((c) => c.id === customerId)) return null;
 
-        const existing = s.data.invoices.find((i) => i.bookingId === bookingId);
-        if (existing) return existing.id;
+        /* A cancelled invoice does not hold its job hostage — see
+           `cancelInvoice`. A live one does: two open invoices against one job
+           is a double charge, and the create screen can be reached twice in
+           two tabs. */
+        if (bookingId) {
+          const live = s.data.invoices.find(
+            (i) => i.bookingId === bookingId && i.status !== 'cancelled',
+          );
+          if (live) return live.id;
+        }
 
-        const offer = s.data.offers.find((o) => o.id === booking.offerId);
-        const lines: InvoiceLine[] = (offer?.lines ?? [])
-          .filter((line) => line.selected)
-          .map((line) => ({
-            /* The owner's wording for this quote if they gave one, otherwise
-               the catalogue slug — which the draft editor can then fix. The
-               store has no locale, so resolving the catalogue name belongs on
-               the screen, not here. */
-            label: line.displayLabel?.trim() || line.label,
-            quantity: line.quantity,
-            unitPrice: line.unitPrice,
-          }));
-
-        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
-        const seq = 52 + s.data.invoices.length;
+        const seq = nextInvoiceSeq(s.data.invoices);
         const due = new Date(now);
-        due.setDate(due.getDate() + INVOICE_TERM_DAYS);
+        due.setDate(due.getDate() + termDays);
 
         const invoice: Invoice = {
-          id: `inv_${stamp}`,
+          /* The sequence is in the id, not only the clock.
+             Two invoices raised in the same millisecond used to come out with
+             the same id — `inv_${stamp}` is four base-36 digits of the clock and
+             nothing else. Through the UI that takes a click each and cannot
+             collide; `reissueInvoice` cancels and re-creates in one call, and
+             the invoice test raises several against a fixed clock. Both got a
+             second record wearing the first one's id, which then shadowed it in
+             every `find`. The sequence is unique by construction, so putting it
+             in front removes the possibility rather than making it unlikely. */
+          id: `inv_${seq}${now.getTime().toString(36).toUpperCase().slice(-4)}`,
           reference: `RE-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
-          customerId: booking.customerId,
+          customerId,
           bookingId,
-          lines:
-            lines.length > 0
-              ? lines
-              : [{ label: booking.serviceSlug, quantity: 1, unitPrice: 0 }],
+          /* An invoice with no lines is a bill for nothing. One empty line is
+             what the draft editor opens on, so the owner types into a row
+             instead of hunting for «Position hinzufügen» first. */
+          lines: lines.length > 0 ? lines : [{ label: '', quantity: 1, unitPrice: 0 }],
           /* Draft, not sent. §10: the owner approves before it goes out. */
           status: 'draft',
+          createdAt: now.toISOString(),
           issuedAt: now.toISOString(),
           dueAt: due.toISOString(),
           qrReference: buildQrReference(seq),
@@ -2170,6 +2292,71 @@ export const useStore = create<StoreState>()(
           summary: `Rechnung ${invoice.reference} erstellt`,
         });
         return invoice.id;
+      },
+
+      deleteInvoice: (id) => {
+        const s = get();
+        const invoice = s.data.invoices.find((i) => i.id === id);
+        /* Re-checked here rather than trusted from the menu: the item is only
+           offered on a draft, and a second tab could have approved it between
+           the render and the click. */
+        if (!invoice || invoice.status !== 'draft') return false;
+
+        set({
+          data: {
+            ...s.data,
+            invoices: s.data.invoices.filter((i) => i.id !== id),
+            bookings: releaseBooking(s.data.bookings, invoice),
+          },
+        });
+        /* The log entry outlives the record on purpose. A draft that quietly
+           vanishes is the one shape of "where did that invoice go" nobody can
+           answer afterwards, and /admin/protokoll prints the summary rather
+           than dereferencing the id. */
+        get().logChange({
+          entity: 'invoice',
+          entityId: id,
+          summary: `Rechnungsentwurf ${invoice.reference} gelöscht`,
+        });
+        return true;
+      },
+
+      reissueInvoice: (id, now, reason) => {
+        const s = get();
+        const invoice = s.data.invoices.find((i) => i.id === id);
+        /* Only the two states where the customer holds a wrong bill. A draft
+           is simply edited, a cancelled one is already gone, and a paid one is
+           a refund — which /flows still lists as open, and inventing it here
+           would move money nobody has agreed to move. */
+        if (!invoice || (invoice.status !== 'sent' && invoice.status !== 'overdue')) return null;
+
+        get().cancelInvoice(id, reason);
+        const replacementId = get().createInvoice(
+          {
+            customerId: invoice.customerId,
+            bookingId: invoice.bookingId,
+            /* Copied, not shared: editing the new draft must not rewrite the
+               lines of the document the customer already has. */
+            lines: invoice.lines.map((line) => ({ ...line })),
+            termDays: INVOICE_TERM_DAYS,
+          },
+          now,
+        );
+        if (!replacementId) return null;
+
+        const replacement = get().data.invoices.find((i) => i.id === replacementId);
+        /* Each document names the other. Without this the cancelled one reads
+           as an invoice the office simply dropped, and the new one as a second
+           bill for the same work. */
+        get().updateInvoice(id, {
+          cancelReason: `${reason} — ersetzt durch ${replacement?.reference ?? ''}`.trim(),
+        });
+        get().logChange({
+          entity: 'invoice',
+          entityId: replacementId,
+          summary: `Rechnung ${replacement?.reference ?? ''} ersetzt ${invoice.reference}`,
+        });
+        return replacementId;
       },
 
       updateInvoice: (id, patch) =>
@@ -2318,6 +2505,7 @@ export const useStore = create<StoreState>()(
             invoices: s.data.invoices.map((i) =>
               i.id !== id ? i : { ...i, status: 'cancelled' as const, cancelReason },
             ),
+            bookings: releaseBooking(s.data.bookings, invoice),
           },
         });
         get().logChange({
@@ -2577,6 +2765,9 @@ export const useStore = create<StoreState>()(
              `payOffer`, which is the only caller — so an invoice sitting in
              draft would describe a payment that has already happened. */
           status: 'paid',
+          /* Raised and issued in the same instant — nothing waits for approval
+             when the money has already arrived. */
+          createdAt: now.toISOString(),
           issuedAt: now.toISOString(),
           dueAt: now.toISOString(),
           paidAt: now.toISOString(),
@@ -2663,6 +2854,7 @@ export const useStore = create<StoreState>()(
              settle. The first term is different because it is paid at
              checkout — this one has nobody standing at a card reader. */
           status: 'sent',
+          createdAt: now.toISOString(),
           issuedAt: now.toISOString(),
           dueAt: now.toISOString(),
           qrReference: buildQrReference(seq),

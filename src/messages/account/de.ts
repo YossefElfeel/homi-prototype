@@ -196,6 +196,12 @@ export const accountDe = {
 
   invoice: {
     back: 'Alle Rechnungen',
+    /* Eine Rechnung, die es nicht gibt, und eine, die noch nicht freigegeben
+       ist, landen bewusst beim selben Text: «die gibt es, Sie dürfen sie nur
+       nicht sehen» verrät genau das, was zurückgehalten wird. */
+    missingTitle: 'Diese Rechnung finden wir nicht',
+    missingBody:
+      'Vielleicht ist der Link nicht mehr aktuell. In der Übersicht stehen alle Rechnungen, die zu Ihrem Konto gehören.',
     issued: 'Rechnungsdatum',
     due: 'Zahlbar bis',
     paidOn: 'Bezahlt am',

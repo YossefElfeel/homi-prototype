@@ -4,20 +4,19 @@ import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
-import { BadgeCheck, Plus, Receipt, Send, Trash2 } from 'lucide-react';
+import { BadgeCheck, Receipt, Send } from 'lucide-react';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { Field, Select, Textarea } from '@/components/ui/field';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Money, formatChf } from '@/components/ui/money';
+import { formatChf } from '@/components/ui/money';
 import {
   Dialog,
   DialogContent,
@@ -26,13 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { InvoiceLines } from '@/components/admin/invoice-lines';
 import { TemplatePicker } from '@/components/admin/template-picker';
+import { ActionIcon } from '@/lib/action-icons';
+import { invoiceTotal } from '@/lib/customer-history';
+import { effectiveInvoiceStatus, mayInvoice } from '@/lib/invoice-permissions';
 import { INVOICE_METHODS, invoicePayment } from '@/lib/payment-methods';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { Invoice, PaymentMethod } from '@/mock/schema';
-
-const total = (invoice: Invoice) =>
-  invoice.lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+import type { PaymentMethod } from '@/mock/schema';
 
 /**
  * Screen 72 — the invoice, editable while it is still a draft.
@@ -45,6 +45,15 @@ const total = (invoice: Invoice) =>
  * The QR-bill is drawn to the real Swiss payment-part proportions because it
  * is instantly recognisable to a Swiss customer, and labelled as a schematic
  * because it is not a valid code.
+ *
+ * Two things moved in this pass, both about *whose* screen this is. The
+ * QR-bill is the document the customer receives, and it sat in the middle of
+ * the owner's screen unlabelled, between two panels of office controls — so
+ * it now says so and links to the page the customer actually reads. And the
+ * office's own irreversible actions were scattered: approve at the top, a red
+ * «stornieren» alone at the very bottom below the message box, and no way at
+ * all to delete a draft or correct an invoice already sent. They are one
+ * section now, at the end, under a heading that names what it is for.
  */
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -53,9 +62,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
+  const router = useRouter();
   const now = useNow();
   const hydrated = useHydrated();
 
+  const role = useStore((s) => s.demo.role);
   const invoices = useStore((s) => s.data.invoices);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
@@ -64,12 +75,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const sendMessage = useStore((s) => s.sendMessage);
   const markInvoicePaid = useStore((s) => s.markInvoicePaid);
   const cancelInvoiceInStore = useStore((s) => s.cancelInvoice);
+  const reissueInvoice = useStore((s) => s.reissueInvoice);
+  const deleteInvoice = useStore((s) => s.deleteInvoice);
   const updateInvoiceLine = useStore((s) => s.updateInvoiceLine);
   const addInvoiceLine = useStore((s) => s.addInvoiceLine);
   const removeInvoiceLine = useStore((s) => s.removeInvoiceLine);
 
   const [state, setState] = useState<'idle' | 'sending'>('idle');
-  const [cancelling, setCancelling] = useState(false);
+  /** Which irreversible step is being confirmed, if any. */
+  const [confirming, setConfirming] = useState<'cancel' | 'reissue' | null>(null);
   const [reason, setReason] = useState('');
   /* The QR-bill is on the invoice, so the slip is what most of them come back
      as — and the owner who was paid in cash at the door only has to change it
@@ -87,8 +101,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         <EmptyState
           icon={Receipt}
           headingLevel={1}
-          title={t('back')}
-          body={t('lockedHint')}
+          /* Was titled «Alle Rechnungen» — the label of its own back button —
+             over a body reading «Versendete Rechnungen sind nicht mehr
+             änderbar», which is an answer to a question nobody asked here. */
+          title={t('missingTitle')}
+          body={t('missingBody')}
           action={
             <Button asChild>
               <Link href="/admin/rechnungen">{t('back')}</Link>
@@ -101,11 +118,25 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   const customer = customers.find((c) => c.id === invoice.customerId)!;
   const property = properties.find((p) => p.customerId === customer.id);
-  const isDraft = invoice.status === 'draft';
-  /** A paid invoice is refunded, not cancelled — and cancelling twice is not a thing. */
-  const canCancel = invoice.status !== 'paid' && invoice.status !== 'cancelled';
-  const canMarkPaid = invoice.status === 'sent' || invoice.status === 'overdue';
   const settledBy = invoicePayment(invoice.id, payments);
+  const total = invoiceTotal(invoice);
+
+  /*
+   * One derived status, then one table of permissions off it.
+   *
+   * Every control here used to test the stored status inline — `isDraft`,
+   * `status !== 'paid' && status !== 'cancelled'`, `status === 'sent' ||
+   * status === 'overdue'` — three phrasings of the same rule, and the list
+   * screen had a fourth. They now all read `invoice-permissions`, which is
+   * also where the answer to "may this person do it at all" lives.
+   */
+  const status = effectiveInvoiceStatus(invoice, now);
+  const canEdit = mayInvoice('editLines', role, status);
+  const canApprove = mayInvoice('approve', role, status);
+  const canMarkPaid = mayInvoice('markPaid', role, status);
+  const canCancel = mayInvoice('cancel', role, status);
+  const canReissue = mayInvoice('reissue', role, status);
+  const canDelete = mayInvoice('delete', role, status);
 
   function send() {
     setState('sending');
@@ -145,10 +176,35 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     toast.success(t('markPaidDone'));
   }
 
-  function cancelInvoice() {
-    cancelInvoiceInStore(invoice!.id, reason);
-    setCancelling(false);
+  function cancel() {
+    cancelInvoiceInStore(invoice!.id, reason.trim());
+    setConfirming(null);
+    setReason('');
     toast.success(t('cancelDone'));
+  }
+
+  /** Cancels this one and lands on the corrected draft it opened. */
+  function reissue() {
+    const replacementId = reissueInvoice(invoice!.id, now, reason.trim());
+    setConfirming(null);
+    setReason('');
+    if (!replacementId) {
+      toast.error(t('reissueFailed'));
+      return;
+    }
+    const replacement = useStore.getState().data.invoices.find((i) => i.id === replacementId);
+    toast.success(t('reissueDone', { reference: replacement?.reference ?? '' }));
+    router.push(`/admin/rechnungen/${replacementId}`);
+  }
+
+  function remove() {
+    if (!window.confirm(t('deleteConfirm', { reference: invoice!.reference }))) return;
+    if (!deleteInvoice(invoice!.id)) {
+      toast.error(t('deleteBlocked'));
+      return;
+    }
+    toast.success(t('deleteDone', { reference: invoice!.reference }));
+    router.push('/admin/rechnungen');
   }
 
   return (
@@ -156,10 +212,10 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       <PageHeader
         back={{ href: '/admin/rechnungen', label: t('back') }}
         title={<span data-numeric>{invoice.reference}</span>}
-        meta={<StatusBadge entity="invoice" state={invoice.status} />}
+        meta={<StatusBadge entity="invoice" state={status} />}
         actions={
           <>
-            {isDraft && (
+            {canApprove && (
               <Button onClick={send} loading={state === 'sending'}>
                 {t('sendAction')}
                 <Send className="size-4" aria-hidden />
@@ -209,9 +265,18 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         )}
       </p>
 
-      {isDraft && (
+      {canEdit && (
         <Alert tone="warning" className="mb-app" title={t('draftBadge')}>
           {t('editHint')}
+        </Alert>
+      )}
+      {status === 'overdue' && (
+        /* Derived from the due date, so a `sent` invoice past its deadline says
+           so here as well as in the list. Without this the two screens
+           disagreed: the list printed «12 T. überfällig» and the detail was
+           still a calm blue «Versendet». */
+        <Alert tone="danger" className="mb-app" title={t('overdueTitle')}>
+          {t('overdueBody', { date: format.dateTime(new Date(invoice.dueAt), 'full') })}
         </Alert>
       )}
       {invoice.status === 'paid' && invoice.paidAt && (
@@ -229,132 +294,56 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               })}
         </Alert>
       )}
+      {invoice.status === 'cancelled' && invoice.cancelReason && (
+        /* Was a grey sentence under the buttons at the foot of the page, which
+           is the last place anyone looks for the reason a document is void. */
+        <Alert tone="neutral" className="mb-app" title={t('cancelledTitle')}>
+          {invoice.cancelReason}
+        </Alert>
+      )}
 
       {/*
-        Screen 72 is titled "Rechnung bearbeiten" and its own doc comment says
+        Screen 72 is titled "Rechnung bearbeiten" and its own doc comment said
         "editable while it is still a draft" — but every line rendered as a
-        read-only <th scope="row">. Nothing on the page could change an amount,
-        which is precisely the case the approval step exists for.
+        read-only <th scope="row">. The table is now shared with the create
+        screen, and the quantity carries the two buttons that answer "bill one
+        hour less" without retyping the cell.
       */}
-      <Card pad="none">
-        <CardHeader
-          className="p-card"
-          title={t('linesTitle')}
-          description={isDraft ? undefined : t('lockedHint')}
-          actions={
-            isDraft ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => addInvoiceLine(invoice.id)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {t('addLine')}
-              </Button>
-            ) : undefined
-          }
-        />
-        <div className="overflow-x-auto border-t border-line-subtle">
-          <table className="w-full min-w-xl border-collapse text-left">
-            <thead>
-              <tr className="border-b border-line-subtle">
-                <th scope="col" className="label-type px-card py-2.5 font-medium text-ink-tertiary">
-                  {t('colDescription')}
-                </th>
-                <th scope="col" className="label-type px-3 py-2.5 text-right font-medium text-ink-tertiary">
-                  {t('colQuantity')}
-                </th>
-                <th scope="col" className="label-type px-3 py-2.5 text-right font-medium text-ink-tertiary">
-                  {t('colUnit')}
-                </th>
-                <th scope="col" className="label-type px-card py-2.5 text-right font-medium text-ink-tertiary">
-                  {t('colTotal')}
-                </th>
-                {isDraft && <th scope="col" className="w-12" />}
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.lines.map((line, index) => (
-                <tr
-                  key={`${line.label}-${index}`}
-                  className="border-b border-line-subtle last:border-0"
-                >
-                  <td className="px-card py-row">
-                    {isDraft ? (
-                      <Input
-                        dense
-                        value={line.label}
-                        placeholder={t('linePlaceholder')}
-                        aria-label={t('colDescription')}
-                        onChange={(e) =>
-                          updateInvoiceLine(invoice.id, index, { label: e.target.value })
-                        }
-                      />
-                    ) : (
-                      line.label
-                    )}
-                  </td>
-                  <td className="px-3 py-row text-right">
-                    {isDraft ? (
-                      <NumberCell
-                        value={line.quantity}
-                        label={t('colQuantity')}
-                        onChange={(quantity) =>
-                          updateInvoiceLine(invoice.id, index, { quantity })
-                        }
-                      />
-                    ) : (
-                      <span data-numeric className="text-ink-secondary">
-                        {line.quantity}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-row text-right">
-                    {isDraft ? (
-                      <NumberCell
-                        value={line.unitPrice}
-                        label={t('colUnit')}
-                        onChange={(unitPrice) =>
-                          updateInvoiceLine(invoice.id, index, { unitPrice })
-                        }
-                      />
-                    ) : (
-                      <Money amount={line.unitPrice} emphasis="quiet" />
-                    )}
-                  </td>
-                  <td className="px-card py-row text-right">
-                    <Money amount={line.quantity * line.unitPrice} />
-                  </td>
-                  {isDraft && (
-                    <td className="pr-3 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t('removeLine')}
-                        onClick={() => removeInvoiceLine(invoice.id, index)}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </Button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="border-t border-line-subtle p-card">
-          <p className="flex items-baseline justify-between gap-4">
-            <span className="font-medium">{t('total')}</span>
-            <Money amount={total(invoice)} emphasis="strong" className="text-2xl" />
-          </p>
-          <p className="mt-1 text-right text-xs text-ink-tertiary">{t('noVat')}</p>
-        </div>
-      </Card>
+      <InvoiceLines
+        lines={invoice.lines}
+        editable={canEdit}
+        lockedHint={t('lockedHint')}
+        onChange={(index, patch) => updateInvoiceLine(invoice.id, index, patch)}
+        onAdd={() => addInvoiceLine(invoice.id)}
+        onRemove={(index) => removeInvoiceLine(invoice.id, index)}
+      />
 
       <section className="mt-app-section">
-        <h2 className="display-type text-xl">{t('qrTitle')}</h2>
-        <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">{t('qrLead')}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="display-type text-xl">{t('qrTitle')}</h2>
+            <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+              {t('qrLead')}
+            </p>
+          </div>
+          {/*
+            The one control on this screen that is not an office action, and
+            that is exactly why it is here rather than in the header beside
+            «Freigeben und senden». The block below is the customer's document
+            rendered on the owner's screen; this opens the page they actually
+            read. Not offered on a draft — §10 keeps an unapproved amount
+            internal, and the account screens filter drafts out, so the link
+            would lead to a page that refuses.
+          */}
+          {invoice.status !== 'draft' && (
+            <Button asChild variant="secondary" size="sm">
+              <a href={`/${locale}/konto/rechnungen/${invoice.id}`} target="_blank" rel="noreferrer">
+                <ActionIcon.customerView className="size-4" aria-hidden />
+                {t('customerView')}
+              </a>
+            </Button>
+          )}
+        </div>
 
         {/* The Swiss payment part: receipt on the left, payment part on the
             right, QR in the middle of the right block. Proportions kept so it
@@ -399,7 +388,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div>
                   <dt className="text-ink-tertiary">{t('qrAmount')}</dt>
-                  <dd data-numeric>{formatChf(total(invoice), locale).replace('CHF ', '')}</dd>
+                  <dd data-numeric>{formatChf(total, locale).replace('CHF ', '')}</dd>
                 </div>
               </dl>
             </div>
@@ -432,7 +421,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <div>
                     <dt className="text-ink-tertiary">{t('qrAmount')}</dt>
                     <dd data-numeric className="font-medium">
-                      {formatChf(total(invoice), locale).replace('CHF ', '')}
+                      {formatChf(total, locale).replace('CHF ', '')}
                     </dd>
                   </div>
                 </dl>
@@ -482,7 +471,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             name: `${customer.firstName} ${customer.lastName}`,
             reference: invoice.reference,
             invoiceNumber: invoice.reference,
-            amount: formatChf(total(invoice), locale),
+            amount: formatChf(total, locale),
             dueDate: format.dateTime(new Date(invoice.dueAt), 'full'),
           }}
           hasDraft={Boolean(note.trim())}
@@ -507,23 +496,36 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         </Button>
       </section>
 
-      <div className="mt-app-section space-y-4">
-        {/*
-          Cancelling used to sit inside the draft-only block, which meant the one
-          case where it matters commercially — an invoice already with the
-          customer — had no control at all. A paid invoice is refunded, not
-          cancelled, so that stays out.
-        */}
-        {canCancel &&
-          (cancelling ? (
+      {/*
+        Everything that ends this document, in one place.
+
+        Cancelling used to be a lone red button at the foot of the page, below
+        the message box, and it was the only one of these that existed at all:
+        a draft nobody wanted had to be cancelled and kept for ever, and an
+        invoice already with a customer carrying a wrong amount had no
+        correction path other than cancelling it and rebuilding every line by
+        hand. The heading is what makes the section legible — three actions
+        with one sentence each, rather than a red button with no context.
+      */}
+      {(canCancel || canReissue || canDelete) && (
+        <section className="mt-app-section">
+          <h2 className="display-type text-xl">{t('closeTitle')}</h2>
+          <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+            {t('closeLead')}
+          </p>
+
+          {confirming ? (
             <ConfirmPanel
-              title={t('cancelConfirmTitle')}
-              body={t('cancelConfirmBody')}
-              action={t('cancelConfirmAction')}
+              className="mt-4"
+              title={confirming === 'cancel' ? t('cancelConfirmTitle') : t('reissueConfirmTitle')}
+              body={confirming === 'cancel' ? t('cancelConfirmBody') : t('reissueConfirmBody')}
+              action={
+                confirming === 'cancel' ? t('cancelConfirmAction') : t('reissueConfirmAction')
+              }
               dismiss={t('dismiss')}
               disabled={reason.trim() === ''}
-              onConfirm={cancelInvoice}
-              onDismiss={() => setCancelling(false)}
+              onConfirm={confirming === 'cancel' ? cancel : reissue}
+              onDismiss={() => setConfirming(null)}
             >
               <Field label={t('cancelReason')}>
                 {(props) => (
@@ -537,17 +539,43 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </Field>
             </ConfirmPanel>
           ) : (
-            <Button variant="danger" size="lg" onClick={() => setCancelling(true)}>
-              {t('cancelAction')}
-            </Button>
-          ))}
-
-        {invoice.status === 'cancelled' && invoice.cancelReason && (
-          <p className="text-sm text-ink-secondary">
-            {t('cancelledNote', { reason: invoice.cancelReason })}
-          </p>
-        )}
-      </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {canReissue && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setReason('');
+                    setConfirming('reissue');
+                  }}
+                >
+                  {t('reissueAction')}
+                </Button>
+              )}
+              {canCancel && (
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setReason('');
+                    setConfirming('cancel');
+                  }}
+                >
+                  {t('cancelAction')}
+                </Button>
+              )}
+              {/* §15 keeps whatever has been in front of a customer, so this is
+                  offered on a draft and nowhere else — and it is offered, because
+                  a mistyped draft kept for ever as «storniert» buries the real
+                  cancellations under clerical noise. */}
+              {canDelete && (
+                <Button variant="ghost" onClick={remove}>
+                  <ActionIcon.delete className="size-4" aria-hidden />
+                  {t('deleteAction')}
+                </Button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/*
         "Mark as paid" was one click that wrote a status and nothing else. The
@@ -562,7 +590,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             <DialogDescription>
               {t('markPaidLead', {
                 reference: invoice.reference,
-                amount: formatChf(total(invoice), locale),
+                amount: formatChf(total, locale),
               })}
             </DialogDescription>
           </DialogHeader>
@@ -595,42 +623,5 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-/**
- * A number cell that survives being cleared.
- *
- * `Number(e.target.value) || 0` is used across the admin forms, and it means
- * selecting a price and pressing backspace to retype it writes 0 to the live
- * record between keystrokes. On a settings screen that silently zeroes the
- * Saturday surcharge; here it zeroes a line on a real invoice. Empty is held
- * as empty and only committed as a number once it parses.
- */
-function NumberCell({
-  value,
-  label,
-  onChange,
-}: {
-  value: number;
-  label: string;
-  onChange: (value: number) => void;
-}) {
-  const [text, setText] = useState<string | null>(null);
-
-  return (
-    <Input
-      dense
-      inputMode="decimal"
-      aria-label={label}
-      className="text-right"
-      value={text ?? String(value)}
-      onChange={(e) => {
-        setText(e.target.value);
-        const parsed = Number(e.target.value);
-        if (e.target.value.trim() !== '' && Number.isFinite(parsed)) onChange(parsed);
-      }}
-      onBlur={() => setText(null)}
-    />
   );
 }

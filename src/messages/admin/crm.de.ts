@@ -623,18 +623,41 @@ export const adminCrmDe = {
   invoices: {
     title: 'Rechnungen',
     lead: 'Was gestellt wurde und was noch offen ist. Entwürfe lassen sich gesammelt freigeben.',
+    search: 'Nummer, QR-Referenz oder Name',
+    filterStatus: 'Status',
     filterAll: 'Alle',
+    /* «Offen» ist kein Status, sondern die Frage dahinter: Entwurf, versendet
+       und überfällig sind alle drei Geld, das noch nicht da ist. */
+    filterOutstanding: 'Offen',
+    filterReset: 'Filter zurücksetzen',
     colReference: 'Nummer',
     colCustomer: 'Kunde',
     colAmount: 'Betrag',
-    colIssued: 'Ausgestellt',
+    colMethod: 'Zahlweg',
+    colCreated: 'Erstellt',
     colDue: 'Fällig',
     colStatus: 'Status',
     overdueBy: '{days} T. überfällig',
     dueIn: 'in {days} T.',
+    rowOpen: 'Rechnung öffnen',
+    rowEdit: 'Positionen bearbeiten',
+    /* Der Grund steht im Namen. Eine ausgegraute Zeile mit demselben Wort
+       drauf erklärt nichts, und ein Tooltip feuert bei einem deaktivierten
+       Menüeintrag nie. */
+    rowEditLocked: 'Nicht änderbar — nur ein Entwurf lässt sich ändern',
+    rowCustomerView: 'Kundenansicht öffnen',
+    rowDelete: 'Entwurf löschen',
+    cancelLead: '{reference} wird als storniert geführt. Der Grund bleibt am Beleg.',
+    deleteConfirm:
+      'Entwurf {reference} endgültig löschen? Er war bei niemandem und bleibt nirgends stehen.',
+    deleteBlocked: 'Nicht mehr löschbar — die Rechnung ist inzwischen versendet.',
+    deleteDone: 'Entwurf {reference} gelöscht.',
     emptyTitle: 'Noch keine Rechnungen',
     emptyBody:
-      'Eine Rechnung entsteht automatisch nach einem abgeschlossenen Einsatz und wartet dann hier auf Ihre Freigabe.',
+      'Eine Rechnung entsteht aus einem abgeschlossenen Einsatz oder wird hier von Hand erstellt — und wartet dann auf Ihre Freigabe.',
+    filterEmptyTitle: 'Keine Rechnung passt',
+    filterEmptyBody:
+      'Suche und Filter schliessen alle Rechnungen aus. Zurücksetzen zeigt wieder alle.',
   },
 
   invoice: {
@@ -663,6 +686,7 @@ export const adminCrmDe = {
     sending: 'Wird gesendet …',
     sentTitle: 'Rechnung ist versendet.',
     cancelAction: 'Rechnung stornieren',
+    cancelledTitle: 'Diese Rechnung ist storniert',
     cancelReason: 'Grund der Stornierung',
     cancelConfirmTitle: 'Rechnung stornieren?',
     cancelConfirmBody:
@@ -670,13 +694,37 @@ export const adminCrmDe = {
     cancelConfirmAction: 'Stornierung erfassen',
     cancelDone: 'Rechnung storniert.',
     cancelledNote: 'Storniert: {reason}',
+    closeTitle: 'Korrektur und Abschluss',
+    closeLead:
+      'Alles, was diesen Beleg beendet. Bis zur Freigabe ist eine Rechnung frei änderbar; danach nicht mehr — eine versendete Rechnung liegt bei der Kundin, und zwei Papiere mit derselben Nummer sind schlimmer als eine Korrektur.',
+    reissueAction: 'Stornieren und neu erstellen',
+    reissueConfirmTitle: 'Rechnung ersetzen?',
+    reissueConfirmBody:
+      'Diese Rechnung wird storniert und ein neuer Entwurf mit denselben Positionen geöffnet. Beide behalten ihre Nummer und verweisen aufeinander.',
+    reissueConfirmAction: 'Ersetzen',
+    reissueDone: 'Ersetzt durch Entwurf {reference}.',
+    reissueFailed: 'Nur eine versendete oder überfällige Rechnung lässt sich ersetzen.',
+    deleteAction: 'Entwurf löschen',
+    deleteConfirm:
+      'Entwurf {reference} endgültig löschen? Er war bei niemandem und bleibt nirgends stehen.',
+    deleteBlocked: 'Nicht mehr löschbar — die Rechnung ist inzwischen versendet.',
+    deleteDone: 'Entwurf {reference} gelöscht.',
+    overdueTitle: 'Überfällig',
+    overdueBody: 'Diese Rechnung war am {date} fällig und ist noch nicht bezahlt.',
+    customerView: 'Kundenansicht',
+    quantityDown: 'Menge verringern',
+    quantityUp: 'Menge erhöhen',
     bookingLink: 'Zum Einsatz',
     subscriptionLink: 'Zum Abo',
     dismiss: 'Abbrechen',
     /* Screen 72 is called "Rechnung bearbeiten" and had nothing editable, no
        way to create an invoice, and no path to «bezahlt». */
     editHint: 'Solange die Rechnung Entwurf ist, sind alle Positionen änderbar.',
-    lockedHint: 'Versendete Rechnungen sind nicht mehr änderbar.',
+    lockedHint:
+      'Nur ein Entwurf lässt sich ändern. Diese Rechnung ist freigegeben — Korrektur weiter unten.',
+    missingTitle: 'Diese Rechnung gibt es nicht',
+    missingBody:
+      'Möglicherweise wurde der Entwurf gelöscht oder der Link ist veraltet. In der Liste stehen alle Rechnungen.',
     linePlaceholder: 'Beschreibung',
     removeLine: 'Position entfernen',
     sentDone: 'Rechnung versendet.',
@@ -698,13 +746,36 @@ export const adminCrmDe = {
     markPaidDone: 'Rechnung als bezahlt erfasst.',
     paidOn: 'Bezahlt am {date}',
     paidVia: 'Bezahlt am {date} per {method}.',
-    createTitle: 'Rechnung erstellen',
-    createLead: 'Für einen abgeschlossenen Einsatz — Positionen kommen aus der Offerte.',
     createAction: 'Rechnung erstellen',
     createDone: 'Entwurf {reference} erstellt.',
-    createPick: 'Einsatz',
-    createEmptyTitle: 'Kein Einsatz zum Verrechnen',
-    createEmptyBody:
-      'Rechnungen entstehen aus abgeschlossenen Einsätzen. Sobald ein Einsatz abgeschlossen ist, erscheint er hier.',
+  },
+
+  /* Screen 71a. Eigener Namensraum statt `invoice.create*`: das war ein Dialog
+     mit einem Auswahlfeld, das hier ist ein Formular mit Positionen. */
+  invoiceNew: {
+    title: 'Rechnung erstellen',
+    lead: 'Für einen abgeschlossenen Einsatz oder frei — alles ist änderbar, bevor die Rechnung entsteht.',
+    aboutTitle: 'Wofür und für wen',
+    aboutLead: 'Der Einsatz ist optional. Ohne ihn ist es eine eigenständige Rechnung.',
+    customer: 'Kundin oder Kunde',
+    customerPlaceholder: 'Bitte wählen',
+    customerRequired: 'Ohne Kundin oder Kunden geht keine Rechnung raus.',
+    booking: 'Einsatz',
+    bookingNone: 'Kein Einsatz',
+    bookingHint: 'Übernimmt die Positionen aus der angenommenen Offerte.',
+    bookingHintNone: 'Für diese Kundin ist gerade kein Einsatz offen zum Verrechnen.',
+    bookingHintNoCustomer: 'Erst die Kundin wählen.',
+    term: 'Zahlungsfrist',
+    termHint: 'Zählt ab der Freigabe, nicht ab heute.',
+    termDays: '{days} Tage',
+    lineLabelRequired:
+      'Jede Position braucht eine Beschreibung — eine Zeile mit Betrag und ohne Text kann niemand prüfen.',
+    createNote: 'Wird als Entwurf angelegt und geht erst mit Ihrer Freigabe raus.',
+    failed: 'Rechnung konnte nicht erstellt werden.',
+    deniedTitle: 'Keine Berechtigung',
+    deniedBody: 'Rechnungen erstellt nur die Inhaberin oder der Inhaber.',
+    noCustomersTitle: 'Noch keine Kundinnen und Kunden',
+    noCustomersBody:
+      'Eine Rechnung braucht jemanden, an den sie geht. Legen Sie zuerst eine Kundin oder einen Kunden an.',
   },
 };
