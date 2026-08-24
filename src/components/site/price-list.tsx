@@ -43,37 +43,49 @@ export async function PriceList({
           <li key={service.slug}>
             <Link
               href={`/leistungen/${service.slug}`}
-              className="group flex items-center gap-5 p-5 transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:gap-6 sm:p-6"
+              className="group flex items-start gap-5 p-5 transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:items-center sm:gap-6 sm:p-6"
             >
               <span className="bg-accent-subtle text-ink-accent grid size-11 shrink-0 place-items-center rounded-full">
                 <ServiceIcon slug={service.slug} className="size-5" />
               </span>
 
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium transition-colors group-hover:text-ink-accent">
-                  {service.name[locale]}
+              {/*
+               * The price drops onto its own line below `sm`.
+               *
+               * Beside the name it was taking 150px of a 375px screen for a
+               * 36px numeral, which left the service about eighty pixels to
+               * put its name and its description in — "One thorough clean — no
+               * plan, no commitment." wrapped to four lines and still pushed a
+               * word past the edge. Nothing here shrinks; the row just stops
+               * pretending it is a table on a phone.
+               */}
+              <span className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-6">
+                <span className="block min-w-0 sm:flex-1">
+                  <span className="block font-medium transition-colors group-hover:text-ink-accent">
+                    {service.name[locale]}
+                  </span>
+                  <span className="mt-1 block text-sm text-ink-secondary">
+                    {service.short[locale]}
+                  </span>
                 </span>
-                <span className="mt-1 block text-sm text-ink-secondary">
-                  {service.short[locale]}
+
+                <span className="hidden shrink-0 text-sm text-ink-tertiary sm:block">
+                  {service.calc === 'perUnit' ? t('methodPerUnit') : t('methodHourly')}
                 </span>
-              </span>
 
-              <span className="hidden shrink-0 text-sm text-ink-tertiary sm:block">
-                {service.calc === 'perUnit' ? t('methodPerUnit') : t('methodHourly')}
-              </span>
-
-              <span
-                className={cn(
-                  'shrink-0 text-right',
-                  display
-                    ? // Money sets its "ab"/"from" prefix in tertiary grey, which
-                      // is right beside body copy and too quiet beside a 36px
-                      // numeral. Lifted with the figure it qualifies.
-                      'display-type text-[32px] leading-none sm:text-[36px] [&_span]:text-ink-secondary'
-                    : 'text-xl',
-                )}
-              >
-                <Money amount={serviceFromPrice(service.minDuration)} from />
+                <span
+                  className={cn(
+                    'mt-3 block shrink-0 sm:mt-0 sm:text-right',
+                    display
+                      ? // Money sets its "ab"/"from" prefix in tertiary grey,
+                        // which is right beside body copy and too quiet beside
+                        // a 36px numeral. Lifted with the figure it qualifies.
+                        'display-type text-[30px] leading-none sm:text-[36px] [&_span]:text-ink-secondary'
+                      : 'text-xl',
+                  )}
+                >
+                  <Money amount={serviceFromPrice(service.minDuration)} from />
+                </span>
               </span>
             </Link>
           </li>

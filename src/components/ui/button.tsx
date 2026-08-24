@@ -21,14 +21,9 @@ const button = cva(
     'transition-[background-color,color,border-color,box-shadow,transform] ease-[var(--ease-standard)]',
     'duration-[var(--motion-base)]',
     '[&_svg]:shrink-0',
-    /* Hook for the Homivaro hover, which is CSS-only and theme-scoped in
-       globals.css. It is a class rather than a variant because nothing about
-       the component changes — the other four directions never match the
-       selector and render exactly as before. Deliberately not the design's
-       full gesture: the cursor-magnet third of it needs a spring, a spring
-       needs `motion`, and `motion` on the shared button would follow this
-       component into all 58 console screens for the sake of a hover. */
-    /* Not on `link` — see the compound variant below. */
+    /* The Homivaro hover (`hv-action`) used to live here, on every variant.
+       It is applied per variant below instead — see the note there for what
+       it did to a link. */
     /* Disabled arrives two ways. A real <button> gets :disabled; an asChild
        anchor cannot — see the note in the component below — so aria-disabled
        has to carry the same weight or the styling silently does nothing. */
@@ -62,17 +57,26 @@ const button = cva(
       block: { true: 'w-full', false: '' },
     },
     compoundVariants: [
-      { variant: 'link', class: 'h-auto p-0' },
+      /* `h-auto p-0` keeps the box on the text so it aligns with the copy
+         around it — and left the target 20px tall. `min-h-6` is the 24px floor
+         and adds two pixels either side, which no layout notices. */
+      { variant: 'link', class: 'h-auto min-h-6 p-0' },
       /*
-       * `hv-action` on every variant but `link`.
+       * The Homivaro hover, on every variant but `link`.
        *
-       * It is the Homivaro hover: a red wash wiping up from the bottom out of
-       * an `::after` at `inset: 0`, with `overflow: hidden` on the control. On
-       * a filled button that is the whole gesture. On a link — `h-auto p-0`,
-       * so the box is exactly the text — the wash is a red rectangle the size
-       * of the words, and the rule that flips the label to white on hover left
-       * white text on red where an inline link had been. It read as a broken
-       * button, which is precisely what it had become.
+       * CSS-only and theme-scoped in globals.css — a class rather than a
+       * variant because nothing about the component changes, and the other
+       * four directions never match the selector. Deliberately not the
+       * design's full gesture: the cursor-magnet third of it needs a spring,
+       * a spring needs `motion`, and `motion` on the shared button would
+       * follow this component into all 58 console screens for a hover.
+       *
+       * It is a red wash wiping up from an `::after` at `inset: 0`, under
+       * `overflow: hidden`. On a filled button that is the whole gesture. On a
+       * link — `h-auto p-0`, so the box is exactly the text — the wash was a
+       * red rectangle the size of the words, and the rule that flips the label
+       * to white left white-on-red where an inline link had been. It read as a
+       * broken button, which is precisely what it had become.
        */
       { variant: 'primary', class: 'hv-action' },
       { variant: 'secondary', class: 'hv-action' },
