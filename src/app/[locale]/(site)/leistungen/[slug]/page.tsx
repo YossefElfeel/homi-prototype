@@ -116,15 +116,18 @@ export default async function ServicePage({
       <div className="border-b border-line-subtle">
         <div className="mx-auto max-w-7xl px-gutter py-4">
           <nav aria-label="Breadcrumb">
+            {/* `py-1` on each crumb: they were 18px tall, the smallest targets
+                on the site, and they sit at the very top of the page where a
+                thumb reaches worst. */}
             <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink-tertiary">
               <li>
-                <Link href="/" className="transition-colors hover:text-ink">
+                <Link href="/" className="inline-flex items-center py-1 transition-colors hover:text-ink">
                   Home
                 </Link>
               </li>
               <ChevronRight className="size-3.5" aria-hidden />
               <li>
-                <Link href="/leistungen" className="transition-colors hover:text-ink">
+                <Link href="/leistungen" className="inline-flex items-center py-1 transition-colors hover:text-ink">
                   {nav('services')}
                 </Link>
               </li>

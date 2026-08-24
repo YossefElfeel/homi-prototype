@@ -65,12 +65,24 @@ export function Coverage() {
               }}
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className={`hv-card hv-card-light group overflow-hidden px-6 py-6 ${
+              className={`hv-card hv-card-light group overflow-hidden px-5 py-6 sm:px-6 ${
                 // Three, three, then two wider tiles — the design's 3-3-2 grid.
                 i >= 6 ? "sm:col-span-3" : "sm:col-span-2"
               }`}
             >
-              <p className="text-ink text-[17px] leading-none font-medium">{m.name}</p>
+              {/*
+               * "Hombrechtikon" is one word with nowhere to break, and at
+               * 17px it needs 121px inside a tile that gives it 108 on a
+               * 375px screen. It was being cut off by the tile's own
+               * `overflow-hidden` — the longest municipality we serve, and
+               * the only one a reader could not finish reading.
+               *
+               * Smaller type below `sm` buys the room; `break-words` is the
+               * guard so the next long name wraps instead of disappearing.
+               */}
+              <p className="text-ink text-[15px] leading-none font-medium break-words sm:text-[17px]">
+                {m.name}
+              </p>
               <p className="text-ink-secondary group-hover:text-ink mt-3 text-sm tabular-nums transition-colors duration-400">
                 {m.zip}
               </p>

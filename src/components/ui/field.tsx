@@ -237,7 +237,7 @@ export function Checkbox({
       <input
         id={id}
         type="checkbox"
-        className="mt-0.5 size-5 shrink-0 accent-[var(--accent-solid)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+        className="mt-0.5 size-6 shrink-0 accent-[var(--accent-solid)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
         {...props}
       />
       <label htmlFor={id} className="text-sm text-ink-secondary">

@@ -137,11 +137,20 @@ export function Footer() {
             <ul className="mt-2 flex flex-wrap gap-5 text-[15px] text-ink-inverse/70">
               {t.footer.legal.map((item, i) => (
                 <li key={item}>
+                  {/* Padded to a real target, with the underline moved onto an
+                      inner span so it still sits under the words rather than
+                      under the padding. These three were 20px tall — the only
+                      links on the site under the 24px floor, and they are on
+                      every page of it. Same structure the service columns
+                      above already use. */}
                   <Link
                     href={LEGAL_ROUTES[i] ?? '/'}
-                    className="relative transition-colors after:absolute after:-bottom-0.5 after:left-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-page after:transition-transform after:duration-400 hover:text-ink-inverse hover:after:origin-left hover:after:scale-x-100"
+                    className="group inline-flex items-center py-1 transition-colors hover:text-ink-inverse"
                   >
-                    {item}
+                    <span className="relative">
+                      {item}
+                      <span className="absolute -bottom-0.5 left-0 h-px w-full origin-right scale-x-0 bg-page transition-transform duration-400 group-hover:origin-left group-hover:scale-x-100" />
+                    </span>
                   </Link>
                 </li>
               ))}

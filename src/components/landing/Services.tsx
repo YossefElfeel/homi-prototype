@@ -266,7 +266,14 @@ export function Services() {
                 {t.services.counter(active + 1, n)}
               </p>
             </div>
-            <div className="flex items-center gap-1.5">
+            {/* The gap moved inside the buttons.
+                An inactive dash is 16px wide, so the button around it was a
+                16px target — under the 24px floor, on a control whose entire
+                job is to be tapped, on the row of the page a thumb reaches
+                for. `px-1.5` makes the target 28px without the dash changing
+                size, and `gap-0` keeps the spacing between the dashes what it
+                was rather than doubling it. */}
+            <div className="flex items-center gap-0">
               {items.map((service, i) => (
                 <button
                   key={service.name}
@@ -274,7 +281,7 @@ export function Services() {
                   onClick={() => jumpTo(i)}
                   aria-label={service.name}
                   aria-current={i === active}
-                  className="group py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                  className="group px-1.5 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
                 >
                   <span
                     className={`block h-[3px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
