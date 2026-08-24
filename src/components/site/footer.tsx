@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/site/logo';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { SEED_SERVICES } from '@/mock/seed';
+import { isOffered } from '@/lib/service-catalogue';
 import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/cn';
 
@@ -47,7 +48,7 @@ export function SiteFooter({ theme }: { theme?: Theme }) {
           </div>
 
           <FooterColumn title={t('servicesHeading')}>
-            {SEED_SERVICES.filter((s) => s.active).map((service) => (
+            {SEED_SERVICES.filter(isOffered).map((service) => (
               <FooterLink key={service.slug} href={`/leistungen/${service.slug}`}>
                 {service.name.de}
               </FooterLink>

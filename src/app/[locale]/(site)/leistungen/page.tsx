@@ -12,6 +12,7 @@ import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
 import { serviceFromPrice } from '@/components/site/service-grid';
 import { formatChf } from '@/components/ui/money';
 import { SEED_SERVICES } from '@/mock/seed';
+import { isOffered } from '@/lib/service-catalogue';
 import type { Locale } from '@/i18n/routing';
 
 export function generateStaticParams() {
@@ -39,7 +40,7 @@ export default async function ServicesIndexPage({
   const t = await getTranslations('site.services');
   const d = await getTranslations('site.display.services');
   const home = await getTranslations('site.home.hero');
-  const active = SEED_SERVICES.filter((svc) => svc.active);
+  const active = SEED_SERVICES.filter(isOffered);
 
   if (theme === 'homivaro') {
     return (

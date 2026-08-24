@@ -9,8 +9,9 @@ import type { Locale } from "@/i18n/routing";
 import { Money } from "@/components/ui/money";
 import { ArrowUpRight } from "@/components/landing/icons";
 import { EASE, inViewLoose } from "@/components/landing/motion";
-import { SERVICE_ICONS, serviceFromPrice } from "@/components/site/service-grid";
+import { ServiceIcon, serviceFromPrice } from "@/components/site/service-grid";
 import { SEED_SERVICES } from "@/mock/seed";
+import { isOffered } from '@/lib/service-catalogue';
 
 /** The three photographs the design shipped, on the three services they show. */
 const PHOTO: Partial<Record<string, string>> = {
@@ -118,7 +119,7 @@ export function ServiceMosaic({
 }) {
   const locale = useLocale() as Locale;
 
-  const all = SEED_SERVICES.filter((s) => s.active && s.slug !== exclude).sort(
+  const all = SEED_SERVICES.filter((s) => isOffered(s) && s.slug !== exclude).sort(
     (a, b) => a.order - b.order,
   );
   const items = limit ? all.slice(0, limit) : all;
@@ -135,7 +136,6 @@ export function ServiceMosaic({
            /leistungen and it was loading lazily. Only the first: marking all
            three would have them compete for the same early bandwidth. */
         const isLcp = i === 0 && Boolean(photo);
-        const Icon = SERVICE_ICONS[service.slug];
 
         return (
           <motion.li
@@ -189,7 +189,7 @@ export function ServiceMosaic({
                   photograph would begin rather than immediately above the
                   name. */}
               <span>
-                {!photo ? <Icon className="text-ink-accent-inverse h-8 w-8" aria-hidden /> : null}
+                {!photo ? <ServiceIcon slug={service.slug} className="text-ink-accent-inverse h-8 w-8" /> : null}
               </span>
 
               <span className="flex items-end justify-between gap-4">

@@ -15,6 +15,7 @@ import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
 import { SEED_SERVICES, SEED_SETTINGS } from '@/mock/seed';
 import type { ServiceSlug } from '@/mock/schema';
+import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 /** SVG icons throughout — never emoji. */
@@ -27,6 +28,27 @@ export const SERVICE_ICONS: Record<ServiceSlug, typeof Brush> = {
   bueroreinigung: Building2,
   moebelmontage: Hammer,
 };
+
+/**
+ * The icon for a service, including one the map has never heard of.
+ *
+ * Five call sites indexed `SERVICE_ICONS` directly, which was safe only while
+ * the catalogue was a closed set of seven. It is not any more: an owner can
+ * add a service, and `SERVICE_ICONS[slug]` for a new one is `undefined` —
+ * rendered as `<Icon />`, that is not a blank space but a React crash, and it
+ * would take down the first step of the request flow.
+ *
+ * A component rather than a `serviceIcon(slug)` helper returning one, because
+ * a component built from a call inside render is a new type on every pass:
+ * React remounts it, and `react-hooks/static-components` refuses the build
+ * over it. `Sparkles` is the fallback rather than a question mark — an
+ * unrecognised service is a normal thing now, not an error to point at.
+ * Choosing an icon per service is on /open-questions.
+ */
+export function ServiceIcon({ slug, className }: { slug: string; className?: string }) {
+  const Icon = SERVICE_ICONS[slug as ServiceSlug] ?? Sparkles;
+  return <Icon className={className} aria-hidden />;
+}
 
 /**
  * The from-price is the honest floor: the two-hour minimum at the hourly rate,
@@ -52,15 +74,13 @@ export function ServiceGrid({
 }) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const locale = useLocale() as Locale;
-  const services = SEED_SERVICES.filter((s) => s.active)
+  const services = SEED_SERVICES.filter(isOffered)
     .sort((a, b) => a.order - b.order)
     .slice(0, limit);
 
   return (
     <ul className="grid gap-px bg-line-subtle sm:grid-cols-2 lg:grid-cols-3">
-      {services.map((service) => {
-        const Icon = SERVICE_ICONS[service.slug];
-        return (
+      {services.map((service) => (
           <li key={service.slug} className="bg-page">
             <Link
               href={`/leistungen/${service.slug}`}
@@ -69,7 +89,7 @@ export function ServiceGrid({
                 'hover:bg-accent-subtle focus-visible:bg-accent-subtle',
               )}
             >
-              <Icon className="size-6 text-ink-accent" aria-hidden />
+              <ServiceIcon slug={service.slug} className="size-6 text-ink-accent" />
               <Heading className="mt-5 text-lg font-medium">{service.name[locale]}</Heading>
               <p className="mt-2 flex-1 text-sm text-ink-secondary">
                 {service.short[locale]}
@@ -83,8 +103,7 @@ export function ServiceGrid({
               </p>
             </Link>
           </li>
-        );
-      })}
+      ))}
     </ul>
   );
 }

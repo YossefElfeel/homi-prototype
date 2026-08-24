@@ -2,18 +2,94 @@
 export const adminContentDe = {
   services: {
     title: 'Leistungen & Preise',
-    lead: 'Änderungen hier erscheinen sofort auf der Website und in der Anfragestrecke.',
+    lead: 'Aktive Leistungen stehen sofort in der Anfragestrecke zur Auswahl. Entwürfe bleiben intern, bis Sie sie aufschalten.',
+    search: 'Leistung suchen',
+    searchPlaceholder: 'Name, Slug oder Kurzbeschreibung',
     colName: 'Leistung',
+    colType: 'Art',
     colCalc: 'Abrechnung',
     colBase: 'Ansatz',
     colMin: 'Minimum',
     colStatus: 'Status',
-    active: 'Aktiv',
-    inactive: 'Deaktiviert',
+    colActivate: 'Aufschalten',
+    /* Nicht «i18n». Die Spalte hiess so, weil sie jemand benannt hat, der den
+       Code schreibt — für alle anderen ist es kein Wort. Sie war die einzige
+       Spaltenüberschrift des Bildschirms, die gar nicht erst übersetzt war. */
+    colLanguages: 'Sprachen',
+    filterStatus: 'Status',
+    filterType: 'Art',
+    filterAll: 'alle',
     calcHourly: 'Nach Stunden',
     calcPerUnit: 'Nach Anzahl',
+    calcFlat: 'Pauschal',
     guarantee: 'Mit Abnahmegarantie',
     translationGap: '{n} Übersetzungen fehlen',
+
+    createAction: 'Leistung anlegen',
+
+    rowOpen: 'Details ansehen',
+    rowEdit: 'Bearbeiten',
+    rowCustomerView: 'Auf der Website ansehen',
+    rowActivate: 'Aufschalten',
+    rowDeactivate: 'Deaktivieren',
+    rowDelete: 'Löschen',
+
+    /* Der Titel nennt die Leistung, nicht die Handlung — die steht schon auf
+       dem Knopf. Wer die Rückfrage liest, muss vor allem wissen, welche der
+       acht Zeilen gemeint ist. */
+    activateTitle: '«{name}» aufschalten?',
+    activateBody:
+      'Die Leistung steht danach in der Anfragestrecke zur Auswahl, mit dem hinterlegten Ansatz — der ist damit gegenüber Kunden verbindlich. Die Marketing-Seiten werden beim Build aus dem Katalog erzeugt und ziehen erst beim nächsten Deploy nach.',
+    activateConfirm: 'Aufschalten',
+    activateDone: '«{name}» ist aufgeschaltet.',
+
+    deactivateTitle: '«{name}» deaktivieren?',
+    deactivateBody:
+      'Die Leistung verschwindet aus der Anfragestrecke, niemand kann sie mehr anfragen. Laufende Aufträge und Rechnungen bleiben unberührt — sie sind bereits erteilt.',
+    deactivateConfirm: 'Deaktivieren',
+    deactivateDone: '«{name}» ist deaktiviert.',
+
+    deleteTitle: '«{name}» löschen?',
+    deleteBody:
+      'Das ist endgültig. Wenn Sie die Leistung nur vorübergehend nicht anbieten wollen, deaktivieren Sie sie stattdessen — dann bleibt sie samt Preis erhalten.',
+    deleteConfirm: 'Endgültig löschen',
+    deleteDone: '«{name}» wurde gelöscht.',
+    /* Sagt die Zahl, nicht nur «geht nicht»: eine Leistung mit 14 Aufträgen
+       daran ist ein anderer Fall als eine mit einem, und der Inhaber
+       entscheidet danach, ob er deaktiviert oder die Aufträge zuerst abschliesst. */
+    deleteBlockedTitle: '«{name}» kann nicht gelöscht werden',
+    deleteBlockedBody:
+      '{n} Anfragen, Aufträge oder Abos verweisen darauf. Würde die Leistung verschwinden, stünde in jedem davon ein Name, den nichts mehr auflösen kann. Deaktivieren nimmt sie ebenso vom Markt und lässt die Historie lesbar.',
+    deleteBlocked: 'Diese Leistung ist noch in Verwendung.',
+
+    detailsTitle: 'Leistung im Überblick',
+    detailsBack: 'Alle Leistungen',
+    detailsLocaleHint:
+      'Deutsch und Englisch sind gepflegt. Französisch und Italienisch sind angelegt, aber nicht übersetzt — dort zeigt die Website den deutschen Text (§20.6).',
+    detailsFallback: 'nicht übersetzt — zeigt Deutsch',
+    detailsUsageHint: 'Was auf diese Leistung zeigt und deshalb ihrem Löschen im Weg steht.',
+    detailsUsageRequests: 'Anfragen',
+    detailsUsageBookings: 'Aufträge',
+    detailsUsagePlans: 'Abos',
+    detailsDangerTitle: 'Leistung löschen',
+    detailsSlug: 'Slug (URL)',
+    detailsNames: 'Bezeichnung',
+    detailsShort: 'Kurzbeschreibung',
+    detailsPricing: 'Abrechnung',
+    detailsProfile: 'Dauer-Schätzung',
+    detailsGuarantee: 'Abnahmegarantie',
+    detailsGuaranteeYes: 'Ja — kostenlose Nachreinigung bei nicht bestandener Abnahme',
+    detailsGuaranteeNo: 'Nein',
+    detailsMissing: 'fehlt — Website zeigt Deutsch',
+    detailsUsage: 'Verwendung',
+    detailsUsageBody: '{n} Anfragen, Aufträge und Abos verweisen darauf.',
+    detailsUsageNone: 'Noch nirgends verwendet.',
+    close: 'Schliessen',
+
+    filterEmptyTitle: 'Keine Leistung passt',
+    filterEmptyBody:
+      'Suchbegriff und Filter zusammen ergeben keine Zeile. Der Katalog selbst ist nicht leer.',
+    filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Leistungen',
     emptyBody: 'Ohne Leistung kann niemand eine Anfrage senden. Legen Sie mindestens eine an.',
   },
@@ -23,9 +99,23 @@ export const adminContentDe = {
     nameTitle: 'Bezeichnung',
     nameHint: 'Erscheint auf der Website und in der Offerte, in der Sprache des Kunden.',
     shortTitle: 'Kurzbeschreibung',
+    shortHint:
+      'Der Satz unter dem Namen auf der Leistungsseite und in der Kachel auf der Startseite.',
     pricingTitle: 'Preis',
-    basePrice: 'Stundenansatz',
+    pricingHint:
+      'Wonach abgerechnet wird, bestimmt, was der Ansatz bedeutet — pro Stunde, pro Stück oder pauschal für den ganzen Auftrag.',
+    calcLabel: 'Abrechnungsart',
+    calcHourly: 'Nach Stunden — Ansatz × geschätzte Dauer',
+    calcPerUnit: 'Nach Anzahl — gezählte Stück werden in Stunden umgerechnet',
+    calcFlat: 'Pauschal — ein Festpreis für den ganzen Auftrag',
+    basePrice: 'Ansatz',
+    basePriceHourly: 'Franken pro Stunde.',
+    basePricePerUnit: 'Franken pro Stunde; die gezählten Stück ergeben die Stunden (§5.1).',
+    basePriceFlat: 'Franken für den ganzen Auftrag, unabhängig von der Dauer.',
     minDuration: 'Mindestdauer in Stunden',
+    minDurationHint: 'Der Boden liegt bei 2 Stunden; hier lässt sich nur nach oben abweichen.',
+    slugLabel: 'Slug (URL)',
+    slugHint: 'Aus dem deutschen Namen abgeleitet und danach fest — Links darauf sollen halten.',
     profileTitle: 'Dauer-Schätzung',
     profileHint:
       'Bestimmt, aus welcher Spalte der Dauertabelle das System die Stunden vorschlägt.',
@@ -37,12 +127,36 @@ export const adminContentDe = {
     guaranteeLabel: 'Abnahmegarantie anbieten',
     guaranteeHint:
       'Verpflichtet zur kostenlosen Nachreinigung, wenn die Abnahme nicht besteht.',
-    activeLabel: 'Auf der Website anbieten',
+    statusTitle: 'Sichtbarkeit',
+    statusHint:
+      'Nur «Aktiv» steht Kunden in der Anfragestrecke zur Auswahl und geht beim nächsten Build auf die Marketing-Seiten. Entwurf und Deaktiviert sind beide unsichtbar — der Unterschied ist, ob die Leistung noch nie draussen war oder zurückgezogen wurde.',
+    statusPending: 'Ausstehende Änderung: {from} → {to}',
+    statusApply: 'Änderung übernehmen',
+    statusDiscard: 'Verwerfen',
     missingTitle: 'Fehlende Übersetzungen',
     missingBody:
       'Fehlt eine Sprache, zeigt die Website den deutschen Text. Das ist die vorgesehene Rückfallebene, aber es fällt auf.',
     save: 'Speichern',
     saved: 'Gespeichert',
+  },
+
+  serviceNew: {
+    title: 'Neue Leistung',
+    lead: 'Nichts wird geschrieben, bis Sie unten speichern. Als Entwurf gespeichert bleibt die Leistung intern, bis Preis und Texte stehen.',
+    back: 'Alle Leistungen',
+    nameRequired: 'Ohne deutsche Bezeichnung gibt es keinen Namen und keinen Slug.',
+    slugPreview: 'URL wird: /leistungen/{slug}',
+    saveDraft: 'Als Entwurf speichern',
+    saveActive: 'Anlegen und aufschalten',
+    createNote:
+      'Ein Entwurf erscheint nirgends ausser hier. Aufschalten stellt die Leistung sofort in die Anfragestrecke.',
+    createdDraft: '«{name}» als Entwurf angelegt.',
+    createdActive: '«{name}» angelegt und aufgeschaltet.',
+    activateTitle: '«{name}» direkt aufschalten?',
+    activateBody:
+      'Die Leistung steht sofort in der Anfragestrecke zur Auswahl — mit dem Ansatz, der oben steht. Als Entwurf speichern geht auch, und aufschalten können Sie danach jederzeit.',
+    activateConfirm: 'Anlegen und aufschalten',
+    dismiss: 'Zurück',
   },
 
   addons: {

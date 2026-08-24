@@ -21,32 +21,63 @@ export const SERVICE_SLUGS = [
   'bueroreinigung',
   'moebelmontage',
 ] as const;
+/**
+ * The seven the business launched with — the ones every other module names by
+ * hand: the icon map, the marketing copy, the pricing order, the seeded
+ * scenarios. `Service.slug` is deliberately *not* this type. The catalogue is
+ * editable, and once an owner can add a service the set of slugs stops being
+ * knowable at compile time; keeping the union here means the modules that
+ * really do only know these seven still say so.
+ */
 export type ServiceSlug = (typeof SERVICE_SLUGS)[number];
 
 /**
- * §21 item 1: the hour is the single pricing unit. Area, rooms and bathrooms
- * are *inputs to a duration estimate*, never independent price units — that is
- * what makes package credits and discounts computable at all.
+ * How a service turns into money.
+ *
+ * §21 item 1 makes the hour the pricing unit for cleaning: area, rooms and
+ * bathrooms are *inputs to a duration estimate*, never independent price units
+ * — that is what makes package credits and discounts computable at all.
+ * `perUnit` counts a thing (windows) and converts the count into hours, and
+ * `flat` is one fixed price for the whole job. No seeded service is flat, but
+ * the type has carried the case since §5.1 and nothing could ever set it.
  */
 export type CalcMethod = 'hourly' | 'perUnit' | 'flat';
 
 /** Column of the §5.2 duration matrix a service reads from. */
 export type DurationProfile = 'standard' | 'deep' | 'moveout' | 'office' | 'none';
 
+/**
+ * Three states, because `active: boolean` could only hold two of them.
+ *
+ * `draft` is the one that was missing, and its absence is what made adding a
+ * service something you had to finish in one sitting: the moment the record
+ * existed it was either on the website or switched off, and "switched off"
+ * already means something else — a service the office retired, or paused for
+ * the season. A half-written price list wearing the same badge as a withdrawn
+ * service is two different facts in one colour.
+ */
+export type ServiceStatus = 'active' | 'inactive' | 'draft';
+
 export interface Service {
   id: ID;
-  slug: ServiceSlug;
+  /**
+   * Free-form, not `ServiceSlug`. It is the URL segment under /leistungen and
+   * the key a request is filed under, and an owner creating «Fassadenreinigung»
+   * needs a slug for it — a closed union made the create flow impossible
+   * rather than merely unbuilt.
+   */
+  slug: string;
   name: Record<Locale, string>;
   short: Record<Locale, string>;
   calc: CalcMethod;
   durationProfile: DurationProfile;
-  /** CHF per hour, or per unit for perUnit services. */
+  /** CHF per hour, per counted unit, or for the whole job — see `calc`. */
   basePrice: number;
   /** Hours. The global floor is 2h (§5.1); a service may set a higher one. */
   minDuration: number;
   /** Move-out cleaning carries the handover guarantee (§12). */
   handoverGuarantee: boolean;
-  active: boolean;
+  status: ServiceStatus;
   order: number;
 }
 
@@ -58,7 +89,8 @@ export interface AddOn {
   price: number;
   /** Extra hours added to the estimate. */
   extraDuration: number;
-  services: ServiceSlug[];
+  /** Which services offer it, by `Service.slug`. */
+  services: string[];
   active: boolean;
 }
 
@@ -174,7 +206,8 @@ export interface ServiceRequest {
   reference: string;
   customerId: ID;
   propertyId: ID;
-  serviceSlug: ServiceSlug;
+  /** A `Service.slug`, not one of the seven — the catalogue is open. */
+  serviceSlug: string;
   addOnIds: ID[];
   /** Windows are billed per unit (§5.1: 0.5h per five windows). */
   windowCount?: number;
@@ -227,7 +260,7 @@ export interface DraftPhoto {
 }
 
 export interface RequestDraft {
-  serviceSlug: ServiceSlug | null;
+  serviceSlug: string | null;
   /** Set when a signed-in customer picks one of their saved properties. */
   propertyId: ID | null;
   property: PropertyInput;
@@ -420,7 +453,7 @@ export interface Booking {
   subscriptionId?: ID;
   customerId: ID;
   propertyId: ID;
-  serviceSlug: ServiceSlug;
+  serviceSlug: string;
   start: ISODate;
   /** Minutes. */
   duration: number;
@@ -593,7 +626,7 @@ export interface Plan {
   /** How long those visits stay usable, from the day the plan is paid for. */
   validityMonths: number;
   /** The service the included visits are drawn against. */
-  serviceSlug: ServiceSlug;
+  serviceSlug: string;
   /**
    * Applied to work *outside* the package — an extra visit once the included
    * ones are spent, or a different service entirely. Inside the package there
@@ -839,7 +872,7 @@ export interface Coupon {
   kind: 'percent' | 'amount';
   value: number;
   minOrder?: number;
-  services: ServiceSlug[];
+  services: string[];
   validFrom: ISODate;
   validTo: ISODate;
   maxUses?: number;
@@ -1048,7 +1081,7 @@ export interface TeamMember {
   role: TeamRole;
   active: boolean;
   regions: string[];
-  skills: ServiceSlug[];
+  skills: string[];
   startedAt: ISODate;
   fromApplicationId?: ID;
 }

@@ -21,7 +21,7 @@ import { Toolbar } from '@/components/ui/toolbar';
 import { planRhythm } from '@/lib/offer-facts';
 import { activeSubscriberCount } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { Plan, ServiceSlug } from '@/mock/schema';
+import type { Plan } from '@/mock/schema';
 
 /**
  * Screen 69 — the plans, as products.
@@ -56,7 +56,7 @@ export default function PlansPage() {
    * against — an office plan and a home plan are not variations of one
    * product, they are two — so that is what the filter filters.
    */
-  const [service, setService] = useState<'all' | ServiceSlug>('all');
+  const [service, setService] = useState<'all' | string>('all');
   const [status, setStatus] = useState<'all' | 'active' | 'retired'>('all');
 
   const filtered = useMemo(() => {
@@ -80,7 +80,7 @@ export default function PlansPage() {
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
   const filtering = status !== 'all' || service !== 'all' || Boolean(query.trim());
-  const serviceName = (slug: ServiceSlug) =>
+  const serviceName = (slug: string) =>
     services.find((s) => s.slug === slug)?.name[locale] ?? slug;
 
   function toggle(plan: Plan) {

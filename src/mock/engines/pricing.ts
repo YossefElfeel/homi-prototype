@@ -211,16 +211,38 @@ export function priceEstimate(input: EstimateInput, settings: Settings): Estimat
   const lines: PriceLine[] = [];
   const notes: string[] = [];
 
-  // Base service, always expressed in hours × rate.
-  lines.push({
-    key: `service:${service.slug}`,
-    label: service.slug,
-    calc: 'hourly',
-    quantity: duration.hours,
-    unitPrice: rate,
-    total: round(duration.hours * rate),
-    kind: 'service',
-  });
+  /*
+   * Base service. Hours × rate for the two cleaning models; one line at one
+   * price for a flat one.
+   *
+   * `flat` used to fall through to the hourly branch, because no service could
+   * be flat and the case was unreachable. The catalogue can set it now, and
+   * the fall-through was not a rounding difference: `basePrice` would have
+   * been read as an hourly rate, so a CHF 180 flat job priced at three hours
+   * came out at CHF 540. The duration is still estimated either way — the
+   * calendar has to hold the visit even when the money does not depend on it.
+   */
+  lines.push(
+    service.calc === 'flat'
+      ? {
+          key: `service:${service.slug}`,
+          label: service.slug,
+          calc: 'flat',
+          quantity: 1,
+          unitPrice: service.basePrice,
+          total: round(service.basePrice),
+          kind: 'service',
+        }
+      : {
+          key: `service:${service.slug}`,
+          label: service.slug,
+          calc: 'hourly',
+          quantity: duration.hours,
+          unitPrice: rate,
+          total: round(duration.hours * rate),
+          kind: 'service',
+        },
+  );
 
   // Add-ons carry their own fixed price on top of the time they add.
   for (const addOn of addOns) {

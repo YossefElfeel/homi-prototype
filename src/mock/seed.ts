@@ -21,9 +21,10 @@ function l(de: string, en: string): Record<Locale, string> {
 }
 
 /**
- * The seven services. Derived from the pricing rules in §5.1 plus the four
- * columns of the §5.2 duration matrix — the documents never list them in one
- * place. Editable from the admin "Leistungen & Preise" screen.
+ * The seven live services, plus one draft and one deactivated. Derived from
+ * the pricing rules in §5.1 plus the four columns of the §5.2 duration matrix
+ * — the documents never list them in one place. Editable from the admin
+ * "Leistungen & Preise" screen, which can now also add to them.
  */
 export const SEED_SERVICES: Service[] = [
   {
@@ -39,7 +40,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 2,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 1,
   },
   {
@@ -55,7 +56,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 2,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 2,
   },
   {
@@ -71,7 +72,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 3,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 3,
   },
   {
@@ -87,7 +88,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 3,
     handoverGuarantee: true,
-    active: true,
+    status: 'active',
     order: 4,
   },
   {
@@ -107,7 +108,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 2,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 5,
   },
   {
@@ -123,7 +124,7 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 2,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 6,
   },
   {
@@ -139,8 +140,63 @@ export const SEED_SERVICES: Service[] = [
     basePrice: 49,
     minDuration: 2,
     handoverGuarantee: false,
-    active: true,
+    status: 'active',
     order: 7,
+  },
+  /*
+   * The eighth is a draft, and it is here for the same reason one add-on ships
+   * switched off: a state nothing is ever *in* is a state you cannot see
+   * working. It is also the only `flat` service in the file — the billing
+   * method the schema has always declared and the seed could never set, since
+   * every price the business quotes today is an hourly one.
+   *
+   * Being a draft, it reaches no customer: the website, the sitemap and the
+   * request flow all ask `isOffered`, which only `active` satisfies. What it
+   * does reach is /admin/leistungen, where the owner can finish pricing it and
+   * put it on sale — which is the flow this seed exists to demonstrate.
+   */
+  {
+    id: 'svc_teppich',
+    slug: 'teppichreinigung',
+    name: l('Teppichreinigung', 'Carpet cleaning'),
+    short: l(
+      'Tiefenreinigung von Teppichen und Polstern, pro Auftrag verrechnet.',
+      'Deep cleaning for carpets and upholstery, billed per job.',
+    ),
+    calc: 'flat',
+    durationProfile: 'none',
+    basePrice: 180,
+    minDuration: 2,
+    handoverGuarantee: false,
+    status: 'draft',
+    order: 8,
+  },
+  /*
+   * The ninth is deactivated, and it completes the set: one row in each of the
+   * three states, so none of them is a filter option that returns nothing.
+   *
+   * A draft and a deactivated service look identical to a customer — both are
+   * simply not there — and that is exactly why they need to look different
+   * here. This one was on sale and came off it: the business stopped taking
+   * facade work when the equipment went, and the record stays so the price is
+   * still there if it ever comes back. Deleting it would have been the other
+   * option, and it is the one the confirm dialog argues against.
+   */
+  {
+    id: 'svc_fassade',
+    slug: 'fassadenreinigung',
+    name: l('Fassadenreinigung', 'Facade cleaning'),
+    short: l(
+      'Aussenreinigung von Fassaden, Balkonen und Sitzplätzen.',
+      'Exterior cleaning for facades, balconies and terraces.',
+    ),
+    calc: 'hourly',
+    durationProfile: 'none',
+    basePrice: 62,
+    minDuration: 4,
+    handoverGuarantee: false,
+    status: 'inactive',
+    order: 9,
   },
 ];
 

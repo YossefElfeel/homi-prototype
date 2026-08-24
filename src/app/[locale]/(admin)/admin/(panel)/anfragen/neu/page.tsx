@@ -22,7 +22,8 @@ import { computeEstimate } from '@/components/booking/use-estimate';
 import { addDays, dayBlockReason, startOfDay } from '@/mock/engines/availability';
 import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { PropertyKind, ServiceSlug, TimeBand } from '@/mock/schema';
+import type { PropertyKind, TimeBand } from '@/mock/schema';
+import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 const KINDS: {
@@ -134,7 +135,7 @@ export default function NewRequestPage() {
   const [customerId, setCustomerId] = useState('');
   const [propertyChoice, setPropertyChoice] = useState<string>(NEW_PROPERTY);
   const [property, setProperty] = useState(emptyProperty);
-  const [serviceSlug, setServiceSlug] = useState<ServiceSlug | ''>('');
+  const [serviceSlug, setServiceSlug] = useState<string>('');
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [windowCount, setWindowCount] = useState<number | null>(null);
   const [furniturePieces, setFurniturePieces] = useState<number | null>(null);
@@ -416,7 +417,7 @@ export default function NewRequestPage() {
            be storable before the address is known, and a placeholder record in
            `properties` would be a real object nobody asked for. */
         propertyId: resolvePropertyId() ?? '',
-        serviceSlug: (serviceSlug || 'unterhaltsreinigung') as ServiceSlug,
+        serviceSlug: serviceSlug || 'unterhaltsreinigung',
         addOnIds,
         windowCount,
         furniturePieces,
@@ -853,7 +854,7 @@ export default function NewRequestPage() {
                       {...props}
                       value={serviceSlug}
                       onChange={(e) => {
-                        setServiceSlug(e.target.value as ServiceSlug);
+                        setServiceSlug(e.target.value);
                         // Add-ons are scoped to a service; carrying them over
                         // would price a window clean onto a furniture job.
                         setAddOnIds([]);
@@ -863,7 +864,7 @@ export default function NewRequestPage() {
                         {t('serviceNone')}
                       </option>
                       {services
-                        .filter((s) => s.active)
+                        .filter(isOffered)
                         .map((s) => (
                           <option key={s.slug} value={s.slug}>
                             {s.name[locale]}

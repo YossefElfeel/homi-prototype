@@ -151,6 +151,13 @@ export const en: Messages = {
       held: 'Held',
       returned: 'Returned',
     },
+    /* "Disabled" rather than "Inactive": the state is the result of a
+       decision, not somewhere a service drifts on its own. */
+    service: {
+      draft: 'Draft',
+      active: 'Active',
+      inactive: 'Disabled',
+    },
     /* Not the state of a payment but its route. Here because it used to live in
        three places: the customer's account, the quote's payment step, and
        `admin.offers.method` — inside a single screen's namespace. */

@@ -9,7 +9,6 @@ import type {
   Plan,
   Property,
   Service,
-  ServiceSlug,
   Settings,
 } from '@/mock/schema';
 
@@ -23,7 +22,7 @@ import type {
  * silently overwrite whatever a visitor had half-finished in the same browser.
  */
 export interface EstimateSource {
-  serviceSlug: ServiceSlug | null;
+  serviceSlug: string | null;
   /** Set when an existing property is chosen; its figures win over the typed ones. */
   propertyId: ID | null;
   property: {

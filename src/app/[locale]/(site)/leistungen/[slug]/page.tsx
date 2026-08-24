@@ -10,6 +10,7 @@ import { getServiceContent } from '@/content/services';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from '@/mock/seed';
 import { durationRange } from '@/mock/engines/pricing';
 import type { ServiceSlug } from '@/mock/schema';
+import { isOffered } from '@/lib/service-catalogue';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
 import { Faq } from '@/components/ui/accordion';
@@ -26,11 +27,20 @@ const SERVICE_PHOTO: Partial<Record<string, string>> = {
   umzugsreinigung: '/img/service-2.webp',
   moebelmontage: '/img/service-3.webp',
 };
-import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid';
+import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 
+/**
+ * Only what is on sale gets a page.
+ *
+ * This mapped the whole catalogue, which was harmless while every seeded
+ * service was active and is not any more: a draft would be pre-rendered into a
+ * fully browsable page with a "request a quote" button on it, for a service
+ * the owner has not finished pricing. The grid, the footer and the sitemap
+ * have always filtered — this was the one place that did not.
+ */
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
-    SEED_SERVICES.map((service) => ({ locale, slug: service.slug })),
+    SEED_SERVICES.filter(isOffered).map((service) => ({ locale, slug: service.slug })),
   );
 }
 
@@ -41,7 +51,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const service = SEED_SERVICES.find((s) => s.slug === slug);
-  if (!service) return {};
+  if (!service || !isOffered(service)) return {};
   return {
     title: service.name[locale as Locale],
     description: service.short[locale as Locale],
@@ -64,17 +74,19 @@ export default async function ServicePage({
   setRequestLocale(locale);
 
   const service = SEED_SERVICES.find((s) => s.slug === slug);
-  if (!service) notFound();
+  /* `isOffered` and not just existence: a service taken off the website has to
+     stop answering on its own URL too, or "deactivate" means nothing more than
+     removing it from the menus. */
+  if (!service || !isOffered(service)) notFound();
 
   const [theme, stressed] = await Promise.all([getTheme(), getStressMode()]);
   const t = await getTranslations('site.services');
   const nav = await getTranslations('nav');
   const content = getServiceContent(slug as ServiceSlug, locale as Locale, stressed);
 
-  const Icon = SERVICE_ICONS[service.slug];
   const range = durationRange(service.durationProfile);
   const addOns = SEED_ADDONS.filter((a) => a.services.includes(service.slug));
-  const related = SEED_SERVICES.filter((s) => s.active && s.slug !== service.slug).slice(0, 3);
+  const related = SEED_SERVICES.filter((s) => isOffered(s) && s.slug !== service.slug).slice(0, 3);
 
   const pricing = await getTranslations('site.pricing');
   const d = await getTranslations('site.display.services');
@@ -146,7 +158,7 @@ export default async function ServicePage({
       <div className="border-b border-line-subtle">
         <div className="mx-auto grid max-w-7xl gap-10 px-gutter py-14 lg:grid-cols-12 lg:py-20">
           <div className="lg:col-span-7">
-            <Icon className="size-7 text-ink-accent" aria-hidden />
+            <ServiceIcon slug={service.slug} className="size-7 text-ink-accent" />
             <h1 className="display-type mt-5 text-[clamp(2rem,5vw,3.5rem)]">
               {service.name[locale as Locale]}
             </h1>
@@ -326,26 +338,23 @@ export default async function ServicePage({
           </div>
         ) : (
           <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
-            {related.map((other) => {
-              const OtherIcon = SERVICE_ICONS[other.slug];
-              return (
-                <li key={other.slug} className="bg-page">
-                  <Link
-                    href={`/leistungen/${other.slug}`}
-                    className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
-                  >
-                    <OtherIcon className="size-5 text-ink-accent" aria-hidden />
-                    <h3 className="mt-4 font-medium">{other.name[locale as Locale]}</h3>
-                    <p className="mt-2 flex-1 text-sm text-ink-secondary">
-                      {other.short[locale as Locale]}
-                    </p>
-                    <p className="mt-4">
-                      <Money amount={serviceFromPrice(other.minDuration)} from />
-                    </p>
-                  </Link>
-                </li>
-              );
-            })}
+            {related.map((other) => (
+              <li key={other.slug} className="bg-page">
+                <Link
+                  href={`/leistungen/${other.slug}`}
+                  className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
+                >
+                  <ServiceIcon slug={other.slug} className="size-5 text-ink-accent" />
+                  <h3 className="mt-4 font-medium">{other.name[locale as Locale]}</h3>
+                  <p className="mt-2 flex-1 text-sm text-ink-secondary">
+                    {other.short[locale as Locale]}
+                  </p>
+                  <p className="mt-4">
+                    <Money amount={serviceFromPrice(other.minDuration)} from />
+                  </p>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </Section>

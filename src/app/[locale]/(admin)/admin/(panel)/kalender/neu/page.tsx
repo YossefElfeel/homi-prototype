@@ -15,6 +15,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { dayBlockReason, type DayBlockReason } from '@/mock/engines/availability';
 import type { CalendarEventKind, ServiceSlug } from '@/mock/schema';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 type Mode = 'job' | 'event';
@@ -93,7 +94,7 @@ export default function NewAppointmentPage() {
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const activeServices = services.filter((s) => s.active);
+  const activeServices = services.filter(isOffered);
   const blockedMessage =
     blocked === 'closed-day'
       ? t('blockedClosedDay')

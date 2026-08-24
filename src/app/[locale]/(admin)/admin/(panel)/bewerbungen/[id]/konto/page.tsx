@@ -44,7 +44,7 @@ export default function ConvertApplicantPage({
 
   const [email, setEmail] = useState<string | null>(null);
   const [regions, setRegions] = useState<string[] | null>(null);
-  const [skills, setSkills] = useState<ServiceSlug[] | null>(null);
+  const [skills, setSkills] = useState<string[] | null>(null);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
   if (!application) return <p className="text-ink-tertiary">—</p>;
@@ -57,7 +57,7 @@ export default function ConvertApplicantPage({
   const skillValue =
     skills ??
     (application.experienceAreas.includes('assembly')
-      ? (['moebelmontage'] as ServiceSlug[])
+      ? ['moebelmontage']
       : (['unterhaltsreinigung', 'einmalreinigung'] as ServiceSlug[]));
 
   function confirm() {

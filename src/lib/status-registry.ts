@@ -22,7 +22,8 @@ export type StatusEntity =
   | 'review'
   | 'application'
   | 'payment'
-  | 'key';
+  | 'key'
+  | 'service';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   // §4.1
@@ -135,6 +136,23 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   key: {
     held: 'info',
     returned: 'neutral',
+  },
+  /*
+   * §17.2. The catalogue drew its own two colours inline — a hand-typed
+   * `bg-status-success` against a hand-typed `bg-status-neutral` in the cell —
+   * for the two states a boolean could hold. Adding a third made that
+   * untenable, which is the good reason to move it here rather than add a
+   * branch to the ternary.
+   *
+   * `draft` is warning, not neutral: an unfinished service is the one row on
+   * the list that is asking for something. `inactive` is neutral, because a
+   * service the office retired is a decision that has already been made — the
+   * same reasoning that keeps a cancelled invoice grey.
+   */
+  service: {
+    draft: 'warning',
+    active: 'success',
+    inactive: 'neutral',
   },
 };
 

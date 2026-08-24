@@ -8,9 +8,10 @@ import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
 import { Field, Input } from '@/components/ui/field';
 import { BookingStep } from '@/components/booking/booking-step';
-import { SERVICE_ICONS, serviceFromPrice } from '@/components/site/service-grid';
+import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { durationRange } from '@/mock/engines/pricing';
 import { useHydrated, useStore } from '@/mock/store';
+import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
@@ -41,7 +42,7 @@ export default function ServiceStep({
    */
   const [prefilled] = useState(
     () =>
-      Boolean(leistung && services.some((s) => s.slug === leistung && s.active)) ||
+      Boolean(leistung && services.some((s) => s.slug === leistung && isOffered(s))) ||
       Boolean(plz && /^\d{4}$/.test(plz)) ||
       sellable(abo),
   );
@@ -62,7 +63,7 @@ export default function ServiceStep({
 
     const patch: Parameters<typeof updateDraft>[0] = {};
 
-    const service = services.find((s) => s.slug === leistung && s.active);
+    const service = services.find((s) => s.slug === leistung && isOffered(s));
     if (service) {
       patch.serviceSlug = service.slug;
       // Same dependent resets the radio does — add-ons are service-scoped.
@@ -105,10 +106,9 @@ export default function ServiceStep({
         <legend className="sr-only">{t('title')}</legend>
         <ul className="grid gap-3 sm:grid-cols-2">
           {services
-            .filter((s) => s.active)
+            .filter(isOffered)
             .sort((a, b) => a.order - b.order)
             .map((service) => {
-              const Icon = SERVICE_ICONS[service.slug];
               const range = durationRange(service.durationProfile);
               const active = draft.serviceSlug === service.slug;
 
@@ -138,7 +138,7 @@ export default function ServiceStep({
                         })
                       }
                     />
-                    <Icon className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
+                    <ServiceIcon slug={service.slug} className="mt-0.5 size-5 shrink-0 text-ink-accent" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-start justify-between gap-2">
                         <span className="font-medium">{service.name[locale]}</span>
