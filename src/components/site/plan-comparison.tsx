@@ -6,7 +6,7 @@ import type { Locale } from '@/i18n/routing';
 import type { Plan } from '@/mock/schema';
 import { formatChf } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
-import { planSaving, plansByService } from '@/lib/plan-facts';
+import { planSaving, plansByService, recommendedPlan } from '@/lib/plan-facts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -89,6 +89,20 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
   const settings = useStore((s) => s.settings);
 
   const anySaving = plans.some((p) => planSaving(p));
+  /*
+   * The same plan the cards above raise and ribbon, marked here too.
+   *
+   * The rails crowned one plan and the table gave no sign of it — a reader who
+   * had just been told which one we suggest arrived at seven rows of numbers
+   * with all three columns weighted equally, and had to remember rather than
+   * see it. Worse, a table is where somebody goes to argue with the
+   * recommendation: this is the screen where the suggestion has to be visible
+   * *next to* the figures that justify or refute it.
+   *
+   * Read from `recommendedPlan` rather than re-derived, so the column that is
+   * tinted here is by construction the card that is raised there.
+   */
+  const recommended = recommendedPlan(plans);
 
   const rows: { label: string; value: (plan: Plan) => string; strong?: boolean }[] = [
     { label: t('rowPrice'), value: (p) => formatChf(p.price, locale), strong: true },
@@ -138,14 +152,30 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
                 &nbsp;
               </th>
               {plans.map((plan) => (
-                <th key={plan.id} scope="col" className="subhead-type px-4 py-4 text-xl">
+                <th
+                  key={plan.id}
+                  scope="col"
+                  className={cn(
+                    'subhead-type px-4 pb-4 text-xl',
+                    // The tint runs the height of the column, so the header
+                    // cell opens it rather than sitting on top of it.
+                    recommended?.id === plan.id
+                      ? 'rounded-t-[var(--radius-md)] bg-accent-subtle pt-3'
+                      : 'pt-4',
+                  )}
+                >
+                  {recommended?.id === plan.id && (
+                    <span className="label-type mb-1.5 block text-ink-accent">
+                      {t('recommended')}
+                    </span>
+                  )}
                   {plan.name[locale]}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, rowIndex) => (
               <tr key={row.label} className="border-b border-line last:border-0">
                 <th scope="row" className="px-4 py-3.5 font-normal text-ink-secondary">
                   {row.label}
@@ -154,7 +184,16 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
                   <td
                     key={plan.id}
                     data-numeric
-                    className={cn('px-4 py-3.5', row.strong && 'text-lg font-medium')}
+                    className={cn(
+                      'px-4 py-3.5',
+                      row.strong && 'text-lg font-medium',
+                      recommended?.id === plan.id && 'bg-accent-subtle',
+                      // Closes the tinted column on the last row. `last:` on
+                      // the cell would match the last cell of every row.
+                      recommended?.id === plan.id &&
+                        rowIndex === rows.length - 1 &&
+                        'rounded-b-[var(--radius-md)]',
+                    )}
                   >
                     {row.value(plan)}
                   </td>
@@ -170,7 +209,17 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
           squeezed table. */}
       <div className="mt-6 space-y-5 lg:hidden">
         {plans.map((plan) => (
-          <div key={plan.id} className="surface-card p-6">
+          <div
+            key={plan.id}
+            className={cn(
+              'surface-card p-6',
+              // No column to tint on a phone, so the block itself carries it.
+              recommended?.id === plan.id && 'border-line-strong bg-accent-subtle',
+            )}
+          >
+            {recommended?.id === plan.id && (
+              <p className="label-type mb-1.5 text-ink-accent">{t('recommended')}</p>
+            )}
             <h4 className="subhead-type text-xl">{plan.name[locale]}</h4>
             <dl className="mt-4 divide-y divide-line border-t border-line">
               {rows.map((row) => (

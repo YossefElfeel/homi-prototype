@@ -28,6 +28,28 @@ export function planOf(subscription: Subscription, plans: Plan[]): Plan | undefi
 }
 
 /**
+ * The plan a group leads with, or nothing when the group has no middle.
+ *
+ * The middle one, not the dearest one: a "recommended" badge on the top tier
+ * reads as a sales tactic to this audience, and picking by position rather
+ * than by name is what lets the office add or retire a plan without the ribbon
+ * landing on nothing. Three or more, because a pair has no middle — on two
+ * plans the old test crowned the cheaper one, which is an accident of rounding
+ * an index rather than a recommendation.
+ *
+ * Derived here rather than computed in each view, because three views make the
+ * claim: the marketing rail, the other direction's rail, and the comparison
+ * table. Two of them had the rule written out and the third had nothing at
+ * all, so the table gave no sign which column the cards above it had just
+ * pointed at. Three copies of a rule is two chances to change one and not the
+ * others.
+ */
+export function recommendedPlan(plans: Plan[]): Plan | undefined {
+  if (plans.length < 3) return undefined;
+  return plans[Math.floor((plans.length - 1) / 2)];
+}
+
+/**
  * What the package saves against buying the same visits one at a time, or
  * nothing if it saves nothing.
  *

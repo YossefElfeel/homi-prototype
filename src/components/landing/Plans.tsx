@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
 import { Money, formatChf } from "@/components/ui/money";
 import { planRhythm } from "@/lib/offer-facts";
-import { planSaving, plansByService } from "@/lib/plan-facts";
+import { planSaving, plansByService, recommendedPlan } from "@/lib/plan-facts";
 import { useStore } from "@/mock/store";
 import type { Plan } from "@/mock/schema";
 import type { Locale } from "@/i18n/routing";
@@ -234,6 +234,7 @@ function PlanRail({
    */
   immediate?: boolean;
 }) {
+  const recommended = recommendedPlan(plans);
   const reveal = immediate
     ? ({ animate: "show" } as const)
     : ({ whileInView: "show", viewport: { once: true, amount: 0.12 } } as const);
@@ -257,18 +258,12 @@ function PlanRail({
             : "lg:grid-cols-3"
       } ${className}`}
     >
-      {plans.map((plan, index) => (
+      {plans.map((plan) => (
         <PlanCard
           key={plan.id}
           plan={plan}
-          /* The middle one, not the dearest one. A "recommended" badge on the
-             top tier reads as a sales tactic to this audience, and picking by
-             position is what lets the office add or retire a plan without the
-             ribbon landing on nothing.
-             Three or more, because a pair has no middle: on the two office
-             plans the old `> 1` crowned the cheaper one, which is not a
-             recommendation, it is an accident of rounding an index. */
-          featured={plans.length >= 3 && index === Math.floor((plans.length - 1) / 2)}
+          /* Same answer the comparison table marks. See `recommendedPlan`. */
+          featured={recommended?.id === plan.id}
           immediate={immediate}
         />
       ))}

@@ -8,7 +8,7 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
-import { planSaving, plansByService } from '@/lib/plan-facts';
+import { planSaving, plansByService, recommendedPlan } from '@/lib/plan-facts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Plan } from '@/mock/schema';
 import { useStore } from '@/mock/store';
@@ -91,22 +91,13 @@ function Rail({ plans: shown, compact }: { plans: Plan[]; compact: boolean }) {
   const t = useTranslations('site.plans');
   const rhythmT = useTranslations('admin.rhythm');
   const locale = useLocale() as Locale;
+  const recommended = recommendedPlan(shown);
 
   return (
     <ul className={cn('grid gap-5', shown.length > 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2')}>
-      {shown.map((plan, index) => {
-        /*
-         * The middle one, not the dearest one.
-         *
-         * A "recommended" badge on the top tier reads as a sales tactic and
-         * this audience discounts it. Picking it by position rather than by
-         * name is what lets the office add or retire a plan without the badge
-         * ending up on nothing.
-         */
-        // Three or more: a pair has no middle, and `> 1` crowned the cheaper
-        // of two, which is an accident of rounding an index, not a
-        // recommendation.
-        const featured = shown.length >= 3 && index === Math.floor((shown.length - 1) / 2);
+      {shown.map((plan) => {
+        // Same answer the comparison table marks. See `recommendedPlan`.
+        const featured = recommended?.id === plan.id;
         const saving = planSaving(plan);
 
         return (
