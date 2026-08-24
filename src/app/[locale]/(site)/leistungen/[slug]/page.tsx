@@ -16,6 +16,7 @@ import { Faq } from '@/components/ui/accordion';
 import { CtaBand } from '@/components/signature/cta-band';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { Masthead } from '@/components/landing/Masthead';
+import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
 import { SectionHead } from '@/components/landing/PageSection';
 import { formatChf } from '@/components/ui/money';
 
@@ -177,7 +178,9 @@ export default async function ServicePage({
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 py-4">
-              <dt className="text-sm text-ink-secondary">Stundensatz</dt>
+              {/* Was the literal "Stundensatz", printed on the English route
+                  as well as the German one. */}
+              <dt className="text-sm text-ink-secondary">{pricing('rateLabel')}</dt>
               <dd>
                 <Money amount={SEED_SETTINGS.hourlyRate} per="hour" />
               </dd>
@@ -248,26 +251,34 @@ export default async function ServicePage({
           ) : (
             <SectionHeading theme={theme} title={t('addOnsTitle')} align="start" />
           )}
-          <ul
-            className={
-              hv
-                ? 'mt-10 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                : 'mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-2 lg:grid-cols-3'
-            }
-          >
+          {/*
+           * White cards, because the section they stand on is grey.
+           *
+           * They were `hv-card-light`, which paints `--surface-sunken` — the
+           * exact colour of a `tone="sunken"` section. Every add-on card was
+           * therefore invisible: what reached the page was five headings, five
+           * lines of body copy and a hairline rule floating on grey, with no
+           * edge anywhere to say where one add-on ended and the next began.
+           * A card's whole job is to be a boundary, and this one had been
+           * asked to be the same colour as the thing it was bounding.
+           *
+           * The price is the reason this section exists — it is what turns
+           * "we could also do the oven" into a decision — so it is set at the
+           * size of a decision rather than at body size.
+           */}
+          <ul className="mt-8 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {addOns.map((addOn) => (
-              <li key={addOn.slug} className={hv ? 'hv-card hv-card-light p-6' : 'bg-page p-6'}>
+              <li key={addOn.slug} className="surface-card flex h-full flex-col p-6">
                 <h3 className="font-medium">{addOn.name[locale as Locale]}</h3>
-                <p className="mt-1.5 text-sm text-ink-secondary">
+                <p className="mt-1.5 flex-1 text-sm text-ink-secondary">
                   {addOn.short[locale as Locale]}
                 </p>
-                <p
-                  className={`mt-4 flex items-baseline justify-between pt-3 ${
-                    hv ? 'border-t border-line' : 'border-t border-line-subtle'
-                  }`}
-                >
-                  <Money amount={addOn.price} />
-                  <span data-numeric className="text-sm text-ink-tertiary">
+                <p className="mt-5 flex items-baseline justify-between gap-3 border-t border-line pt-4">
+                  <Money amount={addOn.price} className="text-xl" />
+                  <span
+                    data-numeric
+                    className="bg-sunken text-ink-secondary shrink-0 rounded-full px-2.5 py-1 text-sm"
+                  >
                     +{addOn.extraDuration} h
                   </span>
                 </p>
@@ -284,7 +295,9 @@ export default async function ServicePage({
             <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{t('calcBody')}</p>
             <Button asChild variant="link" className="mt-5">
               <Link href="/preise">
-                Alle Preise ansehen
+                {/* Was the literal string "Alle Preise ansehen" — German, on
+                    the English route as well as the German one. */}
+                {pricing('allPricesCta')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </Button>
@@ -302,28 +315,39 @@ export default async function ServicePage({
         ) : (
           <SectionHeading theme={theme} title={t('relatedTitle')} align="start" />
         )}
-        <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
-          {related.map((other) => {
-            const OtherIcon = SERVICE_ICONS[other.slug];
-            return (
-              <li key={other.slug} className="bg-page">
-                <Link
-                  href={`/leistungen/${other.slug}`}
-                  className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
-                >
-                  <OtherIcon className="size-5 text-ink-accent" aria-hidden />
-                  <h3 className="mt-4 font-medium">{other.name[locale as Locale]}</h3>
-                  <p className="mt-2 flex-1 text-sm text-ink-secondary">
-                    {other.short[locale as Locale]}
-                  </p>
-                  <p className="mt-4">
-                    <Money amount={serviceFromPrice(other.minDuration)} from />
-                  </p>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {hv ? (
+          /* The same tiles /leistungen shows, not a second design for the same
+             cards. Three services led out of this page in a flat white strip
+             with hairline dividers while the index led into them with photo
+             tiles — the two screens disagreed about what a service card is,
+             and the visitor crossing between them saw the disagreement. */
+          <div className="mt-8">
+            <ServiceMosaic exclude={service.slug} limit={3} />
+          </div>
+        ) : (
+          <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
+            {related.map((other) => {
+              const OtherIcon = SERVICE_ICONS[other.slug];
+              return (
+                <li key={other.slug} className="bg-page">
+                  <Link
+                    href={`/leistungen/${other.slug}`}
+                    className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
+                  >
+                    <OtherIcon className="size-5 text-ink-accent" aria-hidden />
+                    <h3 className="mt-4 font-medium">{other.name[locale as Locale]}</h3>
+                    <p className="mt-2 flex-1 text-sm text-ink-secondary">
+                      {other.short[locale as Locale]}
+                    </p>
+                    <p className="mt-4">
+                      <Money amount={serviceFromPrice(other.minDuration)} from />
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Section>
 
       <CtaBand theme={theme} />

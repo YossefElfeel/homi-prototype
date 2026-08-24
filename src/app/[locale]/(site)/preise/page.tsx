@@ -5,14 +5,14 @@ import { Info } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { routing, type Locale } from '@/i18n/routing';
 import { getTheme } from '@/lib/theme-server';
-import { SEED_SERVICES, SEED_SETTINGS } from '@/mock/seed';
-import { DURATION_TIERS } from '@/mock/engines/pricing';
+import { SEED_SETTINGS } from '@/mock/seed';
 import { Money } from '@/components/ui/money';
 import { Button } from '@/components/ui/button';
 import { Faq } from '@/components/ui/accordion';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
-import { serviceFromPrice } from '@/components/site/service-grid';
+import { PriceList } from '@/components/site/price-list';
+import { DurationMatrix } from '@/components/site/duration-matrix';
 import { Masthead } from '@/components/landing/Masthead';
 import { SectionHead } from '@/components/landing/PageSection';
 import { formatChf } from '@/components/ui/money';
@@ -106,51 +106,15 @@ export default async function PricingPage({
         ) : (
           <SectionHeading theme={theme} title={t('tableTitle')} align="start" />
         )}
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-lg border-collapse text-left">
-            <thead>
-              <tr className="border-b border-line">
-                <th scope="col" className="label-type py-3 pr-4 text-ink-tertiary">
-                  {t('tableService')}
-                </th>
-                <th scope="col" className="label-type py-3 pr-4 text-ink-tertiary">
-                  {t('tableMethod')}
-                </th>
-                <th scope="col" className="label-type py-3 text-right text-ink-tertiary">
-                  {t('tableFrom')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {SEED_SERVICES.filter((service) => service.active)
-                .sort((a, b) => a.order - b.order)
-                .map((service) => (
-                  <tr key={service.slug} className="hv-row border-b border-line-subtle">
-                    <th scope="row" className="py-4 pr-4 font-normal">
-                      <Link
-                        href={`/leistungen/${service.slug}`}
-                        className="transition-colors hover:text-ink-accent"
-                      >
-                        {service.name[locale as Locale]}
-                      </Link>
-                    </th>
-                    <td className="py-4 pr-4 text-ink-secondary">
-                      {service.calc === 'perUnit' ? t('methodPerUnit') : t('methodHourly')}
-                    </td>
-                    <td className="py-4 text-right">
-                      <span
-                        className={
-                          hv ? 'display-type text-[36px] leading-none' : undefined
-                        }
-                      >
-                        <Money amount={serviceFromPrice(service.minDuration)} />
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+        <div className="mt-8">
+          <PriceList locale={locale as Locale} display={hv} />
         </div>
+        {/* The floor, said once and in words. It used to be a column header
+            reading "From", which left the reader to work out for themselves
+            what the number was the floor of. */}
+        <p className="mt-5 max-w-[var(--measure)] text-sm text-ink-secondary">
+          {t('tableFloor')}
+        </p>
       </Section>
 
       <Section>
@@ -164,42 +128,7 @@ export default async function PricingPage({
             align="start"
           />
         )}
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-lg border-collapse text-left">
-            <thead>
-              <tr className="border-b border-line">
-                <th scope="col" className="label-type py-3 pr-4 text-ink-tertiary">
-                  {t('durationArea')}
-                </th>
-                {(['durationStandard', 'durationDeep', 'durationMoveout', 'durationOffice'] as const).map(
-                  (key) => (
-                    <th
-                      key={key}
-                      scope="col"
-                      className="label-type py-3 pr-4 text-right text-ink-tertiary"
-                    >
-                      {t(key)}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {DURATION_TIERS.map((tier) => (
-                <tr key={tier.label} className="border-b border-line-subtle">
-                  <th scope="row" data-numeric className="py-4 pr-4 font-normal">
-                    {tier.label}
-                  </th>
-                  {[tier.standard, tier.deep, tier.moveout, tier.office].map((hours, i) => (
-                    <td key={i} data-numeric className="py-4 pr-4 text-right">
-                      {hours} h
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DurationMatrix />
         <p className="mt-5 max-w-[var(--measure)] text-sm text-ink-secondary">
           {t('durationExtras')}
         </p>
@@ -211,38 +140,55 @@ export default async function PricingPage({
         ) : (
           <SectionHeading theme={theme} title={t('extrasTitle')} align="start" />
         )}
-        <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt className="font-medium">{t('extraTravelTitle')}</dt>
-            <dd className="mt-2 text-sm text-ink-secondary">{t('extraTravelBody')}</dd>
-          </div>
-          <div>
-            <dt className="font-medium">
-              {t('extraSaturdayTitle')}
-              <span data-numeric className="ml-2 text-ink-tertiary">
-                +{s.saturdaySurchargePercent}%
+        {/*
+         * Cards, and the surcharge said as a surcharge.
+         *
+         * Four columns of loose `dt`/`dd` on a grey slab gave the section no
+         * edges at all — the reader had to infer where one surcharge stopped
+         * and the next began from the line breaks. And the two that cost money
+         * carried their percentage as grey text trailing the heading, quieter
+         * than the heading it qualified: on a page about what things cost, the
+         * number was the least visible thing in the block.
+         *
+         * "Free" is a figure too, and it is the answer to the question the
+         * travel card is actually asked, so it gets the same badge.
+         */}
+        <dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {(
+            [
+              { key: 'extraTravel', badge: t('extraFree'), tone: 'quiet' },
+              { key: 'extraSaturday', badge: `+${s.saturdaySurchargePercent}%`, tone: 'loud' },
+              {
+                key: 'extraEvening',
+                badge: `+${s.eveningSurchargePercent}%`,
+                tone: 'loud',
+                note: t('extraFrom', { time: s.eveningSurchargeFrom }),
+              },
+              { key: 'vat', badge: t('vatBadge'), tone: 'quiet' },
+            ] as const
+          ).map((item) => (
+            <div key={item.key} className="surface-card flex flex-col p-6">
+              <span
+                data-numeric
+                className={`self-start rounded-full px-2.5 py-1 text-sm font-medium ${
+                  item.tone === 'loud'
+                    ? 'bg-accent-subtle text-ink-accent'
+                    : 'bg-sunken text-ink-secondary'
+                }`}
+              >
+                {item.badge}
               </span>
-            </dt>
-            <dd className="mt-2 text-sm text-ink-secondary">{t('extraSaturdayBody')}</dd>
-          </div>
-          <div>
-            <dt className="font-medium">
-              {t('extraEveningTitle')}
-              <span data-numeric className="ml-2 text-ink-tertiary">
-                +{s.eveningSurchargePercent}%
-              </span>
-            </dt>
-            <dd className="mt-2 text-sm text-ink-secondary">
-              {t('extraEveningBody')}
-              <span data-numeric className="ml-1">
-                (ab {s.eveningSurchargeFrom})
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt className="font-medium">{t('vatTitle')}</dt>
-            <dd className="mt-2 text-sm text-ink-secondary">{t('vatBody')}</dd>
-          </div>
+              <dt className="mt-4 font-medium">{t(`${item.key}Title`)}</dt>
+              <dd className="mt-2 text-sm text-ink-secondary">
+                {t(`${item.key}Body`)}
+                {/* The threshold is a setting, so it is written by the
+                    translation rather than glued on in JSX — the "(ab 17:00)"
+                    it replaces was a German preposition printed on the English
+                    page. */}
+                {'note' in item ? <span className="mt-1 block">{item.note}</span> : null}
+              </dd>
+            </div>
+          ))}
         </dl>
       </Section>
 

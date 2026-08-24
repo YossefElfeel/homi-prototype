@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
-import { ImagePlaceholder } from '@/components/ui/image-placeholder';
+import { BeforeAfter } from '@/components/site/before-after';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Photo } from '@/mock/schema';
@@ -22,8 +22,14 @@ interface Work {
  * Screens 5 and 6 — the gallery grid and the expanded single work.
  *
  * §20.6: photos are internal by default and only appear here with recorded
- * written consent. So the empty state is not an edge case — it is the launch
- * state, and it has to explain *why* it is empty rather than look broken.
+ * written consent. So the empty state is not an edge case — it is what the
+ * page shows the day nobody has signed one, and it has to explain *why* it is
+ * empty rather than look broken. It is reached from the control that governs
+ * it: a customer turning consent off in /konto/fotos empties this page.
+ *
+ * Each work is a slider rather than two frames side by side. See `BeforeAfter`
+ * for why: half-width frames a gutter apart make the reader align the two
+ * pictures themselves, which is the work the component is supposed to do.
  */
 export function Gallery() {
   const t = useTranslations('site.gallery');
@@ -35,9 +41,7 @@ export function Gallery() {
   const works: Work[] = [];
   for (const photo of consented) {
     if (photo.kind !== 'before' || !photo.bookingId) continue;
-    const after = consented.find(
-      (p) => p.bookingId === photo.bookingId && p.kind === 'after',
-    );
+    const after = consented.find((p) => p.bookingId === photo.bookingId && p.kind === 'after');
     if (after) works.push({ id: photo.bookingId, before: photo, after });
   }
 
@@ -60,32 +64,35 @@ export function Gallery() {
   return (
     <>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {works.map((work) => (
+        {works.map((work, i) => (
           <li key={work.id}>
-            <button
-              type="button"
-              onClick={() => setOpen(work)}
-              className="group block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
-            >
-              <span className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] bg-line">
-                <ImagePlaceholder
-                  seed={`${work.id}-before`}
-                  alt={`${t('before')} — ${work.before.note ?? ''}`}
-                  className="aspect-square"
-                />
-                <ImagePlaceholder
-                  seed={`${work.id}-after`}
-                  alt={`${t('after')} — ${work.after.note ?? ''}`}
-                  className="aspect-square"
-                />
-              </span>
-              <span className="mt-3 flex items-center justify-between text-sm">
-                <span className="text-ink-secondary">{work.before.note}</span>
-                <span className="label-type text-ink-tertiary">
-                  {t('before')} / {t('after')}
-                </span>
-              </span>
-            </button>
+            <BeforeAfter
+              beforeSrc={work.before.src}
+              afterSrc={work.after.src}
+              alt={work.after.note ?? t('title')}
+              beforeLabel={t('before')}
+              afterLabel={t('after')}
+              sliderLabel={`${t('compare')} — ${work.after.note ?? ''}`}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              // The first tile is above the fold on this page and was loading
+              // lazily; the rest are not, and marking them all would have four
+              // photographs competing for the same early bandwidth.
+              priority={i === 0}
+              className="aspect-4/3 rounded-[var(--radius-lg)]"
+            />
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <p className="text-sm text-ink-secondary">{work.before.note}</p>
+              {/* A separate control, because the slider already owns every
+                  pixel of the picture. A card that both slides and opens on
+                  click would do the wrong one of the two every time. */}
+              <button
+                type="button"
+                onClick={() => setOpen(work)}
+                className="label-type shrink-0 text-ink-accent underline-offset-4 transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+              >
+                {t('expand')}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -100,11 +107,11 @@ export function Gallery() {
                   {open?.before.note ?? t('title')}
                 </Dialog.Title>
                 <Dialog.Description className="mt-2 text-sm text-ink-secondary">
-                  {t('lead')}
+                  {t('compareHint')}
                 </Dialog.Description>
               </div>
               <Dialog.Close
-                aria-label="Schliessen"
+                aria-label={t('close')}
                 className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors hover:bg-sunken"
               >
                 <X className="size-5" aria-hidden />
@@ -112,25 +119,16 @@ export function Gallery() {
             </div>
 
             {open && (
-              <div className="mt-6 grid flex-1 gap-4 lg:grid-cols-2">
-                {(
-                  [
-                    [t('before'), open.before],
-                    [t('after'), open.after],
-                  ] as const
-                ).map(([label, photo]) => (
-                  <figure key={label} className="flex flex-col">
-                    <ImagePlaceholder
-                      seed={`${open.id}-${label}`}
-                      alt={`${label} — ${photo.note ?? ''}`}
-                      className="aspect-4/3 flex-1 rounded-[var(--radius-md)]"
-                    />
-                    <figcaption className="label-type mt-3 text-ink-tertiary">
-                      {label}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
+              <BeforeAfter
+                beforeSrc={open.before.src}
+                afterSrc={open.after.src}
+                alt={open.after.note ?? t('title')}
+                beforeLabel={t('before')}
+                afterLabel={t('after')}
+                sliderLabel={`${t('compare')} — ${open.after.note ?? ''}`}
+                sizes="(max-width: 1024px) 92vw, 80vw"
+                className="mt-6 min-h-0 flex-1 rounded-[var(--radius-md)]"
+              />
             )}
           </Dialog.Content>
         </Dialog.Portal>

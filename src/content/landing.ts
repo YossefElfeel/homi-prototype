@@ -77,12 +77,20 @@ export type Content = {
     eyebrow: string;
     headline: string;
     rating: string;
+    /** `{n}` is the card's own score. */
+    starsLabel: string;
     items: {
       quote: string;
       lead: string;
       name: string;
       country: string;
       avatar: string;
+      /**
+       * Out of five. Optional, and absent means five — the aggregate above
+       * the rail says 5.0, so a card with nothing of its own is a five, and
+       * the day a four-star review is added it says four here.
+       */
+      rating?: number;
     }[];
   };
   footer: {
@@ -309,6 +317,7 @@ const en: Content = {
     eyebrow: "Testimonials",
     headline: "Driven by a performance mindset",
     rating: "Based on 200+ reviews",
+    starsLabel: "Rated {n} out of 5",
     items: [
       {
         quote:
@@ -537,6 +546,7 @@ const de: Content = {
     eyebrow: "Kundenstimmen",
     headline: "Angetrieben von Leistungsdenken",
     rating: "Basierend auf 200+ Bewertungen",
+    starsLabel: "Mit {n} von 5 bewertet",
     items: [
       {
         quote:

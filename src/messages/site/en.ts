@@ -127,6 +127,8 @@ export const siteEn: typeof siteDe = {
     tableService: 'Service',
     tableMethod: 'Billing',
     tableFrom: 'From',
+    tableFloor:
+      'Each figure is the floor: the two-hour minimum at the hourly rate, or the service’s own higher minimum. What you pay is the hours actually worked, quoted before anyone comes.',
     methodHourly: 'By the hour',
     methodPerUnit: 'By count',
     durationTitle: 'How we estimate the hours',
@@ -140,6 +142,9 @@ export const siteEn: typeof siteDe = {
     durationExtras:
       'Plus half an hour per additional bathroom, half an hour where there are pets, and an hour when the condition calls for noticeably more work.',
     extrasTitle: 'What can be added',
+    extraFree: 'Free',
+    extraFrom: 'From {time}.',
+    vatBadge: 'None',
     extraTravelTitle: 'Travel',
     extraTravelBody:
       'Free inside the service area. Further out we review the request by hand and show travel as its own line.',
@@ -149,6 +154,7 @@ export const siteEn: typeof siteDe = {
     extraEveningBody: 'For jobs starting after the configured time. Also its own line.',
     vatTitle: 'VAT',
     vatBody: 'Homivaro is not VAT registered. The amount in the quote is the amount you pay.',
+    allPricesCta: 'See all prices',
     noticeTitle: 'The binding price is in the quote',
     noticeBody:
       'The figures here are guides. After your request we assess the property and send a written quote with every line itemised, within 24 hours.',
@@ -167,10 +173,14 @@ export const siteEn: typeof siteDe = {
     eyebrow: 'Plans',
     title: 'Regular cleaning without planning it every time',
     lead: 'A package of visits, paid once, valid for a year. We propose the slot; you can move it whenever you like.',
-    recommended: 'For most households',
+    recommended: 'Our recommendation',
+    wasPrice: 'Bought one visit at a time:',
+    saveBadge: 'Save {percent}%',
     priceNote: '{visits} visits · valid {months} months · paid once',
+    byServiceNav: 'Jump to plans by service',
     compareTitle: 'Side by side',
     rowPrice: 'Price',
+    rowSaving: 'You save',
     rowVisits: 'Visits included',
     rowFrequency: 'Rhythm',
     rowTerm: 'Valid for',
@@ -200,6 +210,10 @@ export const siteEn: typeof siteDe = {
     lead: 'Every image is published with the explicit written consent of the customer.',
     before: 'Before',
     after: 'After',
+    compare: 'Drag to compare before and after',
+    compareHint: 'Drag the divider, or use the arrow keys, to move between before and after.',
+    expand: 'Open larger',
+    close: 'Close',
     emptyTitle: 'No released images yet',
     emptyBody:
       'We photograph every job before and after — but only publish what a customer explicitly releases. This gallery fills up as the first consents come in.',
@@ -209,6 +223,8 @@ export const siteEn: typeof siteDe = {
   about: {
     meta: { title: 'About us' },
     eyebrow: 'About us',
+    factResponse: 'Until you hear back, on a working day',
+    factRegions: 'Municipalities we cover',
     title: 'One person, one service area, clear rules.',
     storyTitle: 'Why Homivaro exists',
     story1:
@@ -246,6 +262,8 @@ export const siteEn: typeof siteDe = {
     eyebrow: 'Contact',
     title: 'Talk to us',
     lead: 'For questions about a live booking, or if something was not right.',
+    factResponse: 'Until you hear back, on a working day',
+    factRegions: 'Municipalities we cover',
     quoteHintTitle: 'Looking for a price?',
     quoteHintBody:
       'The request form is faster — it captures everything we need in order to quote.',
@@ -336,6 +354,8 @@ export const siteEn: typeof siteDe = {
     },
     about: {
       lines: [{ lead: 'One person, one area,' }, { accent: 'clear rules.' }],
+      storyLines: [{ lead: 'Why Homivaro' }, { accent: 'exists.' }],
+      commitmentsLines: [{ lead: 'What you can' }, { accent: 'hold us to.' }],
       valuesLines: [{ lead: 'What we' }, { accent: 'stand for.' }],
       regionLines: [{ lead: 'Where we' }, { accent: 'work.' }],
       careersLines: [{ lead: 'Working' }, { accent: 'with us.' }],

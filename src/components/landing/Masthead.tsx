@@ -127,7 +127,9 @@ export function Masthead({
                 transition={{ duration: 0.8, ease: EASE, delay: 0.72 }}
                 className="mt-9"
               >
-                <Button href={action.href} variant="red">
+                {/* The masthead card is navy — a red button washing navy
+                    here would erase itself on hover. */}
+                <Button href={action.href} variant="red" surface="inverse">
                   {action.label}
                 </Button>
               </motion.div>

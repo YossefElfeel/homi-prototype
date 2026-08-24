@@ -486,6 +486,10 @@ export const adminCrmDe = {
     serviceHint: 'Wogegen die enthaltenen Einsätze laufen.',
     price: 'Preis (CHF)',
     priceHint: 'Einmalig beim Abschluss zahlbar.',
+    listPrice: 'Einzeln gebucht (CHF)',
+    listPriceHint:
+      'Was dieselben Einsätze ohne Abo kosten. Die Website zeigt den Betrag durchgestrichen über dem Preis und rechnet die Ersparnis daraus. 0 heisst: keine Ersparnis ausweisen.',
+    listPriceTooLow: 'Muss über dem Preis liegen, sonst gibt es keine Ersparnis zu zeigen.',
     includedVisits: 'Enthaltene Einsätze',
     validityMonths: 'Gültigkeit (Monate)',
     validityHint: 'Danach verfällt das Paket — mit oder ohne Restguthaben.',

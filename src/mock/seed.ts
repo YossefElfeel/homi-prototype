@@ -545,6 +545,12 @@ const OWNER_SIGNATURE = {
  * the package earns for being paid up front. A price that cannot be re-derived
  * from the hourly rate is a price nobody can defend on the phone.
  *
+ * `listPrice` is that same arithmetic *before* the discount — 26 × 3 h × CHF 49
+ * — which is what makes the saving on the marketing card a subtraction anybody
+ * can redo rather than a number chosen because it looks large. Büro Kompakt
+ * carries none: its per-visit figure sits above the catalogue rate, so there is
+ * no saving to claim and the card must not invent one.
+ *
  * The rhythms are the ones the marketing page has always promised, kept rather
  * than quietly reduced. What that makes visible is the size of the up-front
  * payment — see the open question this raised on /open-questions, which the
@@ -565,6 +571,7 @@ export const SEED_PLANS: Plan[] = [
       l('Ein kostenloses Aussetzen pro Monat', 'One free skip a month'),
     ],
     price: 3440,
+    listPrice: 3822,
     includedVisits: 26,
     validityMonths: 12,
     serviceSlug: 'unterhaltsreinigung',
@@ -588,6 +595,7 @@ export const SEED_PLANS: Plan[] = [
       l('Ein kostenloses Aussetzen pro Monat', 'One free skip a month'),
     ],
     price: 6500,
+    listPrice: 7644,
     includedVisits: 52,
     validityMonths: 12,
     serviceSlug: 'unterhaltsreinigung',
@@ -611,6 +619,7 @@ export const SEED_PLANS: Plan[] = [
       l('Vorrang bei der Terminvergabe', 'Priority when dates are handed out'),
     ],
     price: 12230,
+    listPrice: 15288,
     includedVisits: 104,
     validityMonths: 12,
     serviceSlug: 'unterhaltsreinigung',
@@ -647,6 +656,67 @@ export const SEED_PLANS: Plan[] = [
     active: false,
     visibleOnSite: false,
     order: 4,
+  },
+  /*
+   * The office line, alive again and sold as two.
+   *
+   * /abos showed three plans, all of them the same service, and never said so
+   * — a business asking about their office read the household rhythms and the
+   * household price and had no way to tell whether any of it applied to them.
+   * One plan on its own does not fix that either: a single card has nothing to
+   * compare with, which is the whole reason somebody opens a plans page.
+   *
+   * Same arithmetic as the household plans, at the office duration: an office
+   * visit is two and a half hours at the CHF 49 rate, so `listPrice` is that
+   * times the visits and `price` is that less the package discount. Nothing
+   * here is a number chosen to look right.
+   */
+  {
+    id: 'pln_buero_standard',
+    reference: 'P-005',
+    name: l('Büro Standard', 'Office Standard'),
+    description: l(
+      'Alle zwei Wochen durchs Büro, ein Jahr im Voraus bezahlt.',
+      'Through the office every two weeks, paid a year in advance.',
+    ),
+    features: [
+      l('26 Einsätze im Jahr', '26 visits a year'),
+      l('10 % auf jede weitere Leistung', '10% off any further service'),
+      l('Rechnung auf die Firma', 'Invoiced to the company'),
+    ],
+    price: 2865,
+    listPrice: 3185,
+    includedVisits: 26,
+    validityMonths: 12,
+    serviceSlug: 'bueroreinigung',
+    extraDiscountPercent: 10,
+    active: true,
+    visibleOnSite: true,
+    order: 5,
+  },
+  {
+    id: 'pln_buero_plus',
+    reference: 'P-006',
+    name: l('Büro Plus', 'Office Plus'),
+    description: l(
+      'Wöchentlich, mit Vorrang bei der Terminvergabe.',
+      'Weekly, with priority when dates are handed out.',
+    ),
+    features: [
+      l('52 Einsätze im Jahr', '52 visits a year'),
+      l('15 % auf jede weitere Leistung', '15% off any further service'),
+      l('Vorrang bei der Terminvergabe', 'Priority when dates are handed out'),
+      l('Rechnung auf die Firma', 'Invoiced to the company'),
+    ],
+    price: 5410,
+    listPrice: 6370,
+    includedVisits: 52,
+    validityMonths: 12,
+    serviceSlug: 'bueroreinigung',
+    extraDiscountPercent: 15,
+    active: true,
+    visibleOnSite: true,
+    order: 6,
   },
 ];
 

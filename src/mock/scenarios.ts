@@ -879,6 +879,56 @@ function baseData(now: Date): DataSet {
       requestId: 'req_1',
       takenAt: iso(days(now, -1)),
     },
+    /*
+     * Three finished jobs whose customers signed the consent, so /referenzen
+     * has something to be.
+     *
+     * §20.6 has not moved: a photo reaches the public gallery only with
+     * recorded written consent, and the two request photos above still do not
+     * have it. What changed is that "nobody has ever consented" stopped being
+     * the only state the page could be in. It was the launch state and it was
+     * also the *permanent* state of the prototype — the grid, the pairing, the
+     * expanded view and the dialog were all unreachable without hand-editing
+     * the store, so the screen this page exists for had never been looked at
+     * by anyone reviewing the build.
+     *
+     * The empty state stays reachable, and by the control that governs it:
+     * a customer turns consent off in /konto/fotos and the work disappears
+     * from here. That is the rule working, not a fixture being deleted.
+     */
+    ...(
+      [
+        /*
+         * One photograph per job, and the same file on both sides of the pair.
+         *
+         * TODO:asset — real before-and-after pairs replace these. We have three
+         * photographs of the right rooms and no second frame of any of them, so
+         * the "before" is the same picture carried by `.hv-unclean`: the
+         * comparison slider, the drag, the labels and the grid are all real and
+         * reviewable, and the only thing standing in is the state of the room.
+         * Faking it with an unrelated photograph would be worse — a slider
+         * between two different rooms reads as a broken component.
+         *
+         * The day is the day the job actually ran, not a day near it. A photo
+         * dated before its own booking is the kind of detail a reviewer spots.
+         */
+        ['bkg_3', '/img/service-3.webp', 'Fensterreinigung, Wohnung Meilen', -6],
+        ['bkg_9', '/img/service-1.webp', 'Fensterreinigung, Wohnzimmer', -8],
+        ['bkg_10', '/img/service-2.webp', 'Büroreinigung, Empfang und Küche', -13],
+      ] as const
+    ).flatMap(([bookingId, src, note, daysAgo]) =>
+      (['before', 'after'] as const).map((kind) => ({
+        id: `pho_${bookingId}_${kind}`,
+        src,
+        source: 'field' as const,
+        kind,
+        visibleToCustomer: true,
+        publishConsent: true,
+        note,
+        bookingId,
+        takenAt: iso(days(now, daysAgo)),
+      })),
+    ),
   ];
 
   // A live quote for req_3 and an expired one, so both states of screen 23 are
@@ -3843,8 +3893,8 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
         },
       ];
       // §20.6 — only photos with recorded written consent reach the public
-      // gallery. These two pairs are the ones that have it; the seed photos
-      // deliberately do not, so the launch state stays empty.
+      // gallery. Two more consented pairs on top of the three the base data
+      // carries, so the busy week fills the grid rather than repeating it.
       const consented: Photo[] = (['bkg_1', 'bkg_2'] as const).flatMap((bookingId, i) =>
         (['before', 'after'] as const).map((kind) => ({
           id: `pho_${bookingId}_${kind}`,

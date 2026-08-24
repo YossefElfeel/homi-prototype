@@ -26,7 +26,10 @@ export function PageSection({
   return (
     <section
       id={id}
-      className={`overflow-x-clip py-20 lg:py-[76px] ${tone === "sunken" ? "bg-sunken" : ""} ${className}`}
+      /* `scroll-mt` on every section, not only the ones linked today: the
+         header is fixed, and a jump link that lands the heading underneath it
+         is the same bug wherever it appears. */
+      className={`overflow-x-clip py-20 lg:py-[76px] ${id ? "scroll-mt-24" : ""} ${tone === "sunken" ? "bg-sunken" : ""} ${className}`}
     >
       <div className="hv-container">{children}</div>
     </section>
