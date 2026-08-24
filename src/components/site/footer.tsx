@@ -75,7 +75,13 @@ export function SiteFooter({ theme }: { theme?: Theme }) {
             </li>
             <li>
               <a
-                href={`https://wa.me/${brand('mobile').replace(/\D/g, '')}`}
+                /* `wa.me` wants the number in international form with no plus
+                   and no leading zero. Stripping the non-digits out of the
+                   local `076 227 79 66` gave `0762277966` and WhatsApp opened
+                   on "phone number shared via link is not on WhatsApp" — the
+                   link had never worked. Same fix the floating button already
+                   had. */
+                href={`https://wa.me/41${brand('mobile').replace(/\D/g, '').replace(/^0/, '')}`}
                 className="inline-flex items-center gap-2 text-sm text-ink-secondary transition-colors hover:text-ink"
               >
                 <MessageCircle className="size-3.5 shrink-0" aria-hidden />

@@ -104,9 +104,7 @@ export type Content = {
     social: string;
     copyright: string;
     legal: string[];
-    newsletter: string;
-    emailPlaceholder: string;
-    subscribed: string;
+    madeIn: string;
   };
 };
 
@@ -116,6 +114,34 @@ export const contact = {
   mobile: "076 227 79 66",
   email: "info@homivaro.ch",
 } as const;
+
+/**
+ * The social accounts, in the order they appear in the footer.
+ *
+ * **An empty `href` means the account does not exist yet, and the row skips
+ * it.** The design draws five icons and every one of them was `href="#"` — it
+ * was a one-page comp with nowhere to point. Five dead links in a footer is a
+ * worse first impression than a short row: they look live, they get clicked,
+ * and they go nowhere. Opening an account is filling in one string here, and
+ * the row grows on its own.
+ *
+ * WhatsApp is the one that is real. It is the number the business actually
+ * answers on, and it is the same number the support column shows — built from
+ * `contact` rather than typed again, so the two cannot drift.
+ */
+export const socialAccounts = [
+  {
+    key: "whatsapp",
+    label: "WhatsApp",
+    href: `https://wa.me/41${contact.mobile.replace(/\D/g, "").replace(/^0/, "")}`,
+  },
+  { key: "instagram", label: "Instagram", href: "" },
+  { key: "facebook", label: "Facebook", href: "" },
+  { key: "linkedin", label: "LinkedIn", href: "" },
+  { key: "youtube", label: "YouTube", href: "" },
+] as const;
+
+export type SocialKey = (typeof socialAccounts)[number]["key"];
 
 const serviceImages = [
   "/img/service-1.webp",
@@ -372,9 +398,7 @@ const en: Content = {
     social: "Social Media",
     copyright: "© 2026 Homivaro. All rights reserved.",
     legal: ["Privacy Policy", "Terms", "Imprint"],
-    newsletter: "Subscribe to our Newsletter",
-    emailPlaceholder: "Enter your email",
-    subscribed: "Subscribed",
+    madeIn: "Made in Switzerland",
   },
 };
 
@@ -601,9 +625,11 @@ const de: Content = {
     social: "Social Media",
     copyright: "© 2026 Homivaro. Alle Rechte vorbehalten.",
     legal: ["Datenschutz", "AGB", "Impressum"],
-    newsletter: "Newsletter abonnieren",
-    emailPlaceholder: "E-Mail-Adresse eingeben",
-    subscribed: "Abonniert",
+    /* Untranslated on purpose. "Made in Switzerland" is the mark itself and
+       Swiss firms carry it in English across all four national languages —
+       "Hergestellt in der Schweiz" would also be wrong here, since it says
+       manufactured, and this is a service. */
+    madeIn: "Made in Switzerland",
   },
 };
 
