@@ -200,7 +200,7 @@ export const SEED_SERVICES: Service[] = [
   },
 ];
 
-/** The seven add-ons from §8.1 step 3. */
+/** The seven add-ons from §8.1 step 3, plus two withdrawn ones — see below. */
 export const SEED_ADDONS: AddOn[] = [
   {
     id: 'add_fenster',
@@ -271,6 +271,44 @@ export const SEED_ADDONS: AddOn[] = [
     extraDuration: 1,
     services: ['grundreinigung', 'umzugsreinigung', 'einmalreinigung'],
     active: true,
+  },
+  /*
+   * Two that are switched off, and switched off for the two different reasons
+   * the business actually has.
+   *
+   * Every seeded add-on was `active: true`, so «Nicht verfügbar» was a state
+   * the badge could draw, the filter could select and no data could produce —
+   * the empty half of a two-state control, which reads as a broken filter
+   * rather than an empty result. The same gap the service catalogue closed at
+   * version 24 by seeding a draft and a withdrawn row.
+   *
+   * Teppich is the one that was tried and withdrawn: the price is right, the
+   * machine is out on loan. Polster is the one that was written and never put
+   * out — which is why its short description is the weakest of the nine, and
+   * that is deliberate. It is what an unfinished record looks like.
+   */
+  {
+    id: 'add_teppich',
+    slug: 'teppich',
+    name: l('Teppichshampoonierung', 'Carpet shampooing'),
+    short: l(
+      'Ein Zimmer, nass gereinigt und über Nacht getrocknet.',
+      'One room, wet-cleaned and left to dry overnight.',
+    ),
+    price: 60,
+    extraDuration: 1.5,
+    services: ['grundreinigung', 'umzugsreinigung'],
+    active: false,
+  },
+  {
+    id: 'add_polster',
+    slug: 'polster',
+    name: l('Polstermöbel', 'Upholstery'),
+    short: l('Sofa und Sessel.', 'Sofa and armchairs.'),
+    price: 75,
+    extraDuration: 1.5,
+    services: ['grundreinigung', 'einmalreinigung'],
+    active: false,
   },
 ];
 

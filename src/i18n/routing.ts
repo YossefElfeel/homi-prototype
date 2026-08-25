@@ -18,6 +18,30 @@ export const routing = defineRouting({
    */
   defaultLocale: 'en',
   localePrefix: 'always',
+  /**
+   * And `defaultLocale` now actually decides.
+   *
+   * It did not. next-intl negotiates before it falls back: the `NEXT_LOCALE`
+   * cookie first, then the `accept-language` header, and only then the default
+   * — so `defaultLocale: 'en'` was the answer nobody got. A browser that asks
+   * for German was sent to /de, and worse, the cookie is sticky: one visit to
+   * a /de URL — a link somebody pasted, a screen opened once to check a
+   * translation — pinned that visitor to German on every later visit to the
+   * bare domain, with nothing on screen explaining why.
+   *
+   * That is the right behaviour for the live site and the wrong one for a
+   * prototype being reviewed, where "which language do I get" has to be a
+   * property of the build rather than of whoever's browser is open. Off, the
+   * unprefixed URL always resolves to English.
+   *
+   * The switcher is untouched: it navigates to a prefixed path, and
+   * `localePrefix: 'always'` keeps the locale in the URL, so a language chosen
+   * on screen still holds for as long as you stay in that URL space.
+   *
+   * TODO:launch — this goes back to `true` together with the default above.
+   * Detection is what serves a Zürichsee visitor German without being asked.
+   */
+  localeDetection: false,
 });
 
 export type Locale = (typeof routing.locales)[number];

@@ -159,6 +159,13 @@ export const de = {
       active: 'Aktiv',
       inactive: 'Deaktiviert',
     },
+    /* «Verfügbar», nicht «Aktiv». Die Zusatzleistung selbst tut nichts — die
+       Frage, die der Schalter beantwortet, ist, ob ein Kunde sie heute
+       auswählen kann. */
+    addOn: {
+      active: 'Verfügbar',
+      inactive: 'Nicht verfügbar',
+    },
     /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
        vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
        Zahlschritt der Offerte und einmal als `admin.offers.method`, also

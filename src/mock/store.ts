@@ -45,6 +45,7 @@ import { defaultFor, planDelete, textFor } from '@/lib/templates';
 import { cancelBlock, type CancelBlock } from '@/lib/plan-facts';
 import { propertyUsage } from '@/lib/property-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
+import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -197,8 +198,15 @@ Marco Brunner`;
    cannot help here either: `services` is present in a blob from 23, so it is
    kept whole and the two new rows never arrive. The result reads as the bug
    this seed exists to disprove — two of the three filter options returning an
-   empty table on a screen built to show all three. */
-const SCHEMA_VERSION = 24;
+   empty table on a screen built to show all three.
+
+   25: Same again, one level down — the add-ons gained two withdrawn rows so
+   «Nicht verfügbar» has data behind it. `merge` cannot help: `addOns` is
+   present in a blob from 24, so it is kept whole and the two never arrive.
+   The status filter would then have an option that empties the table every
+   time, on a screen whose whole point this wave is that availability is
+   readable. */
+const SCHEMA_VERSION = 25;
 
 /**
  * §10 — the default payment term.
@@ -872,7 +880,35 @@ interface StoreState {
    * silently doing nothing.
    */
   deleteService: (id: ID) => boolean;
-  setAddOns: (addOns: AddOn[]) => void;
+  /**
+   * An add-on the owner wrote, rather than one the seed shipped.
+   *
+   * `setAddOns` was the whole API: one setter taking the entire array, which
+   * is all a screen needs when the only thing it can change is a checkbox. It
+   * made creating impossible in practice — the caller would have had to mint
+   * the id and the slug itself — and it logged every change, however small, as
+   * «Add-on services edited».
+   *
+   * Returns the record because the slug is derived here from the German name
+   * and may carry a collision suffix, so the caller cannot know in advance
+   * where to route.
+   */
+  createAddOn: (input: Omit<AddOn, 'id' | 'slug'>) => AddOn;
+  /** One record, by id — so a screen editing an add-on cannot rewrite the rest. */
+  updateAddOn: (id: ID, patch: Partial<Omit<AddOn, 'id' | 'slug'>>) => void;
+  /**
+   * Availability, on its own rather than through `updateAddOn`.
+   *
+   * It is the one edit here with an audience — it puts a price in the request
+   * flow or takes an option away — so it is logged as that decision instead of
+   * coalescing into the keystrokes that happened to precede it.
+   */
+  setAddOnActive: (id: ID, active: boolean) => void;
+  /**
+   * Refuses while a request or a quote line still names it — see `addOnUsage`.
+   * Returns false so the caller can say why rather than silently doing nothing.
+   */
+  deleteAddOn: (id: ID) => boolean;
   /* ---- the calendar's own entries (screens 58a, 63a) ----
      A booking could only ever come out of a paid quote, and the calendar could
      only ever show bookings. Between those two facts sat everything the owner
@@ -3560,14 +3596,86 @@ export const useStore = create<StoreState>()(
         return true;
       },
 
-      setAddOns: (addOns) => {
-        set({ addOns });
+      createAddOn: (input) => {
+        const s = get();
+        const slug = uniqueAddOnSlug(slugify(input.name.de) || 'zusatz', s.addOns);
+        /* §20.6 makes German the fallback for an untranslated locale, and the
+           seed spells that out per record. A record typed into the create form
+           did not: `fr` and `it` arrived as empty strings, which is not the
+           same thing as absent — an add-on's name is read straight into the
+           request flow's list, so a French customer would have seen a blank row
+           with a price beside it. Same fix as `createService`. */
+        const fallback = (text: Record<Locale, string>): Record<Locale, string> => ({
+          de: text.de,
+          en: text.en || text.de,
+          fr: text.fr || text.de,
+          it: text.it || text.de,
+        });
+
+        const addOn: AddOn = {
+          ...input,
+          name: fallback(input.name),
+          short: fallback(input.short),
+          id: `add_${Date.now().toString(36)}`,
+          slug,
+        };
+        /* Last in the list. Add-ons render in array order on every screen that
+           shows them, so inserting anywhere else would silently re-rank the
+           ones a customer is already reading. */
+        set({ addOns: [...s.addOns, addOn] });
         get().logChange({
           entity: 'addOn',
-          entityId: 'addons',
-          summary: 'Add-on services edited',
+          entityId: addOn.id,
+          summary: addOn.active
+            ? `"${addOn.name.en}" created and switched on`
+            : `"${addOn.name.en}" created, switched off`,
+        });
+        return addOn;
+      },
+
+      updateAddOn: (id, patch) => {
+        set((s) => ({
+          addOns: s.addOns.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+        }));
+        const addOn = get().addOns.find((x) => x.id === id);
+        get().logChange({
+          entity: 'addOn',
+          entityId: id,
+          summary: `"${addOn?.name.en ?? id}" edited`,
+          /* The editor saves per keystroke, so without this the log is one
+             entry per letter typed into the price field. */
           coalesce: true,
         });
+      },
+
+      setAddOnActive: (id, active) => {
+        const addOn = get().addOns.find((x) => x.id === id);
+        if (!addOn || addOn.active === active) return;
+        set((s) => ({
+          addOns: s.addOns.map((x) => (x.id === id ? { ...x, active } : x)),
+        }));
+        get().logChange({
+          entity: 'addOn',
+          entityId: id,
+          summary: `"${addOn.name.en}" ${active ? 'switched on' : 'switched off'}`,
+        });
+      },
+
+      deleteAddOn: (id) => {
+        const s = get();
+        const addOn = s.addOns.find((x) => x.id === id);
+        if (!addOn) return false;
+        /* Re-checked here rather than trusted from the menu: the confirm read
+           the count one render ago, and the store is the only place that can be
+           sure nothing has since been quoted against it. */
+        if (addOnUsage(addOn, s.data).total > 0) return false;
+        set({ addOns: s.addOns.filter((x) => x.id !== id) });
+        get().logChange({
+          entity: 'addOn',
+          entityId: id,
+          summary: `"${addOn.name.en}" deleted`,
+        });
+        return true;
       },
 
       createManualBooking: (input, now) => {

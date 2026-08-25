@@ -246,6 +246,22 @@ const ENTRIES: Entry[] = [
     screens: '2, 73, 73a, 74',
     state: 'open',
   },
+  {
+    ref: '§11a',
+    question: 'Is an add-on on a plan-covered visit billed, included, or not offered at all?',
+    decision:
+      'OPEN, and the prototype currently gives it away. A request covered by an active plan is never quoted — `requestCoverage` returns `subscription`, the quotes list reads «Zahlung nicht fällig», and no invoice is raised. Add-ons ride on that request, so a customer with a plan who ticks «Backofen» gets CHF 39 of work for nothing, silently, and no screen anywhere says so. Three defensible answers and the business has to pick one. Bill the add-on separately, which means a covered visit can still produce a small invoice and the «payment not due» rule stops being absolute. Fold add-ons into the package, which is generous and makes the plan price wrong. Or hide the «Extras» step from a covered request entirely, which is the cheapest to build and the worst to explain on the phone. Deliberately not guessed here: every one of the three changes what a plan is worth, and that is a price decision rather than a screen.',
+    screens: '17, 27, 68, 75',
+    state: 'open',
+  },
+  {
+    ref: '§17.2b',
+    question: 'Does an add-on the owner adds herself reach the marketing site?',
+    decision:
+      'Not until the next deploy, and that is the same boundary as §17.2 rather than a second problem. /leistungen/[slug] is statically rendered and reads `SEED_ADDONS`, so an add-on written in the panel is bookable, quotable and billable the moment it is switched on — it simply is not advertised on the service page until the site is rebuilt. What *was* a bug and is fixed: the page filtered add-ons by which services they belong to and never by whether they were still offered, so one the owner had switched off went on being advertised at its price while the request flow, which does check, refused to offer it. Both now go through `addOnsForService`.',
+    screens: '2, 75, 75a',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

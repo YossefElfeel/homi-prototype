@@ -793,6 +793,77 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'addons',
+    de: 'Zusatzleistungen',
+    en: 'Add-ons',
+    actors: ['owner'],
+    entries: [
+      ok('Liste der Zusatzleistungen', '/admin/zusatzleistungen'),
+      added(
+        'Neue Zusatzleistung',
+        '/admin/zusatzleistungen/neu',
+        'Was ein Kunde dazukaufen kann, stand im Seed. «Wir shampoonieren jetzt auch Teppiche, 60 Franken» war ein Deploy — derselbe Kanal wie beim Leistungskatalog, nur eine Ebene tiefer',
+      ),
+      added(
+        'Nach Leistung filtern',
+        '/admin/zusatzleistungen',
+        '«Was kann man zur Umzugsreinigung dazubuchen» war nur zu beantworten, indem man die Spalte «Gilt für» Zeile für Zeile las',
+      ),
+    ],
+    actions: [
+      added(
+        'Bezeichnung und Kurzbeschreibung in vier Sprachen bearbeiten',
+        '/admin/zusatzleistungen/fenster',
+        'Beide Texte liest der Kunde im Schritt «Extras». Änderbar war keiner von beiden — die Liste zeigte sie an und sonst nichts',
+      ),
+      added(
+        'Preis und Zeitbedarf ändern',
+        '/admin/zusatzleistungen/fenster',
+        'Nebeneinander, mit je einem Hinweis, welche der beiden Zahlen wohin geht. Der Preis wird verrechnet, die Zeit nur eingeplant — beides zu verrechnen hiesse 45 Franken für die Fenster plus 24.50 für die halbe Stunde',
+      ),
+      added(
+        'Bestimmen, unter welchen Leistungen sie erscheint',
+        '/admin/zusatzleistungen/fenster',
+        '`services` war ein Feld, das nur der Seed schreiben konnte. Welche Extras zu welcher Leistung gehören, stand damit zur Build-Zeit fest',
+      ),
+      added(
+        'Verfügbar schalten und ausblenden',
+        '/admin/zusatzleistungen',
+        'Ein Schalter statt einer Checkbox, in einer Spalte, die sagt, was er tut. Die Checkbox stand unter «Status» — ein Bedienelement unter einem Wort, das wie eine Beschreibung liest. Wirkt sofort und ist mit demselben Klick zurückgenommen',
+      ),
+    ],
+    exits: [
+      added(
+        'Ausgeblendet gespeichert',
+        '/admin/zusatzleistungen/neu',
+        'Erscheint nur im Panel. Der Preis lässt sich einen Tag lang bereden, ohne dass ein halbfertiges Angebot in der laufenden Anfragestrecke steht',
+      ),
+      added(
+        'Angeboten — steht im Schritt «Extras»',
+        '/anfrage/extras',
+        'Die Anfragestrecke liest den Store und zieht sofort nach',
+      ),
+      added(
+        'Gelöscht — oder mit Begründung verweigert',
+        '/admin/zusatzleistungen',
+        'Verweigert, sobald eine Anfrage oder eine Offertenzeile darauf zeigt. Eine Zeile merkt sich den Slug: verschwindet der Datensatz, liest eine bereits versendete Rechnung «backofen» statt «Backofen»',
+      ),
+      added(
+        'Eingeschaltet und trotzdem unerreichbar — als solches markiert',
+        '/admin/zusatzleistungen',
+        'An keine oder nur an nicht aufgeschaltete Leistungen gehängt. Das Abzeichen sagte «Verfügbar» in Grün, und kein Kunde konnte sie sehen',
+      ),
+      open(
+        'Zusatzleistung auf einem Abo-Einsatz',
+        'Ein durch ein Abo gedeckter Auftrag wird gar nicht offeriert — «Zahlung nicht fällig». Wählt der Kunde dort eine Zusatzleistung, ist sie damit gratis. Ob eine Zusatzleistung auf einem Paket-Einsatz separat verrechnet, im Paket enthalten oder gar nicht erst angeboten wird, ist eine Geschäftsentscheidung; siehe §11a auf /open-questions',
+      ),
+      open(
+        'Auf der Leistungsseite der Website',
+        '/leistungen/[slug] zeigt die Zusatzleistungen aus dem Seed, weil die Seite statisch gebaut wird — eine selbst angelegte erscheint erst beim nächsten Deploy. Dieselbe Grenze wie beim Leistungskatalog, kein fehlender Bildschirm. Immerhin zeigt die Seite jetzt keine ausgeblendeten mehr an',
+      ),
+    ],
+  },
+  {
     id: 'hiring',
     de: 'Bewerbung & Team',
     en: 'Hiring & team',

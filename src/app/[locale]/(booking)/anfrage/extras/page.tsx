@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BookingStep } from '@/components/booking/booking-step';
+import { addOnsForService } from '@/lib/addon-catalogue';
 import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
@@ -18,9 +19,12 @@ export default function AddOnsStep() {
   const addOns = useStore((s) => s.addOns);
   const updateDraft = useStore((s) => s.updateDraft);
 
-  const available = addOns.filter(
-    (a) => a.active && draft.serviceSlug && a.services.includes(draft.serviceSlug),
-  );
+  /* The same function the admin list and the service page read, rather than
+     the rule spelled out a third time. It was written out by hand here, on the
+     marketing page and nowhere in the panel — and the marketing copy of it had
+     dropped the `active` half, so a switched-off add-on was advertised there
+     and refused here. */
+  const available = draft.serviceSlug ? addOnsForService(addOns, draft.serviceSlug) : [];
 
   function toggle(id: string) {
     const next = draft.addOnIds.includes(id)

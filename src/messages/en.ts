@@ -158,6 +158,12 @@ export const en: Messages = {
       active: 'Active',
       inactive: 'Disabled',
     },
+    /* "Available", not "Active". The add-on does nothing itself — the question
+       the switch answers is whether a customer can pick it today. */
+    addOn: {
+      active: 'Available',
+      inactive: 'Unavailable',
+    },
     /* Not the state of a payment but its route. Here because it used to live in
        three places: the customer's account, the quote's payment step, and
        `admin.offers.method` — inside a single screen's namespace. */
