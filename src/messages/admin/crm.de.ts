@@ -31,15 +31,17 @@ export const adminCrmDe = {
     rowUnblock: 'Entsperren',
     rowArchive: 'Archivieren',
     rowRestore: 'Wiederherstellen',
+    blockConfirmTitle: '{name} sperren?',
     blockConfirm:
-      '{name} sperren? Es werden keine neuen Anfragen mehr angenommen, es lässt sich keine Offerte mehr senden, und der Kundenbereich ist geschlossen.',
+      'Es werden keine neuen Anfragen mehr angenommen, es lässt sich keine Offerte mehr senden, und der Kundenbereich ist geschlossen. Entsperren geht jederzeit.',
     blockDone: '{name} ist gesperrt.',
     unblockDone: '{name} ist entsperrt.',
     /* Heisst nicht «löschen». Ein Kunde lässt sich nicht löschen — Rechnungen
        hängen daran (§15) und drei Admin-Screens dereferenzieren `customerId`
        mit `!`. Das Archiv sagt, was wirklich passiert. */
+    archiveConfirmTitle: '{name} ins Archiv legen?',
     archiveConfirm:
-      '{name} ins Archiv legen? Der Datensatz bleibt mit Rechnungen und Verlauf bestehen und verschwindet nur aus der Arbeitsliste.',
+      'Der Datensatz bleibt mit Rechnungen und Verlauf bestehen und verschwindet nur aus der Arbeitsliste. Wiederherstellen geht jederzeit.',
     archiveDone: '{name} ist im Archiv.',
     restoreDone: '{name} ist zurück in der Liste.',
     archivedEmptyTitle: 'Archiv ist leer',
@@ -284,8 +286,9 @@ export const adminCrmDe = {
        darauf erklärt nichts, und ein Tooltip käme bei einem deaktivierten
        Eintrag nie zum Zug. */
     rowDeleteBlocked: 'Löschen nicht möglich — {n} Einträge hängen daran',
+    deleteConfirmTitle: 'Objekt endgültig löschen?',
     deleteConfirm:
-      '«{label}» endgültig löschen? Das Objekt wurde noch nie verwendet, es geht also nichts verloren.',
+      '«{label}» wurde noch nie verwendet, es geht also nichts verloren. Rückgängig geht das nicht.',
     deleteDone: '«{label}» gelöscht.',
     deleteBlockedToast:
       'Das Objekt wird inzwischen verwendet und bleibt bestehen. Bitte Seite neu laden.',
@@ -555,6 +558,9 @@ export const adminCrmDe = {
     renewedTimes: '{n}× verlängert',
     rowView: 'Abo dieser Person öffnen',
     rowCancel: 'Stornieren und erstatten',
+    rowCancelConfirmTitle: 'Abo von {name} stornieren?',
+    rowCancelConfirmBody:
+      'Innerhalb der Widerrufsfrist wird der bezahlte Betrag erstattet und die Rechnung dazu storniert. Ausserhalb davon lehnt der Store ab und sagt, welche Regel gegriffen hat.',
     cancelDone: 'Abo von {name} storniert und erstattet.',
     cancelBlocked: {
       used: 'Nicht mehr stornierbar — es hat bereits ein Einsatz stattgefunden.',
@@ -651,9 +657,10 @@ export const adminCrmDe = {
     rowEditLocked: 'Nicht änderbar — nur ein Entwurf lässt sich ändern',
     rowCustomerView: 'Kundenansicht öffnen',
     rowDelete: 'Entwurf löschen',
+    deleteConfirmTitle: 'Entwurf endgültig löschen?',
     cancelLead: '{reference} wird als storniert geführt. Der Grund bleibt am Beleg.',
     deleteConfirm:
-      'Entwurf {reference} endgültig löschen? Er war bei niemandem und bleibt nirgends stehen.',
+      '{reference} war bei niemandem und bleibt nirgends stehen. Rückgängig geht das nicht.',
     deleteBlocked: 'Nicht mehr löschbar — die Rechnung ist inzwischen versendet.',
     deleteDone: 'Entwurf {reference} gelöscht.',
     emptyTitle: 'Noch keine Rechnungen',
@@ -709,8 +716,9 @@ export const adminCrmDe = {
     reissueDone: 'Ersetzt durch Entwurf {reference}.',
     reissueFailed: 'Nur eine versendete oder überfällige Rechnung lässt sich ersetzen.',
     deleteAction: 'Entwurf löschen',
+    deleteConfirmTitle: 'Entwurf endgültig löschen?',
     deleteConfirm:
-      'Entwurf {reference} endgültig löschen? Er war bei niemandem und bleibt nirgends stehen.',
+      '{reference} war bei niemandem und bleibt nirgends stehen. Rückgängig geht das nicht.',
     deleteBlocked: 'Nicht mehr löschbar — die Rechnung ist inzwischen versendet.',
     deleteDone: 'Entwurf {reference} gelöscht.',
     overdueTitle: 'Überfällig',

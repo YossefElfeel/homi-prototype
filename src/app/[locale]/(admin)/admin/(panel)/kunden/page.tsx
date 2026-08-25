@@ -10,6 +10,11 @@ import { Link } from '@/i18n/navigation';
 import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Select } from '@/components/ui/field';
@@ -37,6 +42,11 @@ export default function CustomersPage() {
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const updateCustomer = useStore((s) => s.updateCustomer);
+  const dismissLabel = useDismissLabel();
+  /* Two questions, two held rows — see `useConfirmTarget` on why the row has
+     to outlive the click that dismisses it. */
+  const blocking = useConfirmTarget<Customer>();
+  const archiving = useConfirmTarget<Customer>();
   const [query, setQuery] = useState('');
   /*
    * Archiving is what "delete" means for a customer, so the archive has to be
@@ -187,19 +197,29 @@ export default function CustomersPage() {
     );
   }
 
+  /* Unblocking needs no question — it is the reversal, and asking before
+     undoing something makes the undo feel as heavy as the act. */
   function toggleBlock(c: Customer) {
     if (c.status === 'blocked') {
       updateCustomer(c.id, { status: 'active' });
       toast.success(t('unblockDone', { name: nameOf(c) }));
       return;
     }
-    if (!window.confirm(t('blockConfirm', { name: nameOf(c) }))) return;
+    blocking.ask(c);
+  }
+
+  function confirmBlock() {
+    const c = blocking.target;
+    if (!c) return;
+    blocking.dismiss();
     updateCustomer(c.id, { status: 'blocked' });
     toast.success(t('blockDone', { name: nameOf(c) }));
   }
 
-  function archive(c: Customer) {
-    if (!window.confirm(t('archiveConfirm', { name: nameOf(c) }))) return;
+  function confirmArchive() {
+    const c = archiving.target;
+    if (!c) return;
+    archiving.dismiss();
     updateCustomer(c.id, { archivedAt: now.toISOString() });
     toast.success(t('archiveDone', { name: nameOf(c) }));
   }
@@ -246,7 +266,7 @@ export default function CustomersPage() {
             <RowActionButton
               tone="danger"
               label={t('rowArchive')}
-              onClick={() => archive(c)}
+              onClick={() => archiving.ask(c)}
             >
               <ActionIcon.archive aria-hidden />
             </RowActionButton>
@@ -347,6 +367,31 @@ export default function CustomersPage() {
         <TabsContent value="active">{list}</TabsContent>
         <TabsContent value="archived">{list}</TabsContent>
       </Tabs>
+
+      {/* Both were `window.confirm`. Blocking a customer closes their account
+          area and archiving one takes them out of every working list — two
+          decisions that deserve the product's own words, not the browser's. */}
+      <ConfirmDialog
+        open={blocking.open}
+        onOpenChange={(open) => !open && blocking.dismiss()}
+        title={t('blockConfirmTitle', { name: blocking.target ? nameOf(blocking.target) : '' })}
+        body={t('blockConfirm')}
+        action={t('rowBlock')}
+        dismiss={dismissLabel}
+        onConfirm={confirmBlock}
+      />
+
+      <ConfirmDialog
+        open={archiving.open}
+        onOpenChange={(open) => !open && archiving.dismiss()}
+        title={t('archiveConfirmTitle', {
+          name: archiving.target ? nameOf(archiving.target) : '',
+        })}
+        body={t('archiveConfirm')}
+        action={t('rowArchive')}
+        dismiss={dismissLabel}
+        onConfirm={confirmArchive}
+      />
     </div>
   );
 }

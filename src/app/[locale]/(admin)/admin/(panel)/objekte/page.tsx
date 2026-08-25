@@ -12,6 +12,11 @@ import { ActionIcon } from '@/lib/action-icons';
 import { PROPERTY_KINDS, propertyUsage, propertyVisits, zoneOf, zonesOf } from '@/lib/property-facts';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select } from '@/components/ui/field';
@@ -71,6 +76,8 @@ export default function PropertiesPage() {
   const deleteProperty = useStore((s) => s.deleteProperty);
   const now = useNow();
 
+  const dismissLabel = useDismissLabel();
+  const deleting = useConfirmTarget<Property>();
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | PropertyKind>('all');
@@ -241,9 +248,10 @@ export default function PropertiesPage() {
     </Button>
   );
 
-  function remove(property: Property) {
-    if (!window.confirm(t('deleteConfirm', { label: property.label || property.street })))
-      return;
+  function confirmDelete() {
+    const property = deleting.target;
+    if (!property) return;
+    deleting.dismiss();
     /* The store re-checks rather than trusting this screen's arithmetic: the
        menu item is only enabled when the usage count is zero, and a second
        tab could have booked the address between the render and the click. */
@@ -461,7 +469,7 @@ export default function PropertiesPage() {
                     ? t('rowDeleteBlocked', { n: usage.total })
                     : t('rowDelete')
                 }
-                onClick={() => remove(p)}
+                onClick={() => deleting.ask(p)}
               >
                 <ActionIcon.delete aria-hidden />
               </RowActionButton>
@@ -487,6 +495,20 @@ export default function PropertiesPage() {
             />
           )
         }
+      />
+
+      {/* Was a `window.confirm` — the browser's own box, in the browser's
+          language, over a themed table. */}
+      <ConfirmDialog
+        open={deleting.open}
+        onOpenChange={(open) => !open && deleting.dismiss()}
+        title={t('deleteConfirmTitle')}
+        body={t('deleteConfirm', {
+          label: deleting.target?.label || deleting.target?.street || '',
+        })}
+        action={t('rowDelete')}
+        dismiss={dismissLabel}
+        onConfirm={confirmDelete}
       />
     </div>
   );

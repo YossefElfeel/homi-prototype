@@ -10,6 +10,11 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -70,6 +75,8 @@ export default function RequestsPage() {
   const settings = useStore((s) => s.settings);
   const discardRequestDraft = useStore((s) => s.discardRequestDraft);
 
+  const dismissLabel = useDismissLabel();
+  const discarding = useConfirmTarget<ServiceRequest>();
   const [status, setStatus] = useState('all');
   const [service, setService] = useState('all');
   const [region, setRegion] = useState('all');
@@ -427,14 +434,7 @@ export default function RequestsPage() {
                 <RowActionButton
                   tone="danger"
                   label={t('rowDiscard')}
-                  onClick={() => {
-                    /* A draft has no quote, booking or invoice hanging off
-                       it, which is the only reason a straight delete is
-                       safe here. The store guards the same rule. */
-                    if (!window.confirm(t('rowDiscardConfirm'))) return;
-                    discardRequestDraft(r.id);
-                    toast.success(t('rowDiscardDone'));
-                  }}
+                  onClick={() => discarding.ask(r)}
                 >
                   <ActionIcon.delete aria-hidden />
                 </RowActionButton>
@@ -645,6 +645,27 @@ export default function RequestsPage() {
       </Tabs>
 
       <RejectRequestDialog requestId={rejecting} onClose={() => setRejecting(null)} />
+
+      {/* Was a `window.confirm`, which is the one control on this screen the
+          theme could not reach and the dictionary could not translate. */}
+      <ConfirmDialog
+        open={discarding.open}
+        onOpenChange={(open) => !open && discarding.dismiss()}
+        title={t('rowDiscardConfirmTitle')}
+        body={t('rowDiscardConfirm')}
+        action={t('rowDiscard')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          const draft = discarding.target;
+          if (!draft) return;
+          discarding.dismiss();
+          /* A draft has no quote, booking or invoice hanging off it, which is
+             the only reason a straight delete is safe here. The store guards
+             the same rule. */
+          discardRequestDraft(draft.id);
+          toast.success(t('rowDiscardDone'));
+        }}
+      />
     </div>
   );
 }

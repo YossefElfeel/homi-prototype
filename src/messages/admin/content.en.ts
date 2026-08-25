@@ -371,7 +371,9 @@ export const adminContentEn: typeof adminContentDe = {
     editFirst: 'Edit before sending',
     insertDone: 'Template inserted — check the text before sending.',
     sentDone: 'Message sent.',
-    overwrite: 'The text you started will be replaced. Continue?',
+    overwriteTitle: 'Replace the text you started?',
+    overwrite: 'What you have written so far is overwritten by the template.',
+    overwriteAction: 'Replace it',
     unresolvedTitle: 'Cannot send as is',
     unresolvedBody:
       'We have no value here for {fields}. The placeholder would reach the customer as it stands — fill it in before sending.',

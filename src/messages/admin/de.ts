@@ -283,7 +283,9 @@ export const adminDe = {
     rowReject: 'Ablehnen',
     rowContinue: 'Entwurf weiterbearbeiten',
     rowDiscard: 'Entwurf verwerfen',
-    rowDiscardConfirm: 'Entwurf verwerfen? Das lässt sich nicht rückgängig machen.',
+    rowDiscardConfirmTitle: 'Entwurf verwerfen?',
+    rowDiscardConfirm:
+      'Am Entwurf hängt weder Offerte noch Buchung noch Rechnung — es geht nichts anderes mit verloren. Rückgängig machen lässt es sich trotzdem nicht.',
     rowDiscardDone: 'Entwurf verworfen.',
     rowOffer: 'Offerte ansehen',
     emptyTitle: 'Noch keine Anfragen',
@@ -411,7 +413,9 @@ export const adminDe = {
     draftLead:
       'Dieser Entwurf steht in keiner Warteschlange und der Kunde sieht ihn nicht. Erst «Anfrage erfassen» macht daraus eine echte Anfrage — und startet die Antwortfrist.',
     draftDiscard: 'Entwurf verwerfen',
-    draftDiscardConfirm: 'Entwurf verwerfen? Das lässt sich nicht rückgängig machen.',
+    draftDiscardConfirmTitle: 'Entwurf verwerfen?',
+    draftDiscardConfirm:
+      'Alles am Telefon Aufgenommene ist damit weg. Rückgängig machen lässt sich das nicht.',
     draftDiscardDone: 'Entwurf verworfen.',
     draftNotFound: 'Diesen Entwurf gibt es nicht mehr.',
     draftPromote: 'Anfrage erfassen',
@@ -912,6 +916,7 @@ export const adminDe = {
     noReplyToast: 'Notiert — niemand erreicht.',
     /* Der Bestätigungstext war der Text des Erfassen-Knopfes: «Erfassen Sie
        die Anfrage …» stand über einem roten Absagen-Knopf. */
+    cancelConfirmTitle: 'Termin absagen?',
     cancelConfirmBody:
       'Der Termin verschwindet aus dem Kalender. Der Eintrag bleibt lesbar und kann wieder geöffnet werden.',
     cancelToast: 'Termin abgesagt.',

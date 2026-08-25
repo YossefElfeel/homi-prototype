@@ -22,6 +22,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -76,6 +77,7 @@ export default function ApplicationDetailPage({
 }) {
   const { id } = use(params);
   const t = useTranslations('admin.application');
+  const dismissLabel = useDismissLabel();
   const form = useTranslations('careers.form');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -316,8 +318,7 @@ export default function ApplicationDetailPage({
         <section className="mt-10 border-t border-line-subtle pt-8">
           <h2 className="display-type text-xl">{t('actionsTitle')}</h2>
 
-          {!rejecting ? (
-            <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3">
               {application.status === 'new' && (
                 <Button
                   variant="secondary"
@@ -359,44 +360,7 @@ export default function ApplicationDetailPage({
                   {t('reject')}
                 </Button>
               )}
-            </div>
-          ) : (
-            <div className="surface-card mt-5 p-6">
-              <h3 className="font-medium">{t('rejectTitle')}</h3>
-              <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-                {t('rejectHint')}
-              </p>
-              <Field label={t('rejectTitle')} className="mt-4 max-w-sm">
-                {(props) => (
-                  <Select
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    {...props}
-                  >
-                    {REASONS.map((r) => (
-                      <option key={r.value} value={r.value}>
-                        {t(r.key)}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    rejectApplication(application.id, reason);
-                    setRejecting(false);
-                  }}
-                >
-                  {t('rejectConfirm')}
-                </Button>
-                <Button variant="quiet" onClick={() => setRejecting(false)}>
-                  {t('cancel')}
-                </Button>
-              </div>
-            </div>
-          )}
+          </div>
         </section>
       )}
 
@@ -409,34 +373,60 @@ export default function ApplicationDetailPage({
           })}
         </p>
 
-        {!confirmDelete ? (
-          <Button variant="quiet" className="mt-5" onClick={() => setConfirmDelete(true)}>
-            <Trash2 className="size-4" aria-hidden />
-            {t('deleteAction')}
-          </Button>
-        ) : (
-          <div className="mt-5 border-l-2 border-status-danger-line bg-status-danger p-5">
-            <h3 className="font-medium text-status-danger-fg">{t('deleteConfirmTitle')}</h3>
-            <p className="mt-1.5 max-w-[var(--measure)] text-sm text-status-danger-fg">
-              {t('deleteConfirmBody')}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button
-                variant="danger"
-                onClick={() => {
-                  deleteApplication(application.id);
-                  router.push('/admin/bewerbungen');
-                }}
-              >
-                {t('deleteConfirm')}
-              </Button>
-              <Button variant="quiet" onClick={() => setConfirmDelete(false)}>
-                {t('cancel')}
-              </Button>
-            </div>
-          </div>
-        )}
+        <Button variant="quiet" className="mt-5" onClick={() => setConfirmDelete(true)}>
+          <Trash2 className="size-4" aria-hidden />
+          {t('deleteAction')}
+        </Button>
       </section>
+
+      {/*
+        Both decisions used to open a block *underneath* the buttons — a
+        hand-written copy of `ConfirmPanel` in one case and of the danger card
+        in the other, neither of them the component. Declining pushed the whole
+        retention section down the page, and the reason `Select` it opened with
+        was easy to walk past on the way to the red button.
+
+        revDSG makes the deletion the heavier of the two: an applicant record
+        is personal data with a retention date on it, and there is no archive
+        to fall back on.
+      */}
+      <ConfirmDialog
+        open={rejecting}
+        onOpenChange={setRejecting}
+        title={t('rejectTitle')}
+        body={t('rejectHint')}
+        action={t('rejectConfirm')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          rejectApplication(application.id, reason);
+          setRejecting(false);
+        }}
+      >
+        <Field label={t('rejectTitle')}>
+          {(props) => (
+            <Select value={reason} onChange={(e) => setReason(e.target.value)} {...props}>
+              {REASONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {t(r.key)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('deleteConfirmTitle')}
+        body={t('deleteConfirmBody')}
+        action={t('deleteConfirm')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          deleteApplication(application.id);
+          router.push('/admin/bewerbungen');
+        }}
+      />
     </div>
   );
 }

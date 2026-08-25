@@ -12,6 +12,7 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field';
 import { MoneyRange } from '@/components/ui/money';
@@ -93,6 +94,7 @@ const emptyProperty = () => ({
 export default function NewRequestPage() {
   const t = useTranslations('admin.requestNew');
   const format = useFormatter();
+  const dismissLabel = useDismissLabel();
   const locale = useLocale() as Locale;
   const router = useRouter();
   const now = useNow();
@@ -131,6 +133,7 @@ export default function NewRequestPage() {
   const sourceEvent = events.find((e) => e.id === sourceEventId);
 
   const [open, setOpen] = useState<string[]>(['customer', 'property', 'service']);
+  const [discarding, setDiscarding] = useState(false);
 
   const [customerId, setCustomerId] = useState('');
   const [propertyChoice, setPropertyChoice] = useState<string>(NEW_PROPERTY);
@@ -472,12 +475,7 @@ export default function NewRequestPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (!window.confirm(t('draftDiscardConfirm'))) return;
-                  discardRequestDraft(draft.id);
-                  toast.success(t('draftDiscardDone'));
-                  router.push('/admin/anfragen');
-                }}
+                onClick={() => setDiscarding(true)}
               >
                 <Trash2 className="size-3.5" aria-hidden />
                 {t('draftDiscard')}
@@ -1163,6 +1161,24 @@ export default function NewRequestPage() {
           </aside>
         </div>
       )}
+
+      {/* Throwing away a call taken by hand is the one irreversible step on
+          this screen, and it used to ask with the browser's own box. */}
+      <ConfirmDialog
+        open={discarding}
+        onOpenChange={setDiscarding}
+        title={t('draftDiscardConfirmTitle')}
+        body={t('draftDiscardConfirm')}
+        action={t('draftDiscard')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          setDiscarding(false);
+          if (!draft) return;
+          discardRequestDraft(draft.id);
+          toast.success(t('draftDiscardDone'));
+          router.push('/admin/anfragen');
+        }}
+      />
     </div>
   );
 }

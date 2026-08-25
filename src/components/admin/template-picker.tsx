@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { Field, Select } from '@/components/ui/field';
 import { useStore } from '@/mock/store';
 import type { MessageTemplate, TemplateFlow } from '@/mock/schema';
@@ -74,6 +75,9 @@ export function TemplatePicker({
   const t = useTranslations('admin.templatePicker');
   const templates = useStore((s) => s.settings.messageTemplates);
   const [selectedId, setSelectedId] = useState('');
+  /** The template waiting on «yes, replace what I have typed». */
+  const [overwriting, setOverwriting] = useState<MessageTemplate | null>(null);
+  const dismissLabel = useDismissLabel();
 
   const options = pickable(templates, { flow, exclude: AUTOMATIC_ONLY });
   const selected = options.find((o) => o.id === selectedId);
@@ -92,20 +96,29 @@ export function TemplatePicker({
   const filled = selected ? fillTemplate(selected, locale, vars) : null;
   const blocked = (filled?.unresolved.length ?? 0) > 0;
 
-  function take(template: MessageTemplate, send: boolean) {
+  function insert(template: MessageTemplate) {
     const message = fillTemplate(template, locale, vars);
-    const payload = { subject: message.subject.text, body: message.body.text };
-    if (send) {
-      onSend?.(payload);
-      toast.success(t('sentDone'));
-    } else {
-      /* Only the insert path can destroy work in progress — sending replaces
-         nothing. */
-      if (hasDraft && !window.confirm(t('overwrite'))) return;
-      onInsert(payload);
-      toast.success(t('insertDone'));
-    }
+    onInsert({ subject: message.subject.text, body: message.body.text });
+    toast.success(t('insertDone'));
     setSelectedId('');
+    setOverwriting(null);
+  }
+
+  function take(template: MessageTemplate, send: boolean) {
+    if (send) {
+      const message = fillTemplate(template, locale, vars);
+      onSend?.({ subject: message.subject.text, body: message.body.text });
+      toast.success(t('sentDone'));
+      setSelectedId('');
+      return;
+    }
+    /* Only the insert path can destroy work in progress — sending replaces
+       nothing. */
+    if (hasDraft) {
+      setOverwriting(template);
+      return;
+    }
+    insert(template);
   }
 
   return (
@@ -180,6 +193,19 @@ export function TemplatePicker({
           </div>
         </div>
       )}
+
+      {/* Half-written text is still work, and this used to warn about losing it
+          in a `window.confirm` — a box whose two buttons read «OK» and
+          «Cancel», neither of which names what is about to happen. */}
+      <ConfirmDialog
+        open={overwriting !== null}
+        onOpenChange={(open) => !open && setOverwriting(null)}
+        title={t('overwriteTitle')}
+        body={t('overwrite')}
+        action={t('overwriteAction')}
+        dismiss={dismissLabel}
+        onConfirm={() => overwriting && insert(overwriting)}
+      />
     </div>
   );
 }

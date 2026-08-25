@@ -377,7 +377,9 @@ export const adminContentDe = {
     editFirst: 'Vor dem Senden bearbeiten',
     insertDone: 'Vorlage eingesetzt — Text vor dem Senden prüfen.',
     sentDone: 'Nachricht versendet.',
-    overwrite: 'Der begonnene Text wird ersetzt. Fortfahren?',
+    overwriteTitle: 'Begonnenen Text ersetzen?',
+    overwrite: 'Was Sie bereits geschrieben haben, wird durch die Vorlage überschrieben.',
+    overwriteAction: 'Ersetzen',
     /* The gate that lets "send directly" exist at all. */
     unresolvedTitle: 'Direktversand nicht möglich',
     unresolvedBody:

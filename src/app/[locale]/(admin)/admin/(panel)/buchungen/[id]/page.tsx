@@ -22,7 +22,7 @@ import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-se
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
 import { Field, Input } from '@/components/ui/field';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
@@ -58,6 +58,7 @@ export default function BookingDetailPage({
   const { id } = use(params);
   const { action } = use(searchParams);
   const t = useTranslations('admin.booking');
+  const dismissLabel = useDismissLabel();
   const rt = useTranslations('admin.request');
   const statusT = useTranslations('status.booking');
   const locale = useLocale() as Locale;
@@ -556,74 +557,73 @@ export default function BookingDetailPage({
                 </Button>
               )}
 
-              {confirming === 'noAccess' ? (
-                <ConfirmPanel
-                  title={t('noAccessConfirmTitle')}
-                  body={t('noAccessConfirmBody', { percent: settings.noAccessFeePercent })}
-                  action={t('markNoAccess')}
-                  dismiss={t('dismiss')}
-                  onConfirm={() => {
-                    patchBooking(
-                      { status: 'noAccess' },
-                      {
-                        kind: 'noAccess',
-                        label: t('noAccessEvent', {
-                          percent: settings.noAccessFeePercent,
-                        }),
-                      },
-                    );
-                    setConfirming(null);
-                    toast.success(t('noAccessDone'));
-                  }}
-                  onDismiss={() => setConfirming(null)}
-                />
-              ) : (
-                <>
-                  <Button
-                    variant="secondary"
-                    block
-                    disabled={settled}
-                    onClick={() => setConfirming('noAccess')}
-                  >
-                    <DoorClosed className="size-4" aria-hidden />
-                    {t('markNoAccess')}
-                  </Button>
-                  <p data-numeric className="px-1 text-xs text-ink-tertiary">
-                    {t('noAccessHint', { percent: settings.noAccessFeePercent })}
-                  </p>
-                </>
-              )}
+              <Button
+                variant="secondary"
+                block
+                disabled={settled}
+                onClick={() => setConfirming('noAccess')}
+              >
+                <DoorClosed className="size-4" aria-hidden />
+                {t('markNoAccess')}
+              </Button>
+              <p data-numeric className="px-1 text-xs text-ink-tertiary">
+                {t('noAccessHint', { percent: settings.noAccessFeePercent })}
+              </p>
 
-              {confirming === 'cancel' ? (
-                <ConfirmPanel
-                  title={t('cancelConfirmTitle')}
-                  body={t('cancelConfirmBody')}
-                  action={t('cancelConfirmAction')}
-                  dismiss={t('dismiss')}
-                  onConfirm={() => {
-                    patchBooking(
-                      { status: 'cancelled' },
-                      { kind: 'cancelled', label: t('cancelEvent') },
-                    );
-                    setConfirming(null);
-                    toast.success(t('cancelDone'));
-                  }}
-                  onDismiss={() => setConfirming(null)}
-                />
-              ) : (
-                <Button
-                  variant="danger"
-                  block
-                  disabled={settled}
-                  onClick={() => setConfirming('cancel')}
-                >
-                  {t('cancel')}
-                </Button>
-              )}
+              <Button
+                variant="danger"
+                block
+                disabled={settled}
+                onClick={() => setConfirming('cancel')}
+              >
+                {t('cancel')}
+              </Button>
             </div>
           </div>
         </aside>
       </div>
+
+      {/*
+        Both were inline panels that replaced the button they came from — in a
+        narrow right-hand column, so the question arrived in a 20rem strip and
+        the buttons around it jumped as it opened and closed.
+      */}
+      <ConfirmDialog
+        open={confirming === 'noAccess'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={t('noAccessConfirmTitle')}
+        body={t('noAccessConfirmBody', { percent: settings.noAccessFeePercent })}
+        action={t('markNoAccess')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          patchBooking(
+            { status: 'noAccess' },
+            {
+              kind: 'noAccess',
+              label: t('noAccessEvent', { percent: settings.noAccessFeePercent }),
+            },
+          );
+          setConfirming(null);
+          toast.success(t('noAccessDone'));
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirming === 'cancel'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={t('cancelConfirmTitle')}
+        body={t('cancelConfirmBody')}
+        action={t('cancelConfirmAction')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          patchBooking(
+            { status: 'cancelled' },
+            { kind: 'cancelled', label: t('cancelEvent') },
+          );
+          setConfirming(null);
+          toast.success(t('cancelDone'));
+        }}
+      />
     </div>
   );
 }
