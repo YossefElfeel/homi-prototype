@@ -161,14 +161,128 @@ export const adminContentDe = {
 
   addons: {
     title: 'Zusatzleistungen',
-    lead: 'Preis und Zeitbedarf. Der Preis wird verrechnet, die Zeit nur eingeplant.',
+    /* Sagte «Preis und Zeitbedarf» und setzte damit voraus, dass der Leser
+       bereits weiss, was eine Zusatzleistung ist. Der erste Satz muss das Ding
+       benennen, nicht seine zwei Felder aufzählen. */
+    lead: 'Eine Zusatzleistung ist eine Position, die auf eine Leistung aufgesetzt wird — ein Festpreis für den Auftrag plus die Zeit, die sie den Einsatz länger macht. Verrechnet wird der Preis; die Zeit wird nur eingeplant.',
+
+
+    search: 'Zusatzleistung suchen',
+    searchPlaceholder: 'Bezeichnung, Slug oder Kurzbeschreibung',
     colName: 'Zusatzleistung',
     colPrice: 'Preis',
     colDuration: 'Zeitbedarf',
     colServices: 'Gilt für',
     colStatus: 'Status',
+    colAvailable: 'Verfügbar',
+    filterStatus: 'Status',
+    filterService: 'Leistung',
+    filterAll: 'alle',
+
+    createAction: 'Zusatzleistung anlegen',
+
+    rowOpen: 'Öffnen und bearbeiten',
+    rowDelete: 'Löschen',
+
+    /* Ein Schalter kann «an» zeigen und die Zusatzleistung trotzdem nirgends
+       erscheinen lassen — nämlich dann, wenn keine der angehängten Leistungen
+       aufgeschaltet ist. Ohne diesen Hinweis ist das ein grünes Abzeichen über
+       einer Zeile, die kein Kunde je zu sehen bekommt. */
+    unreachable: 'erreicht niemanden',
+    unreachableNone: 'An keine Leistung gehängt — sie erscheint in keiner Anfrage.',
+    unreachableInactive:
+      'Alle angehängten Leistungen sind Entwurf oder deaktiviert — sie erscheint in keiner Anfrage.',
+
+    switchOn: '«{name}» verfügbar machen',
+    switchOff: '«{name}» ausblenden',
+    switchHint:
+      'Wirkt sofort. Verfügbar heisst: steht im Schritt «Extras» zur Auswahl. Ausgeblendet verschwindet sie aus neuen Anfragen — bereits erteilte Aufträge und versendete Offerten bleiben unberührt.',
+    switchedOn: '«{name}» steht jetzt in der Anfragestrecke zur Auswahl.',
+    switchedOff: '«{name}» ist ausgeblendet. Laufende Aufträge bleiben unberührt.',
+
+    deleteTitle: '«{name}» löschen?',
+    deleteBody:
+      'Das ist endgültig. Wenn Sie sie nur vorübergehend nicht anbieten wollen, blenden Sie sie mit dem Schalter aus — dann bleiben Preis, Text und Zuordnung erhalten.',
+    deleteConfirm: 'Endgültig löschen',
+    deleteDone: '«{name}» wurde gelöscht.',
+    /* Nennt die Zahl statt nur «geht nicht»: eine Zusatzleistung auf zwölf
+       Offerten ist ein anderer Fall als eine auf einer, und der Inhaber
+       entscheidet danach, ob er ausblendet oder wartet. */
+    deleteBlockedTitle: '«{name}» kann nicht gelöscht werden',
+    deleteBlockedBody:
+      '{n} Anfragen und Offerten verweisen darauf. Eine Offertenzeile merkt sich den Slug, nicht die Bezeichnung — verschwindet der Datensatz, liest eine bereits versendete Rechnung «{slug}» statt «{name}». Ausblenden nimmt sie ebenso aus dem Angebot und lässt die Dokumente lesbar.',
+    deleteBlocked: 'Diese Zusatzleistung ist noch in Verwendung.',
+
+    filterEmptyTitle: 'Keine Zusatzleistung passt',
+    filterEmptyBody:
+      'Suchbegriff und Filter zusammen ergeben keine Zeile. Die Liste selbst ist nicht leer.',
+    filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Zusatzleistungen',
-    emptyBody: 'Zusatzleistungen erscheinen im Anfrageformular unter der gewählten Leistung.',
+    emptyBody:
+      'Ohne Zusatzleistung überspringt der Kunde den Schritt «Extras» — die Anfrage funktioniert, aber es gibt nichts dazuzukaufen. Legen Sie die erste an.',
+  },
+
+  addon: {
+    back: 'Alle Zusatzleistungen',
+    nameTitle: 'Bezeichnung',
+    nameHint: 'Die Zeile, die der Kunde im Schritt «Extras» anklickt, in seiner Sprache.',
+    shortTitle: 'Kurzbeschreibung',
+    shortHint:
+      'Der Satz darunter. Er beantwortet «was genau bekomme ich dafür» — «Bis zu fünf Fenster inklusive Rahmen», nicht «Fensterreinigung».',
+    pricingTitle: 'Preis und Zeitbedarf',
+    pricingHint:
+      'Die beiden Zahlen bedeuten Verschiedenes: der Preis wird einmal pro Auftrag verrechnet, der Zeitbedarf verlängert nur den Termin.',
+    priceLabel: 'Preis',
+    priceHint:
+      'Franken, einmal pro Auftrag — unabhängig von Fläche, Dauer und Stundenansatz der Leistung.',
+    durationLabel: 'Zeitbedarf in Stunden',
+    durationHint:
+      'Wie viel länger der Einsatz dauert. Geht in die Planung, nicht in die Rechnung — der Preis oben deckt diese Zeit bereits ab. 0 für etwas, das keine zusätzliche Zeit kostet.',
+    servicesTitle: 'Gilt für',
+    servicesHint:
+      'Unter welchen Leistungen sie im Schritt «Extras» auftaucht. Ohne mindestens eine erscheint sie nirgends.',
+    servicesRequired: 'Ohne eine Leistung kann diese Zusatzleistung niemand auswählen.',
+    servicesInactive: 'nicht aufgeschaltet',
+    availabilityTitle: 'Verfügbarkeit',
+    availabilityLabel: 'In der Anfragestrecke zur Auswahl stellen',
+    availabilityHint:
+      'Wirkt sofort und ist mit demselben Schalter zurückgenommen. Ausgeblendet verschwindet sie aus neuen Anfragen; laufende Aufträge und versendete Offerten bleiben, wie sie sind.',
+    slugLabel: 'Slug',
+    slugHint:
+      'Aus der deutschen Bezeichnung abgeleitet und danach fest. Offertenzeilen merken sich diesen Slug — änderte er sich, verlöre jede bereits erstellte Zeile ihren Namen.',
+    usageTitle: 'Verwendung',
+    usageHint: 'Was darauf zeigt und deshalb dem Löschen im Weg steht.',
+    usageRequests: 'Anfragen',
+    usageOffers: 'Offerten und Rechnungen',
+    usageBody: '{n} Anfragen und Offerten verweisen darauf.',
+    usageNone: 'Noch nirgends verwendet.',
+    localeHint:
+      'Deutsch ist Pflicht. Fehlt eine andere Sprache, zeigt die Anfragestrecke den deutschen Text (§20.6) — vorgesehen, aber es fällt auf.',
+    dangerTitle: 'Zusatzleistung löschen',
+    save: 'Änderungen speichern',
+    saved: '«{name}» gespeichert.',
+    unsaved: 'Ungespeicherte Änderungen. Der Schalter oben wirkt sofort, die Felder hier erst beim Speichern.',
+    discard: 'Verwerfen',
+    notFound: 'Diese Zusatzleistung gibt es nicht mehr.',
+  },
+
+  addonNew: {
+    title: 'Neue Zusatzleistung',
+    lead: 'Etwas, das ein Kunde zu einer Leistung dazukaufen kann. Nichts wird geschrieben, bis Sie unten speichern.',
+    back: 'Alle Zusatzleistungen',
+    nameRequired: 'Ohne deutsche Bezeichnung gibt es keinen Namen und keinen Slug.',
+    slugPreview: 'Slug wird: {slug}',
+    saveHidden: 'Speichern, noch nicht anbieten',
+    saveActive: 'Anlegen und anbieten',
+    createNote:
+      'Ausgeblendet erscheint sie nur hier im Panel. Anbieten stellt sie sofort in den Schritt «Extras» der laufenden Anfragestrecke.',
+    createdHidden: '«{name}» angelegt, noch nicht sichtbar.',
+    createdActive: '«{name}» angelegt und in der Anfragestrecke sichtbar.',
+    activateTitle: '«{name}» direkt anbieten?',
+    activateBody:
+      'Sie steht danach sofort im Schritt «Extras» — mit dem Preis, der oben steht, und der Kunde kann sie in derselben Minute mitbestellen. Ausgeblendet speichern geht auch; anbieten können Sie danach jederzeit mit einem Klick.',
+    activateConfirm: 'Anlegen und anbieten',
+    dismiss: 'Zurück',
   },
 
   coupons: {

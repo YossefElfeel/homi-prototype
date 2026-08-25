@@ -23,7 +23,8 @@ export type StatusEntity =
   | 'application'
   | 'payment'
   | 'key'
-  | 'service';
+  | 'service'
+  | 'addOn';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   // §4.1
@@ -151,6 +152,21 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
    */
   service: {
     draft: 'warning',
+    active: 'success',
+    inactive: 'neutral',
+  },
+  /*
+   * An add-on has two states, not three, and that is deliberate rather than an
+   * omission. A service can be a draft because its price is argued about for
+   * days before it is sold; an add-on is a name, a price and half an hour, and
+   * the thing that would be a draft is simply one that is switched off. Adding
+   * `draft` here would put a third state on the badge that no screen could
+   * write — the exact shape of lie this registry exists to make impossible.
+   *
+   * The colours are the service ones, unchanged: withdrawn is neutral because
+   * it is a decision already made, not a warning about unfinished work.
+   */
+  addOn: {
     active: 'success',
     inactive: 'neutral',
   },

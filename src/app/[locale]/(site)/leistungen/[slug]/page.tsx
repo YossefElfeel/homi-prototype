@@ -8,6 +8,7 @@ import { routing, type Locale } from '@/i18n/routing';
 import { getStressMode, getTheme } from '@/lib/theme-server';
 import { getServiceContent } from '@/content/services';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from '@/mock/seed';
+import { addOnsForService } from '@/lib/addon-catalogue';
 import { durationRange } from '@/mock/engines/pricing';
 import type { ServiceSlug } from '@/mock/schema';
 import { isOffered } from '@/lib/service-catalogue';
@@ -85,7 +86,14 @@ export default async function ServicePage({
   const content = getServiceContent(slug as ServiceSlug, locale as Locale, stressed);
 
   const range = durationRange(service.durationProfile);
-  const addOns = SEED_ADDONS.filter((a) => a.services.includes(service.slug));
+  /* `addOnsForService` rather than the membership test alone. This filtered
+     on which services an add-on belongs to and never on whether it was still
+     offered, so an add-on the owner switched off went on being advertised here
+     at its price — the request flow, which does check `active`, would then not
+     offer it. Same class of bug as the service catalogue's: one rule answered
+     differently on two screens. Still read from the seed rather than the store,
+     because this page is statically rendered — see §17.2b on /open-questions. */
+  const addOns = addOnsForService(SEED_ADDONS, service.slug);
   const related = SEED_SERVICES.filter((s) => isOffered(s) && s.slug !== service.slug).slice(0, 3);
 
   const pricing = await getTranslations('site.pricing');

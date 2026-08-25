@@ -161,14 +161,127 @@ export const adminContentEn: typeof adminContentDe = {
 
   addons: {
     title: 'Add-ons',
-    lead: 'A price and a time cost. The price is billed; the time is only scheduled.',
+    /* Said "a price and a time cost", which assumes the reader already knows
+       what an add-on is. The opening line has to name the thing, not list its
+       two fields. */
+    lead: 'An add-on is a line attached to a service — a fixed price on top of the job, plus the minutes it adds to the visit. The price is billed; the time is only scheduled.',
+
+
+    search: 'Search add-ons',
+    searchPlaceholder: 'Name, slug or short description',
     colName: 'Add-on',
     colPrice: 'Price',
     colDuration: 'Time',
     colServices: 'Applies to',
     colStatus: 'Status',
+    colAvailable: 'Available',
+    filterStatus: 'Status',
+    filterService: 'Service',
+    filterAll: 'all',
+
+    createAction: 'Create an add-on',
+
+    rowOpen: 'Open and edit',
+    rowDelete: 'Delete',
+
+    /* A switch can read "on" and the add-on still reach nobody — when not one
+       of the services it hangs off is on sale. Without this note that is a
+       green badge over a row no customer ever sees. */
+    unreachable: 'reaches nobody',
+    unreachableNone: 'Attached to no service — it appears in no request.',
+    unreachableInactive:
+      'Every service it is attached to is a draft or withdrawn — it appears in no request.',
+
+    switchOn: 'Make «{name}» available',
+    switchOff: 'Hide «{name}»',
+    switchHint:
+      'Takes effect at once. Available means it is offered in the «Extras» step. Hidden, it drops out of new requests — jobs already placed and quotes already sent are untouched.',
+    switchedOn: '«{name}» is now offered in the request flow.',
+    switchedOff: '«{name}» is hidden. Jobs already running are untouched.',
+
+    deleteTitle: 'Delete «{name}»?',
+    deleteBody:
+      'This is final. To stop offering it for a while, hide it with the switch instead — the price, the copy and the service links all survive that.',
+    deleteConfirm: 'Delete for good',
+    deleteDone: '«{name}» has been deleted.',
+    /* Says the number rather than just "no": an add-on on twelve quotes is a
+       different case from one on a single quote, and that is what the owner
+       decides on — hide it, or wait. */
+    deleteBlockedTitle: '«{name}» cannot be deleted',
+    deleteBlockedBody:
+      '{n} requests and quotes point at it. A quote line remembers the slug, not the name — remove the record and an invoice already sent reads «{slug}» where «{name}» was. Hiding takes it off the menu just as well and leaves those documents readable.',
+    deleteBlocked: 'This add-on is still in use.',
+
+    filterEmptyTitle: 'No add-on matches',
+    filterEmptyBody:
+      'The search term and the filters together leave no row. The list itself is not empty.',
+    filterReset: 'Clear filters',
     emptyTitle: 'No add-ons',
-    emptyBody: 'Add-ons appear in the request form under the chosen service.',
+    emptyBody:
+      'With none, the customer skips the «Extras» step — the request still works, there is simply nothing to buy alongside. Write the first one.',
+  },
+
+  addon: {
+    back: 'All add-ons',
+    nameTitle: 'Name',
+    nameHint: 'The line the customer taps in the «Extras» step, in their own language.',
+    shortTitle: 'Short description',
+    shortHint:
+      'The sentence underneath. It answers «what exactly do I get for that» — «Up to five windows including frames», not «Window cleaning».',
+    pricingTitle: 'Price and time',
+    pricingHint:
+      'The two numbers mean different things: the price is billed once per job, the time cost only lengthens the appointment.',
+    priceLabel: 'Price',
+    priceHint:
+      'Francs, once per job — independent of the area, the duration and the service’s hourly rate.',
+    durationLabel: 'Time cost in hours',
+    durationHint:
+      'How much longer the visit runs. It feeds the schedule, not the bill — the price above already covers that time. Use 0 for something that costs no extra time.',
+    servicesTitle: 'Applies to',
+    servicesHint:
+      'Which services it appears under in the «Extras» step. Without at least one it appears nowhere.',
+    servicesRequired: 'With no service attached, nobody can pick this add-on.',
+    servicesInactive: 'not on sale',
+    availabilityTitle: 'Availability',
+    availabilityLabel: 'Offer it in the request flow',
+    availabilityHint:
+      'Takes effect at once, and the same switch takes it back. Hidden, it drops out of new requests; jobs running and quotes sent stay exactly as they are.',
+    slugLabel: 'Slug',
+    slugHint:
+      'Derived from the German name and fixed after that. Quote lines remember this slug — change it and every line already written loses its name.',
+    usageTitle: 'Usage',
+    usageHint: 'What points at it, and therefore stands in the way of deleting it.',
+    usageRequests: 'Requests',
+    usageOffers: 'Quotes and invoices',
+    usageBody: '{n} requests and quotes point at it.',
+    usageNone: 'Not used anywhere yet.',
+    localeHint:
+      'German is required. Where another language is missing, the request flow shows the German text (§20.6) — intended, but it shows.',
+    dangerTitle: 'Delete add-on',
+    save: 'Save changes',
+    saved: '«{name}» saved.',
+    unsaved: 'Unsaved changes. The switch above applies at once; the fields here wait for Save.',
+    discard: 'Discard',
+    notFound: 'This add-on no longer exists.',
+  },
+
+  addonNew: {
+    title: 'New add-on',
+    lead: 'Something a customer can buy alongside a service. Nothing is written until you save below.',
+    back: 'All add-ons',
+    nameRequired: 'Without a German name there is no name and no slug.',
+    slugPreview: 'Slug will be: {slug}',
+    saveHidden: 'Save without offering it',
+    saveActive: 'Create and offer',
+    createNote:
+      'Hidden, it appears nowhere but this panel. Offering it puts it straight into the «Extras» step of the request flow that is running now.',
+    createdHidden: '«{name}» created, not yet visible.',
+    createdActive: '«{name}» created and visible in the request flow.',
+    activateTitle: 'Offer «{name}» right away?',
+    activateBody:
+      'It goes into the «Extras» step immediately — at the price above, and a customer can add it to a job the same minute. Saving it hidden is fine too; offering it afterwards is one click.',
+    activateConfirm: 'Create and offer',
+    dismiss: 'Back',
   },
 
   coupons: {
