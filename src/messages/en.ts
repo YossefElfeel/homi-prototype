@@ -164,6 +164,15 @@ export const en: Messages = {
       active: 'Available',
       inactive: 'Unavailable',
     },
+    /* "Fully redeemed" rather than "Used up": the cap was reached, which is
+       the campaign working, not the record breaking. */
+    coupon: {
+      scheduled: 'Starts later',
+      active: 'Valid',
+      'used-up': 'Fully redeemed',
+      expired: 'Expired',
+      inactive: 'Disabled',
+    },
     /* Not the state of a payment but its route. Here because it used to live in
        three places: the customer's account, the quote's payment step, and
        `admin.offers.method` — inside a single screen's namespace. */

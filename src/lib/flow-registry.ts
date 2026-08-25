@@ -12,6 +12,13 @@
  * be done inside it, and how does it end. `exits` is the load-bearing column —
  * a flow with fewer exits than the real world has outcomes is a flow that will
  * be worked around by phone.
+ *
+ * Written in English, like /screens' notes and unlike the panel it describes.
+ * It used to be German prose under English headings, which made it the one
+ * surface in the build whose language depended on which half of it you read:
+ * the flow was called "Making a request" and everything explaining it was not.
+ * The screens themselves stay bilingual — they have customers — but this board
+ * has readers, and they are the same people who read the notes on /screens.
  */
 
 export type ActorId = 'visitor' | 'customer' | 'owner' | 'contractor' | 'applicant';
@@ -28,7 +35,14 @@ export interface FlowAction {
 
 export interface Flow {
   id: string;
-  de: string;
+  /**
+   * One name, in English.
+   *
+   * There was a `de` beside this, rendered as a grey label next to the
+   * heading. With the body translated it was the last German on the page and
+   * the only thing on it nothing else referred to — a second name for a flow
+   * that is not an entity anybody looks up by name.
+   */
   en: string;
   actors: ActorId[];
   /** How the flow is entered at all. */
@@ -40,11 +54,11 @@ export interface Flow {
 }
 
 export const ACTOR_LABEL: Record<ActorId, string> = {
-  visitor: 'Besucher',
-  customer: 'Kunde',
-  owner: 'Inhaber',
-  contractor: 'Mitarbeitende',
-  applicant: 'Bewerber',
+  visitor: 'Visitor',
+  customer: 'Customer',
+  owner: 'Owner',
+  contractor: 'Team member',
+  applicant: 'Applicant',
 };
 
 const ok = (label: string, href?: string, note?: string): FlowAction => ({
@@ -72,818 +86,916 @@ const open = (label: string, note: string): FlowAction => ({
 export const FLOWS: Flow[] = [
   {
     id: 'intake',
-    de: 'Anfrage stellen',
     en: 'Making a request',
     actors: ['visitor', 'customer', 'owner'],
     entries: [
-      ok('Assistent, 8 Schritte', '/anfrage', 'Öffentlich, ohne Konto — §8.3'),
+      ok('Wizard, 8 steps', '/anfrage', 'Public, no account — §8.3'),
       added(
-        'Telefonisch erfassen',
+        'Take one over the phone',
         '/admin/anfragen/neu',
-        'Eine Seite, jeder Schritt als Abschnitt. Vorher konnte eine Anfrage nur über die Website entstehen — in einem Betrieb, dessen Arbeit per Telefon hereinkommt',
+        'One page, every step a section. A request could previously only come into being through the website — in a business whose work arrives by telephone',
       ),
       added(
-        'Als Entwurf speichern',
+        'Save as a draft',
         '/admin/anfragen/neu',
-        'Für den Anruf, der endet, bevor die Antworten fertig sind. Braucht nur einen Kunden; steht in keiner Warteschlange und beim Kunden nicht im Konto',
+        'For the call that ends before the answers are finished. Needs only a customer; sits in no queue and not in the customer’s account',
       ),
     ],
     actions: [
       ok(
-        'Gebietsprüfung',
+        'Area check',
         '/anfrage/objekt',
-        '8700 innerhalb, 8001 ausserhalb, 80 ungültig. «Ausserhalb» sperrt jetzt «Weiter» — auch bei einem gespeicherten Objekt',
+        '8700 inside, 8001 outside, 80 invalid. "Outside" now blocks "continue" — for a saved property too',
       ),
-      ok('Preisrahmen live', '/anfrage/leistung', 'Rechnet ab Leistung + Fläche mit'),
-      ok('Zutritt hinterlegen', '/anfrage/zutritt', 'Vier Methoden, Codes maskiert'),
-      ok('Entwurf überlebt Neuladen', '/anfrage', '30 Tage, §20.1'),
+      ok('Live price range', '/anfrage/leistung', 'Counts along from service and area'),
+      ok('Record the access method', '/anfrage/zutritt', 'Four methods, codes masked'),
+      ok('The draft survives a reload', '/anfrage', '30 days, §20.1'),
       added(
-        'Nach Frist priorisieren',
+        'Prioritise by deadline',
         '/admin/anfragen',
-        'Jede offene Anfrage hat eine Frist aus §4.1 und einen Verzug in Tagen. Überfällige stehen oben — vorher war die Liste nach Eingang sortiert und damit ein Protokoll, keine Warteschlange',
+        'Every open request has a §4.1 deadline and a delay in days. Overdue ones sit at the top — the list used to be sorted by arrival, which made it a log rather than a queue',
       ),
       added(
-        'Filtern nach Status, Leistung, Gebiet, Zeitraum',
+        'Filter by status, service, area, period',
         '/admin/anfragen',
-        'Vorher nur Status und Gebiet',
+        'Status and area only, before',
       ),
       added(
-        'Reiter «Alle» / «Überfällig»',
+        '"All" / "Overdue" tabs',
         '/admin/anfragen',
-        'War ein Schalter «nur überfällig» zwischen den Filtern, und die Zahl dazu stand in der Ergebniszeile darunter — die Zahl und der Schalter, der sie öffnet, waren nie zusammen zu sehen. Beide Reiter tragen ihren Zählstand; «nichts überfällig» hat einen eigenen leeren Zustand, statt «noch keine Anfragen» zu behaupten',
+        'Was an "overdue only" toggle sitting among the filters, with its count in the results line underneath — the number and the switch that opens it were never on screen together. Both tabs carry their own count, and "nothing overdue" has an empty state of its own rather than claiming "no requests yet"',
       ),
       added(
-        'Zeilenaktionen',
+        'Row actions',
         '/admin/anfragen',
-        'Details, Offerte schreiben, ablehnen, Entwurf weiterbearbeiten oder verwerfen — je nach Status. Vorher führte jede Zeile an genau einen Ort',
+        'Details, write a quote, decline, carry on with a draft or discard it — according to status. Every row used to lead to exactly one place',
       ),
       added(
-        'Ablauf sichtbar',
+        'The sequence is visible',
         '/admin/anfragen/req_1',
-        'Eingegangen → In Prüfung → Offerte versendet → Antwort, mit Zeitstempeln. Dieselbe Ableitung auf der Kundenseite, damit beide nicht verschieden antworten',
+        'Received → In review → Quote sent → Answer, with timestamps. The same derivation on the customer side, so the two cannot answer differently',
       ),
     ],
     exits: [
-      ok('Gesendet', '/anfrage/gesendet'),
+      ok('Sent', '/anfrage/gesendet'),
       added(
-        'Ausserhalb Gebiet — gar nicht erst erfasst',
+        'Outside the area — never taken in at all',
         '/anfrage/objekt',
-        'War ein Ausgang: die Anfrage ging trotzdem raus, wurde markiert, und die Absage kam einen Arbeitstag später von Hand. Jetzt hält die Prüfung bei der PLZ — auf dem Wizard, im Telefonformular und im store, damit keine URL daran vorbeikommt',
+        'Used to be an exit: the request went out anyway, was flagged, and the refusal followed by hand a working day later. The check now stops at the postcode — on the wizard, in the phone form and in the store, so no URL gets round it',
       ),
       added(
-        'Zurückziehen',
+        'Withdraw it',
         '/konto/anfragen/req_3',
-        'cancelledByCustomer war deklariert, übersetzt und eingefärbt — und von keinem Bildschirm erreichbar',
+        'cancelledByCustomer was declared, translated and coloured — and reachable from no screen',
       ),
       added(
-        'Stornieren durch uns',
+        'Cancelled by us',
         '/admin/anfragen/req_3',
-        'Ab «Offerte versendet» ist «Ablehnen» das falsche Wort. Schliesst die Offerte gleich mit',
+        'From "quote sent" onwards, "decline" is the wrong word. Closes the quote along with it',
       ),
       ok(
-        'Ablehnen mit Begründung',
+        'Decline with a reason',
         '/admin/anfragen/req_2?action=reject',
-        '§4.1. Dialog über der Liste statt eigener Seite — die Absage wird dort entschieden, wo die Zeile steht',
+        '§4.1. A dialog over the list rather than a page of its own — the refusal is decided where the row is',
       ),
     ],
   },
   {
     id: 'quote',
-    de: 'Offerte & Zahlung',
     en: 'Quote & payment',
     actors: ['owner', 'customer'],
     entries: [
-      ok('Offerte schreiben', '/admin/anfragen/req_2/offerte', 'Zeilen vorbefüllt aus der Anfrage'),
+      ok('Write a quote', '/admin/anfragen/req_2/offerte', 'Lines pre-filled from the request'),
       added(
-        'Direkt aus der Telefonerfassung',
+        'Straight out of the phone intake',
         '/admin/anfragen/neu',
-        '«Erfassen und Offerte schreiben» — der Anruf endet oft mit beidem',
+        '"Record it and write the quote" — the call often ends with both',
       ),
     ],
     actions: [
       added(
-        'Gelesen heisst gelesen',
+        'Read means read',
         '/admin/anfragen/req_2',
-        'Der Status sprang erst im Offert-Builder auf «In Prüfung» — eine Bildschirmseite zu spät. Die Anfrage liess sich vollständig lesen, während sie «Neu» blieb, und der Kunde sah in seinem Konto weiterhin, dass niemand hineingeschaut hat',
+        'The status only moved to "in review" inside the quote builder — one screen too late. A request could be read from top to bottom while it stayed "New", and the customer went on seeing in their account that nobody had looked',
       ),
-      ok('Positionen bearbeiten', '/admin/anfragen/req_2/offerte'),
-      ok('Optionale Positionen an/aus', '/offerte/off_1', 'Preis und Dauer bewegen sich zusammen'),
-      ok('Termin wählen, 15 Min. reserviert', '/offerte/off_1/termin'),
+      ok('Edit the lines', '/admin/anfragen/req_2/offerte'),
+      ok('Optional lines on and off', '/offerte/off_1', 'Price and duration move together'),
+      ok('Pick a date, held 15 minutes', '/offerte/off_1/termin'),
       added(
-        'Vertrag lesen und unterschreiben',
+        'Read the contract and sign it',
         '/offerte/off_1/unterschrift',
-        'Der Bildschirm zeigte drei Eckdaten und einen Link auf die AGB. Drei Eckdaten prüft man — unterschrieben wird ein Dokument, und das stand nirgends: nicht auf dem Bildschirm, nicht im Konto danach und auch nicht auf der Kopie des Inhabers',
+        'The screen showed three key figures and a link to the terms. Three figures are something you check — what gets signed is a document, and it was nowhere: not on the screen, not in the account afterwards, and not on the owner’s copy either',
       ),
       added(
-        'Homivaro unterschreibt zuerst',
+        'Homivaro signs first',
         '/admin/anfragen/req_1/offerte/senden',
-        'Die Offerte geht unterschrieben raus, die Unterschrift des Kunden schliesst den Vertrag. Gesetzt beim Versand aus den Einstellungen und auf die Offerte kopiert — eine neu gezeichnete Unterschrift ändert nie einen bereits geschlossenen Vertrag',
+        'The quote goes out signed and the customer’s signature closes the contract. Set from the settings on sending and copied onto the quote — a newly drawn signature never changes a contract that is already closed',
       ),
       added(
-        'Unterschrift hinterlegen',
+        'Store the signature',
         '/admin/einstellungen?tab=contract',
-        'sendOffer las den Wert bereits; ohne diesen Bildschirm setzte die Anwendung eine Unterschrift unter jeden Vertrag, die der Inhaber weder sehen noch ändern konnte',
+        'sendOffer was already reading the value; without this screen the application put a signature under every contract that the owner could neither see nor change',
       ),
-      ok('Änderung anfragen', '/offerte/off_1/aenderung'),
+      ok('Ask for a change', '/offerte/off_1/aenderung'),
       added(
-        'Freie Zeiten: die fünf Regeln',
+        'Free slots: the five rules',
         '/admin/anfragen/req_2/offerte',
-        'Der Block zeigte Zeiten ohne zu sagen, woher sie kommen — «sucht das System oder der Mensch?» hatte auf dem Bildschirm keine Antwort. Öffnungszeiten und Vorlaufzeit lesen ihre Werte aus den Einstellungen, damit der Text nicht von der Engine abdriften kann',
+        'The block showed times without saying where they came from — "is the system choosing, or a person?" had no answer on screen. Opening hours and lead time read their values from the settings, so the text cannot drift away from the engine',
       ),
       added(
-        'Vorlage einsetzen oder direkt senden',
+        'Insert a template, or send straight out',
         '/admin/rechnungen/inv_draft',
-        'Der Wähler setzte nur ein und liess {name} stehen, weil nichts die Platzhalter auflöste. Aufgelöst wird jetzt gegen den Datensatz auf dem Bildschirm — was aufgeht, darf mit einem Klick raus, was nicht aufgeht, sperrt den Direktversand. Auf /admin/nachrichten steht er nicht mehr: ein Gespräch dort kann von einer Anfrage, einer Offerte oder einer Rechnung handeln, und ein Wähler, der das nicht unterscheidet, bietet den falschen Text so bereitwillig an wie den richtigen',
+        'The picker only inserted, and left {name} standing, because nothing resolved the placeholders. They are resolved against the record on screen now — what resolves may go out with one click, what does not blocks direct sending. It is gone from /admin/nachrichten: a conversation there may be about a request, a quote or an invoice, and a picker that cannot tell them apart offers the wrong text as readily as the right one',
       ),
       added(
-        'Vorlage im Offert-Builder',
+        'Templates in the quote builder',
         '/admin/anfragen/req_2/offerte',
-        'Bot genau eine fest verdrahtete Option, weshalb «Offerte läuft ab» im ganzen Produkt keinen erreichbaren Weg hatte. Liest jetzt den Bereich Offerten',
+        'Offered exactly one hard-wired option, which is why "quote expires" had no reachable path anywhere in the product. It reads the quotes area now',
       ),
       added(
-        'Wählbare Position: an oder aus vorwählen',
+        'Selectable line: pre-ticked or not',
         '/admin/anfragen/req_2/offerte',
-        'Der Builder schrieb nur `optional`, nie `selected` — jede wählbare Position ging vorangekreuzt raus. Ein Extra konnte also nur ein Rabatt sein, den der Kunde wegnimmt, nie eine Leistung, die er dazunimmt',
+        'The builder only ever wrote `optional`, never `selected` — so every selectable line went out pre-ticked. An extra could therefore only be a discount the customer takes away, never work they add',
       ),
       added(
-        'Begleittext vor dem Senden lesen',
+        'Read the covering message before sending',
         '/admin/anfragen/req_2/offerte/senden',
-        'Die Karte hiess «So sieht es der Kunde» und liess genau den einen Teil weg, der von Hand geschrieben ist',
+        'The card was headed "this is what the customer sees" and left out the one part that is written by hand',
       ),
       added(
-        'Drei Termine vorschlagen (Erstkunde)',
+        'Propose three dates (first-time customer)',
         '/offerte/off_propose/termin',
-        'Stammkunden buchen direkt weiter — wir kennen Objekt, Zutritt und Verlauf. Beim ersten Einsatz schlägt der Kunde bis zu drei Termine vor, nichts wird dabei blockiert',
+        'Regulars book straight on — we know the property, the access and the history. On a first job the customer proposes up to three dates, and nothing is blocked while they sit unanswered',
       ),
       added(
-        'Termin bestätigen',
+        'Confirm the date',
         '/admin/offerten/off_propose',
-        'Der einzige Schritt in diesem Flow, der beim Inhaber liegt. Reserviert den Slot 48 Stunden; ohne die Karte sah die Offerte aus, als läge sie beim Kunden',
+        'The only step in this flow that sits with the owner. Holds the slot for 48 hours; without the card the quote looked as though it were with the customer',
       ),
       added(
-        'Zahlungsstand lesen',
+        'Read the payment state',
         '/admin/offerten',
-        'Nur lesend. Der Inhaber hat hier weder Karte einzugeben noch etwas zurückzuerstatten — die eine Auskunft, die fehlte, war ob das Geld da ist',
+        'Read-only. The owner has neither a card to enter here nor anything to refund — the one thing missing was whether the money has arrived',
       ),
     ],
     exits: [
       added(
-        'Ablehnung zurücknehmen',
+        'Take a refusal back',
         '/admin/anfragen/req_q_rejected',
-        'Ablehnen war eine Einbahnstrasse: «Offerte schreiben» schaltet sich ab, sobald eine Anfrage als beantwortet gilt, also blieb auf dem Bildschirm genau eine Handlung übrig — nochmal ablehnen. Gilt nur für die eigene Absage; hat der Kunde die Offerte abgelehnt, ist die neue Version die Antwort',
+        'Declining was a one-way street: "write a quote" switches itself off as soon as a request counts as answered, so exactly one action was left on the screen — decline it again. Applies only to our own refusal; if the customer declined the quote, the new version is the answer',
       ),
-      ok('Bezahlt und gebucht', '/offerte/off_1/bestaetigt'),
-      ok('Zahlung fehlgeschlagen', '/offerte/off_1/zahlung', 'Reservierung läuft weiter oder ab'),
-      ok('Abgelaufen, neu ausstellen', '/offerte/off_2'),
+      ok('Paid and booked', '/offerte/off_1/bestaetigt'),
+      ok('Payment failed', '/offerte/off_1/zahlung', 'The hold runs on, or runs out'),
+      ok('Expired, reissue it', '/offerte/off_2'),
       added(
-        'Offerte ablehnen',
+        'Decline the quote',
         '/offerte/off_1',
-        'Es gab nur annehmen oder ändern. Ein Nein wurde zu Schweigen und drei Wochen später zu «abgelaufen» — ohne Grund im System. Gibt die reservierte Zeit sofort frei',
+        'There was only accept or amend. A no became silence, and three weeks later "expired" — with no reason in the system. Releases the held time at once',
       ),
       added(
-        'Ohne Zahlung gebucht (Paket oder Abo)',
+        'Booked without payment (package or plan)',
         '/offerte/off_pkg/zahlung',
-        '§11.3 — gekaufte Stunden werden nicht zweimal verrechnet. Vorher verlangte der Ablauf eine Karte, belastete den vollen Betrag und liess die Stunden unangetastet im Konto liegen',
+        '§11.3 — hours already bought are not charged twice. The flow used to demand a card, charge the full amount, and leave the hours sitting untouched in the account',
       ),
       added(
-        'Weiter zur Buchung',
+        'On to the booking',
         '/admin/offerten/off_paid',
-        'Die Verknüpfung Offerte → Buchung stand in den Daten und auf keinem Bildschirm. «Ist das gemacht worden?» begann bisher im Kalender',
+        'The quote → booking link was in the data and on no screen. "Did that ever get done?" used to start in the calendar',
       ),
     ],
   },
   {
     id: 'crm',
-    de: 'Kunden & Objekte',
     en: 'Customers & properties',
     actors: ['owner'],
     entries: [
       added(
-        'Kunde erfassen',
+        'Add a customer',
         '/admin/kunden/neu',
-        'Ein Kunde entstand ausschliesslich als Nebenwirkung des Assistenten. Am ersten Tag war /admin/kunden eine Liste ohne Weg, etwas hineinzutun',
+        'A customer only ever came into being as a side effect of the wizard. On day one /admin/kunden was a list with no way to put anything into it',
       ),
-      added('Objekt erfassen', '/admin/objekte', 'Ausserhalb einer Anfrage — für bekannte Adressen'),
-      ok('Automatisch aus einer Anfrage', '/anfrage/kontakt'),
+      added('Add a property', '/admin/objekte', 'Outside a request — for addresses we know'),
+      ok('Automatically, out of a request', '/anfrage/kontakt'),
       added(
-        'Schlüssel übernehmen',
+        'Take in a key',
         '/admin/schluessel',
-        'Das Formular fragte nur nach dem Objekt und listete jede Adresse der Firma als «Bezeichnung — Strasse». Übergeben wird ein Schlüssel aber von einem Menschen, der seinen Namen nennt: das Büro musste den Namen erst in eines von sechzehn Labels übersetzen, und zwei Kunden mit einer Wohnung an derselben Strasse waren ein Fehlgriff, den nichts danach je bemerkt hätte. Kunde zuerst, dann seine Objekte',
+        'The form asked only for the property and listed every address the company has as "label — street". A key is handed over by a person who gives their name, though: the office had to translate that name into one of sixteen labels first, and two customers with a flat on the same street were a mis-pick that nothing afterwards would ever have caught. Customer first, then their properties',
       ),
     ],
     actions: [
-      added('Doppelprüfung auf E-Mail und Telefon', '/admin/kunden/neu', 'Dieselbe Regel wie im Assistenten'),
-      ok('Interne Notizen', '/admin/kunden/cus_1'),
-      ok('Zutritt und Schlüssel am Objekt', '/admin/objekte/prp_1', 'Codes rollen- und datumsgebunden, §13.1'),
       added(
-        'Nach Status filtern, nach Aufbewahrung und Person suchen',
-        '/admin/schluessel',
-        '«Welche Schlüssel haben wir gerade?» hiess jede Zeile lesen und das Badge prüfen. Das Register behält zurückgegebene Einträge dauerhaft (§13.2), die Liste wächst also von der Antwort weg. Gesucht wird hier als einziger Liste auch rückwärts: jemand steht am Schrank mit einem Anhänger «Fach 3» und muss wissen, zu wessen Tür er gehört — deshalb sind Aufbewahrungsort und die Namen bei Übernahme und Rückgabe durchsuchbar, nicht nur Objekt und Kunde. Dazu die Trefferzahl, die jede andere Admin-Liste über die `Toolbar` längst hatte',
+        'Duplicate check on email and phone',
+        '/admin/kunden/neu',
+        'The same rule as in the wizard',
+      ),
+      ok('Internal notes', '/admin/kunden/cus_1'),
+      ok(
+        'Access and keys on the property',
+        '/admin/objekte/prp_1',
+        'Codes bound to role and date, §13.1',
       ),
       added(
-        'Vom Schlüssel zum Objekt springen',
+        'Filter by status, search by storage place and person',
         '/admin/schluessel',
-        'Die Zeile hatte genau ein Control — «Rückgabe erfassen» — und keinen Weg zu der Adresse, zu der der Schlüssel gehört. Genau dort endet aber jede Frage zu einem Schlüssel: wessen Tür, welcher Zutritt, steht dort ein Auftrag an. Der Sprung lief über die Seitenleiste und eine Suche nach dem hier abgelesenen Label',
+        '"Which keys are we holding right now?" meant reading every row and checking the badge. The register keeps returned entries permanently (§13.2), so the list grows away from the answer. It is the one list that is also searched backwards: somebody is standing at the cabinet with a tag reading "slot 3" and needs to know whose door it opens — so the storage place and the names on hand-over and return are searchable too, not just property and customer. Plus the result count every other admin list had through the `Toolbar` long ago',
       ),
       added(
-        'Objekt bearbeiten',
+        'Jump from the key to the property',
+        '/admin/schluessel',
+        'The row had exactly one control — "record a return" — and no way to the address the key belongs to. That is where every question about a key ends, though: whose door, which access, is there a job due there. The jump went via the sidebar and a search for the label read off here',
+      ),
+      added(
+        'Edit a property',
         '/admin/objekte/prp_1/bearbeiten',
-        'Ein Objekt liess sich anlegen und lesen, sonst nichts. Eine falsch aufgenommene Hausnummer stand danach auf jeder Offerte, jedem Auftragsblatt und jeder Rechnung an dieser Adresse — Lift, Haustiere und erhöhter Aufwand wurden beim Anlegen auf `false` gesetzt und hatten nirgends einen Schalter',
+        'A property could be created and read, and nothing else. A house number taken down wrong then stood on every quote, every job sheet and every invoice at that address — lift, pets and extra effort were set to `false` on creation and had a switch nowhere',
       ),
       added(
-        'Objekt löschen, solange nichts daran hängt',
+        'Delete a property while nothing hangs off it',
         '/admin/objekte',
-        'Sieben Datensatztypen zeigen auf ein Objekt, drei davon mit `!`. Gelöscht wird deshalb nur eine Adresse, die noch nie verwendet wurde; sonst nennt der Eintrag im Menü die Zahl, die ihn blockiert. In jedem Szenario hängt an jedem gesäten Objekt etwas — der aktive Zustand ist also über «Objekt erfassen» erreichbar, was auch der einzige Fall ist, für den «löschen» ehrlich ist. Kein Archiv-Flag: eine am Telefon falsch getippte Adresse ist ein Fehler, und ein Fehler, den man nur verstecken kann, macht aus zwölf Objekten vierzig',
+        'Seven record types point at a property, three of them with `!`. So only an address that has never been used is deleted; otherwise the menu entry names the number blocking it. In every scenario something hangs off every seeded property — the live state is therefore reachable through "add a property", which is also the only case where "delete" is honest. No archive flag: an address mistyped on the phone is a mistake, and a mistake you can only hide turns twelve properties into forty',
       ),
       open(
-        'Objekt einem anderen Kunden zuweisen',
-        'Bewusst kein Feld im Editor. Ein Objekt umzuhängen liesse Buchungen, Offerten und Rechnungen auf einen Kunden zeigen, der es nie hatte — das ist eine Zusammenführung, keine Bearbeitung, und braucht eine Entscheidung darüber, was mit dem Verlauf passiert',
+        'Reassign a property to another customer',
+        'Deliberately not a field in the editor. Moving a property would leave bookings, quotes and invoices pointing at a customer who never had it — that is a merge, not an edit, and it needs a decision about what happens to the history',
       ),
       added(
-        'Nach Objektart und Gebiet filtern, nach Name suchen',
+        'Filter by property type and area, search by name',
         '/admin/objekte',
-        'Die Liste war nach nichts sortierbar und nach nichts filterbar. Die Objektart hatte nicht einmal eine Spalte, und das Gebiet steckt einzig in der PLZ (§6)',
+        'The list could be sorted by nothing and filtered by nothing. The property type did not even have a column, and the area lives solely in the postcode (§6)',
       ),
       added(
-        'Letzter Einsatz und nächster Termin in der Liste',
+        'Last job and next date in the list',
         '/admin/objekte',
-        '«Wann waren wir zuletzt dort?» und «wann wieder?» standen pro Adresse einen Klick tief im Objektverlauf — nachgeschaut wurde deshalb im Kalender. Beide Spalten werden aus den Buchungen abgeleitet, `noAccess` zählt nicht als Einsatz',
+        '"When were we last there?" and "when are we back?" sat one click deep in the property history, per address — so people looked in the calendar instead. Both columns are derived from the bookings, and `noAccess` does not count as a job',
       ),
-      ok('Verlauf als eine Zeitachse', '/admin/kunden/cus_1'),
+      ok('The history as one timeline', '/admin/kunden/cus_1'),
       added(
-        'Stammdaten bearbeiten',
+        'Edit the master record',
         '/admin/kunden/cus_1/bearbeiten',
-        'Der Datensatz liess sich anlegen und lesen, sonst nichts. Eine am Telefon falsch getippte Nummer blieb falsch — das einzige änderbare Feld war die interne Notiz, also genau das Feld, das der Kunde nie sieht',
+        'The record could be created and read, and nothing else. A number mistyped on the phone stayed wrong — the only editable field was the internal note, which is precisely the field the customer never sees',
       ),
       added(
-        'Aktiv / inaktiv setzen',
+        'Set active / inactive',
         '/admin/kunden',
-        'Die Spalte zeigte den Status und nichts im Panel konnte ihn schreiben — nur der Kunde selbst, indem er sein Konto schloss',
+        'The column showed the status and nothing in the panel could write it — only the customer could, by closing their account',
       ),
       added(
-        'Sperren und entsperren',
+        'Block and unblock',
         '/admin/kunden',
-        '«Der ist weg» und «den bedienen wir nicht» waren dieselbe Zeile. Die Sperre beisst wirklich: keine Offerte aus dem Builder, in der Erfassung nicht wählbar, Kundenbereich zu',
+        '"They are gone" and "we do not serve them" were the same row. The block really bites: no quote from the builder, not selectable at intake, customer area shut',
       ),
       added(
-        'Nach Status filtern',
+        'Filter by status',
         '/admin/kunden',
-        'Die Statusspalte wurde zum Schalter, bevor sie zum Filter wurde — «wen haben wir gesperrt?» hiess jede Zeile lesen. Dazu die Trefferzahl, die jede andere Admin-Liste über die `Toolbar` längst hatte',
+        'The status column became a switch before it became a filter — "who have we blocked?" meant reading every row. Plus the result count every other admin list had through the `Toolbar` long ago',
       ),
       added(
-        'Zahlungsmittel sehen, hinterlegen, Standard setzen',
+        'See, store and default a payment method',
         '/admin/kunden/cus_2',
-        'Der Kunde sah seine Karten auf Screen 45, der Inhaber nirgends — und am Telefon wird er gefragt, nicht der Kunde. Das Feld ist eine Bezeichnung, nie eine Kartennummer',
+        'The customer saw their cards on screen 45 and the owner nowhere — and on the phone it is the owner who gets asked, not the customer. The field is a label, never a card number',
       ),
       ok(
-        'Zahlungsmittel entfernen',
+        'Remove a payment method',
         '/konto/zahlungsmittel',
-        'Durch den Kunden selbst. Hinterlegen gibt er am Telefon durch, löschen nicht — das Zahlungsmittel gehört ihm. Screen 65 sagt das hin, wo der Knopf fehlt, sonst sieht es nach einem vergessenen Control aus',
+        'By the customer themselves. They read a new one out over the phone; deleting one they do not — the payment method is theirs. Screen 65 says so where the button is missing, otherwise it looks like a forgotten control',
       ),
       added(
-        'Rechnungen des Kunden mit Betrag und Zahlweg',
+        'The customer’s invoices, with amount and payment route',
         '/admin/kunden/cus_2',
-        'In der Zeitachse war eine Rechnung eine Zeile mit einer Nummer: kein Betrag, kein Zahlungsstand, kein Zahlweg. Details öffnen im Popup, geändert wird weiterhin nur auf Screen 72',
+        'In the timeline an invoice was a row with a number: no amount, no payment state, no route. Details open in a dialog; changes still happen only on screen 72',
       ),
       added(
-        'Ganzen Verlauf durchsuchen und filtern',
+        'Search and filter the whole history',
         '/admin/kunden/cus_2/verlauf',
-        'Der Datensatz trug die ganze Zeitachse ungefiltert. Jetzt trägt er die letzten fünf, und Screen 65a den Rest — mit Suche, Art-Filter und Zeitraum. Offerten sind neu drin: vorher sprang der Verlauf von der Anfrage direkt zur Buchung',
+        'The record carried the entire timeline unfiltered. It carries the last five now and screen 65a the rest — with search, a type filter and a period. Quotes are newly in it: the history used to jump from the request straight to the booking',
       ),
     ],
     exits: [
       added(
-        'Schlüssel zurückgeben',
+        'Return a key',
         '/admin/schluessel',
-        'Die Rückgabe war ein Knopf in der Tabelle: ein Klick, Status umgestellt, Zeitstempel gesetzt, nichts gefragt — unumkehrbar und ohne Rückfrage. Der geschlossene Eintrag konnte damit keine der beiden Fragen beantworten, die zu einem Schlüssel ausserhalb des Schranks überhaupt gestellt werden: wer ihn hinausgetragen hat und wer dafür unterschrieben hat. Jetzt ein Dialog mit Datum, beiden Namen und einer Notiz — und der Eintrag bleibt im Register, gelöscht wird er nie',
+        'The return was a button in the table: one click, status flipped, timestamp set, nothing asked — irreversible and without a prompt. The closed entry could therefore answer neither of the two questions ever asked about a key outside the cabinet: who carried it out, and who signed for it. Now a dialog with a date, both names and a note — and the entry stays in the register; it is never deleted',
       ),
-      ok('Konto schliessen', '/konto/profil', 'Durch den Kunden selbst'),
+      ok('Close the account', '/konto/profil', 'By the customer themselves'),
       added(
-        'Archivieren und wiederherstellen',
+        'Archive and restore',
         '/admin/kunden',
-        'Aus der Arbeitsliste raus, im Datensatz drin — mit eigenem Tab, denn ein Soft Delete, den man nirgends ansehen kann, ist von einem echten nicht zu unterscheiden',
+        'Out of the working list, still in the records — with a tab of its own, because a soft delete you cannot look at anywhere is indistinguishable from a real one',
       ),
       open(
-        'Kunde endgültig löschen (revDSG)',
-        'Das Archiv ist bewusst kein Löschen. Rechnungen hängen am Datensatz (§15) und drei Admin-Screens dereferenzieren `customerId` mit `!`. Was revDSG für einen Kunden mit Rechnungen verlangt, gehört geklärt, bevor der Knopf gebaut wird',
+        'Delete a customer for good (revDSG)',
+        'The archive is deliberately not a delete. Invoices hang off the record (§15) and three admin screens dereference `customerId` with `!`. What revDSG requires for a customer who has invoices needs settling before the button is built',
       ),
     ],
   },
   {
     id: 'job',
-    de: 'Einsatz',
     en: 'The job itself',
     actors: ['owner', 'contractor'],
     entries: [
-      ok('Aus bezahlter Offerte', '/admin/kalender'),
+      ok('From a paid quote', '/admin/kalender'),
       added(
-        'Von Hand eintragen',
+        'Enter one by hand',
         '/admin/kalender/neu',
-        'Eine Buchung entstand ausschliesslich aus einer bezahlten Offerte. Der Auftrag, der am Telefon zustande kommt — die Art, wie dieser Betrieb Arbeit bekommt — hatte keinen Weg in den Kalender, und /admin/buchungen druckte seit dem ersten Tag die Quelle «Manuell» für einen Datensatz, den nichts erzeugen konnte',
+        'A booking came exclusively from a paid quote. The job that comes together on the phone — the way this business gets work — had no path into the calendar, and /admin/buchungen had been printing the source "manual" since day one for a record that nothing could produce',
       ),
       added(
-        'Buchungen als Liste',
+        'Bookings as a list',
         '/admin/buchungen',
-        'Die Buchung war die einzige grosse Entität ohne eigene Liste. Der Kalender beantwortet «was ist am Dienstag» — nicht «welche Einsätze kommen aus Offerten», nicht «welcher fertige Einsatz hat noch keine Rechnung»',
+        'The booking was the one large entity without a list of its own. The calendar answers "what is on on Tuesday" — not "which jobs come out of quotes", not "which finished job still has no invoice"',
       ),
-      ok('Heutige Einsätze', '/einsatz', 'Rolle «Mitarbeitende»'),
+      ok('Today’s jobs', '/einsatz', 'Role "team member"'),
     ],
     actions: [
-      ok('Zuweisen und verschieben', '/admin/buchungen/bkg_1'),
+      ok('Assign and reschedule', '/admin/buchungen/bkg_1'),
       added(
-        'Aktionen direkt aus dem Kalender',
+        'Act straight from the calendar',
         '/admin/kalender',
-        'Verschieben, Zuweisen und Stornieren lagen hinter dem Öffnen des Einsatzes. Das Zeilenmenü springt in dieselbe Ansicht mit dem passenden Feld offen — eine Bestätigung im Dropdown wäre ein Dialog im Menü, und eine zweite Umsetzung von «Stornieren» wäre binnen einer Welle uneinig mit der ersten',
+        'Rescheduling, assigning and cancelling all sat behind opening the job. The row menu jumps into the same view with the right field open — a confirmation inside a dropdown would be a dialog in a menu, and a second implementation of "cancel" would disagree with the first inside a wave',
       ),
       added(
-        'Legende und Farbe nach Zustand',
+        'Legend and colour by state',
         '/admin/kalender',
-        'Woche und Monat zeichneten jeden Eintrag in derselben Akzentfarbe — ein stornierter und ein bestätigter Einsatz sahen gleich aus. Farben kommen aus der status-registry, die Legende liest dieselbe Quelle',
+        'Week and month drew every entry in the same accent colour — a cancelled job and a confirmed one looked alike. The colours come from the status registry, and the legend reads the same source',
       ),
-      ok('Ein- und Auschecken mit Fotos', '/einsatz/bkg_1/check'),
-      ok('Zugangscodes nur am Einsatztag', '/einsatz/bkg_1', 'Demo-Uhr verschieben — der Block leert sich wirklich'),
+      ok('Check in and out with photos', '/einsatz/bkg_1/check'),
+      ok(
+        'Access codes only on the day',
+        '/einsatz/bkg_1',
+        'Move the demo clock — the block really does empty',
+      ),
       added(
-        'Mehraufwand freigeben',
+        'Approve extra time',
         '/admin/buchungen/bkg_1',
-        '§5.3 teilt den Vorgang: melden darf die ausführende Person, bewerten das Büro. Nur die erste Hälfte war gebaut — «wartet auf Freigabe» hatte keinen Ausgang und «abgeschlossen» war unerreichbar',
+        '§5.3 splits the process: the person doing the work reports it, the office judges it. Only the first half was built — "awaiting approval" had no exit and "completed" was unreachable',
       ),
     ],
     exits: [
-      added('Freigegeben und verrechenbar', '/admin/buchungen/bkg_1'),
-      ok('Kein Zutritt, mit Wartezeit und Foto', '/einsatz/bkg_1/kein-zutritt'),
-      ok('Storniert', '/admin/buchungen/bkg_1'),
-      ok('Verrechnet', '/admin/rechnungen'),
+      added('Approved and billable', '/admin/buchungen/bkg_1'),
+      ok('No access, with waiting time and a photo', '/einsatz/bkg_1/kein-zutritt'),
+      ok('Cancelled', '/admin/buchungen/bkg_1'),
+      ok('Invoiced', '/admin/rechnungen'),
     ],
   },
   {
     /*
-     * Neu. Der Kalender hielt ausschliesslich Buchungen, und eine Buchung kam
-     * ausschliesslich aus einer bezahlten Offerte — dazwischen lag alles, was
-     * den Tag eines kleinen Betriebs ausmacht. «Rückruf zugesagt» stand zweimal
-     * im Seed, in einem Notizfeld, ohne Datum und auf keinem Bildschirm
-     * wiederfindbar.
+     * New. The calendar held bookings and nothing else, and a booking came
+     * only from a paid quote — everything that makes up a small firm's day
+     * fell between the two. "Promised a callback" appeared twice in the seed,
+     * in a note field, with no date and findable on no screen.
      */
     id: 'calls',
-    de: 'Anrufe & Termine',
     en: 'Calls & appointments',
     actors: ['owner'],
     entries: [
       added(
-        'Termin eintragen',
+        'Put an appointment in',
         '/admin/kalender/neu',
-        'Ein Knopf, zwei Dinge: Einsatz oder Anruf. Aus Sicht des Inhabers ist es ein Gedanke — an diesem Tag passiert etwas',
+        'One button, two things: a job or a call. From the owner’s side it is one thought — something is happening that day',
       ),
       added(
-        'Ohne Kundenakte',
+        'Without a customer record',
         '/admin/kalender/neu',
-        'Wer einmal angerufen hat, ist kein Kunde. Name und Telefon reichen — sonst füllt sich /admin/kunden mit Leuten, die noch nichts gebucht haben',
+        'Somebody who has rung once is not a customer. A name and a telephone number are enough — otherwise /admin/kunden fills up with people who have booked nothing',
       ),
     ],
     actions: [
       added(
-        'Ergebnis festhalten',
+        'Record the outcome',
         '/admin/kalender/cev_today',
-        'Die Notiz ist, was gefragt werden sollte; das Ergebnis ist, was gesagt wurde — und genau dieser Text muss in die Anfrage übergehen, wenn Arbeit daraus wird',
+        'The note is what was meant to be asked; the outcome is what was said — and it is exactly that text which has to carry over into the request when work comes of it',
       ),
       added(
-        'Besichtigung blockiert Zeit, Anruf nicht',
+        'A viewing blocks time, a call does not',
         '/admin/kalender',
-        'Eine Besichtigung ist irgendwo, ein Telefonat ist überall. Nur die erste kollidiert mit einem Einsatz. Keines von beiden zählt gegen die zwei Einsätze pro Tag — siehe /open-questions',
+        'A viewing is somewhere, a phone call is anywhere. Only the first collides with a job. Neither counts against the two jobs a day — see /open-questions',
       ),
     ],
     exits: [
       added(
-        'Daraus wurde eine Anfrage',
+        'It turned into a request',
         '/admin/kalender/cev_converted',
-        'Der eigentliche Zweck. Ohne diesen Weg endet ein gutes Gespräch als abgehakter Kalendereintrag, und dieselben Angaben werden eine Bildschirmbreite weiter aus dem Gedächtnis nochmal getippt',
+        'The whole point. Without this path a good conversation ends as a ticked-off calendar entry, and the same details get typed again from memory one screen away',
       ),
       added(
-        'Erledigt',
+        'Done',
         '/admin/kalender/cev_today',
-        'Mit Ergebnis im Verlauf, mit Zeitstempel',
+        'With the outcome in the history, with a timestamp',
       ),
       added(
-        'Niemand erreicht',
+        'Nobody reached',
         '/admin/kalender/cev_noreply',
-        'Ausdrücklich nicht «erledigt». Sonst liest sich eine Woche unbeantworteter Anrufe wie eine Woche erledigter Arbeit',
+        'Explicitly not "done". Otherwise a week of unanswered calls reads like a week of finished work',
       ),
-      added('Abgesagt', '/admin/kalender', 'Verschwindet aus dem Kalender, bleibt im Datensatz'),
+      added(
+        'Called off',
+        '/admin/kalender',
+        'Disappears from the calendar, stays in the record',
+      ),
     ],
   },
   {
     id: 'money',
-    de: 'Rechnungen & Abos',
     en: 'Invoices & plans',
     actors: ['owner', 'customer'],
     entries: [
-      ok('Rechnung aus Einsatz', '/admin/rechnungen/neu'),
+      ok('Invoice from a job', '/admin/rechnungen/neu'),
       added(
-        'Rechnung frei erstellen',
+        'Raise an invoice by hand',
         '/admin/rechnungen/neu',
-        'Der Einsatz war der einzige Weg herein, also hatte alles, was diese Firma sonst noch verrechnet — Anfahrt, Material, eine Korrektur nach einer Reklamation — überhaupt keinen Weg in die App. Das wurde in der Buchhaltung geschrieben, und so hält eine Kundin am Ende eine Rechnung in der Hand, von der die App nie gehört hat. Der Einsatz ist jetzt ein Feld im Formular statt die Tür',
+        'The job was the only way in, so everything else this firm bills for — travel, materials, a correction after a complaint — had no path into the app at all. That got written in the accounting system, and so a customer ends up holding an invoice the app has never heard of. The job is a field on the form now, rather than the door',
       ),
     ],
     actions: [
-      ok('Positionen im Entwurf ändern', '/admin/rechnungen/inv_draft'),
-      ok('Versenden, als bezahlt erfassen, stornieren', '/admin/rechnungen/inv_draft'),
+      ok('Change the lines in a draft', '/admin/rechnungen/inv_draft'),
+      ok('Send, record as paid, cancel', '/admin/rechnungen/inv_draft'),
       added(
-        'Zahlweg beim Erfassen angeben',
+        'Name the payment route when recording it',
         '/admin/rechnungen/inv_paid',
-        '«Als bezahlt markieren» schrieb den Status und sonst nichts — kein `Payment`, also stand nirgends, wie das Geld gekommen ist. `PaymentMethod` kannte dafür auch die zwei Wege nicht, über die eine Rechnung hier tatsächlich zurückkommt: QR-Rechnung und bar',
+        '"Mark as paid" wrote the status and nothing else — no `Payment`, so nowhere said how the money had arrived. `PaymentMethod` did not even know the two routes an invoice actually comes back by here: QR-bill and cash',
       ),
       added(
-        'Menge pro Position hoch und runter',
+        'Quantity per line, up and down',
         '/admin/rechnungen/inv_draft',
-        '«Eine Stunde weniger verrechnen» hiess: Zelle anwählen, Zahl neu tippen. Am Schreibtisch geht das, auf dem Telefon ist es eine Zifferntastatur über einer Tabelle — für eine Änderung, die fast immer ±1 ist',
+        '"Bill an hour less" meant: select the cell, retype the number. At a desk that is fine; on a phone it is a numeric keypad over a table — for a change that is almost always ±1',
       ),
       added(
-        'Suchen und nach Status filtern',
+        'Search and filter by status',
         '/admin/rechnungen',
-        'Die Liste war sechs Spalten ohne Suche und ohne Filter. Gesucht wird auch über die QR-Referenz, weil das die Nummer ist, die auf dem Kontoauszug steht — «zu welcher Rechnung gehört diese Zahlung» war vorher gar nicht beantwortbar. «Offen» steht neben den fünf Status, weil es die Frage dahinter ist und keiner davon',
+        'The list was six columns with no search and no filter. The QR reference is searchable too, because that is the number on the bank statement — "which invoice does this payment belong to" could not be answered at all before. "Outstanding" stands beside the five statuses because it is the question behind them and none of them',
       ),
       added(
-        'Aktionen direkt in der Zeile',
+        'Act straight from the row',
         '/admin/rechnungen',
-        'Jede Zeile konnte genau eines: sich öffnen. Freigeben, stornieren und löschen hiessen erst öffnen — darum gab es die Sammel-Freigabe per Checkbox, eine Massenaktion als Ersatz für die fehlenden Zeilenaktionen. Was eine Zeile nicht kann, bleibt im Menü stehen und trägt statt des Namens den Grund',
+        'Every row could do exactly one thing: open itself. Releasing, cancelling and deleting all meant opening first — which is why there was a bulk release by checkbox, a mass action standing in for the missing row actions. What a row cannot do stays in the menu and carries the reason instead of the name',
       ),
       added(
-        'Storno und Löschen fragen nach',
+        'Cancelling and deleting ask first',
         '/admin/rechnungen',
-        'Löschen fragte mit `window.confirm` — die Box vom Browser, mit «OK» und «Cancel» drauf in der Sprache vom Browser statt von der Seite, und ohne Platz für einen Grund. Stornieren fragte mit einem Panel, das ganz unten auf der Seite aufging, unter der QR-Rechnung und dem Nachrichtenfeld. Beide sind jetzt derselbe Dialog, und derselbe Dialog steht auch hinter jedem Löschen und Ablehnen im ganzen Panel',
+        'Deleting asked with `window.confirm` — the browser’s box, with "OK" and "Cancel" on it in the browser’s language rather than the page’s, and no room for a reason. Cancelling asked with a panel that opened right at the bottom of the page, below the QR-bill and the message field. Both are the same dialog now, and the same dialog stands behind every delete and decline in the panel',
       ),
       added(
-        'Nach der Freigabe nicht mehr ändern',
+        'No changes after release',
         '/admin/rechnungen/inv_sent',
-        'Stand nirgends. Der Entwurfseditor sperrte sich zwar, sagte aber nicht, was stattdessen zu tun ist — jetzt gibt es «stornieren und neu erstellen»: die alte Rechnung wird storniert, ein Entwurf mit denselben Positionen geht auf, und beide Belege verweisen aufeinander',
+        'Was stated nowhere. The draft editor did lock itself, but did not say what to do instead — now there is "cancel and re-create": the old invoice is cancelled, a draft opens with the same lines, and both documents point at each other',
       ),
     ],
     exits: [
-      ok('Bezahlt', '/konto/rechnungen/inv_paid'),
-      ok('Storniert mit Grund', '/admin/rechnungen/inv_draft'),
+      ok('Paid', '/konto/rechnungen/inv_paid'),
+      ok('Cancelled with a reason', '/admin/rechnungen/inv_draft'),
       ok(
-        'Überfällig',
+        'Overdue',
         '/konto/rechnungen/inv_paid',
-        'Wird beim Lesen aus dem Fälligkeitsdatum abgeleitet, nicht gespeichert — richtig so, sonst bräuchte es einen nächtlichen Lauf',
+        'Derived from the due date on reading, not stored — rightly so, otherwise it would need a nightly run',
       ),
       open(
-        'Rückerstattung',
-        'Bewusst auf die nächste Welle geschoben. Bis jetzt war sie gar nicht baubar: eine bezahlte Rechnung hatte keinen `Payment`-Datensatz, also gab es nichts, worauf sich eine Erstattung beziehen könnte. Den gibt es seit dieser Welle — `refunded` steht in `PaymentStatus` und in der Statusfarbtabelle, und die Offerten-Seite zeigt ihn bereits für eine Offert-Zahlung. Für eine Rechnung führt noch kein Knopf dahin',
+        'Refund',
+        'Deliberately pushed to the next wave. Until now it was not buildable at all: a paid invoice had no `Payment` record, so there was nothing a refund could refer to. That exists as of this wave — `refunded` is in `PaymentStatus` and in the status colour table, and the quotes page already shows it for a quote payment. For an invoice, no button leads there yet',
       ),
       added(
-        'Entwurf gelöscht',
+        'Draft deleted',
         '/admin/rechnungen',
-        '§15 behält alles, was bei einer Kundin war — ein Entwurf war bei niemandem. Ihn für immer als «storniert» mitzuschleppen begräbt die echten Stornos unter Bürokram. Nur im Entwurf, und der Store prüft das noch einmal selbst',
+        '§15 keeps everything that has been with a customer — a draft has been with nobody. Carrying it forever as "cancelled" buries the real cancellations under paperwork. Drafts only, and the store checks that again itself',
       ),
       added(
-        'Storniert und ersetzt',
+        'Cancelled and replaced',
         '/admin/rechnungen/inv_sent',
-        'Storniert war vorher eine Sackgasse: der Einsatz blieb auf `invoiced` stehen, und die Liste der verrechenbaren Einsätze sind «abgeschlossene ohne Rechnung» — eine falsch gestellte Rechnung machte ihren Einsatz also für immer unverrechenbar. Ein Storno gibt den Einsatz jetzt zurück',
+        'Cancelled used to be a dead end: the job stayed on `invoiced`, and the billable list is "completed jobs without an invoice" — so an invoice raised wrongly made its job permanently unbillable. A cancellation gives the job back now',
       ),
       added(
-        'Erstattet',
+        'Refunded',
         '/admin/abos/pln_basic/sub_2',
-        'War bewusst offen — es gab keinen Payment-Datensatz, auf den sich eine Erstattung hätte beziehen können. Eine Abo-Stornierung innerhalb der Widerrufsfrist erzeugt jetzt eine Zahlung mit Status «refunded» und storniert die Rechnung dazu. Für eine Rechnung aus einem Einsatz führt weiterhin kein Knopf dahin',
+        'Was deliberately open — there was no payment record a refund could have referred to. Cancelling a plan inside the withdrawal period now creates a payment with status "refunded" and cancels the invoice with it. For an invoice out of a job, no button leads there yet',
       ),
     ],
   },
   {
     /*
-     * Abos waren zwei Zeilen im Geld-Flow und keine davon stimmte noch.
-     * Der Grund: ein Abo war kein Ding. `PlanTier` waren drei String-Literale,
-     * also gab es nichts anzulegen, nichts zu bearbeiten, nichts zurückzuziehen
-     * — und der Weg, auf dem eine Kundin tatsächlich ein Abo bekommt, war
-     * schlicht nicht verdrahtet.
+     * Plans were two rows in the money flow and neither was true any more.
+     * The reason: a plan was not a thing. `PlanTier` was three string
+     * literals, so there was nothing to create, nothing to edit, nothing to
+     * withdraw — and the path by which a customer actually gets a plan was
+     * simply not wired up.
      */
     id: 'plans',
-    de: 'Abos',
     en: 'Plans',
     actors: ['visitor', 'customer', 'owner'],
     entries: [
-      added('Abo anlegen', '/admin/abos/neu', 'Es gab keine Entität, also gab es kein Anlegen'),
-      added('Abo bearbeiten', '/admin/abos/pln_basic/bearbeiten'),
-      ok('Abo-Seite auf der Website', '/abos'),
+      added('Create a plan', '/admin/abos/neu', 'There was no entity, so there was no creating'),
+      added('Edit a plan', '/admin/abos/pln_basic/bearbeiten'),
+      ok('The plans page on the website', '/abos'),
       added(
-        'Abo aus bezahlter Offerte',
+        'A plan out of a paid quote',
         '/admin/abos/pln_basic',
-        'Der eigentliche Bruch: Besucherin wählt ein Abo, der Wunsch landet auf der Anfrage, der Rabatt auf der Offerte — und dann legte niemand ein Abo an. Wer auf der Website ein Abo abschloss, hatte hinterher keines',
+        'The real break: a visitor picks a plan, the wish lands on the request, the discount on the quote — and then nobody created a plan. Anyone who took one out on the website had none afterwards',
       ),
     ],
     actions: [
       added(
-        'Aus dem Verkauf nehmen',
+        'Take it off sale',
         '/admin/abos',
-        'Bestehende Abos laufen weiter. Ein bezahltes Jahr lässt sich nicht rückwirkend zurückziehen',
+        'Existing plans run on. A year already paid for cannot be withdrawn retrospectively',
       ),
       added(
-        'Von der Website nehmen',
+        'Take it off the website',
         '/admin/abos/pln_buero',
-        'Zwei Schalter, nicht einer: telefonisch verkaufen, bevor es angekündigt ist — und aufhören zu werben, während die Bestandskundschaft es weiter nutzt',
+        'Two switches, not one: sell it by telephone before it is announced — and stop advertising it while the existing customers go on using it',
       ),
       added(
-        'Einsätze zählen',
+        'Count the visits',
         '/admin/abos/pln_basic/sub_2',
-        'Vorher deckte ein Abo ein Jahr lang alles ab, was es berührte. Ein Einsatz wird beim Freigeben angerechnet, und danach ist er weg',
+        'A plan used to cover everything it touched for a year. A visit is counted on approval, and after that it is gone',
       ),
-      ok('Besuch überspringen', '/konto/abo'),
-      added('Pausieren und fortsetzen', '/admin/abos/pln_basic/sub_2'),
+      ok('Skip a visit', '/konto/abo'),
+      added('Pause and resume', '/admin/abos/pln_basic/sub_2'),
     ],
     exits: [
       added(
-        'Abgelaufen',
+        'Expired',
         '/admin/abos/pln_vip/sub_s_expired',
-        'Wird beim Lesen aus dem Enddatum abgeleitet, nicht gespeichert — sonst bräuchte es einen nächtlichen Lauf. Nicht genutzte Einsätze werden benannt, nicht verschwiegen',
+        'Derived from the end date on reading, not stored — otherwise it would need a nightly run. Unused visits are named, not passed over in silence',
       ),
       added(
-        'Verlängert',
+        'Renewed',
         '/admin/abos/pln_basic/sub_2',
-        'Neue Rechnung, Einsätze zurückgesetzt, Zähler um eins hoch. Bewusst nicht automatisch: hier bucht nichts turnusmässig ab',
+        'New invoice, visits reset, counter up by one. Deliberately not automatic: nothing here charges on a cycle',
       ),
       added(
-        'Storniert und erstattet',
+        'Cancelled and refunded',
         '/admin/abos/pln_basic/sub_2',
-        'Nur solange kein Einsatz stattgefunden hat und die Widerrufsfrist läuft. Die Regel steht im Store, nicht nur im deaktivierten Knopf — sonst geht eine URL daran vorbei',
+        'Only while no visit has taken place and the withdrawal period is still running. The rule lives in the store, not just in the disabled button — otherwise a URL gets round it',
       ),
       open(
-        'Abo wechseln',
-        'Die Kundin sieht das grössere Abo und schreibt uns; verrechnet wird von Hand. §21.7 sagt «Upgrade sofort, Downgrade zur nächsten Laufzeit» — was bei einem im Voraus bezahlten Paket eine Verrechnung der schon bezahlten Einsätze bedeutet, und die Formel dafür ist nicht entschieden. Sie zu erfinden hiesse, Geld zu berechnen, das niemand bestätigt hat',
+        'Switch plan',
+        'The customer sees the larger plan and writes to us; it is billed by hand. §21.7 says "upgrade at once, downgrade at the next term" — which, for a package paid up front, means offsetting the visits already paid for, and the formula for that is not decided. Inventing it would mean calculating money nobody has confirmed',
       ),
     ],
   },
   {
-    /* Der einzige Bildschirm, auf dem beide Seiten schreiben — und bis jetzt
-       der einzige ohne eigene Zeile auf diesem Board. Screen 48 stand unter
-       /screens als gebaut, während im Panel monatelang gar nichts die
-       Nachrichten las: genau der Fall, für den es diese zweite Tabelle gibt. */
+    /* The one screen both sides write to — and until now the one without a row
+       of its own on this board. Screen 48 stood on /screens as built while for
+       months nothing in the panel read the messages at all: exactly the case
+       this second table exists for. */
     id: 'messages',
-    de: 'Gespräch mit dem Kunden',
     en: 'The conversation',
     actors: ['owner', 'customer'],
     entries: [
-      ok('Kunde schreibt zu einer Referenz', '/konto/nachrichten'),
-      ok('Inhaber öffnet ein Gespräch', '/admin/nachrichten'),
+      ok('The customer writes about a reference', '/konto/nachrichten'),
+      ok('The owner opens a conversation', '/admin/nachrichten'),
       ok(
-        'Aus einer Rechnung heraus',
+        'Out of an invoice',
         '/admin/rechnungen/inv_draft',
-        'Der Begleittext landet im Thread der Rechnung, nicht in einer zweiten Ablage',
+        'The covering message lands in the invoice’s thread, not in a second filing place',
       ),
     ],
     actions: [
-      ok('Antworten', '/admin/nachrichten'),
+      ok('Reply', '/admin/nachrichten'),
       added(
-        'Datei oder Bild anhängen',
+        'Attach a file or an image',
         '/admin/nachrichten',
-        'Die Offerte, die Preisliste, das Foto vom Wintergarten — alles, worauf eine Antwort sich berief, musste bisher per Mail daneben laufen. Kein `Photo`: eine Anhang ist an einen benannten Kunden adressiert, also ist die Einwilligungsfrage aus §20.6 mit dem Senden schon beantwortet, und ein PDF passt ohnehin nicht hinein',
+        'The quote, the price list, the photo of the conservatory — everything a reply referred to had to travel alongside by email. Not a `Photo`: an attachment is addressed to a named customer, so the consent question from §20.6 is already answered by sending it, and a PDF would not fit in one anyway',
       ),
       added(
-        'Nach gelesen, ungelesen und Zeitraum filtern',
+        'Filter by read, unread and period',
         '/admin/nachrichten',
-        'Ein einziger Chip hiess «Ungelesen» und mass in Wahrheit «der Kunde hat zuletzt geschrieben». Beides ist jetzt getrennt: `readByAdmin` sagt, was niemand angeschaut hat, und wer zuletzt schrieb sagt, was noch eine Antwort schuldet',
+        'A single chip read "unread" and was in fact measuring "the customer wrote last". The two are separated now: `readByAdmin` says what nobody has looked at, and who wrote last says what still owes an answer',
       ),
       ok(
-        'Gespräch als gelesen markieren',
+        'Mark a conversation as read',
         '/admin/nachrichten',
-        'Durch Öffnen. Ein eigener Knopf dafür wäre ein Knopf für etwas, das der Klick davor schon gesagt hat',
+        'By opening it. A button for that would be a button for something the click before it has already said',
       ),
     ],
     exits: [
-      ok('Antwort steht im Kundenkonto', '/konto/nachrichten'),
-      ok('Weiter in die Kundenakte', '/admin/kunden/cus_2'),
+      ok('The reply is in the customer’s account', '/konto/nachrichten'),
+      ok('On into the customer record', '/admin/kunden/cus_2'),
       open(
-        'Kunde hängt selbst etwas an',
-        'Nur der Inhaber kann anhängen. Was ein Kunde hochlädt, kommt von aussen — Ablage, Grössenbegrenzung und Virenprüfung sind dann echte Fragen, und §22 beantwortet keine davon. Fotos zur Anfrage nimmt Screen 20 weiterhin entgegen, dort ist der Rahmen geklärt',
+        'The customer attaches something themselves',
+        'Only the owner can attach. What a customer uploads comes from outside — storage, a size limit and virus scanning are real questions then, and §22 answers none of them. Screen 20 still takes photos with a request; the framing there is settled',
       ),
       open(
-        'Gespräch schliessen oder archivieren',
-        'Ein Thread endet heute dadurch, dass niemand mehr schreibt. Ob ein erledigtes Gespräch aus der Liste verschwinden soll — und was dann mit einer späteren Antwort des Kunden passiert — ist nicht entschieden',
+        'Close or archive a conversation',
+        'A thread ends today by nobody writing any more. Whether a finished conversation should drop out of the list — and what then happens to a later reply from the customer — is not decided',
       ),
     ],
   },
   {
     id: 'templates',
-    de: 'Textvorlagen',
     en: 'Message templates',
     actors: ['owner'],
     entries: [
-      ok('Vorlagen-Übersicht', '/admin/vorlagen'),
+      ok('Template overview', '/admin/vorlagen'),
       added(
-        'Neue Vorlage',
+        'New template',
         '/admin/vorlagen/neu',
-        'Die elf Vorlagen waren ein geschlossener Union-Typ. Eine zwölfte anzulegen war nicht ungebaut, sondern unmöglich — und «Pricing List» aus dem Briefing hatte deshalb nirgends Platz',
+        'The eleven templates were a closed union type. Creating a twelfth was not unbuilt but impossible — and "pricing list" from the brief therefore had nowhere to go',
       ),
       added(
-        'Aus einem Wähler heraus',
+        'Out of a picker',
         '/admin/rechnungen',
-        'Jeder Wähler verlinkt auf die Verwaltung, damit «diese Vorlage taugt nicht» dort endet, wo man sie ändert',
+        'Every picker links to the management screen, so "this template is no good" ends where you change it',
       ),
     ],
     actions: [
       added(
-        'Suchen und filtern',
+        'Search and filter',
         '/admin/vorlagen',
-        'Bei elf Zeilen eine Bequemlichkeit, bei dreissig die einzige Art, etwas zu finden',
+        'At eleven rows a convenience; at thirty the only way to find anything',
       ),
-      added('Bearbeiten in vier Sprachen', '/admin/vorlagen/tpl_offer_sent'),
+      added('Edit in four languages', '/admin/vorlagen/tpl_offer_sent'),
       added(
-        'Standardvorlage bestimmen',
+        'Set the default template',
         '/admin/vorlagen',
-        'Ein Anlass kann mehrere Vorlagen haben. Welche automatisch rausgeht, ist eine Entscheidung — sie wird gesetzt, nicht geraten',
+        'One occasion can have several templates. Which one goes out automatically is a decision — it is set, not guessed',
       ),
       added(
-        'Löschen mit Rückfrage',
+        'Delete with a prompt',
         '/admin/vorlagen',
-        'Drei verschiedene Rückfragen, je nachdem was kaputtgehen könnte: eine gewöhnliche, eine die nach der Nachfolgerin fragt, und eine die sagt, dass der Originaltext wiederhergestellt wird',
+        'Three different prompts, according to what could break: an ordinary one, one that asks for the successor, and one that says the original text will be restored',
       ),
     ],
     exits: [
       added(
-        'Vorlage steht in den Wählern',
+        'The template stands in the pickers',
         '/admin/rechnungen/inv_draft',
-        'Der Bereich der Vorlage bestimmt, welcher Wähler sie anbietet — dieselbe Tabelle, die die Verwendungs-Liste im Editor füllt',
+        'A template’s area decides which picker offers it — the same table that fills the usage list in the editor',
       ),
       added(
-        'Vorlage geht automatisch raus',
+        'The template goes out automatically',
         '/admin/vorlagen',
-        'Nur mit Anlass und nur als Standardvorlage. Ohne Anlass ist sie ausschliesslich von Hand wählbar',
+        'Only with an occasion, and only as the default. Without an occasion it can be chosen by hand alone',
       ),
       added(
-        'Gelöscht — Anlass sendet weiter',
+        'Deleted — the occasion still sends',
         '/admin/vorlagen',
-        'Die einzige Zusicherung, die das Löschen einschränkt: ein Anlass steht nie ohne Text da. Beim Löschen der letzten Vorlage kommt der Originaltext zurück',
+        'The one assurance that constrains deleting: an occasion is never left without text. Deleting the last template brings the original back',
       ),
       open(
-        'Automatischer Versand selbst',
-        'Es gibt keinen Job, der «Offerte läuft ab» zum Ablaufdatum verschickt. Der Prototyp hat keinen Scheduler, und einen zu behaupten hiesse, Verhalten zu zeigen, das nicht existiert — die Vorlagen sind vorhanden und von Hand sendbar',
+        'Automatic sending itself',
+        'There is no job that sends "quote expires" on the expiry date. The prototype has no scheduler, and claiming one would mean showing behaviour that does not exist — the templates are there and can be sent by hand',
       ),
     ],
   },
   {
     id: 'catalogue',
-    de: 'Leistungskatalog',
     en: 'Service catalogue',
     actors: ['owner'],
     entries: [
-      ok('Katalog-Übersicht', '/admin/leistungen'),
+      ok('Catalogue overview', '/admin/leistungen'),
       added(
-        'Neue Leistung',
+        'New service',
         '/admin/leistungen/neu',
-        'Der Katalog war so lang, wie der Seed ihn geschrieben hatte. Eine achte Leistung anzubieten war kein ungebauter Bildschirm, sondern ein Deploy',
+        'The catalogue was as long as the seed had written it. Offering an eighth service was not an unbuilt screen but a deploy',
       ),
       added(
-        'Suchen und filtern',
+        'Search and filter',
         '/admin/leistungen',
-        'Bei sieben Zeilen Bequemlichkeit. Sobald sich der Katalog erweitern lässt, ist es die einzige Art, eine Leistung zu finden — und der einzige Weg, alle Entwürfe auf einmal zu sehen',
+        'At seven rows, a convenience. As soon as the catalogue can be extended it is the only way to find a service — and the only way to see every draft at once',
       ),
     ],
     actions: [
       added(
-        'Details ansehen, ohne etwas zu ändern',
+        'Look at the details without changing anything',
         '/admin/leistungen/grundreinigung/details',
-        'Der Editor speichert bei jedem Tastendruck. Nachschlagen, wie eine Leistung abgerechnet wird, darf nicht dort stattfinden — und ein eigener Bildschirm hat eine Adresse, die man verschicken kann',
+        'The editor saves on every keystroke. Looking up how a service is billed must not happen there — and a screen of its own has an address you can send to somebody',
       ),
-      ok('In vier Sprachen bearbeiten', '/admin/leistungen/grundreinigung'),
+      ok('Edit in four languages', '/admin/leistungen/grundreinigung'),
       added(
-        'Kurzbeschreibung bearbeiten',
+        'Edit the short description',
         '/admin/leistungen/grundreinigung',
-        '`short` steht auf jeder Leistungsseite und in jeder Kachel der Startseite — und stand auf keinem Bildschirm. Der erste Satz, den ein Kunde liest, war der einzige, den der Inhaber nicht ändern konnte',
+        '`short` stands on every service page and in every tile on the home page — and stood on no screen. The first sentence a customer reads was the only one the owner could not change',
       ),
       added(
-        'Abrechnungsart bestimmen',
+        'Choose how it is billed',
         '/admin/leistungen/grundreinigung',
-        'Pro Stunde, pro Stück oder pauschal. `calc` war ein Dreier-Union, das nur der Seed setzen konnte — und die Liste zeigte ihn mit einem Zweier-Ternär an',
+        'Per hour, per unit or flat. `calc` was a three-way union that only the seed could set — and the list rendered it with a two-way ternary',
       ),
       added(
-        'Aufschalten und deaktivieren, mit Rückfrage',
+        'Put on sale and withdraw, with a prompt',
         '/admin/leistungen',
-        'Ein Schalter in eigener Spalte, damit der Stand ohne Öffnen lesbar ist — aber er wirkt nicht beim Klicken, sondern öffnet die Rückfrage. Beides ändert, was ein Kunde sieht',
+        'A switch in a column of its own, so the state is readable without opening — but it does not act on the click; it opens the prompt. Both directions change what a customer sees',
       ),
     ],
     exits: [
       added(
-        'Als Entwurf abgelegt',
+        'Filed as a draft',
         '/admin/leistungen/neu',
-        'Erscheint nirgends ausser im Katalog. Vorher gab es diesen Zustand nicht: `active` war ein Boolean, und «noch nicht fertig» und «zurückgezogen» waren dieselbe Zeile',
+        'Appears nowhere but in the catalogue. This state did not exist before: `active` was a boolean, and "not finished yet" and "withdrawn" were the same row',
       ),
       added(
-        'Aufgeschaltet — steht in der Anfragestrecke',
+        'On sale — stands in the request flow',
         '/anfrage/leistung',
-        'Website, Preisliste, Anfragestrecke und sitemap.xml lesen jetzt alle dieselbe Funktion, damit «aufgeschaltet» überall dasselbe heisst',
+        'Website, price list, request flow and sitemap.xml now all read the same function, so "on sale" means the same thing everywhere',
       ),
       added(
-        'Deaktiviert — auch die eigene URL antwortet nicht mehr',
+        'Withdrawn — its own URL stops answering too',
         '/admin/leistungen',
-        '/leistungen/[slug] hat vorher jede Leistung ausgeliefert, gefiltert wurde nur in den Menüs. Deaktivieren hiess damit: aus der Navigation verschwinden und weiter buchbar bleiben',
+        '/leistungen/[slug] used to serve every service; only the menus were filtered. Withdrawing therefore meant: disappear from the navigation and stay bookable',
       ),
       open(
-        'Aufschalten wirkt sofort auf den Marketing-Seiten',
-        'Die Anfragestrecke liest den Katalog aus dem Store und zieht sofort nach. /leistungen, /preise, Startseite und Footer werden statisch aus dem Seed gerendert — sie folgen erst beim nächsten Build. Das ist die Grenze eines Prototyps ohne Backend, kein fehlender Bildschirm, und die Texte im Panel sagen es inzwischen genauso',
+        'Putting on sale takes effect on the marketing pages at once',
+        'The request flow reads the catalogue from the store and follows immediately. /leistungen, /preise, the home page and the footer are rendered statically from the seed — they follow at the next build. That is the boundary of a prototype without a backend, not a missing screen, and the copy in the panel now says as much',
       ),
       added(
-        'Gelöscht — oder mit Begründung verweigert',
+        'Deleted — or refused with a reason',
         '/admin/leistungen',
-        'Verweigert, sobald eine Anfrage, ein Auftrag oder ein Abo darauf zeigt. Die Rückfrage nennt die Zahl und schlägt Deaktivieren vor, statt nur «geht nicht» zu sagen',
+        'Refused as soon as a request, a job or a plan points at it. The prompt names the number and suggests withdrawing, instead of only saying "no"',
       ),
       open(
-        'Reihenfolge auf der Website ändern',
-        '`order` bestimmt, wie die Leistungen auf der Startseite und unter /leistungen stehen. Neue Leistungen landen hinten, und es gibt keinen Bildschirm, der die sieben bestehenden umsortiert — sinnvoll wäre Drag-and-drop in der Liste, und das ist mehr, als diese Welle abschliessen kann',
+        'Change the order on the website',
+        '`order` decides how the services stand on the home page and under /leistungen. New services land at the end, and there is no screen that reorders the existing seven — drag-and-drop in the list would be the sensible thing, and that is more than this wave can close',
       ),
       open(
-        'Symbol pro Leistung wählen',
-        'Die sieben Seed-Leistungen haben ein festes Symbol im Code. Eine selbst angelegte bekommt das Ersatzsymbol — kein Absturz mehr, aber auch keine Wahl. Steht auf /open-questions',
+        'Choose an icon per service',
+        'The seven seeded services have a fixed icon in the code. One created here gets the fallback glyph — no longer a crash, but no choice either. It is on /open-questions',
       ),
     ],
   },
   {
     id: 'addons',
-    de: 'Zusatzleistungen',
     en: 'Add-ons',
     actors: ['owner'],
     entries: [
-      ok('Liste der Zusatzleistungen', '/admin/zusatzleistungen'),
+      ok('The list of add-ons', '/admin/zusatzleistungen'),
       added(
-        'Neue Zusatzleistung',
+        'New add-on',
         '/admin/zusatzleistungen/neu',
-        'Was ein Kunde dazukaufen kann, stand im Seed. «Wir shampoonieren jetzt auch Teppiche, 60 Franken» war ein Deploy — derselbe Kanal wie beim Leistungskatalog, nur eine Ebene tiefer',
+        'What a customer can buy on top stood in the seed. "We shampoo carpets now, sixty francs" was a deploy — the same channel as the service catalogue, one level down',
       ),
       added(
-        'Nach Leistung filtern',
+        'Filter by service',
         '/admin/zusatzleistungen',
-        '«Was kann man zur Umzugsreinigung dazubuchen» war nur zu beantworten, indem man die Spalte «Gilt für» Zeile für Zeile las',
+        '"What can you add to a move-out clean" could only be answered by reading the "applies to" column row by row',
       ),
     ],
     actions: [
       added(
-        'Bezeichnung und Kurzbeschreibung in vier Sprachen bearbeiten',
+        'Edit name and short description in four languages',
         '/admin/zusatzleistungen/fenster',
-        'Beide Texte liest der Kunde im Schritt «Extras». Änderbar war keiner von beiden — die Liste zeigte sie an und sonst nichts',
+        'The customer reads both texts in the "extras" step. Neither could be changed — the list displayed them and nothing else',
       ),
       added(
-        'Preis und Zeitbedarf ändern',
+        'Change price and time needed',
         '/admin/zusatzleistungen/fenster',
-        'Nebeneinander, mit je einem Hinweis, welche der beiden Zahlen wohin geht. Der Preis wird verrechnet, die Zeit nur eingeplant — beides zu verrechnen hiesse 45 Franken für die Fenster plus 24.50 für die halbe Stunde',
+        'Side by side, each with a hint saying where the two numbers go. The price is billed, the time only scheduled — billing both would mean 45 francs for the windows plus 24.50 for the half hour',
       ),
       added(
-        'Bestimmen, unter welchen Leistungen sie erscheint',
+        'Decide which services it appears under',
         '/admin/zusatzleistungen/fenster',
-        '`services` war ein Feld, das nur der Seed schreiben konnte. Welche Extras zu welcher Leistung gehören, stand damit zur Build-Zeit fest',
+        '`services` was a field only the seed could write. Which extras belong to which service was therefore fixed at build time',
       ),
       added(
-        'Verfügbar schalten und ausblenden',
+        'Switch available and hide',
         '/admin/zusatzleistungen',
-        'Ein Schalter statt einer Checkbox, in einer Spalte, die sagt, was er tut. Die Checkbox stand unter «Status» — ein Bedienelement unter einem Wort, das wie eine Beschreibung liest. Wirkt sofort und ist mit demselben Klick zurückgenommen',
+        'A switch rather than a checkbox, in a column that says what it does. The checkbox sat under "status" — a control under a word that reads like a description. It applies at once and the same click takes it back',
       ),
     ],
     exits: [
       added(
-        'Ausgeblendet gespeichert',
+        'Saved hidden',
         '/admin/zusatzleistungen/neu',
-        'Erscheint nur im Panel. Der Preis lässt sich einen Tag lang bereden, ohne dass ein halbfertiges Angebot in der laufenden Anfragestrecke steht',
+        'Appears only in the panel. The price can be argued over for a day without a half-finished offer standing in the live request flow',
       ),
       added(
-        'Angeboten — steht im Schritt «Extras»',
+        'Offered — stands in the "extras" step',
         '/anfrage/extras',
-        'Die Anfragestrecke liest den Store und zieht sofort nach',
+        'The request flow reads the store and follows immediately',
       ),
       added(
-        'Gelöscht — oder mit Begründung verweigert',
+        'Deleted — or refused with a reason',
         '/admin/zusatzleistungen',
-        'Verweigert, sobald eine Anfrage oder eine Offertenzeile darauf zeigt. Eine Zeile merkt sich den Slug: verschwindet der Datensatz, liest eine bereits versendete Rechnung «backofen» statt «Backofen»',
+        'Refused as soon as a request or a quote line points at it. A line remembers the slug: if the record disappears, an invoice already sent reads "backofen" instead of "Backofen"',
       ),
       added(
-        'Eingeschaltet und trotzdem unerreichbar — als solches markiert',
+        'Switched on and unreachable anyway — flagged as such',
         '/admin/zusatzleistungen',
-        'An keine oder nur an nicht aufgeschaltete Leistungen gehängt. Das Abzeichen sagte «Verfügbar» in Grün, und kein Kunde konnte sie sehen',
+        'Hung off nothing, or only off services that are not on sale. The badge said "available" in green, and no customer could see it',
       ),
       open(
-        'Zusatzleistung auf einem Abo-Einsatz',
-        'Ein durch ein Abo gedeckter Auftrag wird gar nicht offeriert — «Zahlung nicht fällig». Wählt der Kunde dort eine Zusatzleistung, ist sie damit gratis. Ob eine Zusatzleistung auf einem Paket-Einsatz separat verrechnet, im Paket enthalten oder gar nicht erst angeboten wird, ist eine Geschäftsentscheidung; siehe §11a auf /open-questions',
+        'An add-on on a plan-covered visit',
+        'A job covered by a plan is never quoted — "payment not due". If the customer picks an add-on there, it is therefore free. Whether an add-on on a package visit is billed separately, included in the package, or not offered at all is a business decision; see §11a on /open-questions',
       ),
       open(
-        'Auf der Leistungsseite der Website',
-        '/leistungen/[slug] zeigt die Zusatzleistungen aus dem Seed, weil die Seite statisch gebaut wird — eine selbst angelegte erscheint erst beim nächsten Deploy. Dieselbe Grenze wie beim Leistungskatalog, kein fehlender Bildschirm. Immerhin zeigt die Seite jetzt keine ausgeblendeten mehr an',
+        'On the service page of the website',
+        '/leistungen/[slug] shows the add-ons from the seed, because the page is built statically — one created here appears at the next deploy. The same boundary as the service catalogue, not a missing screen. At least the page no longer shows hidden ones',
+      ),
+    ],
+  },
+  {
+    id: 'coupons',
+    en: 'Coupons',
+    actors: ['owner'],
+    entries: [
+      added(
+        'The list of coupons',
+        '/admin/gutscheine',
+        'The list was empty in every scenario, and the empty state declared that to be the intention. The only way to screen 77 was therefore "create a coupon" — opening an existing one was simply not possible',
+      ),
+      ok('New coupon', '/admin/gutscheine/neu'),
+      added(
+        'Open an existing coupon',
+        '/admin/gutscheine/cpn_1',
+        'Five codes in the seed, one per state. The edit form had never been opened against a record with values in it',
+      ),
+      added(
+        'Search by code or service',
+        '/admin/gutscheine',
+        '"We have WELCOME10 here" is the whole question when somebody rings up, and it meant reading the table. The slug is searchable beside the service name, because a quote line stores the slug rather than the name',
+      ),
+      added(
+        'Filter by state',
+        '/admin/gutscheine',
+        'On the derived state, not on the `active` field. Filtering the raw boolean would file SPRING25 — switched on, expired four months ago — under "valid", which is the exact wrong answer the badge was rewritten to stop giving',
+      ),
+    ],
+    actions: [
+      added(
+        'Change code, kind and value — and only then save',
+        '/admin/gutscheine/cpn_1',
+        'Every field wrote to the store on every keystroke, and only when editing. Anyone who opened WELCOME10 to check its ceiling had changed it by tabbing through; clearing the code to retype it saved a coupon with no code',
+      ),
+      added(
+        'Catch a duplicate code',
+        '/admin/gutscheine/cpn_1',
+        'A redemption resolves by code — two identical codes silently give one campaign the other’s ceiling. It could not be checked while every keystroke was the save: every prefix of an existing code is a duplicate on its way there',
+      ),
+      added(
+        'Catch an end date before the start date',
+        '/admin/gutscheine/cpn_1',
+        'Produced a coupon that is never valid and stood in the list as "valid" regardless',
+      ),
+      ok(
+        'Restrict it to individual services',
+        '/admin/gutscheine/cpn_1',
+        'None ticked means: applies to all. It is in the list now too, in a column of its own — before, a code for the whole catalogue and one for windows only looked identical',
+      ),
+      added(
+        'Switch a code on or off from the list',
+        '/admin/gutscheine',
+        'The one control on either coupon screen that writes on the click, and the reason the split exists: here the flip is the whole action and the same click takes it back. On screen 77 the same field waits in the draft beside a half-typed code, where applying it alone would publish one decision out of a record the reader can still see is unfinished. Logged in the Protokoll, because pulling a printed code is what that screen is for',
+      ),
+      added(
+        'Discard instead of saving',
+        '/admin/gutscheine/cpn_1',
+        'There was no way out of a change. Nothing was staged, so nothing could be abandoned — the back link left the change standing',
+      ),
+    ],
+    exits: [
+      ok('Saved — stands in the list', '/admin/gutscheine'),
+      added(
+        'Switched off',
+        '/admin/gutscheine/cpn_4',
+        'From the list it applies at once; from the edit screen it waits for the button with everything else. Two saving models for one field, and the difference is what else is in flight beside it',
+      ),
+      added(
+        'Fully redeemed — ceiling reached, window still open',
+        '/admin/gutscheine',
+        'The only one of the five states in a warning colour. Customers are typing in a code today that the office believes is running; before, expired, fully redeemed and disabled shared one grey badge',
+      ),
+      added(
+        'Expired — without anybody switching anything off',
+        '/admin/gutscheine',
+        'Read from the data, not from `active`. SPRING25 stands at "active" to this day and has been over for four months',
+      ),
+      added(
+        'Starts later — created, but not valid yet',
+        '/admin/gutscheine',
+        'The state that did not exist: a code for a campaign in three weeks read as "valid" today. Precisely the question this screen exists to answer',
+      ),
+      open(
+        'Redeem a coupon',
+        '`pricing.ts` has been able to do both since §20.2 — percent and amount, and it never stacks with the plan discount. Only, no screen ever hands it one: the request flow has no code field, so `usedCount` moves nowhere and the redemption figures in the seed are history rather than bookkeeping. Deliberately open — whether the code is entered in the wizard, on the quote or only at payment decides where the discount goes on record; see §9.4a on /open-questions',
+      ),
+      open(
+        'Delete a coupon',
+        'No deleting, and that is the opposite position to the add-on. A redeemed code stands on a quote that has gone out; if the record disappears, the deduction on an old invoice can no longer be explained. Switching it off takes it out of circulation just as well and keeps the trace',
       ),
     ],
   },
   {
     id: 'hiring',
-    de: 'Bewerbung & Team',
     en: 'Hiring & team',
     actors: ['applicant', 'owner'],
     entries: [
-      ok('Bewerbung', '/jobs/bewerbung', 'Arbeitsbewilligung ist die erste Frage'),
-      ok('Spontanbewerbung', '/jobs', 'Wenn keine Stelle offen ist'),
-      ok('Stelle anlegen', '/admin/stellen'),
+      ok('Application', '/jobs/bewerbung', 'The work permit is the first question'),
+      ok('Speculative application', '/jobs', 'When no position is open'),
+      ok('Create a position', '/admin/stellen'),
     ],
     actions: [
-      ok('Status abfragen', '/jobs/status'),
-      ok('Prüfen, ablehnen, löschen', '/admin/bewerbungen/app_1', 'Löschen ist echt, nicht archiviert — revDSG'),
-      ok('In Mitarbeiterkonto umwandeln', '/admin/bewerbungen/app_1/konto'),
+      ok('Check the status', '/jobs/status'),
+      ok(
+        'Review, reject, delete',
+        '/admin/bewerbungen/app_1',
+        'Deleting is real, not archived — revDSG',
+      ),
+      ok('Turn into a staff account', '/admin/bewerbungen/app_1/konto'),
     ],
     exits: [
-      ok('Abgelehnt mit Grund', '/admin/bewerbungen/app_1'),
-      ok('Angestellt', '/admin/team'),
+      ok('Rejected with a reason', '/admin/bewerbungen/app_1'),
+      ok('Hired', '/admin/team'),
       open(
-        'Teammitglied von Hand anlegen',
-        'Der einzige Weg ins Team führt über eine Bewerbung. Das ist vertretbar — es hält Berechtigungen an einen geprüften Datensatz gebunden — aber am ersten Tag ist /admin/team damit leer und nur über eine erfundene Bewerbung füllbar',
+        'Add a team member by hand',
+        'The only way into the team is through an application. That is defensible — it keeps permissions tied to a checked record — but on day one it leaves /admin/team empty and fillable only through an invented application',
       ),
     ],
   },

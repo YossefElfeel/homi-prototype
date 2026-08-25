@@ -24,7 +24,8 @@ export type StatusEntity =
   | 'payment'
   | 'key'
   | 'service'
-  | 'addOn';
+  | 'addOn'
+  | 'coupon';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   // §4.1
@@ -168,6 +169,29 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
    */
   addOn: {
     active: 'success',
+    inactive: 'neutral',
+  },
+  /*
+   * §9.4. The coupon list drew its own badge — one ternary, `success` for
+   * valid and `neutral` for everything else — which meant three genuinely
+   * different situations shared one grey chip. Expired, aufgebraucht and
+   * deaktiviert are not the same news, and the column headed «Status» was the
+   * only place the office would ever find out which one it was.
+   *
+   * `used-up` is the warning, and it is the only one. A cap hit while the
+   * window is still open is a code customers are being turned away from today
+   * — the office either raises the ceiling or lets it die, but it has to know.
+   * Expiry is neither: a campaign reaching its end date did what it was
+   * written to do, so it is neutral for the same reason a plan that ran its
+   * term is. `scheduled` is info — a code waiting for its start date is not
+   * asking for anything, it just is not live yet, and green would have said it
+   * was.
+   */
+  coupon: {
+    scheduled: 'info',
+    active: 'success',
+    'used-up': 'warning',
+    expired: 'neutral',
     inactive: 'neutral',
   },
 };

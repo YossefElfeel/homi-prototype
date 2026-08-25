@@ -144,10 +144,11 @@ export default async function FlowsPage({
       <div className="space-y-block py-block">
         {FLOWS.map((flow) => (
           <section key={flow.id}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 className="display-type text-2xl">{flow.en}</h2>
-              <span className="label-type text-ink-tertiary">{flow.de}</span>
-            </div>
+            {/* The German name used to sit opposite the heading as a grey
+                label. With the rows underneath translated it was the last
+                German on the page, and a second name for something nobody
+                looks up by name. */}
+            <h2 className="display-type text-2xl">{flow.en}</h2>
 
             <p className="mt-2 flex flex-wrap gap-1.5">
               {flow.actors.map((actor) => (

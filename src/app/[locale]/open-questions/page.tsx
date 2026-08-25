@@ -262,6 +262,14 @@ const ENTRIES: Entry[] = [
     screens: '2, 75, 75a',
     state: 'open',
   },
+  {
+    ref: '§9.4a',
+    question: 'Where does a customer actually type a coupon code?',
+    decision:
+      'OPEN, and the coupon screens are the half that exists. The office can write a code, scope it to services, cap it, date it and switch it off, and `pricing.ts` has been able to apply one since §20.2 — both kinds, never stacked with the plan discount, larger one wins. What no screen does is hand it one. There is no code field in the request flow, none on the quote, none at payment, so `usedCount` never moves and the redemption figures in the seed are history rather than bookkeeping. The place it goes is the decision, not the field. In the request flow the discount is visible before the customer commits, which is what makes a code worth printing — and it means the quote has to be built twice if the office later edits it. On the quote it stays under the office\'s control and the customer meets a number they cannot reproduce from the price list. At payment it is simplest to build and the worst of the three: the amount changes on the last screen, which is the one place this build has spent the most effort making trustworthy. Not guessed here because it also decides where the redemption is recorded, and a coupon that is counted in two places is counted wrong.',
+    screens: '17, 27, 31, 76, 77',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {
