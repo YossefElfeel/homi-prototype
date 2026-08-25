@@ -10,7 +10,6 @@ export const accountEn: typeof accountDe = {
       invoices: 'Invoices',
       properties: 'Properties',
       subscription: 'Plan',
-      credit: 'Hour credit',
       payment: 'Payment methods',
       photos: 'Before & after',
       review: 'Leave a review',
@@ -331,25 +330,6 @@ export const accountEn: typeof accountDe = {
     emptyTitle: 'No plan running',
     emptyBody:
       'A plan is a package of visits you pay for once and draw on for a year — with a discount on everything beyond it.',
-    emptyAction: 'See the packages',
-  },
-
-  credit: {
-    title: 'Hour credit',
-    remaining: 'Remaining',
-    hours: '{n} hours',
-    expires: 'Valid until',
-    expiringTitle: 'Expiring soon',
-    expiringBody:
-      'Your credit expires on {date}. It cannot be used after that — book your next job in good time.',
-    ledgerTitle: 'Movements',
-    colDate: 'Date',
-    colReason: 'Entry',
-    colHours: 'Hours',
-    bookAction: 'Book a job',
-    emptyTitle: 'No credit',
-    emptyBody:
-      'Hour packages are hours bought in advance at a reduced rate. They are valid for twelve months.',
     emptyAction: 'See the packages',
   },
 

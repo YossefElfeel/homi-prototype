@@ -35,7 +35,7 @@ const { useStore } = await import('../src/mock/store.ts');
 import { SEED_PLANS } from '../src/mock/seed.ts';
 import { buildScenario } from '../src/mock/scenarios.ts';
 import { cancelBlock, skipsUsedThisMonth, subscriptionState, visitsLeft } from '../src/lib/plan-facts.ts';
-import { offerCoverage } from '../src/lib/offer-facts.ts';
+import { requestCoverage } from '../src/lib/offer-facts.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -267,22 +267,20 @@ function reset() {
     propertyId: sub.propertyId,
     serviceSlug: plan.serviceSlug,
   };
-  const offer = s.data.offers[0]!;
-
-  const covered = offerCoverage(offer, request, [sub], [plan], [], NOW);
+  const covered = requestCoverage(request, [sub], [plan], NOW);
   check('a plan with visits left covers the job', covered.kind === 'subscription');
   check('and says how many are left', covered.visitsRemaining === visitsLeft(sub, plan));
 
   const spent = { ...sub, visitsUsed: plan.includedVisits };
   check(
     'a spent plan does not cover it',
-    offerCoverage(offer, request, [spent], [plan], [], NOW).kind === 'payable',
+    requestCoverage(request, [spent], [plan], NOW).kind === 'payable',
   );
 
   const ended = { ...sub, endDate: new Date('2026-01-01').toISOString() };
   check(
     'an expired plan does not cover it',
-    offerCoverage(offer, request, [ended], [plan], [], NOW).kind === 'payable',
+    requestCoverage(request, [ended], [plan], NOW).kind === 'payable',
   );
   check('and it reads as expired', subscriptionState(ended, NOW) === 'expired');
 }

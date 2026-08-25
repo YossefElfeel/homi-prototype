@@ -23,7 +23,7 @@ import { daysLeft, isExpired, offerTotal } from '@/mock/engines/offers';
 import {
   customerName,
   offerBooking,
-  offerCoverage,
+  requestCoverage,
   offerPayment,
   offerRhythm,
 } from '@/lib/offer-facts';
@@ -69,13 +69,13 @@ const PAYMENT_FILTERS = ['succeeded', 'failed', 'pending', 'refunded', 'notDue',
  * The list answered four questions: who, how much, when sent, when it lapses.
  * It could not answer the ones actually asked of it in a working week — *what*
  * was quoted, whether it repeats, whether the money arrived, and whether the
- * job is billable at all or already covered by hours the customer bought
- * months ago. Every one of those was derivable from data the store already
- * held; none of them was on screen, so each was a trip to another list.
+ * job is billable at all or already covered by the plan the customer pays for.
+ * Every one of those was derivable from data the store already held; none of
+ * them was on screen, so each was a trip to another list.
  *
  * The columns are derived rather than stored (see `lib/offer-facts.ts`) — a
- * `coveredBy` value written at quote time is wrong the moment a package runs
- * out of hours.
+ * `coveredBy` value written at quote time is wrong the moment a plan spends its
+ * last included visit.
  */
 export default function OffersPage() {
   const t = useTranslations('admin.offers');
@@ -94,7 +94,6 @@ export default function OffersPage() {
   const requests = useStore((s) => s.data.requests);
   const customers = useStore((s) => s.data.customers);
   const subscriptions = useStore((s) => s.data.subscriptions);
-  const credits = useStore((s) => s.data.credits);
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
@@ -119,7 +118,7 @@ export default function OffersPage() {
   const paymentStateOf = (o: Offer) => {
     const record = offerPayment(o.id, payments);
     if (record) return record.status;
-    return offerCoverage(o, requestOf(o), subscriptions, plans, credits, now).kind === 'payable'
+    return requestCoverage(requestOf(o), subscriptions, plans, now).kind === 'payable'
       ? 'none'
       : 'notDue';
   };
@@ -159,7 +158,6 @@ export default function OffersPage() {
     customers,
     payments,
     subscriptions,
-    credits,
     status,
     payment,
     service,
@@ -274,7 +272,7 @@ export default function OffersPage() {
         if (payment) {
           return <StatusBadge entity="payment" state={payment.status} size="sm" />;
         }
-        const coverage = offerCoverage(o, requestOf(o), subscriptions, plans, credits, now);
+        const coverage = requestCoverage(requestOf(o), subscriptions, plans, now);
         /* A covered job never produces a payment and never will. Leaving the
            cell blank would read as "not paid yet" for a job that owes
            nothing. */

@@ -147,14 +147,13 @@ for (const name of SCENARIOS) {
   for (const property of data.properties) {
     const usage = propertyUsage(data, property.id);
 
-    /* Counted independently of `propertyUsage`, over the same seven types it
+    /* Counted independently of `propertyUsage`, over the same six types it
        claims to cover. A field added to the schema and forgotten in the guard
        is a delete that leaves a dangling id. */
     const referenced =
       data.requests.some((r) => r.propertyId === property.id) ||
       data.bookings.some((b) => b.propertyId === property.id) ||
       data.subscriptions.some((s) => s.propertyId === property.id) ||
-      data.credits.some((c) => c.propertyId === property.id) ||
       data.keyLog.some((k) => k.propertyId === property.id) ||
       data.events.some((e) => e.propertyId === property.id) ||
       data.photos.some((p) => p.propertyId === property.id);

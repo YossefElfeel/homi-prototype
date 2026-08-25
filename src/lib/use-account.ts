@@ -53,7 +53,6 @@ export function useAccount() {
         (p.invoiceId && invoiceIds.has(p.invoiceId)),
     ),
     subscriptions: data.subscriptions.filter((s) => s.customerId === customerId),
-    credits: data.credits.filter((c) => c.customerId === customerId),
     messages: data.messages.filter((m) => m.customerId === customerId),
     reviews: data.reviews.filter((r) => r.customerId === customerId),
     /*

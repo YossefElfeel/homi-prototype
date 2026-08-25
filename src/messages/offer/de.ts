@@ -219,12 +219,10 @@ export const offerDe = {
       'Prototyp: es wird kein Geld belastet. Wählen Sie unten, welchen Ausgang Sie sehen möchten.',
     mockSucceed: 'Erfolgreiche Zahlung',
     mockFail: 'Fehlgeschlagene Zahlung',
-    /* §11.3 — bereits gekaufte Stunden werden nicht zweimal verrechnet. Ohne
-       das hier verlangte der Ablauf eine Karte, belastete den vollen Betrag,
-       und die Stunden blieben unangetastet im Konto liegen. */
+    /* §11.3 — ein Einsatz, den das Abo schon bezahlt hat, wird nicht zweimal
+       verrechnet. Ohne das hier verlangte der Ablauf eine Karte und belastete
+       den vollen Betrag für einen Einsatz, der im Abo enthalten ist. */
     coveredTitle: 'Für diesen Einsatz ist nichts zu bezahlen',
-    coveredPackage:
-      '{hours} Std. werden von Ihrem Stundenpaket abgezogen. Danach bleiben {remaining} Std. — abzüglich dieses Einsatzes.',
     coveredSubscription:
       'Dieser Einsatz gehört zu Ihrem Abo. Abgerechnet wird wie gewohnt monatlich.',
     coveredConfirm: 'Termin verbindlich buchen',

@@ -26,7 +26,7 @@ const ENTRIES: Entry[] = [
     ref: '§21.1',
     question: 'Per room or per hour for recurring cleaning?',
     decision:
-      'The hour is the only pricing unit. Area, rooms and bathrooms feed a duration estimate. This is what makes hour-based package credits and plan discounts computable.',
+      'The hour is the only pricing unit. Area, rooms and bathrooms feed a duration estimate. This is what makes the per-visit price of a plan, and its discount on everything beyond the plan, computable.',
     screens: '13–22, 54, 73',
     state: 'decided',
   },
@@ -138,9 +138,9 @@ const ENTRIES: Entry[] = [
     ref: '§21.6',
     question: 'Package credit in visits or hours?',
     decision:
-      'Hours, tied to a specific property and its recorded specification. A differently-priced visit converts to hours at the current rate.',
-    screens: '44, 70',
-    state: 'decided',
+      'Visits, counted on the plan — which replaces the answer of hours in the specification. What a customer buys up front is a plan with a number of included visits, and what they spend is one of those visits; the counter every plan screen already shows is the whole balance. The separate hour credit this question invented is gone from both the customer account and the panel, because it was a second ledger answering the same question: hours came off one balance while the visit counter on the plan stayed where it was, and a job could be covered twice or not at all depending on which of the two a screen happened to read. Work beyond the included visits is quoted and paid for at the discount the plan carries, so nothing is lost — only the second balance.',
+    screens: '43, 70a',
+    state: 'overridden',
   },
   {
     ref: '§21.7',

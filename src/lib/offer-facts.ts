@@ -19,7 +19,6 @@ import type {
   ID,
   Invoice,
   Offer,
-  PackageCredit,
   Payment,
   Plan,
   RhythmKey,
@@ -27,7 +26,7 @@ import type {
   ServiceRequest,
   Subscription,
 } from '@/mock/schema';
-import { offerHours, offerTotal, roundChf } from '@/mock/engines/offers';
+import { offerTotal, roundChf } from '@/mock/engines/offers';
 /* The one implementation of "add up an invoice". A second one here would be
    two answers to the same sum the first time a line grows a field. */
 import { invoiceTotal } from '@/lib/customer-history';
@@ -71,39 +70,40 @@ export function offerRhythm(request: ServiceRequest | undefined, plans: Plan[]):
 
 /* ------------------------------------------------------------ coverage */
 
-export type CoverageKind = 'subscription' | 'package' | 'payable';
+export type CoverageKind = 'subscription' | 'payable';
 
 export interface Coverage {
   kind: CoverageKind;
-  /** The subscription or credit the work would be drawn against. */
+  /** The subscription the work would be drawn against. */
   sourceId?: ID;
-  /** Hours left on the package, for the ones that are close to running out. */
-  hoursRemaining?: number;
-  /** Visits left on the plan, for the same reason. */
+  /** Visits left on the plan, for the ones that are close to running out. */
   visitsRemaining?: number;
 }
 
 /**
  * Whether this job is already paid for.
  *
- * The order matters. A plan customer's regular visit is covered by the plan
- * whether or not they also hold package hours, and charging a card for it would
- * be a double bill. Package hours only answer for the work if there are enough
- * of them: a six-hour job against four remaining hours is a payable job, not a
- * covered one, and calling it covered is how an invoice goes missing.
+ * There is one answer to that now: the plan, counted in visits. Hour credit
+ * bought as a separate package used to be a second one, and two ledgers for the
+ * same question is how a job gets covered twice or not at all — the hours came
+ * off one balance while the plan's visit counter, the thing every screen shows,
+ * stayed where it was. What a customer pays for up front is a plan, and what
+ * they spend is a visit off it.
  *
- * A plan now runs out two ways rather than one. Its term can end, and it can be
+ * A plan runs out two ways rather than one. Its term can end, and it can be
  * *spent* — the term still running, every included visit used. The second is
- * new, and it is the one that would otherwise produce free work silently:
- * before visits were counted, a plan covered everything it touched for a whole
- * year no matter how much of it there was.
+ * the one that would otherwise produce free work silently: before visits were
+ * counted, a plan covered everything it touched for a whole year no matter how
+ * much of it there was.
+ *
+ * Decided off the request, not the quote: the plan pays for a visit whatever
+ * the quote says it will take. Hours only ever mattered here while a package
+ * balance had to stretch to them.
  */
-export function offerCoverage(
-  offer: Offer,
+export function requestCoverage(
   request: ServiceRequest | undefined,
   subscriptions: Subscription[],
   plans: Plan[],
-  credits: PackageCredit[],
   now: Date,
 ): Coverage {
   if (!request) return { kind: 'payable' };
@@ -123,18 +123,6 @@ export function offerCoverage(
       sourceId: subscription.id,
       visitsRemaining: (plan?.includedVisits ?? 0) - subscription.visitsUsed,
     };
-  }
-
-  const hours = offerHours(offer);
-  const credit = credits.find(
-    (c) =>
-      c.customerId === request.customerId &&
-      c.propertyId === request.propertyId &&
-      new Date(c.expiresAt) > now &&
-      c.hoursRemaining >= hours,
-  );
-  if (credit) {
-    return { kind: 'package', sourceId: credit.id, hoursRemaining: credit.hoursRemaining };
   }
 
   return { kind: 'payable' };
@@ -285,7 +273,6 @@ export function isReturningCustomer(
   customerId: ID,
   bookings: Booking[],
   subscriptions: Subscription[],
-  credits: PackageCredit[] = [],
 ): boolean {
   const served = bookings.some(
     (b) =>
@@ -300,18 +287,9 @@ export function isReturningCustomer(
   /* `expired` passes this test on purpose. A year of visits that has since run
      out is the strongest evidence of a relationship on this model, not the
      weakest — only a cancelled-and-refunded plan means nothing ever happened. */
-  if (subscriptions.some((s) => s.customerId === customerId && s.status !== 'cancelled')) {
-    return true;
-  }
-
-  /*
-   * Someone who has paid for ten hours up front is not a stranger, whatever
-   * the booking statuses happen to say. Without this the demo account — whose
-   * package ledger records two finished jobs — was routed down the first-job
-   * path, because the bookings those ledger entries point at are seeded
-   * `scheduled` rather than `closed`.
-   */
-  return credits.some((c) => c.customerId === customerId);
+  return subscriptions.some(
+    (s) => s.customerId === customerId && s.status !== 'cancelled',
+  );
 }
 
 /** How long the office's confirmed date is held before the slot is released. */

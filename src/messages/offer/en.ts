@@ -189,8 +189,6 @@ export const offerEn: typeof offerDe = {
     mockSucceed: 'Successful payment',
     mockFail: 'Failed payment',
     coveredTitle: 'There is nothing to pay for this job',
-    coveredPackage:
-      '{hours} h come off your package. That leaves {remaining} h before this job is deducted.',
     coveredSubscription:
       'This job belongs to your plan. It is billed monthly as usual.',
     coveredConfirm: 'Book this date',

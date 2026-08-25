@@ -228,7 +228,6 @@ export const TRACKS: Track[] = [
         'skips used up',
         'expired with visits left',
       ], 'One card per plan — the demo customer holds one on a flat and one on an office'),
-      done('44', 'Stundenguthaben', 'Hour credit', '/konto/guthaben', ['expiring', 'empty']),
       done('45', 'Zahlungsmittel', 'Payment methods', '/konto/zahlungsmittel', ['TWINT unavailable']),
       done('46', 'Bewertung schreiben', 'Write a review', '/konto/bewertung', ['nothing to review', 'sent']),
       done('47', 'Vorher / Nachher', 'Before & after', '/konto/fotos', ['empty', 'consent off']),

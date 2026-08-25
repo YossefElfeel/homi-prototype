@@ -12,7 +12,6 @@ import {
   Receipt,
   RefreshCw,
   Star,
-  Timer,
   User,
 } from 'lucide-react';
 
@@ -30,7 +29,6 @@ type NavKey =
   | 'invoices'
   | 'properties'
   | 'subscription'
-  | 'credit'
   | 'payment'
   | 'photos'
   | 'review'
@@ -40,7 +38,7 @@ type NavKey =
 /**
  * Ordered by how often a customer actually opens each one, not by the
  * specification's chapter order. Appointments and money sit at the top; the
- * plan, credit and payment details are visited a handful of times a year.
+ * plan and the payment details are visited a handful of times a year.
  */
 const NAV: {
   group: 'jobs' | 'account';
@@ -63,7 +61,6 @@ const NAV: {
     items: [
       { href: '/konto/objekte', key: 'properties', icon: Home },
       { href: '/konto/abo', key: 'subscription', icon: RefreshCw },
-      { href: '/konto/guthaben', key: 'credit', icon: Timer },
       { href: '/konto/zahlungsmittel', key: 'payment', icon: CreditCard },
       { href: '/konto/profil', key: 'profile', icon: User },
     ],

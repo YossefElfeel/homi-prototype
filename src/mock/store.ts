@@ -53,7 +53,7 @@ import {
   type DayBlockReason,
   type Slot,
 } from './engines/availability';
-import { CONFIRMED_HOLD_HOURS, offerCoverage } from '@/lib/offer-facts';
+import { CONFIRMED_HOLD_HOURS, requestCoverage } from '@/lib/offer-facts';
 import { buildOfferLines, canReissue, offerHours, offerTotal } from './engines/offers';
 import { arrivalWindowMinutes } from './engines/pricing';
 
@@ -213,16 +213,18 @@ const INVOICE_TERM_DAYS = 30;
 /**
  * What each close-out writes into a calendar entry's timeline.
  *
- * German, like every other seeded and store-written label in this file: the
- * timeline is data, not UI text, and translating it at write time would freeze
- * whichever language the owner happened to be using into the record.
+ * English, like every other seeded and store-written label in this file: the
+ * timeline is data, not UI text. It is written once, in the language the office
+ * runs in, and never re-read through a dictionary — so translating it at write
+ * time would freeze whichever language the owner happened to be using into the
+ * record, and translating it at read time would rewrite history.
  */
 const EVENT_STATUS_EVENT: Record<CalendarEventStatus, string> = {
-  upcoming: 'Wieder geöffnet',
-  done: 'Erledigt',
-  pending: 'Niemand erreicht',
-  inProgress: 'Anfrage entstanden',
-  cancelled: 'Abgesagt',
+  upcoming: 'Reopened',
+  done: 'Done',
+  pending: 'Nobody reached',
+  inProgress: 'Turned into a request',
+  cancelled: 'Cancelled',
 };
 
 /**
@@ -405,7 +407,7 @@ interface StoreState {
   /**
    * Removes an address nothing has used yet, and refuses otherwise.
    *
-   * `propertyUsage` is the guard, not a warning the caller may skip: seven
+   * `propertyUsage` is the guard, not a warning the caller may skip: six
    * record types carry a `propertyId` and three dereference it with `!`, so a
    * delete that ignored them would not leave a gap in a list, it would crash
    * the screen that opened the booking behind it. Returns whether the row
@@ -975,8 +977,8 @@ function initialDemo(): DemoState {
     scenario: 'demo',
     dateOverride: null,
     // The demo account. cus_2 is the only seeded customer with a request, a
-    // subscription, an invoice and an hour credit at once, so every account
-    // screen has something to show without switching customer first.
+    // subscription and an invoice at once, so every account screen has
+    // something to show without switching customer first.
     currentCustomerId: 'cus_2',
     currentMemberId: 'tm_owner',
   };
@@ -1065,7 +1067,7 @@ export const useStore = create<StoreState>()(
           const property: Property = {
             id: propertyId,
             customerId,
-            label: input.street || 'Objekt',
+            label: input.street || 'Property',
             street: input.street,
             postcode: input.postcode,
             city: input.city,
@@ -1182,7 +1184,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'customer',
           entityId: id,
-          summary: `Kunde angelegt: ${customer.firstName} ${customer.lastName}`,
+          summary: `Customer created: ${customer.firstName} ${customer.lastName}`,
         });
         return id;
       },
@@ -1205,7 +1207,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'property',
           entityId: id,
-          summary: `Objekt angelegt: ${input.label || input.street}`,
+          summary: `Property created: ${input.label || input.street}`,
         });
         return id;
       },
@@ -1224,7 +1226,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'property',
           entityId: id,
-          summary: `Objekt bearbeitet: ${patch.label ?? before.label ?? before.street}`,
+          summary: `Property edited: ${patch.label ?? before.label ?? before.street}`,
           /* The detail screen writes the standing note on every keystroke.
              Without this the log would carry one entry per character typed. */
           coalesce: true,
@@ -1243,7 +1245,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'property',
           entityId: id,
-          summary: `Objekt gelöscht: ${property.label || property.street}`,
+          summary: `Property deleted: ${property.label || property.street}`,
         });
         return true;
       },
@@ -1268,7 +1270,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'key',
           entityId: id,
-          summary: `Schlüssel übernommen: ${property?.label || property?.street || input.propertyId} — ${input.storageLocation}`,
+          summary: `Key taken in: ${property?.label || property?.street || input.propertyId} — ${input.storageLocation}`,
           actor: input.receivedBy,
         });
         return id;
@@ -1292,7 +1294,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'key',
           entityId: id,
-          summary: `Schlüssel zurückgegeben: ${property?.label || property?.street || entry.propertyId} — an ${input.returnedTo}`,
+          summary: `Key returned: ${property?.label || property?.street || entry.propertyId} — to ${input.returnedTo}`,
           actor: input.returnedBy,
         });
         return true;
@@ -1355,8 +1357,8 @@ export const useStore = create<StoreState>()(
           entity: 'request',
           entityId: id,
           summary: input.asDraft
-            ? `Anfrage als Entwurf gespeichert: ${reference}`
-            : `Anfrage telefonisch erfasst: ${reference}`,
+            ? `Request saved as a draft: ${reference}`
+            : `Request taken by phone: ${reference}`,
         });
         return { id, reference };
       },
@@ -1405,7 +1407,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'request',
           entityId: id,
-          summary: `Entwurf zur Anfrage gemacht: ${request.reference}`,
+          summary: `Draft turned into a request: ${request.reference}`,
         });
       },
 
@@ -1840,24 +1842,17 @@ export const useStore = create<StoreState>()(
         const hours = offerHours(offer);
 
         /*
-         * §11.3 — hours already bought are not charged again.
+         * §11.3 — a visit the plan already paid for is not charged again.
          *
          * The quote list gained a column saying whether a job is covered by a
-         * package or a plan, and a column that says "covered" over a gateway
-         * that then takes the full amount is worse than no column at all. So
-         * coverage is decided here, by the same function the column reads, and
-         * a covered job books without a Payment record: the package loses
-         * hours, the plan loses nothing, and neither produces a second charge
-         * for work the customer has already paid for.
+         * plan, and a column that says "covered" over a gateway that then takes
+         * the full amount is worse than no column at all. So coverage is
+         * decided here, by the same function the column reads, and a covered
+         * job books without a Payment record: the plan spends one of its
+         * included visits and no second charge is raised for work the customer
+         * has already paid for.
          */
-        const coverage = offerCoverage(
-          offer,
-          request,
-          s.data.subscriptions,
-          s.plans,
-          s.data.credits,
-          now,
-        );
+        const coverage = requestCoverage(request, s.data.subscriptions, s.plans, now);
         const covered = coverage.kind !== 'payable';
 
         const payment: Payment = {
@@ -1897,11 +1892,9 @@ export const useStore = create<StoreState>()(
               at: now.toISOString(),
               kind: 'created',
               label:
-                coverage.kind === 'package'
-                  ? `Gebucht — ${hours} Std. ab Paket`
-                  : coverage.kind === 'subscription'
-                    ? 'Gebucht — im Abo enthalten'
-                    : 'Gebucht und bezahlt',
+                coverage.kind === 'subscription'
+                  ? 'Booked — included in the plan'
+                  : 'Booked and paid',
             },
           ],
         };
@@ -1910,29 +1903,6 @@ export const useStore = create<StoreState>()(
           data: {
             ...s.data,
             payments: covered ? s.data.payments : [...s.data.payments, payment],
-            /* The ledger is the customer's own account of where their hours
-               went (screen 43). A silent decrement of `hoursRemaining` would
-               leave them a balance that dropped for no stated reason. */
-            credits:
-              coverage.kind === 'package'
-                ? s.data.credits.map((c) =>
-                    c.id === coverage.sourceId
-                      ? {
-                          ...c,
-                          hoursRemaining: Math.round((c.hoursRemaining - hours) * 100) / 100,
-                          ledger: [
-                            ...c.ledger,
-                            {
-                              at: now.toISOString(),
-                              hours: -hours,
-                              reason: `Einsatz ${reference}`,
-                              bookingId: booking.id,
-                            },
-                          ],
-                        }
-                      : c,
-                  )
-                : s.data.credits,
             bookings: [booking, ...s.data.bookings],
             offers: s.data.offers.map((o) =>
               o.id === offerId ? { ...o, status: 'accepted' as const } : o,
@@ -2200,7 +2170,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'posting',
           entityId: posting.id,
-          summary: 'Stelle angelegt',
+          summary: 'Job posting created',
         });
         return { id: posting.id, slug };
       },
@@ -2345,7 +2315,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: invoice.id,
-          summary: `Rechnung ${invoice.reference} erstellt`,
+          summary: `Invoice ${invoice.reference} created`,
         });
         return invoice.id;
       },
@@ -2372,7 +2342,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: id,
-          summary: `Rechnungsentwurf ${invoice.reference} gelöscht`,
+          summary: `Invoice draft ${invoice.reference} deleted`,
         });
         return true;
       },
@@ -2410,7 +2380,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: replacementId,
-          summary: `Rechnung ${replacement?.reference ?? ''} ersetzt ${invoice.reference}`,
+          summary: `Invoice ${replacement?.reference ?? ''} replaces ${invoice.reference}`,
         });
         return replacementId;
       },
@@ -2496,7 +2466,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: id,
-          summary: `Rechnung ${invoice.reference} versendet`,
+          summary: `Invoice ${invoice.reference} sent`,
         });
       },
 
@@ -2546,7 +2516,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: id,
-          summary: `Rechnung ${invoice.reference} als bezahlt markiert (${method})`,
+          summary: `Invoice ${invoice.reference} marked as paid (${method})`,
         });
       },
 
@@ -2567,7 +2537,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'invoice',
           entityId: id,
-          summary: `Rechnung ${invoice.reference} storniert — ${cancelReason}`,
+          summary: `Invoice ${invoice.reference} cancelled — ${cancelReason}`,
         });
       },
 
@@ -2602,7 +2572,7 @@ export const useStore = create<StoreState>()(
           const parts = [
             kind === 'in' ? 'Eingecheckt' : 'Ausgecheckt',
             photos.length > 0 ? `${photos.length} Fotos` : null,
-            extraHours ? `+${extraHours} Std. gemeldet` : null,
+            extraHours ? `+${extraHours} h reported` : null,
             note.trim() || null,
           ].filter(Boolean);
 
@@ -2716,7 +2686,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'plan',
           entityId: id,
-          summary: `Abo ${plan.name.de} angelegt`,
+          summary: `Plan ${plan.name.en} created`,
         });
         return id;
       },
@@ -2751,7 +2721,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'plan',
           entityId: id,
-          summary: `Abo ${plan?.name.de ?? id} ${active ? 'aktiviert' : 'deaktiviert'}`,
+          summary: `Plan ${plan?.name.en ?? id} ${active ? 'activated' : 'deactivated'}`,
         });
       },
 
@@ -2812,7 +2782,7 @@ export const useStore = create<StoreState>()(
           subscriptionId: id,
           lines: [
             {
-              label: `Abo ${plan.name.de} — ${plan.includedVisits} Einsätze, ${plan.validityMonths} Monate`,
+              label: `Plan ${plan.name.en} — ${plan.includedVisits} visits, ${plan.validityMonths} months`,
               quantity: 1,
               unitPrice: plan.price,
             },
@@ -2853,8 +2823,8 @@ export const useStore = create<StoreState>()(
           invoiceId: invoice.id,
           renewalCount: 0,
           history: [
-            { at: now.toISOString(), kind: 'started', label: `Abo gestartet — ${plan.name.de}` },
-            { at: now.toISOString(), kind: 'paid', label: `Bezahlt — ${invoice.reference}` },
+            { at: now.toISOString(), kind: 'started', label: `Plan started — ${plan.name.en}` },
+            { at: now.toISOString(), kind: 'paid', label: `Paid — ${invoice.reference}` },
           ],
         };
 
@@ -2869,7 +2839,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'subscription',
           entityId: id,
-          summary: `Abo ${subscription.reference} eröffnet — ${plan.name.de}`,
+          summary: `Plan ${subscription.reference} opened — ${plan.name.en}`,
         });
         return id;
       },
@@ -2901,7 +2871,7 @@ export const useStore = create<StoreState>()(
           subscriptionId: id,
           lines: [
             {
-              label: `Abo ${plan.name.de} — Verlängerung ${plan.validityMonths} Monate`,
+              label: `Plan ${plan.name.en} — renewal ${plan.validityMonths} months`,
               quantity: 1,
               unitPrice: plan.price,
             },
@@ -2936,9 +2906,9 @@ export const useStore = create<StoreState>()(
                       {
                         at: now.toISOString(),
                         kind: 'renewed',
-                        label: `Verlängert um ${plan.validityMonths} Monate`,
+                        label: `Renewed for ${plan.validityMonths} months`,
                       },
-                      { at: now.toISOString(), kind: 'invoiced', label: `Rechnung ${invoice.reference}` },
+                      { at: now.toISOString(), kind: 'invoiced', label: `Invoice ${invoice.reference}` },
                     ],
                   },
             ),
@@ -3020,7 +2990,7 @@ export const useStore = create<StoreState>()(
                             {
                               at: now.toISOString(),
                               kind: 'visitUsed',
-                              label: `Einsatz ${booking.reference} angerechnet`,
+                              label: `Visit ${booking.reference} counted`,
                             },
                           ],
                         },
@@ -3041,7 +3011,7 @@ export const useStore = create<StoreState>()(
                     status: 'paused' as const,
                     history: [
                       ...x.history,
-                      { at: now.toISOString(), kind: 'paused', label: 'Abo pausiert' },
+                      { at: now.toISOString(), kind: 'paused', label: 'Plan paused' },
                     ],
                   },
             ),
@@ -3060,7 +3030,7 @@ export const useStore = create<StoreState>()(
                     status: 'active' as const,
                     history: [
                       ...x.history,
-                      { at: now.toISOString(), kind: 'resumed', label: 'Abo fortgesetzt' },
+                      { at: now.toISOString(), kind: 'resumed', label: 'Plan resumed' },
                     ],
                   },
             ),
@@ -3107,8 +3077,8 @@ export const useStore = create<StoreState>()(
                           at: now.toISOString(),
                           kind: 'skipped',
                           label: next
-                            ? `Einsatz ${next.reference} ausgesetzt`
-                            : 'Nächster Einsatz ausgesetzt',
+                            ? `Visit ${next.reference} skipped`
+                            : 'Next visit skipped',
                         },
                       ],
                     },
@@ -3125,7 +3095,7 @@ export const useStore = create<StoreState>()(
                             {
                               at: now.toISOString(),
                               kind: 'skipped',
-                              label: 'Abo-Termin übersprungen',
+                              label: 'Plan visit skipped',
                             },
                           ],
                         },
@@ -3181,7 +3151,7 @@ export const useStore = create<StoreState>()(
             invoices: s.data.invoices.map((i) =>
               i.id !== subscription.invoiceId
                 ? i
-                : { ...i, status: 'cancelled' as const, cancelReason: 'Abo storniert und erstattet' },
+                : { ...i, status: 'cancelled' as const, cancelReason: 'Plan cancelled and refunded' },
             ),
             subscriptions: s.data.subscriptions.map((x) =>
               x.id !== id
@@ -3196,7 +3166,7 @@ export const useStore = create<StoreState>()(
                       {
                         at: now.toISOString(),
                         kind: 'cancelled',
-                        label: refund ? 'Gekündigt und erstattet' : 'Gekündigt',
+                        label: refund ? 'Cancelled and refunded' : 'Cancelled',
                       },
                     ],
                   },
@@ -3206,7 +3176,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'subscription',
           entityId: id,
-          summary: `Abo ${subscription.reference} storniert${refund ? ' und erstattet' : ''}`,
+          summary: `Plan ${subscription.reference} cancelled${refund ? ' and refunded' : ''}`,
         });
         return null;
       },
@@ -3401,7 +3371,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'settings',
           entityId: keys[0] ?? 'settings',
-          summary: `Einstellung geändert: ${keys.join(', ')}`,
+          summary: `Setting changed: ${keys.join(', ')}`,
           coalesce: true,
         });
       },
@@ -3416,7 +3386,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'template',
           entityId: template.id,
-          summary: `Vorlage "${textFor(template.subject, 'de') || template.id}" angelegt`,
+          summary: `Template "${textFor(template.subject, 'en') || template.id}" created`,
         });
       },
 
@@ -3433,7 +3403,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'template',
           entityId: id,
-          summary: `Vorlage "${next ? textFor(next.subject, 'de') || id : id}" bearbeitet`,
+          summary: `Template "${next ? textFor(next.subject, 'en') || id : id}" edited`,
           /* The editor autosaves like every other settings screen, so without
              this the log would carry one entry per keystroke. */
           coalesce: true,
@@ -3452,13 +3422,13 @@ export const useStore = create<StoreState>()(
 
         set({ settings: { ...s.settings, messageTemplates: plan.next } });
 
-        const label = textFor(plan.removed.subject, 'de') || id;
+        const label = textFor(plan.removed.subject, 'en') || id;
         const summary =
           plan.kind === 'restore'
-            ? `Vorlage "${label}" gelöscht — Originaltext wiederhergestellt, damit der Anlass weiterhin versendet`
+            ? `Template "${label}" deleted — the original text is back, so the occasion still sends`
             : plan.kind === 'promote'
-              ? `Vorlage "${label}" gelöscht — "${textFor(plan.heir.subject, 'de') || plan.heir.id}" ist neu die Standardvorlage`
-              : `Vorlage "${label}" gelöscht`;
+              ? `Template "${label}" deleted — "${textFor(plan.heir.subject, 'en') || plan.heir.id}" is the default now`
+              : `Template "${label}" deleted`;
 
         get().logChange({ entity: 'template', entityId: id, summary });
       },
@@ -3487,7 +3457,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'service',
           entityId: 'catalogue',
-          summary: 'Leistungskatalog bearbeitet',
+          summary: 'Service catalogue edited',
           coalesce: true,
         });
       },
@@ -3534,8 +3504,8 @@ export const useStore = create<StoreState>()(
           entityId: service.id,
           summary:
             service.status === 'draft'
-              ? `"${service.name.de}" als Entwurf angelegt`
-              : `"${service.name.de}" angelegt und aufgeschaltet`,
+              ? `"${service.name.en}" created as a draft`
+              : `"${service.name.en}" created and put on sale`,
         });
         return service;
       },
@@ -3548,7 +3518,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'service',
           entityId: id,
-          summary: `"${service?.name.de ?? id}" bearbeitet`,
+          summary: `"${service?.name.en ?? id}" edited`,
           /* The editor autosaves per keystroke, so without this the log is
              one entry per letter typed into the price field. */
           coalesce: true,
@@ -3562,14 +3532,14 @@ export const useStore = create<StoreState>()(
           services: s.services.map((x) => (x.id === id ? { ...x, status } : x)),
         }));
         const WORD: Record<ServiceStatus, string> = {
-          active: 'aufgeschaltet',
-          inactive: 'deaktiviert',
-          draft: 'zurück auf Entwurf gesetzt',
+          active: 'put on sale',
+          inactive: 'taken off sale',
+          draft: 'set back to draft',
         };
         get().logChange({
           entity: 'service',
           entityId: id,
-          summary: `"${service.name.de}" ${WORD[status]}`,
+          summary: `"${service.name.en}" ${WORD[status]}`,
         });
       },
 
@@ -3585,7 +3555,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'service',
           entityId: id,
-          summary: `"${service.name.de}" gelöscht`,
+          summary: `"${service.name.en}" deleted`,
         });
         return true;
       },
@@ -3595,7 +3565,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'addOn',
           entityId: 'addons',
-          summary: 'Zusatzleistungen bearbeitet',
+          summary: 'Add-on services edited',
           coalesce: true,
         });
       },
@@ -3657,7 +3627,7 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'booking',
           entityId: id,
-          summary: `Einsatz von Hand erfasst: ${reference}`,
+          summary: `Job entered by hand: ${reference}`,
         });
         return { id, reference };
       },
@@ -3683,14 +3653,14 @@ export const useStore = create<StoreState>()(
           note: input.note?.trim() || undefined,
           assigneeId: input.assigneeId,
           createdAt: now.toISOString(),
-          history: [{ at: now.toISOString(), kind: 'created', label: 'Eingetragen' }],
+          history: [{ at: now.toISOString(), kind: 'created', label: 'Created' }],
         };
 
         set({ data: { ...s.data, events: [event, ...s.data.events] } });
         get().logChange({
           entity: 'event',
           entityId: id,
-          summary: `Kalendereintrag angelegt: ${reference} — ${event.title}`,
+          summary: `Calendar entry created: ${reference} — ${event.title}`,
         });
         return id;
       },
@@ -3747,7 +3717,7 @@ export const useStore = create<StoreState>()(
                       {
                         at: now.toISOString(),
                         kind: 'inProgress',
-                        label: `Anfrage ${request.reference} entstanden`,
+                        label: `Request ${request.reference} created`,
                       },
                     ],
                   },

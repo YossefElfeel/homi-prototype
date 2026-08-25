@@ -21,8 +21,8 @@ import { Field, Input } from '@/components/ui/field';
 import { OfferShell } from '@/components/offer/offer-shell';
 import { HoldTimer } from '@/components/offer/hold-timer';
 import { useOffer } from '@/components/offer/use-offer';
-import { offerHours, offerTotal } from '@/mock/engines/offers';
-import { offerCoverage } from '@/lib/offer-facts';
+import { offerTotal } from '@/mock/engines/offers';
+import { requestCoverage } from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { PaymentMethod } from '@/mock/schema';
 import type { Locale } from '@/i18n/routing';
@@ -66,7 +66,6 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const settings = useStore((s) => s.settings);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const plans = useStore((s) => s.plans);
-  const credits = useStore((s) => s.data.credits);
   const payOffer = useStore((s) => s.payOffer);
 
   const [method, setMethod] = useState<PaymentMethod>('twint');
@@ -79,14 +78,14 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const amount = offerTotal(offer);
 
   /*
-   * §11.3 — hours already bought are not charged again.
+   * §11.3 — a visit the plan already paid for is not charged again.
    *
-   * Without this the flow asked a package customer for a card, took the full
-   * amount, and left them with the hours still sitting in their account. The
-   * gateway is not softened here, it is *absent*: there is nothing to pay, so
-   * there is nothing to pay with.
+   * Without this the flow asked a plan customer for a card and took the full
+   * amount for a visit their plan already includes. The gateway is not softened
+   * here, it is *absent*: there is nothing to pay, so there is nothing to pay
+   * with.
    */
-  const coverage = offerCoverage(offer, request, subscriptions, plans, credits, now);
+  const coverage = requestCoverage(request, subscriptions, plans, now);
   const covered = coverage.kind !== 'payable';
 
   function pay() {
@@ -111,14 +110,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           <h1 className="display-type mt-7 text-[clamp(1.75rem,3.6vw,2.75rem)]">
             {t('coveredTitle')}
           </h1>
-          <p className="mt-4 text-lg text-ink-secondary">
-            {coverage.kind === 'package'
-              ? t('coveredPackage', {
-                  hours: offerHours(offer),
-                  remaining: coverage.hoursRemaining ?? 0,
-                })
-              : t('coveredSubscription')}
-          </p>
+          <p className="mt-4 text-lg text-ink-secondary">{t('coveredSubscription')}</p>
 
           <div className="surface-card mt-8 p-6">
             <h2 className="flex items-center gap-2 font-medium">

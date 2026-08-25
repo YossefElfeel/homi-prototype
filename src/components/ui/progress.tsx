@@ -5,9 +5,10 @@ import * as ProgressPrimitive from '@radix-ui/react-progress';
 import { cn } from '@/lib/cn';
 
 /**
- * Used where a number has a ceiling the reader needs to feel: hour credit
- * against the package, free skips used this month, photos taken against the
- * three a check-out requires. A bare "2 of 3" makes you do the arithmetic.
+ * Used where a number has a ceiling the reader needs to feel: visits used
+ * against the ones a plan includes, free skips used this month, photos taken
+ * against the three a check-out requires. A bare "2 of 3" makes you do the
+ * arithmetic.
  */
 const TONE = {
   default: 'bg-accent',

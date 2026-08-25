@@ -495,7 +495,7 @@ export const adminCrmDe = {
     listPriceTooLow: 'Muss über dem Preis liegen, sonst gibt es keine Ersparnis zu zeigen.',
     includedVisits: 'Enthaltene Einsätze',
     validityMonths: 'Gültigkeit (Monate)',
-    validityHint: 'Danach verfällt das Paket — mit oder ohne Restguthaben.',
+    validityHint: 'Danach verfällt das Paket — mit oder ohne offene Einsätze.',
     extraDiscount: 'Rabatt auf Zusatzleistungen (%)',
     extraDiscountHint: 'Gilt für Arbeit ausserhalb des Pakets.',
     derivedPerVisit: 'Ergibt pro Einsatz',
