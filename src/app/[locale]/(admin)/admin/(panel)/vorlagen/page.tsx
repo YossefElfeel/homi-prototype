@@ -9,7 +9,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { routing, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Select } from '@/components/ui/field';
@@ -62,9 +62,10 @@ export default function AdminTemplatesPage() {
   const [query, setQuery] = useState('');
   const [flow, setFlow] = useState<TemplateFlow | 'all'>('all');
   const [tag, setTag] = useState('');
+  const dismissLabel = useDismissLabel();
   /* The template awaiting confirmation, plus the heir the admin picked for it.
-     Held here rather than in ConfirmPanel so reading this file tells you the
-     screen has a confirm step — the house rule for that component. */
+     Held here rather than inside the dialog so reading this file tells you the
+     screen has a confirm step — the house rule the panel this replaced set. */
   const [doomed, setDoomed] = useState<MessageTemplate | null>(null);
   const [heirId, setHeirId] = useState('');
 
@@ -220,57 +221,62 @@ export default function AdminTemplatesPage() {
         }
       />
 
-      {doomed && (
-        <ConfirmPanel
-          className="mb-app"
-          title={
+      {/* Was an inline panel that pushed the whole table down the screen the
+          moment you opened a row menu — so the answer to «which one did I just
+          click» scrolled away as the question appeared. */}
+      <ConfirmDialog
+        open={doomed !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setDoomed(null);
+          setHeirId('');
+        }}
+        title={
+          !doomed
+            ? ''
+            : 
             deleteKind === 'restore'
               ? t('deleteLastTitle', { event: eventLabel(doomed.event ?? '') })
               : deleteKind === 'promote'
                 ? t('deleteReplaceTitle')
                 : t('deleteTitle')
-          }
-          body={
-            deleteKind === 'restore'
+        }
+        body={
+          !doomed
+            ? ''
+            : deleteKind === 'restore'
               ? t('deleteLastBody', { event: eventLabel(doomed.event ?? '') })
               : deleteKind === 'promote'
                 ? t('deleteReplaceBody', { event: eventLabel(doomed.event ?? '') })
                 : t('deleteBody')
-          }
-          action={
-            deleteKind === 'restore' ? t('deleteLastConfirm') : t('deleteConfirm')
-          }
-          dismiss={t('deleteCancel')}
-          /* Which template inherits the automatic send is a business decision,
-             so it is asked here rather than guessed in the store. */
-          disabled={deleteKind === 'promote' && !heirId}
-          onConfirm={confirmDelete}
-          onDismiss={() => {
-            setDoomed(null);
-            setHeirId('');
-          }}
-        >
-          {deleteKind === 'promote' && (
-            <Field label={t('deleteReplaceLabel')} className="max-w-sm">
-              {(props) => (
-                <Select
-                  {...props}
-                  dense
-                  value={heirId}
-                  onChange={(e) => setHeirId(e.target.value)}
-                >
-                  <option value="">—</option>
-                  {siblings.map((one) => (
-                    <option key={one.id} value={one.id}>
-                      {templateLabel(one, locale, t('untitled'))}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-          )}
-        </ConfirmPanel>
-      )}
+        }
+        action={deleteKind === 'restore' ? t('deleteLastConfirm') : t('deleteConfirm')}
+        dismiss={dismissLabel}
+        /* Which template inherits the automatic send is a business decision,
+           so it is asked here rather than guessed in the store. */
+        disabled={deleteKind === 'promote' && !heirId}
+        onConfirm={confirmDelete}
+      >
+        {deleteKind === 'promote' && (
+          <Field label={t('deleteReplaceLabel')}>
+            {(props) => (
+              <Select
+                {...props}
+                dense
+                value={heirId}
+                onChange={(e) => setHeirId(e.target.value)}
+              >
+                <option value="">—</option>
+                {siblings.map((one) => (
+                  <option key={one.id} value={one.id}>
+                    {templateLabel(one, locale, t('untitled'))}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
+      </ConfirmDialog>
 
       <Toolbar
         search={{

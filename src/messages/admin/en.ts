@@ -242,7 +242,9 @@ export const adminEn: typeof adminDe = {
     rowReject: 'Decline',
     rowContinue: 'Continue draft',
     rowDiscard: 'Discard draft',
-    rowDiscardConfirm: 'Discard this draft? This cannot be undone.',
+    rowDiscardConfirmTitle: 'Discard this draft?',
+    rowDiscardConfirm:
+      'No quote, booking or invoice hangs off a draft, so nothing else goes with it. It still cannot be undone.',
     rowDiscardDone: 'Draft discarded.',
     rowOffer: 'View quote',
     emptyTitle: 'No requests yet',
@@ -361,7 +363,9 @@ export const adminEn: typeof adminDe = {
     draftLead:
       'This draft is in no queue and the customer cannot see it. Only “Record request” turns it into a real request — and starts the response clock.',
     draftDiscard: 'Discard draft',
-    draftDiscardConfirm: 'Discard this draft? This cannot be undone.',
+    draftDiscardConfirmTitle: 'Discard this draft?',
+    draftDiscardConfirm:
+      'Everything taken down on the phone goes with it. This cannot be undone.',
     draftDiscardDone: 'Draft discarded.',
     draftNotFound: 'That draft no longer exists.',
     draftPromote: 'Record request',
@@ -796,6 +800,7 @@ export const adminEn: typeof adminDe = {
     noReplyToast: 'Noted — nobody answered.',
     /* The confirmation body was the convert button's text: "Enter the request
        …" sat above a red call-it-off button. */
+    cancelConfirmTitle: 'Call this appointment off?',
     cancelConfirmBody:
       'The appointment leaves the calendar. The entry stays readable and can be reopened.',
     cancelToast: 'Appointment called off.',

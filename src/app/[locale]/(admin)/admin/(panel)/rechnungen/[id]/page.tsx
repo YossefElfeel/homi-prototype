@@ -10,9 +10,10 @@ import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Select, Textarea } from '@/components/ui/field';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -58,6 +59,7 @@ import type { PaymentMethod } from '@/mock/schema';
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('admin.invoice');
+  const dismissLabel = useDismissLabel();
   const brand = useTranslations('brand');
   const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
@@ -82,8 +84,14 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const removeInvoiceLine = useStore((s) => s.removeInvoiceLine);
 
   const [state, setState] = useState<'idle' | 'sending'>('idle');
-  /** Which irreversible step is being confirmed, if any. */
-  const [confirming, setConfirming] = useState<'cancel' | 'reissue' | null>(null);
+  /**
+   * Which irreversible step is waiting for an answer, if any.
+   *
+   * All three share one piece of state because at most one of them can be open
+   * — and because a second boolean per action is how a screen ends up with two
+   * modals stacked on each other.
+   */
+  const [confirming, setConfirming] = useState<'cancel' | 'reissue' | 'delete' | null>(null);
   const [reason, setReason] = useState('');
   /* The QR-bill is on the invoice, so the slip is what most of them come back
      as — and the owner who was paid in cash at the door only has to change it
@@ -137,6 +145,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const canCancel = mayInvoice('cancel', role, status);
   const canReissue = mayInvoice('reissue', role, status);
   const canDelete = mayInvoice('delete', role, status);
+  /* Not a permission — a question about whether the customer's page has
+     anything on it worth opening. See the QR card's own note. */
+  const showCustomerView = invoice.status !== 'draft' && invoice.status !== 'paid';
 
   function send() {
     setState('sending');
@@ -198,7 +209,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   }
 
   function remove() {
-    if (!window.confirm(t('deleteConfirm', { reference: invoice!.reference }))) return;
+    setConfirming(null);
     if (!deleteInvoice(invoice!.id)) {
       toast.error(t('deleteBlocked'));
       return;
@@ -318,37 +329,63 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         onRemove={(index) => removeInvoiceLine(invoice.id, index)}
       />
 
-      <section className="mt-app-section">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="display-type text-xl">{t('qrTitle')}</h2>
-            <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-              {t('qrLead')}
-            </p>
-          </div>
-          {/*
-            The one control on this screen that is not an office action, and
-            that is exactly why it is here rather than in the header beside
-            «Freigeben und senden». The block below is the customer's document
-            rendered on the owner's screen; this opens the page they actually
-            read. Not offered on a draft — §10 keeps an unapproved amount
-            internal, and the account screens filter drafts out, so the link
-            would lead to a page that refuses.
-          */}
-          {invoice.status !== 'draft' && (
-            <Button asChild variant="secondary" size="sm">
-              <a href={`/${locale}/konto/rechnungen/${invoice.id}`} target="_blank" rel="noreferrer">
-                <ActionIcon.customerView className="size-4" aria-hidden />
-                {t('customerView')}
-              </a>
-            </Button>
-          )}
-        </div>
+      <Card className="mt-app-section">
+        <CardHeader
+          title={t('qrTitle')}
+          description={t('qrLead')}
+          actions={
+            /*
+             * The one control on this screen that is not an office action, and
+             * that is exactly why it sits here rather than in the header beside
+             * «Freigeben und senden». The block below is the customer's own
+             * document rendered on the owner's screen; this opens the page they
+             * actually read.
+             *
+             * Two states do not get it. A draft, because §10 keeps an
+             * unapproved amount internal and the account screens refuse one —
+             * the link would open a page that says no. And a settled invoice,
+             * because there is nothing left for the customer to do with it:
+             * their copy drops the payment part once it is paid, so the link
+             * would send the owner to a page that no longer shows the thing
+             * this card is about.
+             */
+            showCustomerView ? (
+              <Button asChild variant="secondary" size="sm">
+                <a
+                  href={`/${locale}/konto/rechnungen/${invoice.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ActionIcon.customerView className="size-4" aria-hidden />
+                  {t('customerView')}
+                </a>
+              </Button>
+            ) : undefined
+          }
+        />
 
-        {/* The Swiss payment part: receipt on the left, payment part on the
-            right, QR in the middle of the right block. Proportions kept so it
-            reads as the real thing at a glance. */}
-        <div className="mt-4 overflow-x-auto">
+        {/*
+          The Swiss payment part: receipt on the left, payment part on the
+          right, QR in the middle of the right block. Proportions kept so it
+          reads as the real thing at a glance.
+
+          One deliberate departure from the real slip. A printed QR-bill repeats
+          the payee and the reference on *both* halves, and that is not
+          redundancy — the perforation runs down the middle, the payer keeps the
+          receipt and the bank keeps the payment part, so each half has to be
+          readable on its own once they are apart.
+
+          Nothing here is ever torn. On screen the repeat is just the same lines
+          twice, three centimetres apart, and it reads as a rendering fault. So
+          every fact is stated once, on the receipt — payee, reference, payer,
+          currency and amount — and the payment part carries only what the
+          receipt does not: the code itself, and the date the money is due.
+
+          Worth reopening the day this has to produce a printable slip — at that
+          point the duplication becomes required again, and it is a rule of the
+          Swiss Implementation Guidelines rather than a layout preference.
+        */}
+        <CardBody className="overflow-x-auto">
           <div className="grid min-w-2xl grid-cols-[1fr_2fr] border border-line-strong">
             <div className="border-r border-line-strong p-5">
               <p className="label-type text-ink-tertiary">Empfangsschein</p>
@@ -393,8 +430,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </dl>
             </div>
 
-            <div className="flex gap-6 p-5">
-              <div className="flex-1">
+            <div className="p-5">
+              <div>
                 <p className="label-type text-ink-tertiary">Zahlteil</p>
                 <div
                   aria-hidden
@@ -413,49 +450,25 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     />
                   ))}
                 </div>
-                <dl className="mt-4 flex gap-6 text-sm">
-                  <div>
-                    <dt className="text-ink-tertiary">{t('qrCurrency')}</dt>
-                    <dd data-numeric>CHF</dd>
-                  </div>
-                  <div>
-                    <dt className="text-ink-tertiary">{t('qrAmount')}</dt>
-                    <dd data-numeric className="font-medium">
-                      {formatChf(total, locale).replace('CHF ', '')}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <dl className="flex-1 space-y-3 text-sm">
-                <div>
-                  <dt className="text-ink-tertiary">{t('qrPayableTo')}</dt>
-                  <dd className="mt-0.5">{brand('name')}</dd>
-                </div>
-                <div>
-                  <dt className="text-ink-tertiary">{t('qrReference')}</dt>
-                  <dd data-numeric className="mt-0.5">
-                    {invoice.qrReference}
-                  </dd>
-                </div>
-                <div>
+                {/* The one fact the receipt beside it does not carry. The
+                    payee, the reference and the amount were all repeated here
+                    and are now stated once, on the receipt — see the note
+                    above. */}
+                <dl className="mt-4 text-sm">
                   <dt className="text-ink-tertiary">{t('dueTitle')}</dt>
                   <dd data-numeric className="mt-0.5">
                     {format.dateTime(new Date(invoice.dueAt), 'full')}
                   </dd>
-                </div>
-              </dl>
+                </dl>
+              </div>
             </div>
           </div>
-        </div>
+        </CardBody>
         <p className="mt-3 text-xs text-ink-tertiary">{t('qrNote')}</p>
-      </section>
+      </Card>
 
-      <section className="mt-app-section">
-        <h2 className="display-type text-xl">{t('messageTitle')}</h2>
-        <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-          {t('messageLead')}
-        </p>
+      <Card className="mt-app-section">
+        <CardHeader title={t('messageTitle')} description={t('messageLead')} />
 
         {/*
           The customer's language, not the admin's: an invoice note is read by
@@ -463,8 +476,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           which is what lets the picker offer one-click sending — a template
           whose placeholders all resolve has nothing left for a human to fill in.
         */}
+        <CardBody>
         <TemplatePicker
-          className="mt-4"
           flow="invoices"
           locale={customer.language}
           vars={{
@@ -494,7 +507,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <Send className="size-4" aria-hidden />
           {t('messageSend')}
         </Button>
-      </section>
+        </CardBody>
+      </Card>
 
       {/*
         Everything that ends this document, in one place.
@@ -508,38 +522,10 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         with one sentence each, rather than a red button with no context.
       */}
       {(canCancel || canReissue || canDelete) && (
-        <section className="mt-app-section">
-          <h2 className="display-type text-xl">{t('closeTitle')}</h2>
-          <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-            {t('closeLead')}
-          </p>
-
-          {confirming ? (
-            <ConfirmPanel
-              className="mt-4"
-              title={confirming === 'cancel' ? t('cancelConfirmTitle') : t('reissueConfirmTitle')}
-              body={confirming === 'cancel' ? t('cancelConfirmBody') : t('reissueConfirmBody')}
-              action={
-                confirming === 'cancel' ? t('cancelConfirmAction') : t('reissueConfirmAction')
-              }
-              dismiss={t('dismiss')}
-              disabled={reason.trim() === ''}
-              onConfirm={confirming === 'cancel' ? cancel : reissue}
-              onDismiss={() => setConfirming(null)}
-            >
-              <Field label={t('cancelReason')}>
-                {(props) => (
-                  <Textarea
-                    {...props}
-                    className="min-h-20 bg-page"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
-                )}
-              </Field>
-            </ConfirmPanel>
-          ) : (
-            <div className="mt-4 flex flex-wrap gap-3">
+        <Card className="mt-app-section">
+          <CardHeader title={t('closeTitle')} description={t('closeLead')} />
+          <CardBody>
+            <div className="flex flex-wrap gap-3">
               {canReissue && (
                 <Button
                   variant="secondary"
@@ -567,15 +553,79 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   a mistyped draft kept for ever as «storniert» buries the real
                   cancellations under clerical noise. */}
               {canDelete && (
-                <Button variant="ghost" onClick={remove}>
+                <Button variant="ghost" onClick={() => setConfirming('delete')}>
                   <ActionIcon.delete className="size-4" aria-hidden />
                   {t('deleteAction')}
                 </Button>
               )}
             </div>
-          )}
-        </section>
+          </CardBody>
+        </Card>
       )}
+
+      {/*
+        The three questions, as popups.
+
+        They used to be an inline red panel that replaced the buttons — which
+        on this screen means the confirm opened at the very foot of a page
+        carrying a QR-bill and a message box above it, so on anything shorter
+        than a desk monitor the question you had just asked for was off-screen.
+        Deleting a draft did not even get that: it raised a `window.confirm`,
+        the browser's own box, in the browser's language.
+      */}
+      <ConfirmDialog
+        open={confirming === 'cancel'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={t('cancelConfirmTitle')}
+        body={t('cancelConfirmBody')}
+        action={t('cancelConfirmAction')}
+        dismiss={dismissLabel}
+        disabled={reason.trim() === ''}
+        onConfirm={cancel}
+      >
+        <Field label={t('cancelReason')}>
+          {(props) => (
+            <Textarea
+              {...props}
+              className="min-h-20"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          )}
+        </Field>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirming === 'reissue'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={t('reissueConfirmTitle')}
+        body={t('reissueConfirmBody')}
+        action={t('reissueConfirmAction')}
+        dismiss={dismissLabel}
+        disabled={reason.trim() === ''}
+        onConfirm={reissue}
+      >
+        <Field label={t('cancelReason')}>
+          {(props) => (
+            <Textarea
+              {...props}
+              className="min-h-20"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          )}
+        </Field>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirming === 'delete'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={t('deleteConfirmTitle')}
+        body={t('deleteConfirm', { reference: invoice.reference })}
+        action={t('deleteAction')}
+        dismiss={dismissLabel}
+        onConfirm={remove}
+      />
 
       {/*
         "Mark as paid" was one click that wrote a status and nothing else. The

@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import {
   Dialog,
@@ -79,6 +80,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
+  const dismissLabel = useDismissLabel();
   const now = useNow();
   const hydrated = useHydrated();
 
@@ -111,6 +113,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const [cardCvv, setCardCvv] = useState('');
   /** The invoice open in the popup, by id — never the record, which the store replaces. */
   const [openInvoice, setOpenInvoice] = useState<string | null>(null);
+  /* One record on this screen, so a flag is enough — the list needs
+     `useConfirmTarget` because there the question is about a row. */
+  const [confirming, setConfirming] = useState<'block' | 'archive' | null>(null);
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -144,15 +149,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   const name = `${customer.firstName} ${customer.lastName}`;
 
+  /* The reversals ask nothing. Undoing a block or pulling a record back out of
+     the archive is the safe direction, and a confirm on it makes the undo feel
+     as heavy as the act it undoes. */
   function toggleBlock() {
     if (customer!.status === 'blocked') {
       updateCustomer(customer!.id, { status: 'active' });
       toast.success(lt('unblockDone', { name }));
       return;
     }
-    if (!window.confirm(lt('blockConfirm', { name }))) return;
-    updateCustomer(customer!.id, { status: 'blocked' });
-    toast.success(lt('blockDone', { name }));
+    setConfirming('block');
   }
 
   function toggleArchive() {
@@ -161,7 +167,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       toast.success(lt('restoreDone', { name }));
       return;
     }
-    if (!window.confirm(lt('archiveConfirm', { name }))) return;
+    setConfirming('archive');
+  }
+
+  function confirmBlock() {
+    setConfirming(null);
+    updateCustomer(customer!.id, { status: 'blocked' });
+    toast.success(lt('blockDone', { name }));
+  }
+
+  function confirmArchive() {
+    setConfirming(null);
     updateCustomer(customer!.id, { archivedAt: now.toISOString() });
     toast.success(lt('archiveDone', { name }));
   }
@@ -814,6 +830,28 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Both were `window.confirm`, the same two as on the list — and the same
+          two decisions, so the same box asks them. */}
+      <ConfirmDialog
+        open={confirming === 'block'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={lt('blockConfirmTitle', { name })}
+        body={lt('blockConfirm')}
+        action={lt('rowBlock')}
+        dismiss={dismissLabel}
+        onConfirm={confirmBlock}
+      />
+
+      <ConfirmDialog
+        open={confirming === 'archive'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={lt('archiveConfirmTitle', { name })}
+        body={lt('archiveConfirm')}
+        action={lt('rowArchive')}
+        dismiss={dismissLabel}
+        onConfirm={confirmArchive}
+      />
     </div>
   );
 }

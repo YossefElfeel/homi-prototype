@@ -8,15 +8,12 @@ import { Plus, Receipt, Send } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
-import { DataView, type Column } from '@/components/ui/data-view';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
+import { DataView, type Column } from '@/components/ui/data-view';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Select, Textarea } from '@/components/ui/field';
@@ -71,6 +68,7 @@ export default function InvoicesPage() {
   const t = useTranslations('admin.invoices');
   const invoiceT = useTranslations('admin.invoice');
   const statusT = useTranslations('status.invoice');
+  const dismissLabel = useDismissLabel();
   const methodT = useTranslations('status.method');
   const appT = useTranslations('app');
   const format = useFormatter();
@@ -89,8 +87,15 @@ export default function InvoicesPage() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<string[]>([]);
-  /** The invoice whose cancellation is being written, and the reason for it. */
-  const [cancelling, setCancelling] = useState<Invoice | null>(null);
+  /*
+   * Two destructive row actions, two held rows.
+   *
+   * `useConfirmTarget` rather than a plain `useState` because Radix keeps the
+   * dialog mounted for the length of its exit: clearing the row on the click
+   * that dismisses blanks the sentence naming the invoice while it fades.
+   */
+  const cancelling = useConfirmTarget<Invoice>();
+  const deleting = useConfirmTarget<Invoice>();
   const [reason, setReason] = useState('');
 
   const nameOf = useMemo(() => {
@@ -133,8 +138,10 @@ export default function InvoicesPage() {
     toast.success(invoiceT('sentDone'));
   }
 
-  function remove(invoice: Invoice) {
-    if (!window.confirm(t('deleteConfirm', { reference: invoice.reference }))) return;
+  function confirmDelete() {
+    const invoice = deleting.target;
+    if (!invoice) return;
+    deleting.dismiss();
     /* The store re-checks rather than trusting the menu: the item is only
        offered on a draft, and a second tab could have approved it between the
        render and the click. */
@@ -146,9 +153,9 @@ export default function InvoicesPage() {
   }
 
   function confirmCancel() {
-    if (!cancelling) return;
-    cancelInvoice(cancelling.id, reason.trim());
-    setCancelling(null);
+    if (!cancelling.target) return;
+    cancelInvoice(cancelling.target.id, reason.trim());
+    cancelling.dismiss();
     setReason('');
     toast.success(invoiceT('cancelDone'));
   }
@@ -318,10 +325,17 @@ export default function InvoicesPage() {
             <ActionIcon.invoice aria-hidden />
           </RowAction>
         )}
-        {/* What the person being billed sees. Never offered on a draft: §10
-            keeps an unapproved amount internal, and the customer's own screen
-            filters drafts out — so this would open a page that says nothing. */}
-        {state !== 'draft' && (
+        {/*
+            What the person being billed sees, and it is offered on exactly the
+            states where that page still has something on it.
+
+            Not on a draft: §10 keeps an unapproved amount internal and the
+            customer's own screen refuses one, so the link would open a page
+            that says no. And not once it is settled either — their copy drops
+            the payment part when it is paid, so from here the item would
+            promise a document and land on a receipt.
+        */}
+        {state !== 'draft' && state !== 'paid' && (
           <RowAction
             external
             href={`/konto/rechnungen/${invoice.id}`}
@@ -337,14 +351,18 @@ export default function InvoicesPage() {
             label={invoiceT('cancelAction')}
             onClick={() => {
               setReason('');
-              setCancelling(invoice);
+              cancelling.ask(invoice);
             }}
           >
             <ActionIcon.decline aria-hidden />
           </RowActionButton>
         )}
         {canDelete && (
-          <RowActionButton tone="danger" label={t('rowDelete')} onClick={() => remove(invoice)}>
+          <RowActionButton
+            tone="danger"
+            label={t('rowDelete')}
+            onClick={() => deleting.ask(invoice)}
+          >
             <ActionIcon.delete aria-hidden />
           </RowActionButton>
         )}
@@ -476,36 +494,39 @@ export default function InvoicesPage() {
         The reason is still required: a cancellation with no reason is the one
         entry in the books nobody can explain a month later.
       */}
-      <Dialog open={cancelling !== null} onOpenChange={(open) => !open && setCancelling(null)}>
-        <DialogContent closeLabel={invoiceT('dismiss')}>
-          <DialogHeader>
-            <DialogTitle>{invoiceT('cancelConfirmTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('cancelLead', { reference: cancelling?.reference ?? '' })}
-            </DialogDescription>
-          </DialogHeader>
+      <ConfirmDialog
+        open={cancelling.open}
+        onOpenChange={(open) => !open && cancelling.dismiss()}
+        title={invoiceT('cancelConfirmTitle')}
+        body={t('cancelLead', { reference: cancelling.target?.reference ?? '' })}
+        action={invoiceT('cancelConfirmAction')}
+        dismiss={dismissLabel}
+        disabled={reason.trim() === ''}
+        onConfirm={confirmCancel}
+      >
+        <Field label={invoiceT('cancelReason')} hint={invoiceT('cancelConfirmBody')}>
+          {(props) => (
+            <Textarea
+              {...props}
+              className="min-h-24"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          )}
+        </Field>
+      </ConfirmDialog>
 
-          <Field label={invoiceT('cancelReason')} hint={invoiceT('cancelConfirmBody')}>
-            {(props) => (
-              <Textarea
-                {...props}
-                className="min-h-24"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            )}
-          </Field>
-
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setCancelling(null)}>
-              {invoiceT('dismiss')}
-            </Button>
-            <Button variant="danger" disabled={reason.trim() === ''} onClick={confirmCancel}>
-              {invoiceT('cancelConfirmAction')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Deleting used to raise a `window.confirm` — the browser's box, in the
+          browser's language, over a themed panel. */}
+      <ConfirmDialog
+        open={deleting.open}
+        onOpenChange={(open) => !open && deleting.dismiss()}
+        title={t('deleteConfirmTitle')}
+        body={t('deleteConfirm', { reference: deleting.target?.reference ?? '' })}
+        action={t('rowDelete')}
+        dismiss={dismissLabel}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

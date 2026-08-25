@@ -507,6 +507,11 @@ export const FLOWS: Flow[] = [
         'Jede Zeile konnte genau eines: sich öffnen. Freigeben, stornieren und löschen hiessen erst öffnen — darum gab es die Sammel-Freigabe per Checkbox, eine Massenaktion als Ersatz für die fehlenden Zeilenaktionen. Was eine Zeile nicht kann, bleibt im Menü stehen und trägt statt des Namens den Grund',
       ),
       added(
+        'Storno und Löschen fragen nach',
+        '/admin/rechnungen',
+        'Löschen fragte mit `window.confirm` — die Box vom Browser, mit «OK» und «Cancel» drauf in der Sprache vom Browser statt von der Seite, und ohne Platz für einen Grund. Stornieren fragte mit einem Panel, das ganz unten auf der Seite aufging, unter der QR-Rechnung und dem Nachrichtenfeld. Beide sind jetzt derselbe Dialog, und derselbe Dialog steht auch hinter jedem Löschen und Ablehnen im ganzen Panel',
+      ),
+      added(
         'Nach der Freigabe nicht mehr ändern',
         '/admin/rechnungen/inv_sent',
         'Stand nirgends. Der Entwurfseditor sperrte sich zwar, sagte aber nicht, was stattdessen zu tun ist — jetzt gibt es «stornieren und neu erstellen»: die alte Rechnung wird storniert, ein Entwurf mit denselben Positionen geht auf, und beide Belege verweisen aufeinander',

@@ -25,7 +25,7 @@ import { Link } from '@/i18n/navigation';
 import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { Lifecycle } from '@/components/ui/lifecycle';
 import { quoteStages } from '@/lib/quote-lifecycle';
@@ -73,6 +73,7 @@ export default function RequestDetailPage({
   const { id } = use(params);
   const { action } = use(searchParams);
   const t = useTranslations('admin.request');
+  const dismissLabel = useDismissLabel();
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const hydrated = useHydrated();
@@ -313,37 +314,38 @@ export default function RequestDetailPage({
         </div>
       </div>
 
-      {cancelling && (
-        <ConfirmPanel
-          className="mt-6"
-          title={t('cancelTitle')}
-          body={t('cancelBody')}
-          action={t('cancelConfirm')}
-          dismiss={t('cancelDismiss')}
-          disabled={!cancelReason.trim()}
-          onDismiss={() => setCancelling(false)}
-          onConfirm={() => {
-            cancelRequest(request.id, 'company', cancelReason, now);
-            setCancelling(false);
-            toast.success(t('cancelDone', { reference: request.reference }));
-          }}
-        >
-          {/* Required here, unlike the customer's own withdrawal: this one is
-              the company acting on somebody else's job, and a month later the
-              only account of why is whatever was typed in this box. */}
-          <Field label={t('cancelReason')}>
-            {(props) => (
-              <Textarea
-                {...props}
-                className="min-h-20 bg-card"
-                value={cancelReason}
-                placeholder={t('cancelReasonPlaceholder')}
-                onChange={(e) => setCancelReason(e.target.value)}
-              />
-            )}
-          </Field>
-        </ConfirmPanel>
-      )}
+      {/* Was an inline panel below the header, which on this screen opened
+          above the whole record — so agreeing to cancel meant reading a
+          question with the thing it was about pushed off the screen. */}
+      <ConfirmDialog
+        open={cancelling}
+        onOpenChange={setCancelling}
+        title={t('cancelTitle')}
+        body={t('cancelBody')}
+        action={t('cancelConfirm')}
+        dismiss={dismissLabel}
+        disabled={!cancelReason.trim()}
+        onConfirm={() => {
+          cancelRequest(request.id, 'company', cancelReason, now);
+          setCancelling(false);
+          toast.success(t('cancelDone', { reference: request.reference }));
+        }}
+      >
+        {/* Required here, unlike the customer's own withdrawal: this one is
+            the company acting on somebody else's job, and a month later the
+            only account of why is whatever was typed in this box. */}
+        <Field label={t('cancelReason')}>
+          {(props) => (
+            <Textarea
+              {...props}
+              className="min-h-20"
+              value={cancelReason}
+              placeholder={t('cancelReasonPlaceholder')}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+          )}
+        </Field>
+      </ConfirmDialog>
 
       {/*
         Was first in the right-hand column, which made "where is this request?"

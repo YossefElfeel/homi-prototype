@@ -12,6 +12,11 @@ import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
@@ -54,6 +59,8 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const setPlanVisible = useStore((s) => s.setPlanVisible);
   const cancelSubscription = useStore((s) => s.cancelSubscription);
 
+  const dismissLabel = useDismissLabel();
+  const cancelling = useConfirmTarget<Subscription>();
   const [query, setQuery] = useState('');
 
   const subscribers = useMemo(
@@ -92,7 +99,10 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const serviceName =
     services.find((s) => s.slug === plan.serviceSlug)?.name[locale] ?? plan.serviceSlug;
 
-  function cancel(subscription: Subscription) {
+  function cancel() {
+    const subscription = cancelling.target;
+    if (!subscription) return;
+    cancelling.dismiss();
     const block = cancelSubscription(subscription.id, now);
     /* The store decides, and it says which rule refused. A button that just
        fails is a button somebody presses three times before phoning. */
@@ -369,7 +379,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
               <RowActionButton
                 tone="danger"
                 label={t('rowCancel')}
-                onClick={() => cancel(s)}
+                onClick={() => cancelling.ask(s)}
               >
                 <ActionIcon.decline aria-hidden />
               </RowActionButton>
@@ -401,6 +411,26 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           }
         />
       </section>
+
+      {/*
+        This one had no confirmation at all — one click in a row menu ended a
+        plan, and inside the cooling-off period that also moves money: the
+        store writes a `refunded` payment and cancels the invoice behind it.
+        The refusals still come back as they did, from the store rather than
+        from a greyed button, because «why not» is the sentence the office has
+        to repeat to the customer anyway.
+      */}
+      <ConfirmDialog
+        open={cancelling.open}
+        onOpenChange={(open) => !open && cancelling.dismiss()}
+        title={t('rowCancelConfirmTitle', {
+          name: cancelling.target ? nameOf(cancelling.target) : '',
+        })}
+        body={t('rowCancelConfirmBody')}
+        action={t('rowCancel')}
+        dismiss={dismissLabel}
+        onConfirm={cancel}
+      />
     </div>
   );
 }

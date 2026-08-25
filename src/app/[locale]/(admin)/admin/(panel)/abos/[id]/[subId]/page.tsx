@@ -9,7 +9,7 @@ import { AlertTriangle, Lock, Pause, Play, RefreshCw, SkipForward } from 'lucide
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
@@ -43,6 +43,7 @@ export default function SubscriberPage({
 }) {
   const { id, subId } = use(params);
   const t = useTranslations('admin.subscriber');
+  const dismissLabel = useDismissLabel();
   const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -360,48 +361,27 @@ export default function SubscriberPage({
                 {paused ? t('resume') : t('pause')}
               </Button>
 
-              {confirmingCancel ? (
-                <ConfirmPanel
-                  title={t('cancelConfirmTitle')}
-                  body={t('cancelConfirmBody', { amount: plan.price })}
-                  action={t('cancelConfirmAction')}
-                  dismiss={t('dismiss')}
-                  onConfirm={() => {
-                    const refused = cancelSubscription(subscription.id, now);
-                    setConfirmingCancel(false);
-                    if (refused) toast.error(t(`cancelBlocked.${refused}`));
-                    else toast.success(t('cancelDone'));
-                  }}
-                  onDismiss={() => setConfirmingCancel(false)}
-                />
-              ) : (
-                <>
-                  <Button
-                    variant="danger"
-                    block
-                    disabled={block !== null}
-                    onClick={() => setConfirmingCancel(true)}
-                  >
-                    {t('cancel')}
-                  </Button>
-                  {/*
-                    The reason sits under the button rather than in a tooltip.
-                    This is the one control on the screen whose availability is
-                    a rule the customer will ask about, and "you may cancel
-                    until the 3rd" is not something to make anyone hover for.
-                  */}
-                  <p className="text-sm text-ink-tertiary">
-                    {block === null
-                      ? t('cancelUntil', {
-                          date: format.dateTime(
-                            cancelDeadline(subscription, settings),
-                            'short',
-                          ),
-                        })
-                      : t(`cancelBlocked.${block}`)}
-                  </p>
-                </>
-              )}
+              <Button
+                variant="danger"
+                block
+                disabled={block !== null}
+                onClick={() => setConfirmingCancel(true)}
+              >
+                {t('cancel')}
+              </Button>
+              {/*
+                The reason sits under the button rather than in a tooltip.
+                This is the one control on the screen whose availability is a
+                rule the customer will ask about, and "you may cancel until the
+                3rd" is not something to make anyone hover for.
+              */}
+              <p className="text-sm text-ink-tertiary">
+                {block === null
+                  ? t('cancelUntil', {
+                      date: format.dateTime(cancelDeadline(subscription, settings), 'short'),
+                    })
+                  : t(`cancelBlocked.${block}`)}
+              </p>
             </div>
           </div>
 
@@ -418,6 +398,24 @@ export default function SubscriberPage({
           </div>
         </aside>
       </div>
+
+      {/* Cancelling a plan inside its cooling-off period refunds money. That
+          used to be asked by a panel that replaced the button in a narrow
+          column, taking the «kündbar bis» line with it. */}
+      <ConfirmDialog
+        open={confirmingCancel}
+        onOpenChange={setConfirmingCancel}
+        title={t('cancelConfirmTitle')}
+        body={t('cancelConfirmBody', { amount: plan.price })}
+        action={t('cancelConfirmAction')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          const refused = cancelSubscription(subscription.id, now);
+          setConfirmingCancel(false);
+          if (refused) toast.error(t(`cancelBlocked.${refused}`));
+          else toast.success(t('cancelDone'));
+        }}
+      />
     </div>
   );
 }

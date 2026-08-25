@@ -21,7 +21,7 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { Money } from '@/components/ui/money';
@@ -57,6 +57,7 @@ function kindKey(kind: CalendarEventKind) {
 export default function CalendarEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('admin.event');
+  const dismissLabel = useDismissLabel();
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const now = useNow();
@@ -456,25 +457,10 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
                       </>
                     )}
 
-                    {confirming ? (
-                      <ConfirmPanel
-                        title={t('cancel')}
-                        body={t('cancelConfirmBody')}
-                        action={t('cancel')}
-                        dismiss={t('dismiss')}
-                        onConfirm={() => {
-                          setStatus(event.id, 'cancelled', now);
-                          setConfirming(false);
-                          toast.success(t('cancelToast'));
-                        }}
-                        onDismiss={() => setConfirming(false)}
-                      />
-                    ) : (
-                      <Button block variant="danger" onClick={() => setConfirming(true)}>
-                        <X className="size-4" aria-hidden />
-                        {t('cancel')}
-                      </Button>
-                    )}
+                    <Button block variant="danger" onClick={() => setConfirming(true)}>
+                      <X className="size-4" aria-hidden />
+                      {t('cancel')}
+                    </Button>
                   </>
                 ) : (
                   <Button
@@ -494,6 +480,22 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
           )}
         </aside>
       </div>
+
+      {/* Was an inline panel inside the right-hand column, where it replaced
+          the button and pushed the two above it around as it opened. */}
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t('cancelConfirmTitle')}
+        body={t('cancelConfirmBody')}
+        action={t('cancel')}
+        dismiss={dismissLabel}
+        onConfirm={() => {
+          setStatus(event.id, 'cancelled', now);
+          setConfirming(false);
+          toast.success(t('cancelToast'));
+        }}
+      />
     </div>
   );
 }
