@@ -35,7 +35,7 @@ import {
 } from '@/mock/engines/offers';
 import {
   offerBooking,
-  offerCoverage,
+  requestCoverage,
   offerPayment,
   offerRhythm,
 } from '@/lib/offer-facts';
@@ -76,7 +76,6 @@ export default function AdminOfferDetailPage({
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const subscriptions = useStore((s) => s.data.subscriptions);
-  const credits = useStore((s) => s.data.credits);
   const settings = useStore((s) => s.settings);
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
@@ -116,7 +115,7 @@ export default function AdminOfferDetailPage({
   const left = daysLeft(offer, now);
   const discount = offerDiscount(offer);
 
-  const coverage = offerCoverage(offer, request, subscriptions, plans, credits, now);
+  const coverage = requestCoverage(request, subscriptions, plans, now);
   const payment = offerPayment(offer.id, payments);
   const booking = offerBooking(offer.id, bookings);
   const rhythm = offerRhythm(request, plans);
@@ -471,57 +470,14 @@ export default function AdminOfferDetailPage({
             {/*
               §11 — why this job is not being charged, and what is left.
 
-              The list carried a chip that said «Aus Paket» and a number of
-              hours, which answers "is this billable" and nothing else. The
-              questions the office actually has when a customer rings are the
-              next two: how much of what they bought is left, and does it
-              stretch to another visit. Both are arithmetic on data the store
-              already holds — and neither had anywhere to be shown, because a
-              table cell is not the place to do arithmetic out loud.
+              The list carried a chip that said «Im Abo» and nothing else, which
+              answers "is this billable" and stops there. The questions the
+              office actually has when a customer rings are the next two: how
+              much of what they bought is left, and does it stretch to another
+              visit. Both are arithmetic on data the store already holds — and
+              neither had anywhere to be shown, because a table cell is not the
+              place to do arithmetic out loud.
             */}
-            {coverage.kind === 'package' && (
-              <Card>
-                <CardHeader
-                  title={t('coverageTitle')}
-                  description={t('coveragePackageLead')}
-                />
-                {(() => {
-                  const credit = credits.find((c) => c.id === coverage.sourceId);
-                  const jobHours = offerHours(offer);
-                  const left = coverage.hoursRemaining ?? 0;
-                  /* After this one, not before it: the balance on the screen
-                     while a quote is open is the balance the customer is
-                     about to spend from. */
-                  const after = Math.max(0, left - jobHours);
-                  const more = jobHours > 0 ? Math.floor(after / jobHours) : 0;
-                  return (
-                    <dl className="mt-3 space-y-2 text-sm">
-                      <Row label={t('coverageBalance')}>
-                        <span data-numeric>{t('hoursValue', { n: left })}</span>
-                      </Row>
-                      <Row label={t('coverageThisJob')}>
-                        <span data-numeric>−{t('hoursValue', { n: jobHours })}</span>
-                      </Row>
-                      <div className="flex items-baseline justify-between gap-4 border-t border-line-subtle pt-2">
-                        <dt className="shrink-0 font-medium">{t('coverageAfter')}</dt>
-                        <dd data-numeric className="text-right font-medium">
-                          {t('hoursValue', { n: after })}
-                        </dd>
-                      </div>
-                      <p className="text-ink-secondary">{t('coverageMore', { n: more })}</p>
-                      {credit && (
-                        <Row label={t('coverageExpires')}>
-                          <span data-numeric className="text-ink-tertiary">
-                            {format.dateTime(new Date(credit.expiresAt), 'short')}
-                          </span>
-                        </Row>
-                      )}
-                    </dl>
-                  );
-                })()}
-              </Card>
-            )}
-
             {coverage.kind === 'subscription' && (
               <Card>
                 <CardHeader

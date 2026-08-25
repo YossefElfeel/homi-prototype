@@ -12,7 +12,7 @@ import { SCENARIOS, buildScenario, seedHolds } from '../src/mock/scenarios.ts';
 import { offerHours, offerTotal } from '../src/mock/engines/offers.ts';
 import {
   bookingPaymentState,
-  offerCoverage,
+  requestCoverage,
   offerPayment,
   offerBooking,
   offerRhythm,
@@ -78,11 +78,6 @@ for (const clock of CLOCKS) {
       check(`${tag} booking ${b.reference} → customer`, customerIds.has(b.customerId), b.customerId);
       check(`${tag} booking ${b.reference} → property`, propertyIds.has(b.propertyId), b.propertyId);
     }
-    for (const c of d.credits) {
-      check(`${tag} credit ${c.id} → customer`, customerIds.has(c.customerId), c.customerId);
-      check(`${tag} credit ${c.id} → property`, propertyIds.has(c.propertyId), c.propertyId);
-    }
-
     /* ------------------------------------------------------ pricing */
     for (const o of d.offers) {
       check(`${tag} ${o.reference} prices > 0`, offerTotal(o) > 0, String(offerTotal(o)));
@@ -165,13 +160,7 @@ for (const clock of CLOCKS) {
     /* ---------------------------------------------------- coverage */
     for (const o of d.offers) {
       const r = d.requests.find((x) => x.id === o.requestId);
-      const cov = offerCoverage(o, r, d.subscriptions, SEED_PLANS, d.credits, clock);
-      if (cov.kind === 'package') {
-        const credit = d.credits.find((c) => c.id === cov.sourceId)!;
-        check(`${tag} ${o.reference} package actually covers it`,
-          credit.hoursRemaining >= offerHours(o),
-          `${credit.hoursRemaining} < ${offerHours(o)}`);
-      }
+      const cov = requestCoverage(r, d.subscriptions, SEED_PLANS, clock);
       /* A covered quote skips the gateway, so it must not also carry a
          successful charge — that would be the double bill the coverage rule
          exists to prevent. */
@@ -187,7 +176,7 @@ for (const clock of CLOCKS) {
     if (off1) {
       const r = d.requests.find((x) => x.id === off1.requestId);
       check(`${tag} off_1 stays payable`,
-        offerCoverage(off1, r, d.subscriptions, SEED_PLANS, d.credits, clock).kind === 'payable');
+        requestCoverage(r, d.subscriptions, SEED_PLANS, clock).kind === 'payable');
     }
 
     /* -------------------------------------------------------- plans */
@@ -274,7 +263,7 @@ for (const clock of CLOCKS) {
         .map((o) => {
           const r = d.requests.find((x) => x.id === o.requestId);
           return {
-            cov: offerCoverage(o, r, d.subscriptions, SEED_PLANS, d.credits, clock).kind,
+            cov: requestCoverage(r, d.subscriptions, SEED_PLANS, clock).kind,
             pay: offerPayment(o.id, d.payments)?.status,
             booking: Boolean(offerBooking(o.id, d.bookings)),
             rhythm: offerRhythm(r, SEED_PLANS),
@@ -283,8 +272,7 @@ for (const clock of CLOCKS) {
           };
         });
 
-      check(`${tag} a package-covered quote exists`, states.some((s) => s.cov === 'package'));
-      /* The quote detail now draws a different card per coverage kind, so the
+      /* The quote detail draws a different card per coverage kind, so the
          plan branch is a state a screen can be in — and a state no scenario
          reaches is one nobody ever looks at. */
       check(

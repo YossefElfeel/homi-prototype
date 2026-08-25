@@ -63,7 +63,6 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   const bookings = useStore((s) => s.data.bookings);
   const properties = useStore((s) => s.data.properties);
   const subscriptions = useStore((s) => s.data.subscriptions);
-  const credits = useStore((s) => s.data.credits);
   const closures = useStore((s) => s.data.closures);
   const events = useStore((s) => s.data.events);
   const holds = useStore((s) => s.holds);
@@ -100,7 +99,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   if (!data) return null;
 
   const { offer, hold, customer } = data;
-  const returning = isReturningCustomer(customer.id, bookings, subscriptions, credits);
+  const returning = isReturningCustomer(customer.id, bookings, subscriptions);
   const proposals = offer.proposedSlots ?? [];
   /* Sent in, nothing back yet. Nothing on this page is actionable in that
      state and pretending otherwise — leaving the grid live — invites a second

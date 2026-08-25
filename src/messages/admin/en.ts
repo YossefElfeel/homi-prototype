@@ -129,15 +129,7 @@ export const adminEn: typeof adminDe = {
     payment: 'Payment',
     paymentNone: 'Not paid yet',
     coverageTitle: 'Covered by',
-    coveragePackageLead:
-      'This job is paid from the hours the customer already bought, not charged again.',
     coverageSubscriptionLead: 'This job is included in the running plan.',
-    coverageBalance: 'Balance before this job',
-    coverageThisJob: 'This job',
-    coverageAfter: 'Left afterwards',
-    coverageMore:
-      '{n, plural, =0 {Not enough left for another job this size.} one {Enough left for one more job this size.} other {Enough left for # more jobs this size.}}',
-    coverageExpires: 'Balance expires',
     coveragePlan: 'Plan',
     coverageVisits: 'Visits in the package',
     coverageVisitsValue: '{left} of {total} left',
@@ -145,7 +137,6 @@ export const adminEn: typeof adminDe = {
     coverageSkips: 'Free skips',
     coverageSkipsValue: '{left} of {total} this month',
     coverageOpenPlan: 'Open the plan',
-    hoursValue: '{n} h',
     paymentFailed: 'Failed: {reason}',
     bookingTitle: 'What it became',
     bookingOpen: 'Open the booking',

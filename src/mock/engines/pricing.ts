@@ -3,7 +3,7 @@
  *
  * The hour is the only unit of account (§21 item 1). Area, rooms, bathrooms,
  * pets and condition are inputs to a *duration estimate*; that estimate times
- * the hourly rate is the price. This is what makes package credits, plan
+ * the hourly rate is the price. This is what makes a plan's per-visit price,
  * discounts and part-refunds computable at all.
  *
  * Everything here is pure. The booking flow calls it on every keystroke to
@@ -82,7 +82,7 @@ export interface EstimateInput {
    * The discount the customer's plan earns on work *outside* the package, as a
    * percentage. It arrives as a number rather than a plan id because pricing
    * has no business resolving plans: which plan applies, and whether this job
-   * is inside the package or beyond it, is decided by `offerCoverage` — and a
+   * is inside the package or beyond it, is decided by `requestCoverage` — and a
    * job inside the package is not quoted at all.
    */
   planDiscountPercent?: number;

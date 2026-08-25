@@ -13,7 +13,6 @@ import type {
   KeyLogEntry,
   CustomerMessage,
   ID,
-  PackageCredit,
   Offer,
   Payment,
   PropertyKind,
@@ -75,7 +74,6 @@ export interface DataSet {
   payments: Payment[];
   paymentMethods: SavedPaymentMethod[];
   keyLog: KeyLogEntry[];
-  credits: PackageCredit[];
   messages: CustomerMessage[];
   coupons: Coupon[];
   changeLog: ChangeLogEntry[];
@@ -101,7 +99,6 @@ const EMPTY: DataSet = {
   payments: [],
   paymentMethods: [],
   keyLog: [],
-  credits: [],
   messages: [],
   coupons: [],
   changeLog: [],
@@ -197,16 +194,16 @@ function calendarEvent(
   const createdAt = days(now, -(input.createdDaysAgo ?? Math.max(1, input.inDays + 2)));
 
   const history: CalendarEvent['history'] = [
-    { at: iso(createdAt), kind: 'created', label: 'Eingetragen' },
+    { at: iso(createdAt), kind: 'created', label: 'Created' },
   ];
   if (status === 'done') {
-    history.push({ at: iso(start), kind: 'done', label: 'Erledigt' });
+    history.push({ at: iso(start), kind: 'done', label: 'Done' });
   } else if (status === 'pending') {
-    history.push({ at: iso(start), kind: 'pending', label: 'Niemand erreicht' });
+    history.push({ at: iso(start), kind: 'pending', label: 'Nobody reached' });
   } else if (status === 'cancelled') {
-    history.push({ at: iso(start), kind: 'cancelled', label: 'Abgesagt' });
+    history.push({ at: iso(start), kind: 'cancelled', label: 'Cancelled' });
   } else if (status === 'inProgress') {
-    history.push({ at: iso(start), kind: 'inProgress', label: 'Anfrage entstanden' });
+    history.push({ at: iso(start), kind: 'inProgress', label: 'Turned into a request' });
   }
 
   return {
@@ -303,7 +300,7 @@ function baseData(now: Date): DataSet {
     {
       id: 'prp_1',
       customerId: 'cus_1',
-      label: 'Zuhause',
+      label: 'Home',
       street: 'Seestrasse 44',
       postcode: '8700',
       city: 'Küsnacht',
@@ -317,19 +314,19 @@ function baseData(now: Date): DataSet {
       needsExtraEffort: false,
       access: {
         method: 'key-box',
-        boxLocation: 'Rechts neben der Haustür, unter dem Briefkasten',
+        boxLocation: 'Right of the front door, under the letterbox',
         boxCode: '4417',
-        keyReturnLocation: 'Zurück in den Schlüsselkasten',
+        keyReturnLocation: 'Back into the key safe',
         alarmCode: '90210',
         emergencyName: 'Andrea Keller',
         emergencyPhone: '+41 79 000 00 01',
       },
-      permanentNotes: 'Hund (Nala) ist tagsüber zuhause, sehr freundlich.',
+      permanentNotes: 'The dog (Nala) is at home during the day, very friendly.',
     },
     {
       id: 'prp_2',
       customerId: 'cus_2',
-      label: 'Wohnung',
+      label: 'Flat',
       street: 'Dorfstrasse 12',
       postcode: '8706',
       city: 'Meilen',
@@ -355,7 +352,7 @@ function baseData(now: Date): DataSet {
        */
       id: 'prp_2b',
       customerId: 'cus_2',
-      label: 'Büro Seestrasse',
+      label: 'Seestrasse office',
       street: 'Seestrasse 104',
       postcode: '8706',
       city: 'Meilen',
@@ -377,7 +374,7 @@ function baseData(now: Date): DataSet {
     {
       id: 'prp_3',
       customerId: 'cus_3',
-      label: 'Alte Wohnung',
+      label: 'Old flat',
       street: 'Bergstrasse 8',
       postcode: '8712',
       city: 'Stäfa',
@@ -400,7 +397,7 @@ function baseData(now: Date): DataSet {
     {
       id: 'prp_4',
       customerId: 'cus_4',
-      label: 'Büro',
+      label: 'Office',
       street: 'Seestrasse 101',
       postcode: '8708',
       city: 'Männedorf',
@@ -435,7 +432,7 @@ function baseData(now: Date): DataSet {
       preferred: { date: iso(days(now, 9)), band: 'morning', flexible: false },
       photoIds: ['pho_1', 'pho_2'],
       customerNote:
-        'Übergabe ist am 20., die Verwaltung ist streng. Backofen ist der kritische Punkt.',
+        'Handover is on the 20th and the management is strict. The oven is the critical point.',
       /*
        * `off_2` hangs off this request, was issued 20 days ago and ran out 6
        * days ago — and the request said `new`. So screen 53 opened on a
@@ -493,7 +490,7 @@ function baseData(now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'scheduled',
       photoIds: [],
-      history: [{ at: iso(days(now, -14)), kind: 'created', label: 'Abo-Termin geplant' }],
+      history: [{ at: iso(days(now, -14)), kind: 'created', label: 'Plan visit scheduled' }],
     },
     {
       id: 'bkg_2',
@@ -518,11 +515,11 @@ function baseData(now: Date): DataSet {
       reschedule: { from: iso(at(days(now, 0), 8, 30)), at: iso(days(now, -1)) },
       photoIds: [],
       history: [
-        { at: iso(days(now, -3)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -3)), kind: 'created', label: 'Booked' },
         {
           at: iso(days(now, -1)),
           kind: 'rescheduled',
-          label: 'Verschoben auf morgen 08:30 — Ausfall im Team',
+          label: 'Moved to tomorrow 08:30 — someone off sick',
         },
       ],
     },
@@ -549,9 +546,9 @@ function baseData(now: Date): DataSet {
       status: 'invoiced',
       photoIds: [],
       history: [
-        { at: iso(days(now, -13)), kind: 'created', label: 'Gebucht' },
-        { at: iso(days(now, -6)), kind: 'completed', label: 'Einsatz abgeschlossen' },
-        { at: iso(days(now, -5)), kind: 'invoiced', label: 'Rechnung versendet' },
+        { at: iso(days(now, -13)), kind: 'created', label: 'Booked' },
+        { at: iso(days(now, -6)), kind: 'completed', label: 'Job finished' },
+        { at: iso(days(now, -5)), kind: 'invoiced', label: 'Invoice sent' },
       ],
     },
     /*
@@ -575,7 +572,7 @@ function baseData(now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'scheduled',
       photoIds: [],
-      history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Abo-Termin geplant' }],
+      history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Plan visit scheduled' }],
     },
 
     /*
@@ -615,11 +612,11 @@ function baseData(now: Date): DataSet {
       reschedule: { from: iso(at(openDay(now, 1), 9)), at: iso(days(now, -2)) },
       photoIds: [],
       history: [
-        { at: iso(days(now, -9)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -9)), kind: 'created', label: 'Booked' },
         {
           at: iso(days(now, -2)),
           kind: 'rescheduled',
-          label: 'Verschoben auf Wunsch der Kundin — Handwerker im Haus',
+          label: 'Moved at her request — tradesmen in the house',
         },
       ],
     },
@@ -637,8 +634,8 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       checkInAt: iso(at(days(now, 0), 15, 4)),
       history: [
-        { at: iso(days(now, -5)), kind: 'created', label: 'Gebucht und bezahlt' },
-        { at: iso(at(days(now, 0), 15, 4)), kind: 'checkIn', label: 'Eingecheckt' },
+        { at: iso(days(now, -5)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(at(days(now, 0), 15, 4)), kind: 'checkIn', label: 'Checked in' },
       ],
     },
     {
@@ -656,14 +653,14 @@ function baseData(now: Date): DataSet {
       checkInAt: iso(at(pastOpenDay(now, -1), 9, 6)),
       checkOutAt: iso(at(pastOpenDay(now, -1), 15, 40)),
       history: [
-        { at: iso(days(now, -16)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(pastOpenDay(now, -1), 9, 6)), kind: 'checkIn', label: 'Eingecheckt' },
+        { at: iso(days(now, -16)), kind: 'created', label: 'Booked' },
+        { at: iso(at(pastOpenDay(now, -1), 9, 6)), kind: 'checkIn', label: 'Checked in' },
         {
           at: iso(at(pastOpenDay(now, -1), 15, 40)),
           kind: 'checkOut',
           /* §5.3 — reported by the person on site, priced by the office. This
              is the sentence the approval button is asking about. */
-          label: 'Ausgecheckt · +1.5 Std. gemeldet · Garage war zusätzlich abgemacht',
+          label: 'Checked out · +1.5 h reported · garage was agreed on top',
         },
       ],
     },
@@ -680,11 +677,11 @@ function baseData(now: Date): DataSet {
       status: 'noAccess',
       photoIds: [],
       history: [
-        { at: iso(days(now, -12)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -12)), kind: 'created', label: 'Booked' },
         {
           at: iso(at(pastOpenDay(now, -4), 10, 22)),
           kind: 'noAccess',
-          label: 'Kein Zutritt — 20 Min. gewartet, 50% verrechnet',
+          label: 'No access — waited 20 min, 50% charged',
         },
       ],
     },
@@ -703,9 +700,9 @@ function baseData(now: Date): DataSet {
       checkInAt: iso(at(pastOpenDay(now, -8), 9, 2)),
       checkOutAt: iso(at(pastOpenDay(now, -8), 12, 10)),
       history: [
-        { at: iso(days(now, -19)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(pastOpenDay(now, -8), 12, 10)), kind: 'checkOut', label: 'Ausgecheckt' },
-        { at: iso(days(now, -7)), kind: 'approved', label: 'Freigegeben' },
+        { at: iso(days(now, -19)), kind: 'created', label: 'Booked' },
+        { at: iso(at(pastOpenDay(now, -8), 12, 10)), kind: 'checkOut', label: 'Checked out' },
+        { at: iso(days(now, -7)), kind: 'approved', label: 'Approved' },
       ],
     },
     {
@@ -729,9 +726,9 @@ function baseData(now: Date): DataSet {
       status: 'closed',
       photoIds: [],
       history: [
-        { at: iso(days(now, -27)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(pastOpenDay(now, -13), 14)), kind: 'checkOut', label: 'Ausgecheckt' },
-        { at: iso(days(now, -12)), kind: 'closed', label: 'Abgeschlossen und bezahlt' },
+        { at: iso(days(now, -27)), kind: 'created', label: 'Booked' },
+        { at: iso(at(pastOpenDay(now, -13), 14)), kind: 'checkOut', label: 'Checked out' },
+        { at: iso(days(now, -12)), kind: 'closed', label: 'Closed and paid' },
       ],
     },
   ];
@@ -750,9 +747,9 @@ function baseData(now: Date): DataSet {
       invoiceId: 'inv_plan_1',
       renewalCount: 0,
       history: [
-        { at: iso(days(now, -60)), kind: 'started', label: 'Abo gestartet — Premium' },
-        { at: iso(days(now, -60)), kind: 'paid', label: 'Bezahlt — RE-0060' },
-        { at: iso(days(now, -18)), kind: 'skipped', label: 'Einsatz ausgesetzt' },
+        { at: iso(days(now, -60)), kind: 'started', label: 'Plan started — Premium' },
+        { at: iso(days(now, -60)), kind: 'paid', label: 'Paid — RE-0060' },
+        { at: iso(days(now, -18)), kind: 'skipped', label: 'Visit skipped' },
       ],
     },
     {
@@ -760,10 +757,10 @@ function baseData(now: Date): DataSet {
        * The demo account's own plan.
        *
        * `initialDemo` has always claimed cus_2 is "the only seeded customer
-       * with a request, a subscription, an invoice and an hour credit at
-       * once", and the subscription was the one part that was not true — the
-       * only seeded plan belonged to cus_1. So the plan screen every reviewer
-       * opens first showed its empty state.
+       * with a request, a subscription and an invoice at once", and the
+       * subscription was the one part that was not true — the only seeded plan
+       * belonged to cus_1. So the plan screen every reviewer opens first showed
+       * its empty state.
        */
       id: 'sub_2',
       reference: 'S-0013',
@@ -779,10 +776,10 @@ function baseData(now: Date): DataSet {
          reads, and it is why the term runs past the first year's end. */
       renewalCount: 1,
       history: [
-        { at: iso(days(now, -400)), kind: 'started', label: 'Abo gestartet — Basic' },
-        { at: iso(days(now, -400)), kind: 'paid', label: 'Bezahlt — RE-0058' },
-        { at: iso(days(now, -35)), kind: 'renewed', label: 'Verlängert um 12 Monate' },
-        { at: iso(days(now, -35)), kind: 'paid', label: 'Bezahlt — RE-0059' },
+        { at: iso(days(now, -400)), kind: 'started', label: 'Plan started — Basic' },
+        { at: iso(days(now, -400)), kind: 'paid', label: 'Paid — RE-0058' },
+        { at: iso(days(now, -35)), kind: 'renewed', label: 'Renewed for 12 months' },
+        { at: iso(days(now, -35)), kind: 'paid', label: 'Paid — RE-0059' },
       ],
     },
     {
@@ -801,8 +798,8 @@ function baseData(now: Date): DataSet {
       invoiceId: 'inv_plan_3',
       renewalCount: 0,
       history: [
-        { at: iso(days(now, -90)), kind: 'started', label: 'Abo gestartet — Büro Kompakt' },
-        { at: iso(days(now, -90)), kind: 'paid', label: 'Bezahlt — RE-0061' },
+        { at: iso(days(now, -90)), kind: 'started', label: 'Plan started — Office Compact' },
+        { at: iso(days(now, -90)), kind: 'paid', label: 'Paid — RE-0061' },
       ],
     },
     /*
@@ -831,10 +828,10 @@ function baseData(now: Date): DataSet {
       status: 'active',
       visitsUsed: 22,
       renewalCount: 0,
-      internalNotes: 'Läuft nächste Woche aus. Vor dem Ende anrufen, nicht danach.',
+      internalNotes: 'Runs out next week. Call before it ends, not after.',
       history: [
-        { at: iso(days(now, -359)), kind: 'started', label: 'Abo gestartet — Premium' },
-        { at: iso(days(now, -359)), kind: 'paid', label: 'Bezahlt — RE-0051' },
+        { at: iso(days(now, -359)), kind: 'started', label: 'Plan started — Premium' },
+        { at: iso(days(now, -359)), kind: 'paid', label: 'Paid — RE-0051' },
       ],
     },
     {
@@ -849,9 +846,9 @@ function baseData(now: Date): DataSet {
       visitsUsed: 9,
       renewalCount: 1,
       history: [
-        { at: iso(days(now, -711)), kind: 'started', label: 'Abo gestartet — Basic' },
-        { at: iso(days(now, -346)), kind: 'renewed', label: 'Verlängert um 12 Monate' },
-        { at: iso(days(now, -346)), kind: 'paid', label: 'Bezahlt — RE-0052' },
+        { at: iso(days(now, -711)), kind: 'started', label: 'Plan started — Basic' },
+        { at: iso(days(now, -346)), kind: 'renewed', label: 'Renewed for 12 months' },
+        { at: iso(days(now, -346)), kind: 'paid', label: 'Paid — RE-0052' },
       ],
     },
   ];
@@ -864,7 +861,7 @@ function baseData(now: Date): DataSet {
       kind: 'context',
       visibleToCustomer: true,
       publishConsent: false,
-      note: 'Backofen — hier ist einiges eingebrannt.',
+      note: 'Oven — a lot of this is burnt on.',
       requestId: 'req_1',
       takenAt: iso(days(now, -1)),
     },
@@ -875,7 +872,7 @@ function baseData(now: Date): DataSet {
       kind: 'context',
       visibleToCustomer: true,
       publishConsent: false,
-      note: 'Bad, Fugen.',
+      note: 'Bathroom, grouting.',
       requestId: 'req_1',
       takenAt: iso(days(now, -1)),
     },
@@ -914,7 +911,7 @@ function baseData(now: Date): DataSet {
          */
         ['bkg_3', '/img/service-3.webp', 'Fensterreinigung, Wohnung Meilen', -6],
         ['bkg_9', '/img/service-1.webp', 'Fensterreinigung, Wohnzimmer', -8],
-        ['bkg_10', '/img/service-2.webp', 'Büroreinigung, Empfang und Küche', -13],
+        ['bkg_10', '/img/service-2.webp', 'Office cleaning, reception and kitchen', -13],
       ] as const
     ).flatMap(([bookingId, src, note, daysAgo]) =>
       (['before', 'after'] as const).map((kind) => ({
@@ -969,7 +966,7 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_1',
       receivedAt: iso(days(now, -58)),
       receivedBy: 'Marco Brunner',
-      storageLocation: 'Schlüsselschrank Büro, Fach 3',
+      storageLocation: 'Office key cabinet, slot 3',
       status: 'held',
     },
     {
@@ -977,7 +974,7 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_1',
       receivedAt: iso(days(now, -58)),
       receivedBy: 'Marco Brunner',
-      storageLocation: 'Zweitschlüssel — Tresor, Fach 1',
+      storageLocation: 'Spare key — safe, slot 1',
       status: 'held',
     },
     /* The closed record, carrying the return in full — who handed it over, who
@@ -989,11 +986,11 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_1',
       receivedAt: iso(days(now, -120)),
       receivedBy: 'Anna Suter',
-      storageLocation: 'Kellerschlüssel — Schlüsselschrank Büro, Fach 3',
+      storageLocation: 'Cellar key — office key cabinet, slot 3',
       returnedAt: iso(days(now, -74)),
       returnedBy: 'Anna Suter',
       returnedTo: 'Andrea Keller',
-      returnNote: 'Keller wird nicht mehr gereinigt — Haupt- und Zweitschlüssel bleiben bei uns.',
+      returnNote: 'The cellar is no longer cleaned — we keep the main key and the spare.',
       status: 'returned',
     },
     /* A commercial address, held on an open contract. The office key is the
@@ -1005,7 +1002,7 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_2b',
       receivedAt: iso(days(now, -35)),
       receivedBy: 'Marco Brunner',
-      storageLocation: 'Schlüsselschrank Büro, Fach 7',
+      storageLocation: 'Office key cabinet, slot 7',
       status: 'held',
     },
     /* Closed because the contract ended, which is the ordinary way a key goes
@@ -1018,11 +1015,11 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_4',
       receivedAt: iso(days(now, -210)),
       receivedBy: 'Marco Brunner',
-      storageLocation: 'Schlüsselschrank Büro, Fach 9',
+      storageLocation: 'Office key cabinet, slot 9',
       returnedAt: iso(days(now, -12)),
       returnedBy: 'Anna Suter',
       returnedTo: 'James Whitfield',
-      returnNote: 'Vertrag zum Monatsende beendet, Schlüssel an der Rezeption übergeben.',
+      returnNote: 'Contract ended at the end of the month, key handed over at reception.',
       status: 'returned',
     },
   ];
@@ -1033,7 +1030,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0051',
       customerId: 'cus_1',
       bookingId: 'bkg_1',
-      lines: [{ label: 'Unterhaltsreinigung', quantity: 5, unitPrice: 49 }],
+      lines: [{ label: 'Regular cleaning', quantity: 5, unitPrice: 49 }],
       // §10 — generated automatically after the job, then waits for approval.
       status: 'draft',
       createdAt: iso(days(now, -1)),
@@ -1046,7 +1043,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0048',
       customerId: 'cus_2',
       bookingId: 'bkg_2',
-      lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
+      lines: [{ label: 'One-off cleaning', quantity: 3, unitPrice: 49 }],
       status: 'paid',
       createdAt: iso(days(now, -27)),
       issuedAt: iso(days(now, -26)),
@@ -1059,7 +1056,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0049',
       customerId: 'cus_2',
       bookingId: 'bkg_3',
-      lines: [{ label: 'Fensterreinigung', quantity: 2, unitPrice: 49 }],
+      lines: [{ label: 'Window cleaning', quantity: 2, unitPrice: 49 }],
       status: 'sent',
       createdAt: iso(days(now, -6)),
       issuedAt: iso(days(now, -5)),
@@ -1076,7 +1073,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0050',
       customerId: 'cus_m8',
       bookingId: 'bkg_8',
-      lines: [{ label: 'Einmalreinigung — kein Zutritt (50%)', quantity: 1.5, unitPrice: 49 }],
+      lines: [{ label: 'One-off cleaning — no access (50%)', quantity: 1.5, unitPrice: 49 }],
       status: 'sent',
       createdAt: iso(days(now, -12)),
       issuedAt: iso(days(now, -11)),
@@ -1091,7 +1088,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0047',
       customerId: 'cus_m7',
       bookingId: 'bkg_10',
-      lines: [{ label: 'Büroreinigung', quantity: 6, unitPrice: 55 }],
+      lines: [{ label: 'Office cleaning', quantity: 6, unitPrice: 55 }],
       status: 'paid',
       createdAt: iso(days(now, -14)),
       issuedAt: iso(days(now, -13)),
@@ -1113,7 +1110,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2025-0058',
       customerId: 'cus_2',
       subscriptionId: 'sub_2',
-      lines: [{ label: 'Abo Basic — 26 Einsätze, 12 Monate', quantity: 1, unitPrice: 3440 }],
+      lines: [{ label: 'Basic plan — 26 visits, 12 months', quantity: 1, unitPrice: 3440 }],
       status: 'paid',
       createdAt: iso(days(now, -400)),
       issuedAt: iso(days(now, -400)),
@@ -1126,7 +1123,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0059',
       customerId: 'cus_2',
       subscriptionId: 'sub_2',
-      lines: [{ label: 'Abo Basic — Verlängerung 12 Monate', quantity: 1, unitPrice: 3440 }],
+      lines: [{ label: 'Basic plan — renewal, 12 months', quantity: 1, unitPrice: 3440 }],
       status: 'paid',
       createdAt: iso(days(now, -35)),
       issuedAt: iso(days(now, -35)),
@@ -1139,7 +1136,7 @@ function baseData(now: Date): DataSet {
       reference: 'RE-2026-0060',
       customerId: 'cus_1',
       subscriptionId: 'sub_1',
-      lines: [{ label: 'Abo Premium — 52 Einsätze, 12 Monate', quantity: 1, unitPrice: 6500 }],
+      lines: [{ label: 'Premium plan — 52 visits, 12 months', quantity: 1, unitPrice: 6500 }],
       status: 'paid',
       createdAt: iso(days(now, -60)),
       issuedAt: iso(days(now, -60)),
@@ -1153,7 +1150,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subscriptionId: 'sub_3',
       lines: [
-        { label: 'Abo Büro Kompakt — 12 Einsätze, 12 Monate', quantity: 1, unitPrice: 1980 },
+        { label: 'Office Compact plan — 12 visits, 12 months', quantity: 1, unitPrice: 1980 },
       ],
       status: 'paid',
       createdAt: iso(days(now, -90)),
@@ -1171,7 +1168,7 @@ function baseData(now: Date): DataSet {
       actor: 'Marco Brunner',
       entity: 'Einstellungen',
       entityId: 'settings',
-      summary: 'Samstagszuschlag von 20% auf 25% erhöht',
+      summary: 'Saturday surcharge raised from 20% to 25%',
     },
     {
       id: 'chg_2',
@@ -1179,37 +1176,7 @@ function baseData(now: Date): DataSet {
       actor: 'Marco Brunner',
       entity: 'Leistung',
       entityId: 'svc_grund',
-      summary: 'Grundreinigung: Mindestdauer auf 3 Stunden gesetzt',
-    },
-  ];
-
-  // §11.3 — hours bought as a package, spent against bookings. The expiry is
-  // the part customers get caught by, so the seed puts one close to it.
-  const credits: PackageCredit[] = [
-    {
-      id: 'cr_1',
-      customerId: 'cus_2',
-      propertyId: 'prp_2',
-      /*
-       * 2.5, not 6.5.
-       *
-       * The quote list now derives "covered by a package" from the hours left
-       * against the hours quoted, and at 6.5 this credit silently covered
-       * `off_1` — the 4.5-hour Grundreinigung the whole walkthrough runs on.
-       * Screens 27 and 31 hang off that quote's payment step, and a covered
-       * quote has no payment step, so both went unreachable. The lower balance
-       * is also the more useful story: hours that no longer stretch to a deep
-       * clean are what the near-expiry warning on screen 43 is for.
-       */
-      hoursRemaining: 2.5,
-      purchasedAt: iso(days(now, -300)),
-      expiresAt: iso(days(now, 65)),
-      ledger: [
-        { at: iso(days(now, -300)), hours: 10, reason: 'Paket 10 Stunden gekauft' },
-        { at: iso(days(now, -120)), hours: -2, reason: 'Einsatz', bookingId: 'bkg_2' },
-        { at: iso(days(now, -40)), hours: -1.5, reason: 'Einsatz', bookingId: 'bkg_2' },
-        { at: iso(days(now, -12)), hours: -4, reason: 'Einsatz', bookingId: 'bkg_2' },
-      ],
+      summary: 'Deep cleaning: minimum duration set to 3 hours',
     },
   ];
 
@@ -1223,9 +1190,13 @@ function baseData(now: Date): DataSet {
    * them could look wrong on screen no matter how wrong they were.
    *
    * What these stage: a first message nobody has answered, a thread that ran
-   * to six turns, French and English alongside German, and subjects that are
-   * not all A-… — a job, a quote and an invoice each start conversations of
-   * their own, and the customer never restates which one they mean.
+   * to six turns, French alongside English, and subjects that are not all
+   * A-… — a job, a quote and an invoice each start conversations of their own,
+   * and the customer never restates which one they mean.
+   *
+   * The French thread stays French on purpose. A customer writes in their own
+   * language whatever the office runs in, and cus_3 is seeded `fr` — a seed
+   * where every thread is in one language cannot show that the screen copes.
    *
    * Every subject below is a reference that exists elsewhere in this seed. A
    * thread hanging off a reference no screen can open reads fine in the list
@@ -1239,7 +1210,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: requests[2]!.reference,
       from: 'homivaro',
-      body: 'Guten Tag Herr Widmer, vielen Dank für Ihre Anfrage. Die Offerte finden Sie in Ihrem Konto. Bei Fragen erreichen Sie mich direkt.',
+      body: 'Good afternoon Mr Widmer, thank you for your enquiry. You will find the quote in your account. If anything is unclear, write to me directly.',
       at: iso(days(now, -3)),
       readByCustomer: true,
       readByAdmin: true,
@@ -1249,7 +1220,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: requests[2]!.reference,
       from: 'customer',
-      body: 'Danke — passt der Termin auch eine Stunde später?',
+      body: 'Thanks — does an hour later work for the appointment as well?',
       at: iso(days(now, -2)),
       readByCustomer: true,
       readByAdmin: true,
@@ -1259,7 +1230,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: requests[2]!.reference,
       from: 'homivaro',
-      body: 'Ja, das geht. Ich habe den Termin auf 09:00 verschoben und die Bestätigung angepasst.',
+      body: 'Yes, that works. I have moved the appointment to 09:00 and updated the confirmation.',
       at: iso(days(now, -2)),
       readByCustomer: false,
       readByAdmin: true,
@@ -1278,7 +1249,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: 'B-1044',
       from: 'homivaro',
-      body: 'Guten Tag Herr Widmer\n\nwir mussten Ihren Einsatz verschieben — statt heute um 08:30 kommen wir neu morgen um 08:30. Ein Kollege ist ausgefallen.\n\nPasst Ihnen der neue Termin nicht, antworten Sie einfach hier.\n\nFreundliche Grüsse\nHomivaro',
+      body: 'Good morning Mr Widmer\n\nwe have had to move your job — instead of today at 08:30 we will now come tomorrow at 08:30. A colleague is off sick.\n\nIf the new time does not suit you, just reply here.\n\nKind regards\nHomivaro',
       at: iso(days(now, -1)),
       readByCustomer: false,
       readByAdmin: true,
@@ -1292,7 +1263,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: 'RE-2026-0048',
       from: 'customer',
-      body: 'Können Sie mir diese Rechnung nochmals schicken? Ich finde sie in meinen Mails nicht mehr.',
+      body: 'Could you send me this invoice again? I cannot find it in my mail any more.',
       at: hoursAgo(196),
       readByCustomer: true,
       readByAdmin: true,
@@ -1302,7 +1273,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       subject: 'RE-2026-0048',
       from: 'homivaro',
-      body: 'Gerne. Sie liegt auch in Ihrem Konto unter «Rechnungen» — dort können Sie sie jederzeit als PDF herunterladen.',
+      body: 'Of course. It is also in your account under «Invoices» — you can download it as a PDF there at any time.',
       at: hoursAgo(194),
       readByCustomer: true,
       readByAdmin: true,
@@ -1334,7 +1305,7 @@ function baseData(now: Date): DataSet {
       readByCustomer: true,
       readByAdmin: true,
       attachments: [
-        { id: 'att_off_2481', name: 'Offerte-A-2481.pdf', kind: 'document', size: 214_000 },
+        { id: 'att_off_2481', name: 'Quote-A-2481.pdf', kind: 'document', size: 214_000 },
       ],
     },
     {
@@ -1356,7 +1327,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'customer',
-      body: 'Guten Tag, ich habe den Code am Schlüsselkasten geändert. Nala ist wie immer zuhause.',
+      body: 'Hello, I have changed the code on the key safe. Nala is at home as always.',
       at: hoursAgo(148),
       readByCustomer: true,
       readByAdmin: true,
@@ -1366,7 +1337,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'homivaro',
-      body: 'Danke für den Hinweis — den Code bitte nicht hier, sondern im Konto unter «Objekt» eintragen. Dort steht er maskiert und nur das Team sieht ihn.',
+      body: 'Thanks for letting us know — please do not put the code here, but in your account under «Property». It is masked there and only the team sees it.',
       at: hoursAgo(146),
       readByCustomer: true,
       readByAdmin: true,
@@ -1376,7 +1347,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'customer',
-      body: 'Erledigt. Und noch etwas: Können Sie beim nächsten Mal die Fenster im Wintergarten mitmachen?',
+      body: 'Done. And one more thing: could you do the conservatory windows next time?',
       at: hoursAgo(101),
       readByCustomer: true,
       readByAdmin: true,
@@ -1386,7 +1357,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'homivaro',
-      body: 'Fensterreinigung ist im Abo nicht enthalten, die müsste ich separat offerieren. Soll ich?',
+      body: 'Window cleaning is not included in the plan, I would have to quote for it separately. Shall I?',
       at: hoursAgo(99),
       readByCustomer: true,
       readByAdmin: true,
@@ -1399,7 +1370,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'customer',
-      body: 'Ja, bitte — aber erst im Frühling.',
+      body: 'Yes please — but not until spring.',
       at: hoursAgo(74),
       readByCustomer: true,
       readByAdmin: true,
@@ -1409,7 +1380,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_1',
       subject: 'B-1043',
       from: 'homivaro',
-      body: 'Notiert, ich melde mich im März dazu. Der Abo-Termin bleibt wie geplant.',
+      body: 'Noted, I will come back to you in March. The plan visit stays as scheduled.',
       at: hoursAgo(72),
       readByCustomer: true,
       readByAdmin: true,
@@ -1424,7 +1395,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m5',
       subject: 'O-2494-1',
       from: 'homivaro',
-      body: 'Guten Tag Frau Meier\n\ndie Offerte für die Umzugsreinigung ist unterwegs. Sobald die Zahlung durch ist, halten wir den Termin fest.\n\nFreundliche Grüsse\nMarco Brunner',
+      body: 'Good morning Ms Meier\n\nthe quote for the move-out clean is on its way. As soon as the payment goes through we will hold the date.\n\nKind regards\nMarco Brunner',
       at: iso(days(now, -3)),
       readByCustomer: true,
       readByAdmin: true,
@@ -1434,7 +1405,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m5',
       subject: 'O-2494-1',
       from: 'customer',
-      body: 'Die Karte wurde zweimal abgelehnt, die Bank sagt es liege nicht an ihr. Geht auch eine Rechnung?',
+      body: 'The card was declined twice and the bank says it is not their end. Would an invoice work instead?',
       at: hoursAgo(20),
       readByCustomer: true,
       readByAdmin: true,
@@ -1450,7 +1421,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m2',
       subject: 'A-2495',
       from: 'homivaro',
-      body: 'Guten Tag Herr Schoch, Ihre Anpassung ist angekommen. Ich rechne die Fenster raus und schicke die neue Offerte.',
+      body: 'Good morning Mr Schoch, your change has come through. I will take the windows out and send the new quote.',
       at: iso(days(now, -4)),
       readByCustomer: true,
       readByAdmin: true,
@@ -1460,7 +1431,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m2',
       subject: 'A-2495',
       from: 'customer',
-      body: 'Gibt es dazu schon etwas Neues? Ich muss der Verwaltung bis Freitag zusagen.',
+      body: 'Is there any news on this yet? I have to confirm with the management by Friday.',
       at: hoursAgo(30),
       readByCustomer: true,
       readByAdmin: false,
@@ -1473,7 +1444,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m7',
       subject: 'A-2502',
       from: 'customer',
-      body: 'Bei uns ist ab 18:00 niemand mehr im Haus. Geht die Reinigung auch nach Feierabend?',
+      body: 'There is nobody in the building after 18:00. Can the cleaning be done after hours?',
       at: hoursAgo(70),
       readByCustomer: true,
       readByAdmin: true,
@@ -1483,7 +1454,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_m7',
       subject: 'A-2502',
       from: 'homivaro',
-      body: 'Ja, Büros reinigen wir regelmässig abends. Die Terminvorschläge habe ich entsprechend gesetzt.',
+      body: 'Yes, we clean offices in the evening regularly. I have set the proposed times accordingly.',
       at: hoursAgo(68),
       readByCustomer: true,
       readByAdmin: true,
@@ -1528,17 +1499,17 @@ function baseData(now: Date): DataSet {
    * reaches this — its empty list is the deliverable.
    */
   const queue: ServiceRequest[] = [
-    queueRequest(now, { id: 'req_q_draft', ref: 'A-2490', n: 3, service: 'einmalreinigung', status: 'draft', agedHours: 30, note: undefined, internal: 'Angerufen, Fläche noch unklar. Rückruf abgemacht.' }),
+    queueRequest(now, { id: 'req_q_draft', ref: 'A-2490', n: 3, service: 'einmalreinigung', status: 'draft', agedHours: 30, note: undefined, internal: 'Called, floor area still unclear. Call back agreed.' }),
     queueRequest(now, { id: 'req_q_new1', ref: 'A-2491', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 5, intent: 'pln_basic' }),
     queueRequest(now, { id: 'req_q_new2', ref: 'A-2492', n: 8, service: 'fensterreinigung', status: 'new', agedHours: 20, preferredInDays: 9 }),
     /* One day past the promise — the row the red deadline state exists for. */
     queueRequest(now, { id: 'req_q_late', ref: 'A-2493', n: 6, service: 'grundreinigung', status: 'inReview', agedHours: 52 }),
     queueRequest(now, { id: 'req_q_offer', ref: 'A-2494', n: 5, service: 'umzugsreinigung', status: 'offerSent', agedDays: 3, preferredInDays: 12 }),
-    queueRequest(now, { id: 'req_q_revision', ref: 'A-2495', n: 2, service: 'grundreinigung', status: 'revisionRequested', agedDays: 5, note: 'Können Sie die Fenster rausrechnen?' }),
+    queueRequest(now, { id: 'req_q_revision', ref: 'A-2495', n: 2, service: 'grundreinigung', status: 'revisionRequested', agedDays: 5, note: 'Could you take the windows out of the price?' }),
     queueRequest(now, { id: 'req_q_accepted', ref: 'A-2496', n: 9, service: 'einmalreinigung', status: 'accepted', agedDays: 12 }),
-    queueRequest(now, { id: 'req_q_rejected', ref: 'A-2497', n: 12, service: 'einmalreinigung', status: 'rejected', agedDays: 8, internal: 'Abgelehnt: Termin nur am Sonntag möglich, das geht bei uns nicht.' }),
+    queueRequest(now, { id: 'req_q_rejected', ref: 'A-2497', n: 12, service: 'einmalreinigung', status: 'rejected', agedDays: 8, internal: 'Declined: a Sunday was the only date possible, and we do not work Sundays.' }),
     queueRequest(now, { id: 'req_q_expired', ref: 'A-2498', n: 10, service: 'fensterreinigung', status: 'expired', agedDays: 38 }),
-    queueRequest(now, { id: 'req_q_cancel', ref: 'A-2499', n: 4, service: 'bueroreinigung', status: 'cancelledByCustomer', agedDays: 6, internal: 'Zurückgezogen: intern gelöst.' }),
+    queueRequest(now, { id: 'req_q_cancel', ref: 'A-2499', n: 4, service: 'bueroreinigung', status: 'cancelledByCustomer', agedDays: 6, internal: 'Withdrawn: solved internally.' }),
   ];
 
   /*
@@ -1557,10 +1528,10 @@ function baseData(now: Date): DataSet {
    * three names repeating.
    */
   const quoteRequests: ServiceRequest[] = [
-    queueRequest(now, { id: 'req_q_propose', ref: 'A-2501', n: 8, service: 'fensterreinigung', status: 'offerSent', agedDays: 2, note: 'Erstauftrag — Storenkasten bitte mitnehmen.' }),
+    queueRequest(now, { id: 'req_q_propose', ref: 'A-2501', n: 8, service: 'fensterreinigung', status: 'offerSent', agedDays: 2, note: 'First job — please do the blind boxes too.' }),
     queueRequest(now, { id: 'req_q_confirm', ref: 'A-2502', n: 7, service: 'bueroreinigung', status: 'offerSent', agedDays: 4 }),
     queueRequest(now, { id: 'req_q_recurring', ref: 'A-2503', n: 6, service: 'unterhaltsreinigung', status: 'offerSent', agedDays: 3, intent: 'pln_premium' }),
-    queueRequest(now, { id: 'req_q_refund', ref: 'A-2504', n: 11, service: 'bueroreinigung', status: 'accepted', agedDays: 16, internal: 'Termin abgesagt, Betrag zurückerstattet.' }),
+    queueRequest(now, { id: 'req_q_refund', ref: 'A-2504', n: 11, service: 'bueroreinigung', status: 'accepted', agedDays: 16, internal: 'Appointment cancelled, amount refunded.' }),
     /* cus_2 rather than a household: the package that covers it is theirs. */
     {
       id: 'req_q_pkg',
@@ -1572,7 +1543,7 @@ function baseData(now: Date): DataSet {
       windowCount: 8,
       preferred: { flexible: true },
       photoIds: [],
-      customerNote: 'Die Fenster zur Seeseite, wenn möglich vor dem Wochenende.',
+      customerNote: 'The windows on the lake side, before the weekend if possible.',
       status: 'offerSent',
       createdAt: iso(days(now, -2)),
       openedAt: iso(days(now, -2)),
@@ -1596,7 +1567,7 @@ function baseData(now: Date): DataSet {
       addOnIds: [],
       preferred: { flexible: true },
       photoIds: [],
-      customerNote: 'Diesmal bitte auch den Keller, wenn es die Zeit hergibt.',
+      customerNote: 'The cellar as well this time, if there is time for it.',
       status: 'offerSent',
       createdAt: iso(days(now, -1)),
       openedAt: iso(days(now, -1)),
@@ -1686,7 +1657,7 @@ function baseData(now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'scheduled',
       photoIds: [],
-      history: [{ at: iso(days(now, -10)), kind: 'created', label: 'Gebucht und bezahlt' }],
+      history: [{ at: iso(days(now, -10)), kind: 'created', label: 'Booked and paid' }],
     },
     {
       id: 'bkg_off_refund',
@@ -1702,9 +1673,9 @@ function baseData(now: Date): DataSet {
       status: 'cancelled',
       photoIds: [],
       history: [
-        { at: iso(days(now, -14)), kind: 'created', label: 'Gebucht und bezahlt' },
-        { at: iso(days(now, -4)), kind: 'cancelled', label: 'Vom Kunden abgesagt' },
-        { at: iso(days(now, -4)), kind: 'refunded', label: 'Betrag vollständig zurückerstattet' },
+        { at: iso(days(now, -14)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(days(now, -4)), kind: 'cancelled', label: 'Cancelled by the customer' },
+        { at: iso(days(now, -4)), kind: 'refunded', label: 'Full amount refunded' },
       ],
     },
   ];
@@ -1853,23 +1824,23 @@ function baseData(now: Date): DataSet {
       id: 'cev_today',
       ref: 'K-400',
       kind: 'contact-call',
-      title: 'Rückruf Erdgeschoss-Preis',
+      title: 'Call back about the ground-floor price',
       inDays: 0,
       hour: 11,
       customerId: 'cus_m3',
-      note: 'Wollte den Preis fürs Erdgeschoss. Fläche war am Telefon noch unklar.',
+      note: 'Wanted the price for the ground floor. Floor area was still unclear on the phone.',
       createdDaysAgo: 1,
     }),
     calendarEvent(now, {
       id: 'cev_draft',
       ref: 'K-401',
       kind: 'follow-up',
-      title: 'Fläche nachfragen — Entwurf A-2490',
+      title: 'Ask for the floor area — draft A-2490',
       inDays: 1,
       hour: 9,
       duration: 15,
       customerId: 'cus_m3',
-      note: 'Entwurf liegt in der Warteschlange, es fehlt nur die Fläche.',
+      note: 'The draft is in the queue, only the floor area is missing.',
     }),
     /* A first job is worth looking at before it is priced. The only kind that
        blocks a slot — see `occupiesSlot`. */
@@ -1877,13 +1848,13 @@ function baseData(now: Date): DataSet {
       id: 'cev_viewing',
       ref: 'K-402',
       kind: 'viewing',
-      title: 'Besichtigung vor Offerte',
+      title: 'Viewing before the quote',
       inDays: 2,
       hour: 16,
       duration: 45,
       customerId: 'cus_m8',
       propertyId: 'prp_m8',
-      note: 'Storenkasten anschauen, bevor die Offerte rausgeht.',
+      note: 'Look at the blind boxes before the quote goes out.',
     }),
     /* The deal path, already walked. Without one seeded record carrying it,
        `inProgress` would be a state only reachable by doing the whole flow. */
@@ -1891,12 +1862,12 @@ function baseData(now: Date): DataSet {
       id: 'cev_converted',
       ref: 'K-403',
       kind: 'contact-call',
-      title: 'Anruf Umzugsreinigung',
+      title: 'Call about a move-out clean',
       inDays: -3,
       hour: 10,
       status: 'inProgress',
       customerId: 'cus_m5',
-      outcome: 'Umzug per Ende Monat, Wohnung 4.5 Zimmer. Offerte zugesagt.',
+      outcome: 'Moving out at the end of the month, 4.5-room flat. Quote promised.',
       requestId: 'req_q_offer',
       createdDaysAgo: 7,
     }),
@@ -1912,37 +1883,37 @@ function baseData(now: Date): DataSet {
       id: 'cev_done',
       ref: 'K-405',
       kind: 'contact-call',
-      title: 'Rückruf Grundreinigung Küche',
+      title: 'Call back about a kitchen deep clean',
       inDays: -2,
       hour: 15,
       status: 'done',
       customerId: 'cus_m6',
-      outcome: 'Alles besprochen, sie meldet sich nach den Ferien selbst.',
+      outcome: 'Everything discussed, she will get in touch herself after the holidays.',
       createdDaysAgo: 6,
     }),
     calendarEvent(now, {
       id: 'cev_cancelled',
       ref: 'K-406',
       kind: 'viewing',
-      title: 'Besichtigung Attikawohnung',
+      title: 'Viewing, penthouse flat',
       inDays: -5,
       hour: 10,
       duration: 45,
       status: 'cancelled',
       customerId: 'cus_m11',
-      note: 'Kurzfristig abgesagt — Wohnung ist doch noch nicht leer.',
+      note: 'Cancelled at short notice — the flat is not empty yet after all.',
       createdDaysAgo: 12,
     }),
     calendarEvent(now, {
       id: 'cev_noreply',
       ref: 'K-404',
       kind: 'follow-up',
-      title: 'Offerte A-2494 nachfassen',
+      title: 'Follow up quote A-2494',
       inDays: -1,
       hour: 14,
       status: 'pending',
       customerId: 'cus_m5',
-      note: 'Zweiter Versuch. Danach schriftlich.',
+      note: 'Second attempt. In writing after that.',
     }),
   ];
 
@@ -2018,7 +1989,6 @@ function baseData(now: Date): DataSet {
       },
     ],
     keyLog,
-    credits,
     messages,
     changeLog,
     photos,
@@ -2056,7 +2026,7 @@ function makeOffer(
     version: 1,
     lines,
     message:
-      'Guten Tag\n\nvielen Dank für Ihre Anfrage. Nachfolgend finden Sie unsere Offerte, Position für Position aufgeschlüsselt. Der Betrag ist verbindlich; Zuschläge und Anfahrt sind – falls zutreffend – separat ausgewiesen.\n\nWählen Sie einen freien Termin, und wir bestätigen ihn sofort.\n\nFreundliche Grüsse\nMarco Brunner',
+      'Hello\n\nthank you for your enquiry. Our quote is below, broken down line by line. The amount is binding; surcharges and travel are shown separately where they apply.\n\nPick a free date and we will confirm it straight away.\n\nKind regards\nMarco Brunner',
     status: opts.status ?? 'sent',
     issuedAt: iso(issuedAt),
     expiresAt: iso(days(issuedAt, opts.validDays)),
@@ -2076,7 +2046,7 @@ function withClosure(data: DataSet, now: Date): DataSet {
         id: 'clo_1',
         start: iso(days(now, 2)),
         end: iso(days(now, 12)),
-        reason: 'Betriebsferien',
+        reason: 'Company holidays',
         recurringYearly: false,
       },
     ],
@@ -2260,7 +2230,7 @@ function withHiring(data: DataSet, now: Date): DataSet {
       submittedAt: iso(days(now, -9)),
       retainUntil: iso(days(now, 171)),
       consentGivenAt: iso(days(now, -9)),
-      internalNotes: 'Telefonat 12.: kann ab sofort, sucht 60–80%.',
+      internalNotes: 'Phone call on the 12th: can start straight away, looking for 60–80%.',
     },
     {
       // The one that closes the loop: accepted, converted, and now the
@@ -2284,7 +2254,7 @@ function withHiring(data: DataSet, now: Date): DataSet {
       availability: { days: [1, 2, 3, 4, 5], earliest: '07:00', latest: '17:00' },
       startFrom: iso(days(now, -40)),
       references: [
-        { name: 'Herr Bühler', company: 'Hauswartung Bühler', phone: '+41 79 000 00 15' },
+        { name: 'Mr Bühler', company: 'Bühler Building Services', phone: '+41 79 000 00 15' },
       ],
       documents: [
         { id: 'doc_3', name: 'Lebenslauf_Nowak.pdf', kind: 'cv', sizeKb: 310 },
@@ -2317,7 +2287,7 @@ function withHiring(data: DataSet, now: Date): DataSet {
       references: [],
       documents: [{ id: 'doc_5', name: 'CV_Bianchi.pdf', kind: 'cv', sizeKb: 205 }],
       motivation:
-        'Ich montiere seit vier Jahren nebenberuflich und suche regelmässige Einsätze in der Region.',
+        'I have been assembling furniture on the side for four years and am looking for regular work in the area.',
       status: 'new',
       submittedAt: iso(days(now, -1)),
       retainUntil: iso(days(now, 179)),
@@ -2370,7 +2340,7 @@ function withHiring(data: DataSet, now: Date): DataSet {
       availability: { days: [2, 3, 4], earliest: '08:30', latest: '15:00' },
       references: [],
       documents: [{ id: 'doc_6', name: 'Bewerbung_Item.pdf', kind: 'other', sizeKb: 96 }],
-      motivation: 'Ich suche einen Wiedereinstieg und arbeite gerne selbstständig.',
+      motivation: 'I am looking to return to work and like working independently.',
       status: 'rejected',
       rejectionReason: 'experience',
       submittedAt: iso(days(now, -34)),
@@ -2512,13 +2482,13 @@ const OFFER_FOR: Partial<Record<RequestStatus, Offer['status']>> = {
 
 /** Per-service notes, so seventy rows do not all read identically. */
 const SERVICE_NOTES: Record<ServiceSlug, string> = {
-  unterhaltsreinigung: 'Alle zwei Wochen wäre ideal, am liebsten vormittags.',
-  einmalreinigung: 'Einmal richtig durch, danach schauen wir weiter.',
-  grundreinigung: 'Ist lange nicht gemacht worden — Küche und Bad sind das Thema.',
-  umzugsreinigung: 'Übergabe steht an, die Verwaltung nimmt es genau.',
+  unterhaltsreinigung: 'Every two weeks would be ideal, mornings preferably.',
+  einmalreinigung: 'One proper clean through, then we will see.',
+  grundreinigung: 'It has not been done in a long time — the kitchen and the bathroom are the issue.',
+  umzugsreinigung: 'The handover is coming up and the management is exacting.',
   fensterreinigung: 'Sprossenfenster, teilweise schwer erreichbar.',
-  bueroreinigung: 'Nach Büroschluss, ab 18 Uhr. Rechnung an die Firma.',
-  moebelmontage: 'Neue Möbel geliefert, Aufbau fehlt noch.',
+  bueroreinigung: 'After office hours, from 18:00. Invoice to the company.',
+  moebelmontage: 'New furniture delivered, still needs assembling.',
 };
 
 /**
@@ -2596,7 +2566,7 @@ const extraProperties = (): Property[] =>
   EXTRA_PEOPLE.map((p) => ({
     id: `prp_m${p.n}`,
     customerId: `cus_m${p.n}`,
-    label: p.kind === 'office' ? 'Büro' : p.kind === 'house' ? 'Haus' : 'Wohnung',
+    label: p.kind === 'office' ? 'Office' : p.kind === 'house' ? 'House' : 'Flat',
     street: p.street,
     postcode: p.postcode,
     city: p.city,
@@ -2614,9 +2584,9 @@ const extraProperties = (): Property[] =>
       p.n % 4 === 1
         ? {
             method: 'key-box',
-            boxLocation: 'Neben der Haustür',
+            boxLocation: 'Next to the front door',
             boxCode: `${4000 + p.n * 7}`,
-            keyReturnLocation: 'Zurück in den Kasten',
+            keyReturnLocation: 'Back into the box',
           }
         : p.n % 4 === 2
           ? { method: 'customer-present', contactPhone: p.phone }
@@ -2713,7 +2683,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
          stays because invoices hang off it; only the status moves. */
       ...person('cus_7', 'Regula', 'Frei', 'de', now, 210, '+41 79 118 40 62'),
       status: 'inactive',
-      internalNotes: 'Konto vom Kunden geschlossen — weggezogen, kein Objekt mehr im Gebiet.',
+      internalNotes: 'Account closed by the customer — moved away, no property left in the area.',
     },
   ];
 
@@ -2722,7 +2692,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
     {
       id: 'prp_5',
       customerId: 'cus_5',
-      label: 'Reihenhaus',
+      label: 'Terraced house',
       street: 'Rebbergstrasse 7',
       postcode: '8634',
       city: 'Hombrechtikon',
@@ -2736,8 +2706,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       needsExtraEffort: false,
       access: {
         method: 'key-left',
-        keyLocation: 'Schlüsseltresor am Gartentor',
-        keyReturnLocation: 'Zurück in den Tresor',
+        keyLocation: 'Key safe at the garden gate',
+        keyReturnLocation: 'Back into the safe',
       },
     },
     {
@@ -2747,7 +2717,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
          give `req_s_rejected` an out-of-area reason. The area is refused at
          intake now, so a request against this address could not exist and the
          matrix would have been staging an impossible row. */
-      label: 'Wohnung Meilen',
+      label: 'Meilen flat',
       street: 'Dorfstrasse 24',
       postcode: '8706',
       city: 'Meilen',
@@ -2783,7 +2753,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: [],
       preferred: { flexible: false },
       photoIds: [],
-      internalNote: 'Angerufen Dienstag, wollte Preis für Erdgeschoss. Rückruf zugesagt.',
+      internalNote: 'Called on Tuesday, wanted a price for the ground floor. Call back promised.',
       /* No openedAt: a draft has not arrived, so no clock has started. The
          deadline column has to print "—" here, not a breach. */
       status: 'draft',
@@ -2812,7 +2782,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: ['add_backofen'],
       preferred: { flexible: true },
       photoIds: [],
-      customerNote: 'Wohnung war lange vermietet, ist ziemlich mitgenommen.',
+      customerNote: 'The flat was let for a long time and is fairly worn.',
       status: 'new',
       createdAt: hours(50), // one full day late
     },
@@ -2867,7 +2837,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: ['add_fenster'],
       preferred: { date: iso(days(now, 8)), band: 'afternoon', flexible: false },
       photoIds: [],
-      customerNote: 'Können Sie die Fenster rausrechnen? Der Rest passt.',
+      customerNote: 'Could you take the windows out of the price? The rest is fine.',
       status: 'revisionRequested',
       createdAt: iso(days(now, -5)),
       openedAt: iso(days(now, -5)),
@@ -2899,7 +2869,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: [],
       preferred: { flexible: true },
       photoIds: [],
-      internalNote: 'Abgelehnt: in dieser Woche keine Kapazität mehr frei.',
+      internalNote: 'Declined: no capacity left this week.',
       status: 'rejected',
       createdAt: iso(days(now, -9)),
       openedAt: iso(days(now, -9)),
@@ -2929,7 +2899,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: [],
       preferred: { flexible: true },
       photoIds: [],
-      internalNote: 'Zurückgezogen durch den Kunden: anders gelöst.',
+      internalNote: 'Withdrawn by the customer: solved another way.',
       status: 'cancelledByCustomer',
       createdAt: iso(days(now, -7)),
       openedAt: iso(days(now, -7)),
@@ -2944,7 +2914,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       addOnIds: [],
       preferred: { date: iso(days(now, 3)), band: 'morning', flexible: false },
       photoIds: [],
-      internalNote: 'Storniert durch uns: Objekt verkauft, Übergabe abgesagt.',
+      internalNote: 'Cancelled by us: property sold, handover called off.',
       status: 'cancelledByCompany',
       createdAt: iso(days(now, -10)),
       openedAt: iso(days(now, -10)),
@@ -3026,11 +2996,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         customerNote: status === 'draft' ? undefined : SERVICE_NOTES[slug],
         internalNote:
           status === 'draft'
-            ? 'Angerufen, Angaben noch unvollständig. Rückruf zugesagt.'
+            ? 'Called, the details are still incomplete. Call back promised.'
             : status === 'rejected'
-              ? 'Abgelehnt: passt nicht in die Route.'
+              ? 'Declined: does not fit the route.'
               : status === 'cancelledByCustomer'
-                ? 'Zurückgezogen durch den Kunden.'
+                ? 'Withdrawn by the customer.'
                 : status === 'cancelledByCompany'
                   ? 'Storniert durch uns.'
                   : undefined,
@@ -3111,13 +3081,13 @@ function withAllStates(data: DataSet, now: Date): DataSet {
           checkOutAt:
             future || bookingStatus === 'inProgress' ? undefined : iso(at(start, 13, 30)),
           history: [
-            { at: iso(days(now, -settledDays)), kind: 'created', label: 'Gebucht' },
+            { at: iso(days(now, -settledDays)), kind: 'created', label: 'Booked' },
             ...(bookingStatus === 'awaitingApproval'
               ? [
                   {
                     at: iso(at(start, 13, 30)),
                     kind: 'checkOut',
-                    label: 'Ausgecheckt · +1 Std. gemeldet',
+                    label: 'Checked out · +1 h reported',
                   },
                 ]
               : []),
@@ -3135,7 +3105,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
             reference: `RE-2026-01${String(si + 10).padStart(2, '0')}`,
             customerId: request.customerId,
             bookingId,
-            lines: [{ label: 'Reinigung', quantity: 3 + si, unitPrice: SEED_SETTINGS.hourlyRate }],
+            lines: [{ label: 'Cleaning', quantity: 3 + si, unitPrice: SEED_SETTINGS.hourlyRate }],
             status: bookingStatus === 'closed' ? 'paid' : 'sent',
             createdAt: iso(days(now, -(si + 2))),
             issuedAt: iso(days(now, -(si + 1))),
@@ -3201,7 +3171,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         reference: 'O-2607-1',
       }),
       revisionNote:
-        'Umfang: Können Sie die Fenster rausrechnen? Der Rest passt so, wir würden gerne diese Woche noch buchen.',
+        'Scope: could you take the windows out of the price? The rest is fine as it is, we would like to book this week.',
     },
     makeOffer('off_s_accepted', find('req_s_accepted'), prop('prp_1'), now, {
       issuedDaysAgo: 11,
@@ -3242,8 +3212,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       status: 'rescheduled',
       photoIds: [],
       history: [
-        { at: iso(days(now, -6)), kind: 'created', label: 'Gebucht' },
-        { at: iso(days(now, -1)), kind: 'rescheduled', label: 'Verschoben auf Wunsch des Kunden' },
+        { at: iso(days(now, -6)), kind: 'created', label: 'Booked' },
+        { at: iso(days(now, -1)), kind: 'rescheduled', label: 'Moved at his request' },
       ],
     },
     {
@@ -3260,8 +3230,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       checkInAt: iso(at(days(now, 0), 8, 5)),
       history: [
-        { at: iso(days(now, -5)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(days(now, 0), 8, 5)), kind: 'checkIn', label: 'Eingecheckt' },
+        { at: iso(days(now, -5)), kind: 'created', label: 'Booked' },
+        { at: iso(at(days(now, 0), 8, 5)), kind: 'checkIn', label: 'Checked in' },
       ],
     },
     {
@@ -3279,14 +3249,14 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       checkInAt: iso(at(days(now, -1), 9, 3)),
       checkOutAt: iso(at(days(now, -1), 15, 20)),
       history: [
-        { at: iso(days(now, -8)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(days(now, -1), 9, 3)), kind: 'checkIn', label: 'Eingecheckt' },
+        { at: iso(days(now, -8)), kind: 'created', label: 'Booked' },
+        { at: iso(at(days(now, -1), 9, 3)), kind: 'checkIn', label: 'Checked in' },
         {
           at: iso(at(days(now, -1), 15, 20)),
           kind: 'checkOut',
           /* §5.3 — reported by the person on site, priced by the office. This
              is the sentence the approval button is asking about. */
-          label: 'Ausgecheckt · +1.5 Std. gemeldet · Keller war zusätzlich vereinbart',
+          label: 'Checked out · +1.5 h reported · cellar was agreed on top',
         },
       ],
     },
@@ -3303,11 +3273,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       status: 'noAccess',
       photoIds: [],
       history: [
-        { at: iso(days(now, -11)), kind: 'created', label: 'Gebucht' },
+        { at: iso(days(now, -11)), kind: 'created', label: 'Booked' },
         {
           at: iso(at(days(now, -3), 10, 25)),
           kind: 'noAccess',
-          label: 'Kein Zutritt — 20 Min. gewartet, 50% verrechnet',
+          label: 'No access — waited 20 min, 50% charged',
         },
       ],
     },
@@ -3326,9 +3296,9 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       checkInAt: iso(at(days(now, -6), 9, 2)),
       checkOutAt: iso(at(days(now, -6), 13, 10)),
       history: [
-        { at: iso(days(now, -12)), kind: 'created', label: 'Gebucht' },
-        { at: iso(at(days(now, -6), 13, 10)), kind: 'checkOut', label: 'Ausgecheckt' },
-        { at: iso(days(now, -5)), kind: 'approved', label: 'Freigegeben' },
+        { at: iso(days(now, -12)), kind: 'created', label: 'Booked' },
+        { at: iso(at(days(now, -6), 13, 10)), kind: 'checkOut', label: 'Checked out' },
+        { at: iso(days(now, -5)), kind: 'approved', label: 'Approved' },
       ],
     },
     {
@@ -3343,7 +3313,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'invoiced',
       photoIds: [],
-      history: [{ at: iso(days(now, -20)), kind: 'checkOut', label: 'Ausgecheckt' }],
+      history: [{ at: iso(days(now, -20)), kind: 'checkOut', label: 'Checked out' }],
     },
     {
       id: 'bkg_s_closed',
@@ -3357,7 +3327,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'closed',
       photoIds: [],
-      history: [{ at: iso(days(now, -47)), kind: 'closed', label: 'Abgeschlossen und bezahlt' }],
+      history: [{ at: iso(days(now, -47)), kind: 'closed', label: 'Closed and paid' }],
     },
     {
       id: 'bkg_s_cancelled',
@@ -3371,8 +3341,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       status: 'cancelled',
       photoIds: [],
       history: [
-        { at: iso(days(now, -10)), kind: 'created', label: 'Gebucht' },
-        { at: iso(days(now, -2)), kind: 'cancelled', label: 'Storniert — Objekt verkauft' },
+        { at: iso(days(now, -10)), kind: 'created', label: 'Booked' },
+        { at: iso(days(now, -2)), kind: 'cancelled', label: 'Cancelled — property sold' },
       ],
     },
   ];
@@ -3394,8 +3364,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       visitsUsed: 6,
       renewalCount: 0,
       history: [
-        { at: iso(days(now, -120)), kind: 'started', label: 'Abo gestartet — Basic' },
-        { at: iso(days(now, -9)), kind: 'paused', label: 'Abo pausiert' },
+        { at: iso(days(now, -120)), kind: 'started', label: 'Plan started — Basic' },
+        { at: iso(days(now, -9)), kind: 'paused', label: 'Plan paused' },
       ],
     },
     {
@@ -3413,8 +3383,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       visitsUsed: 93,
       renewalCount: 0,
       history: [
-        { at: iso(days(now, -400)), kind: 'started', label: 'Abo gestartet — VIP' },
-        { at: iso(days(now, -35)), kind: 'expired', label: 'Laufzeit abgelaufen' },
+        { at: iso(days(now, -400)), kind: 'started', label: 'Plan started — VIP' },
+        { at: iso(days(now, -35)), kind: 'expired', label: 'Term expired' },
       ],
     },
     {
@@ -3432,8 +3402,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       renewalCount: 0,
       cancelledAt: iso(days(now, -12)),
       history: [
-        { at: iso(days(now, -20)), kind: 'started', label: 'Abo gestartet — Basic' },
-        { at: iso(days(now, -12)), kind: 'cancelled', label: 'Gekündigt und erstattet' },
+        { at: iso(days(now, -20)), kind: 'started', label: 'Plan started — Basic' },
+        { at: iso(days(now, -12)), kind: 'cancelled', label: 'Cancelled and refunded' },
       ],
     },
   ];
@@ -3447,7 +3417,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       reference: 'RE-2026-0061',
       customerId: 'cus_5',
       bookingId: 'bkg_s_completed',
-      lines: [{ label: 'Einmalreinigung', quantity: 4, unitPrice: 49 }],
+      lines: [{ label: 'One-off cleaning', quantity: 4, unitPrice: 49 }],
       status: 'sent',
       createdAt: iso(days(now, -5)),
       issuedAt: iso(days(now, -4)),
@@ -3460,8 +3430,8 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       customerId: 'cus_6',
       bookingId: 'bkg_s_invoiced',
       lines: [
-        { label: 'Grundreinigung', quantity: 5, unitPrice: 49 },
-        { label: 'Backofenreinigung', quantity: 1, unitPrice: 45 },
+        { label: 'Deep cleaning', quantity: 5, unitPrice: 49 },
+        { label: 'Oven cleaning', quantity: 1, unitPrice: 45 },
       ],
       status: 'overdue',
       createdAt: iso(days(now, -53)),
@@ -3474,12 +3444,12 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       reference: 'RE-2026-0058',
       customerId: 'cus_3',
       bookingId: 'bkg_s_cancelled',
-      lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
+      lines: [{ label: 'Move-out cleaning', quantity: 6, unitPrice: 49 }],
       status: 'cancelled',
       createdAt: iso(days(now, -15)),
       issuedAt: iso(days(now, -14)),
       dueAt: iso(days(now, 16)),
-      cancelReason: 'Einsatz storniert — Objekt verkauft, nie erbracht.',
+      cancelReason: 'Job cancelled — property sold, never carried out.',
       qrReference: '21 00000 00003 13947 14300 09104',
     },
     /*
@@ -3497,7 +3467,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       reference: 'RE-2026-0041',
       customerId: 'cus_3',
       bookingId: 'bkg_s_closed',
-      lines: [{ label: 'Umzugsreinigung', quantity: 6, unitPrice: 49 }],
+      lines: [{ label: 'Move-out cleaning', quantity: 6, unitPrice: 49 }],
       status: 'paid',
       createdAt: iso(days(now, -48)),
       issuedAt: iso(days(now, -47)),
@@ -3532,10 +3502,10 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_completed',
       customerId: 'cus_1',
       rating: 5,
-      text: 'Sehr sorgfältig, und die Absprachen haben genau gestimmt.',
+      text: 'Very thorough, and everything we agreed was exactly right.',
       status: 'published',
       submittedAt: iso(days(now, -5)),
-      ownerReply: 'Vielen Dank, Frau Keller — bis zum nächsten Mal.',
+      ownerReply: 'Thank you, Ms Keller — until next time.',
       publishConsent: true,
     },
     {
@@ -3543,7 +3513,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_invoiced',
       customerId: 'cus_2',
       rating: 3,
-      text: 'Gute Arbeit, aber die Ankunft war fast eine Stunde später als angekündigt.',
+      text: 'Good work, but they arrived almost an hour later than announced.',
       status: 'pending',
       submittedAt: iso(days(now, -2)),
       publishConsent: true,
@@ -3553,11 +3523,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       bookingId: 'bkg_s_noaccess',
       customerId: 'cus_6',
       rating: 1,
-      text: 'Niemand ist gekommen und trotzdem wurde verrechnet.',
+      text: 'Nobody turned up and we were charged anyway.',
       status: 'rejected',
       submittedAt: iso(days(now, -3)),
       ownerReply:
-        'Der Termin war bestätigt, es war 20 Minuten niemand da und das ist mit Foto und Zeitstempel dokumentiert. Die Gebühr steht in den AGB §8.',
+        'The appointment was confirmed, nobody was there for 20 minutes, and that is documented with a photo and a timestamp. The fee is set out in §8 of our terms.',
       publishConsent: true,
     },
   ];
@@ -3574,15 +3544,15 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       propertyId: 'prp_3',
       receivedAt: iso(days(now, -60)),
       receivedBy: 'Marco Brunner',
-      storageLocation: 'Schlüsselschrank Büro, Fach 5',
+      storageLocation: 'Office key cabinet, slot 5',
       returnedAt: iso(days(now, -46)),
       returnedBy: 'Marco Brunner',
       /* Not the customer. Somebody else collecting is the case the return
          dialog asks «übergeben an» for at all — with only the customer's own
          name ever in the data, the field looks like a duplicate of the
          customer column and the reason for it is invisible. */
-      returnedTo: 'Nachmieterin, Frau Bühler (Vollmacht per Mail)',
-      returnNote: 'Wohnung übergeben, Endreinigung abgeschlossen.',
+      returnedTo: 'The incoming tenant, Ms Bühler (authorised by mail)',
+      returnNote: 'Flat handed over, final clean finished.',
       status: 'returned',
     },
   ];
@@ -3596,7 +3566,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       customerId: 'cus_5',
       subject: 'A-2606',
       from: 'customer',
-      body: 'Guten Tag, passt der 11. auch am Nachmittag statt am Mittag?',
+      body: 'Hello, does the 11th work in the afternoon rather than at midday?',
       at: iso(days(now, -1)),
       readByCustomer: true,
       readByAdmin: false,
@@ -3606,7 +3576,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       customerId: 'cus_6',
       subject: 'RE-2026-0055',
       from: 'customer',
-      body: 'Ich bestreite diese Rechnung — es war niemand vor Ort.',
+      body: 'I dispute this invoice — nobody was on site.',
       at: iso(days(now, -2)),
       readByCustomer: true,
       readByAdmin: true,
@@ -3616,12 +3586,12 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       customerId: 'cus_6',
       subject: 'RE-2026-0055',
       from: 'homivaro',
-      body: 'Guten Tag Herr Huber\n\nDer Einsatz ist mit Foto und Zeitstempel dokumentiert. Ich schicke Ihnen die Aufnahme gerne zu.\n\nFreundliche Grüsse\nMarco Brunner',
+      body: 'Good morning Mr Huber\n\nThe job is documented with a photo and a timestamp. I am happy to send you the picture.\n\nKind regards\nMarco Brunner',
       at: iso(days(now, -2)),
       readByCustomer: false,
       readByAdmin: true,
       attachments: [
-        { id: 'att_einsatz', name: 'Einsatz-Kuechenzeile.jpg', kind: 'image', size: 1_840_000 },
+        { id: 'att_einsatz', name: 'job-kitchen-units.jpg', kind: 'image', size: 1_840_000 },
         { id: 'att_protokoll', name: 'Zeitprotokoll-RE-2026-0055.pdf', kind: 'document', size: 48_900 },
       ],
     },
@@ -3632,7 +3602,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       id: 'cev_s_planned',
       ref: 'K-500',
       kind: 'contact-call',
-      title: 'Rückruf — geplant',
+      title: 'Call back — scheduled',
       inDays: 1,
       hour: 10,
       customerId: 'cus_1',
@@ -3641,18 +3611,18 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       id: 'cev_s_done',
       ref: 'K-501',
       kind: 'contact-call',
-      title: 'Rückruf — erledigt',
+      title: 'Call back — done',
       inDays: -2,
       hour: 11,
       status: 'done',
       customerId: 'cus_2',
-      outcome: 'Termin auf Donnerstag verschoben, Bestätigung ist raus.',
+      outcome: 'Appointment moved to Thursday, the confirmation has gone out.',
     }),
     calendarEvent(now, {
       id: 'cev_s_noreply',
       ref: 'K-502',
       kind: 'follow-up',
-      title: 'Nachfassen — niemand erreicht',
+      title: 'Follow-up — nobody reached',
       inDays: -1,
       hour: 15,
       status: 'pending',
@@ -3662,19 +3632,19 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       id: 'cev_s_converted',
       ref: 'K-503',
       kind: 'contact-call',
-      title: 'Anruf — daraus wurde eine Anfrage',
+      title: 'Call — it turned into a request',
       inDays: -4,
       hour: 9,
       status: 'inProgress',
       customerId: 'cus_5',
-      outcome: 'Grundreinigung vor Übergabe. Anfrage erfasst.',
+      outcome: 'Deep clean before the handover. Request recorded.',
       requestId: 'req_s_new',
     }),
     calendarEvent(now, {
       id: 'cev_s_cancelled',
       ref: 'K-504',
       kind: 'viewing',
-      title: 'Besichtigung — abgesagt',
+      title: 'Viewing — cancelled',
       inDays: -1,
       hour: 13,
       duration: 45,
@@ -3689,12 +3659,12 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       id: 'cev_s_lead',
       ref: 'K-505',
       kind: 'contact-call',
-      title: 'Neue Interessentin',
+      title: 'New enquiry',
       inDays: 2,
       hour: 8,
       contactName: 'Petra Lüthi',
       contactPhone: '+41 79 604 18 22',
-      note: 'Über die Website angerufen, will einen Preisrahmen für 3.5 Zimmer.',
+      note: 'Called through the website, wants a price range for 3.5 rooms.',
     }),
     /* On site, and therefore blocking. This is the record that proves
        `occupiesSlot` does something — the picker refuses this window. */
@@ -3702,7 +3672,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       id: 'cev_s_viewing',
       ref: 'K-506',
       kind: 'viewing',
-      title: 'Besichtigung Büro',
+      title: 'Office viewing',
       inDays: 3,
       hour: 14,
       duration: 60,
@@ -3865,7 +3835,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           bookingId: 'bkg_1',
           customerId: 'cus_1',
           rating: 5,
-          text: 'Pünktlich, gründlich, und man merkt, dass mitgedacht wird. Sehr empfehlenswert.',
+          text: 'On time, thorough, and you can tell they think ahead. Highly recommended.',
           status: 'published',
           submittedAt: iso(days(now, -20)),
           publishConsent: true,
@@ -3875,7 +3845,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           bookingId: 'bkg_2',
           customerId: 'cus_2',
           rating: 5,
-          text: 'Endreinigung hat die Abnahme auf Anhieb bestanden. Genau das, was versprochen war.',
+          text: 'The final clean passed the handover first time. Exactly what was promised.',
           status: 'published',
           submittedAt: iso(days(now, -6)),
           publishConsent: true,
@@ -3885,7 +3855,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           bookingId: 'bkg_3',
           customerId: 'cus_3',
           rating: 4,
-          text: 'Sehr saubere Arbeit. Die Ankunft war etwas später als angekündigt, wurde aber vorher gemeldet.',
+          text: 'Very clean work. They arrived a little later than announced, but they told us beforehand.',
           status: 'pending',
           submittedAt: iso(days(now, -2)),
           publishConsent: true,
@@ -3898,7 +3868,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           bookingId: 'bkg_4',
           customerId: 'cus_4',
           rating: 2,
-          text: 'Zwei Fenster wurden ausgelassen und die Küche war nur oberflächlich gemacht. Auf meine Nachricht kam erst am nächsten Tag eine Antwort.',
+          text: 'Two windows were missed and the kitchen was only done superficially. My message was not answered until the next day.',
           status: 'pending',
           submittedAt: iso(days(now, -1)),
           // Deliberately withheld: the moderation screen has to show the case
@@ -3917,7 +3887,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           kind,
           visibleToCustomer: true,
           publishConsent: true,
-          note: i === 0 ? 'Küche, Küsnacht' : 'Badezimmer, Meilen',
+          note: i === 0 ? 'Kitchen, Küsnacht' : 'Badezimmer, Meilen',
           bookingId,
           takenAt: iso(days(now, -20 + i * 14)),
         })),
@@ -3976,10 +3946,10 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
             {
               at: iso(days(day, -6)),
               kind: 'created',
-              label: i % 3 === 0 ? 'Abo-Termin geplant' : 'Gebucht und bezahlt',
+              label: i % 3 === 0 ? 'Plan visit scheduled' : 'Booked and paid',
             },
             ...(past
-              ? [{ at: iso(at(day, second ? 17 : 12)), kind: 'checkOut', label: 'Ausgecheckt' }]
+              ? [{ at: iso(at(day, second ? 17 : 12)), kind: 'checkOut', label: 'Checked out' }]
               : []),
           ],
         } satisfies Booking;
@@ -4006,7 +3976,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           bookingId: booking.id,
           lines: [
             {
-              label: 'Reinigung',
+              label: 'Cleaning',
               quantity: booking.duration / 60,
               unitPrice: SEED_SETTINGS.hourlyRate,
             },
@@ -4045,10 +4015,10 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           kind: i % 3 === 0 ? 'follow-up' : 'contact-call',
           title:
             i % 3 === 0
-              ? 'Offerte nachfassen'
+              ? 'Follow up the quote'
               : i % 3 === 1
-                ? 'Rückruf Termin verschieben'
-                : 'Anfrage am Telefon',
+                ? 'Call back to move an appointment'
+                : 'Request by phone',
           inDays: i - 3,
           hour: i % 2 === 0 ? 12 : 17,
           duration: 15,
@@ -4086,7 +4056,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
            * neither needs a job behind it: a standalone invoice is a first
            * class thing since the create screen stopped requiring one.
            */
-          lines: [{ label: 'Einmalreinigung', quantity: 3, unitPrice: 49 }],
+          lines: [{ label: 'One-off cleaning', quantity: 3, unitPrice: 49 }],
           status: 'overdue',
           createdAt: iso(days(now, -45)),
           issuedAt: iso(days(now, -44)),
@@ -4123,44 +4093,44 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           id: 'cev_ov_1',
           ref: 'K-460',
           kind: 'follow-up',
-          title: 'Rechnung RE-2026-0044 — zweite Mahnung besprechen',
+          title: 'Invoice RE-2026-0044 — discuss the second reminder',
           inDays: 0,
           hour: 9,
           customerId: 'cus_2',
-          note: '14 Tage überfällig. Vor der Mahnung anrufen, nicht danach.',
+          note: '14 days overdue. Call before the reminder, not after.',
         }),
         calendarEvent(now, {
           id: 'cev_ov_2',
           ref: 'K-461',
           kind: 'follow-up',
-          title: 'Abo-Zahlung fehlgeschlagen — Karte erneuern',
+          title: 'Plan payment failed — renew the card',
           inDays: -1,
           hour: 16,
           status: 'pending',
           customerId: 'cus_1',
-          note: 'Einzug abgelehnt. Ohne neue Karte pausiert der nächste Termin.',
+          note: 'Direct debit declined. Without a new card the next visit is paused.',
         }),
         calendarEvent(now, {
           id: 'cev_ov_3',
           ref: 'K-462',
           kind: 'follow-up',
-          title: 'Anfrage A-2524 — 11 Tage ohne Antwort',
+          title: 'Request A-2524 — 11 days without an answer',
           inDays: -2,
           hour: 11,
           status: 'pending',
           customerId: 'cus_m10',
-          note: 'Dritter Versuch. Danach schriftlich schliessen.',
+          note: 'Third attempt. Close it in writing after that.',
         }),
         calendarEvent(now, {
           id: 'cev_ov_4',
           ref: 'K-463',
           kind: 'contact-call',
-          title: 'Zahlungsplan angeboten',
+          title: 'Payment plan offered',
           inDays: -4,
           hour: 14,
           status: 'done',
           customerId: 'cus_2',
-          outcome: 'Zahlt in zwei Raten, erste Rate Ende Monat. Schriftlich bestätigt.',
+          outcome: 'Paying in two instalments, the first at the end of the month. Confirmed in writing.',
         }),
       ];
 
@@ -4189,10 +4159,10 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
        * is the case the scheduler has to refuse when a quote is written.
        */
       const duringAbsence: ServiceRequest[] = [
-        queueRequest(now, { id: 'req_aw_1', ref: 'A-2531', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 30, preferredInDays: 5, note: 'Wäre der 5. möglich? Wir sind ab dann zurück.' }),
-        queueRequest(now, { id: 'req_aw_2', ref: 'A-2532', n: 8, service: 'einmalreinigung', status: 'new', agedHours: 54, preferredInDays: 7, note: 'Sobald es geht, wir haben Besuch angekündigt.' }),
+        queueRequest(now, { id: 'req_aw_1', ref: 'A-2531', n: 1, service: 'unterhaltsreinigung', status: 'new', agedHours: 30, preferredInDays: 5, note: 'Would the 5th be possible? We are back from then.' }),
+        queueRequest(now, { id: 'req_aw_2', ref: 'A-2532', n: 8, service: 'einmalreinigung', status: 'new', agedHours: 54, preferredInDays: 7, note: 'As soon as you can, we have guests coming.' }),
         queueRequest(now, { id: 'req_aw_3', ref: 'A-2533', n: 5, service: 'fensterreinigung', status: 'new', agedHours: 96 }),
-        queueRequest(now, { id: 'req_aw_4', ref: 'A-2534', n: 3, service: 'grundreinigung', status: 'inReview', agedHours: 140, internal: 'Gesehen, kann erst nach den Ferien beantwortet werden.' }),
+        queueRequest(now, { id: 'req_aw_4', ref: 'A-2534', n: 3, service: 'grundreinigung', status: 'inReview', agedHours: 140, internal: 'Seen, cannot be answered until after the holidays.' }),
       ];
       /*
        * What a closure does to the calls.
@@ -4208,11 +4178,11 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           id: 'cev_aw_1',
           ref: 'K-470',
           kind: 'contact-call',
-          title: 'Vor den Ferien: Termine bestätigen',
+          title: 'Before the holidays: confirm the appointments',
           inDays: 1,
           hour: 8,
           customerId: 'cus_1',
-          note: 'Letzter Arbeitstag. Abo-Termin im Ferienfenster verschieben.',
+          note: 'Last working day. Move the plan visit inside the holiday window.',
         }),
         /* The one the holiday ran over. `cancelled` had no record outside
            `states` — this is the case it exists for. */
@@ -4220,32 +4190,32 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           id: 'cev_aw_2',
           ref: 'K-471',
           kind: 'viewing',
-          title: 'Besichtigung — fällt in die Betriebsferien',
+          title: 'Viewing — falls inside the company holidays',
           inDays: 5,
           hour: 10,
           duration: 45,
           status: 'cancelled',
           customerId: 'cus_m5',
           propertyId: 'prp_m5',
-          note: 'Vor den Ferien zugesagt, danach neu abgemacht.',
+          note: 'Agreed before the holidays, rearranged afterwards.',
           createdDaysAgo: 9,
         }),
         calendarEvent(now, {
           id: 'cev_aw_3',
           ref: 'K-472',
           kind: 'follow-up',
-          title: 'Nach der Rückkehr: A-2531 beantworten',
+          title: 'After coming back: answer A-2531',
           inDays: 13,
           hour: 9,
           customerId: 'cus_m1',
-          note: 'Wartet seit dem ersten Ferientag. Zuerst anrufen, dann offerieren.',
+          note: 'Waiting since the first day of the holidays. Call first, then quote.',
           createdDaysAgo: 1,
         }),
         calendarEvent(now, {
           id: 'cev_aw_4',
           ref: 'K-473',
           kind: 'follow-up',
-          title: 'Nach der Rückkehr: A-2533 beantworten',
+          title: 'After coming back: answer A-2533',
           inDays: 13,
           hour: 10,
           customerId: 'cus_m5',
@@ -4290,13 +4260,13 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
             id: 'cev_cf_viewing',
             ref: 'K-450',
             kind: 'viewing',
-            title: 'Besichtigung dazwischen',
+            title: 'Viewing in between',
             inDays: 0,
             hour: 12,
             duration: 45,
             customerId: 'cus_m2',
             propertyId: 'prp_m2',
-            note: 'Zugesagt, bevor der zweite Einsatz am selben Tag stand.',
+            note: 'Agreed before the second job that day was set.',
           }),
         ],
         /* Two requests asking for the day that is already double-booked, one at
@@ -4304,7 +4274,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
            buffer in `slotsForDay` has to refuse a slot the calendar looks free
            for — and there was no request to quote from. */
         requests: [
-          queueRequest(now, { id: 'req_cf_1', ref: 'A-2541', n: 1, service: 'einmalreinigung', status: 'new', agedHours: 8, preferredInDays: 0, note: 'Am liebsten heute noch, falls irgendwie möglich.' }),
+          queueRequest(now, { id: 'req_cf_1', ref: 'A-2541', n: 1, service: 'einmalreinigung', status: 'new', agedHours: 8, preferredInDays: 0, note: 'Today if there is any way at all.' }),
           queueRequest(now, { id: 'req_cf_2', ref: 'A-2542', n: 8, service: 'grundreinigung', status: 'new', agedHours: 15, preferredInDays: 0 }),
           ...data.requests,
         ],
@@ -4328,51 +4298,51 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           id: 'cev_hr_1',
           ref: 'K-480',
           kind: 'contact-call',
-          title: 'Erstgespräch Elena Ferreira',
+          title: 'First interview, Elena Ferreira',
           inDays: 1,
           hour: 15,
           duration: 45,
           contactName: 'Elena Ferreira',
           contactPhone: '+41 78 000 00 11',
-          note: 'Bewerbung app_1. Arbeitsbewilligung und Verfügbarkeit klären.',
+          note: 'Application app_1. Clarify the work permit and availability.',
         }),
         calendarEvent(now, {
           id: 'cev_hr_2',
           ref: 'K-481',
           kind: 'contact-call',
-          title: 'Referenz prüfen — Frau Hunziker',
+          title: 'Check the reference — Ms Hunziker',
           inDays: 2,
           hour: 11,
           duration: 15,
           contactName: 'Frau Hunziker',
           contactPhone: '+41 79 000 00 12',
-          note: 'Referenz zu Elena Ferreira.',
+          note: 'Reference for Elena Ferreira.',
         }),
         calendarEvent(now, {
           id: 'cev_hr_3',
           ref: 'K-482',
           kind: 'contact-call',
-          title: 'Erstgespräch Dritan Krasniqi',
+          title: 'First interview, Dritan Krasniqi',
           inDays: -2,
           hour: 14,
           duration: 45,
           status: 'done',
           contactName: 'Dritan Krasniqi',
           contactPhone: '+41 78 000 00 13',
-          outcome: 'Erfahren, Auto vorhanden, kann ab nächstem Monat. Weiter zur zweiten Runde.',
+          outcome: 'Experienced, has a car, available from next month. Through to the second round.',
         }),
         calendarEvent(now, {
           id: 'cev_hr_4',
           ref: 'K-483',
           kind: 'contact-call',
-          title: 'Absage besprechen — Amara Diallo',
+          title: 'Discuss the rejection — Amara Diallo',
           inDays: -1,
           hour: 17,
           duration: 15,
           status: 'pending',
           contactName: 'Amara Diallo',
           contactPhone: '+41 78 000 00 17',
-          note: 'Absage lieber am Telefon als per Mail.',
+          note: 'Rejection by phone rather than by mail.',
         }),
       ];
       return { ...data, events: [...interviews, ...data.events] };

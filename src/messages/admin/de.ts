@@ -146,15 +146,7 @@ export const adminDe = {
     payment: 'Zahlung',
     paymentNone: 'Noch nicht bezahlt',
     coverageTitle: 'Deckung',
-    coveragePackageLead:
-      'Dieser Einsatz wird aus dem gekauften Stundenpaket bezahlt, nicht neu verrechnet.',
     coverageSubscriptionLead: 'Dieser Einsatz ist im laufenden Abo enthalten.',
-    coverageBalance: 'Guthaben vor diesem Einsatz',
-    coverageThisJob: 'Dieser Einsatz',
-    coverageAfter: 'Bleibt danach',
-    coverageMore:
-      '{n, plural, =0 {Reicht danach für keinen weiteren Einsatz dieser Grösse.} one {Reicht danach für einen weiteren Einsatz dieser Grösse.} other {Reicht danach für # weitere Einsätze dieser Grösse.}}',
-    coverageExpires: 'Guthaben verfällt',
     coveragePlan: 'Abo',
     coverageVisits: 'Einsätze im Paket',
     coverageVisitsValue: 'Noch {left} von {total}',
@@ -162,7 +154,6 @@ export const adminDe = {
     coverageSkips: 'Freie Aussetzer',
     coverageSkipsValue: '{left} von {total} diesen Monat',
     coverageOpenPlan: 'Abo öffnen',
-    hoursValue: '{n} Std.',
     paymentFailed: 'Fehlgeschlagen: {reason}',
     bookingTitle: 'Daraus wurde',
     bookingOpen: 'Buchung öffnen',

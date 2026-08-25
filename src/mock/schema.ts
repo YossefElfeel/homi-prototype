@@ -36,7 +36,8 @@ export type ServiceSlug = (typeof SERVICE_SLUGS)[number];
  *
  * §21 item 1 makes the hour the pricing unit for cleaning: area, rooms and
  * bathrooms are *inputs to a duration estimate*, never independent price units
- * — that is what makes package credits and discounts computable at all.
+ * — that is what makes a plan's per-visit price and its discount computable at
+ * all.
  * `perUnit` counts a thing (windows) and converts the count into hours, and
  * `flat` is one fixed price for the whole job. No seeded service is flat, but
  * the type has carried the case since §5.1 and nothing could ever set it.
@@ -703,23 +704,6 @@ export interface Subscription {
   history: TimelineEvent[];
 }
 
-export interface CreditLedgerEntry {
-  at: ISODate;
-  hours: number;
-  reason: string;
-  bookingId?: ID;
-}
-
-export interface PackageCredit {
-  id: ID;
-  customerId: ID;
-  propertyId: ID;
-  hoursRemaining: number;
-  purchasedAt: ISODate;
-  expiresAt: ISODate;
-  ledger: CreditLedgerEntry[];
-}
-
 /**
  * §16 — the message thread a customer sees in their account.
  *
@@ -1204,7 +1188,6 @@ export interface Settings {
    */
   planCancellationDays: number;
   monthlyFreeSkips: number;
-  creditValidityMonths: number;
   /**
    * §21 item 12 — permanent key holding stays locked until a liability policy
    * exists. Toggling this in the demo bar switches the key-log screen between

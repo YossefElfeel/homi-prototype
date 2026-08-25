@@ -9,7 +9,6 @@ export const accountDe = {
       invoices: 'Rechnungen',
       properties: 'Objekte',
       subscription: 'Abo',
-      credit: 'Guthaben',
       payment: 'Zahlungsmittel',
       photos: 'Vorher / Nachher',
       review: 'Bewertung abgeben',
@@ -342,25 +341,6 @@ export const accountDe = {
     emptyTitle: 'Kein laufendes Abo',
     emptyBody:
       'Ein Abo ist ein Paket Einsätze, das Sie einmal bezahlen und ein Jahr lang abrufen — mit Rabatt auf alles darüber hinaus.',
-    emptyAction: 'Pakete ansehen',
-  },
-
-  credit: {
-    title: 'Stundenguthaben',
-    remaining: 'Verbleibend',
-    hours: '{n} Stunden',
-    expires: 'Gültig bis',
-    expiringTitle: 'Läuft bald ab',
-    expiringBody:
-      'Ihr Guthaben verfällt am {date}. Danach nicht mehr einlösbar — planen Sie den nächsten Einsatz rechtzeitig.',
-    ledgerTitle: 'Bewegungen',
-    colDate: 'Datum',
-    colReason: 'Vorgang',
-    colHours: 'Stunden',
-    bookAction: 'Einsatz planen',
-    emptyTitle: 'Kein Guthaben',
-    emptyBody:
-      'Stundenpakete sind im Voraus gekaufte Stunden zum reduzierten Ansatz. Sie sind zwölf Monate gültig.',
     emptyAction: 'Pakete ansehen',
   },
 

@@ -324,7 +324,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_request_received', {
     event: 'request-received',
     flow: 'requests',
-    tags: ['Bestätigung'],
+    tags: ['Confirmation'],
     channels: ['email'],
     subject: {
       de: 'Ihre Anfrage {reference} ist eingegangen',
@@ -338,7 +338,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_offer_sent', {
     event: 'offer-sent',
     flow: 'quotes',
-    tags: ['Offerte'],
+    tags: ['Quote'],
     channels: ['email', 'sms'],
     subject: { de: 'Ihre Offerte von Homivaro', en: 'Your quote from Homivaro' },
     body: {
@@ -349,7 +349,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_offer_reminder', {
     event: 'offer-reminder',
     flow: 'quotes',
-    tags: ['Offerte', 'Erinnerung'],
+    tags: ['Quote', 'Reminder'],
     channels: ['email'],
     subject: {
       de: 'Ihre Offerte läuft am {validUntil} ab',
@@ -363,7 +363,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_booking_confirmed', {
     event: 'booking-confirmed',
     flow: 'bookings',
-    tags: ['Termin', 'Bestätigung'],
+    tags: ['Appointment', 'Confirmation'],
     channels: ['email', 'sms'],
     subject: { de: 'Termin bestätigt: {date}', en: 'Appointment confirmed: {date}' },
     body: {
@@ -378,7 +378,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_appointment_reminder', {
     event: 'appointment-reminder',
     flow: 'bookings',
-    tags: ['Termin', 'Erinnerung'],
+    tags: ['Appointment', 'Reminder'],
     channels: ['sms'],
     subject: {
       de: 'Erinnerung an Ihren Termin',
@@ -396,7 +396,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_on_the_way', {
     event: 'on-the-way',
     flow: 'bookings',
-    tags: ['Termin'],
+    tags: ['Appointment'],
     channels: ['sms'],
     subject: {
       de: 'Wir sind unterwegs',
@@ -414,7 +414,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_job_done', {
     event: 'job-done',
     flow: 'bookings',
-    tags: ['Abschluss'],
+    tags: ['Completion'],
     channels: ['email'],
     subject: { de: 'Die Arbeiten sind abgeschlossen', en: 'The work is finished' },
     body: {
@@ -425,7 +425,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_invoice_sent', {
     event: 'invoice-sent',
     flow: 'invoices',
-    tags: ['Rechnung'],
+    tags: ['Invoice'],
     channels: ['email'],
     subject: { de: 'Rechnung {invoiceNumber}', en: 'Invoice {invoiceNumber}' },
     body: {
@@ -436,7 +436,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_payment_reminder', {
     event: 'payment-reminder',
     flow: 'invoices',
-    tags: ['Rechnung', 'Erinnerung'],
+    tags: ['Invoice', 'Reminder'],
     channels: ['email'],
     subject: {
       de: 'Rechnung {invoiceNumber} ist noch offen',
@@ -450,7 +450,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_cancellation', {
     event: 'cancellation',
     flow: 'bookings',
-    tags: ['Stornierung'],
+    tags: ['Cancellation'],
     channels: ['email', 'sms'],
     subject: {
       de: 'Ihr Termin am {date} ist storniert',
@@ -464,7 +464,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_review_request', {
     event: 'review-request',
     flow: 'reviews',
-    tags: ['Bewertung'],
+    tags: ['Review'],
     channels: ['email'],
     subject: { de: 'Waren Sie zufrieden?', en: 'Were you happy with the work?' },
     body: {
@@ -486,7 +486,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_offer_sent_short', {
     event: 'offer-sent',
     flow: 'quotes',
-    tags: ['Offerte', 'Kurz'],
+    tags: ['Quote', 'Short'],
     channels: ['email', 'sms'],
     isDefault: false,
     subject: { de: 'Ihre Offerte ist bereit', en: 'Your quote is ready' },
@@ -505,7 +505,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_payment_reminder_final', {
     event: 'payment-reminder',
     flow: 'invoices',
-    tags: ['Rechnung', 'Erinnerung', 'Letzte Mahnung'],
+    tags: ['Invoice', 'Reminder', 'Final notice'],
     channels: ['email'],
     isDefault: false,
     subject: {
@@ -520,7 +520,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   tpl('tpl_booking_confirmed_subscription', {
     event: 'booking-confirmed',
     flow: 'bookings',
-    tags: ['Termin', 'Bestätigung', 'Abo'],
+    tags: ['Appointment', 'Confirmation', 'Plan'],
     channels: ['email'],
     isDefault: false,
     subject: {
@@ -539,7 +539,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
    */
   tpl('tpl_area_declined', {
     flow: 'general',
-    tags: ['Absage', 'Gebiet'],
+    tags: ['Rejection', 'Area'],
     channels: ['email'],
     subject: {
       de: 'Leider ausserhalb unseres Einsatzgebiets',
@@ -562,7 +562,7 @@ const SEED_TEMPLATES: MessageTemplate[] = [
   {
     id: 'tpl_pricing_list',
     flow: 'general',
-    tags: ['Preise'],
+    tags: ['Prices'],
     channels: ['email'],
     subject: { de: 'Unsere Preise auf einen Blick', en: 'Our prices at a glance' },
     body: {
@@ -798,7 +798,6 @@ export const SEED_SETTINGS: Settings = {
   noAccessFeePercent: 50, // §4.2
   planCancellationDays: 14,
   monthlyFreeSkips: 1, // §11.2
-  creditValidityMonths: 12, // §11.3
   // §21 item 12 — key holding stays locked until a policy exists.
   hasLiabilityInsurance: false,
   applicationRetentionMonths: 6, // revDSG

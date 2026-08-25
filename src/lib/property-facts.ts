@@ -130,7 +130,6 @@ export interface PropertyUsage {
   requests: number;
   bookings: number;
   subscriptions: number;
-  credits: number;
   keys: number;
   events: number;
   photos: number;
@@ -145,7 +144,6 @@ export function propertyUsage(data: DataSet, propertyId: ID): PropertyUsage {
     requests: count(data.requests, (r) => r.propertyId),
     bookings: count(data.bookings, (b) => b.propertyId),
     subscriptions: count(data.subscriptions, (s) => s.propertyId),
-    credits: count(data.credits, (c) => c.propertyId),
     keys: count(data.keyLog, (k) => k.propertyId),
     events: count(data.events, (e) => e.propertyId),
     photos: count(data.photos, (p) => p.propertyId),

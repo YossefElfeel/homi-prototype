@@ -461,7 +461,7 @@ export default function PropertiesPage() {
               <RowActionButton
                 tone="danger"
                 disabled={usage.total > 0}
-                /* The label carries the reason: seven record types point at a
+                /* The label carries the reason: six record types point at a
                    property, and an address with history is kept so the
                    invoices behind it still resolve (§15). */
                 label={
