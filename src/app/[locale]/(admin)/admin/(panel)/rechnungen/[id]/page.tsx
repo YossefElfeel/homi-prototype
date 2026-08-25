@@ -364,9 +364,27 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           }
         />
 
-        {/* The Swiss payment part: receipt on the left, payment part on the
-            right, QR in the middle of the right block. Proportions kept so it
-            reads as the real thing at a glance. */}
+        {/*
+          The Swiss payment part: receipt on the left, payment part on the
+          right, QR in the middle of the right block. Proportions kept so it
+          reads as the real thing at a glance.
+
+          One deliberate departure from the real slip. A printed QR-bill repeats
+          the payee and the reference on *both* halves, and that is not
+          redundancy — the perforation runs down the middle, the payer keeps the
+          receipt and the bank keeps the payment part, so each half has to be
+          readable on its own once they are apart.
+
+          Nothing here is ever torn. On screen the repeat is just the same lines
+          twice, three centimetres apart, and it reads as a rendering fault. So
+          every fact is stated once, on the receipt — payee, reference, payer,
+          currency and amount — and the payment part carries only what the
+          receipt does not: the code itself, and the date the money is due.
+
+          Worth reopening the day this has to produce a printable slip — at that
+          point the duplication becomes required again, and it is a rule of the
+          Swiss Implementation Guidelines rather than a layout preference.
+        */}
         <CardBody className="overflow-x-auto">
           <div className="grid min-w-2xl grid-cols-[1fr_2fr] border border-line-strong">
             <div className="border-r border-line-strong p-5">
@@ -412,8 +430,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </dl>
             </div>
 
-            <div className="flex gap-6 p-5">
-              <div className="flex-1">
+            <div className="p-5">
+              <div>
                 <p className="label-type text-ink-tertiary">Zahlteil</p>
                 <div
                   aria-hidden
@@ -432,38 +450,17 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     />
                   ))}
                 </div>
-                <dl className="mt-4 flex gap-6 text-sm">
-                  <div>
-                    <dt className="text-ink-tertiary">{t('qrCurrency')}</dt>
-                    <dd data-numeric>CHF</dd>
-                  </div>
-                  <div>
-                    <dt className="text-ink-tertiary">{t('qrAmount')}</dt>
-                    <dd data-numeric className="font-medium">
-                      {formatChf(total, locale).replace('CHF ', '')}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <dl className="flex-1 space-y-3 text-sm">
-                <div>
-                  <dt className="text-ink-tertiary">{t('qrPayableTo')}</dt>
-                  <dd className="mt-0.5">{brand('name')}</dd>
-                </div>
-                <div>
-                  <dt className="text-ink-tertiary">{t('qrReference')}</dt>
-                  <dd data-numeric className="mt-0.5">
-                    {invoice.qrReference}
-                  </dd>
-                </div>
-                <div>
+                {/* The one fact the receipt beside it does not carry. The
+                    payee, the reference and the amount were all repeated here
+                    and are now stated once, on the receipt — see the note
+                    above. */}
+                <dl className="mt-4 text-sm">
                   <dt className="text-ink-tertiary">{t('dueTitle')}</dt>
                   <dd data-numeric className="mt-0.5">
                     {format.dateTime(new Date(invoice.dueAt), 'full')}
                   </dd>
-                </div>
-              </dl>
+                </dl>
+              </div>
             </div>
           </div>
         </CardBody>

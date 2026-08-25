@@ -682,7 +682,11 @@ export const adminCrmDe = {
     addLine: 'Position hinzufügen',
     total: 'Gesamtbetrag',
     noVat: 'Keine MwSt. — Endbetrag.',
-    dueTitle: 'Zahlungsfrist',
+    /* «Zahlungsdatum» wäre die wörtliche Übersetzung und die falsche: das liest
+       sich als der Tag, an dem bezahlt *wurde* — eine andere Tatsache, und auf
+       einer bezahlten Rechnung schlicht falsch. «Zahlbar bis» steht auch auf
+       Screen 40, also sieht die Kundin dasselbe Wort. */
+    dueTitle: 'Zahlbar bis',
     qrTitle: 'QR-Rechnung',
     qrLead:
       'Wird über das angebundene Buchhaltungssystem erzeugt. Referenz und Betrag stehen im QR-Code.',
