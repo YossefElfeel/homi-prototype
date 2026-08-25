@@ -971,6 +971,17 @@ interface StoreState {
    */
   linkEventToRequest: (id: ID, requestId: ID, now: Date) => void;
 
+  /**
+   * A coupon switched on or off, on its own rather than through `patchData`.
+   *
+   * Screen 76 flips this from the list, where it is the whole action rather
+   * than one field of an edit — so it is the one coupon change with an
+   * audience, and the only one worth a line in the Protokoll. Everything else
+   * on a coupon goes through the edit screen's draft and lands in one write
+   * when the button is pressed.
+   */
+  setCouponActive: (id: ID, active: boolean) => void;
+
   patchData: (patch: Partial<DataSet>) => void;
   addHold: (hold: SlotHold) => void;
   releaseHold: (id: string) => void;
@@ -3831,6 +3842,25 @@ export const useStore = create<StoreState>()(
                   },
             ),
           },
+        });
+      },
+
+      setCouponActive: (id, active) => {
+        const coupon = get().data.coupons.find((c) => c.id === id);
+        /* No entry when nothing moved. The switch is idempotent by nature —
+           the list re-renders on every store write — and a log that records
+           "switched off" twice makes the Protokoll unreadable. */
+        if (!coupon || coupon.active === active) return;
+        set((s) => ({
+          data: {
+            ...s.data,
+            coupons: s.data.coupons.map((c) => (c.id === id ? { ...c, active } : c)),
+          },
+        }));
+        get().logChange({
+          entity: 'coupon',
+          entityId: id,
+          summary: `"${coupon.code}" ${active ? 'switched on' : 'switched off'}`,
         });
       },
 

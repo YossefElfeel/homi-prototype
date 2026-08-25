@@ -166,6 +166,15 @@ export const de = {
       active: 'Verfügbar',
       inactive: 'Nicht verfügbar',
     },
+    /* «Aufgebraucht» statt «Ausgeschöpft»: es ist das Wort, das am Telefon
+       fällt, wenn ein Kunde den Code eintippt und nichts passiert. */
+    coupon: {
+      scheduled: 'Startet später',
+      active: 'Gültig',
+      'used-up': 'Aufgebraucht',
+      expired: 'Abgelaufen',
+      inactive: 'Deaktiviert',
+    },
     /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
        vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
        Zahlschritt der Offerte und einmal als `admin.offers.method`, also

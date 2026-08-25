@@ -1181,6 +1181,109 @@ function baseData(now: Date): DataSet {
   ];
 
   /*
+   * Five coupons, one per state.
+   *
+   * `coupons: []` was the only list in this seed that was empty on purpose,
+   * and the empty state said so — discount messaging reads cheap in this
+   * market, so the screen recommended against leaning on it. The
+   * recommendation stands and stays on the screen. What could not stand is
+   * that the recommendation was being made by a table nobody had ever seen
+   * hold a row: the validity column, the redemption count, the sort order and
+   * every state but «keine» were unreviewed, and screen 77 could only ever be
+   * reached through «Gutschein anlegen» — opening an existing coupon was
+   * unreachable, so the edit screen had never been opened against a record
+   * that already had values in it.
+   *
+   * Sparingly is what these are. Five codes across fourteen months, three of
+   * them already over, is a company that used the mechanism four or five times
+   * and did not build its pricing on it — which is the same advice the note
+   * under the heading gives, said in data instead of prose.
+   *
+   * Between them they carry every branch the two screens can take: percent and
+   * francs, all-services and service-scoped, capped and uncapped, with and
+   * without a minimum order. `cpn_1` is the one with everything filled in,
+   * because it is the row a reader opens first.
+   */
+  const coupons: Coupon[] = [
+    {
+      id: 'cpn_1',
+      code: 'WELCOME10',
+      kind: 'percent',
+      value: 10,
+      /* The one permanent code, and the only one that is not a campaign: it
+         goes out with every first quote, which is why it is the one with a
+         floor under it — 10% of a two-hour job is not worth the paperwork. */
+      minOrder: 150,
+      services: [],
+      validFrom: iso(days(now, -60)),
+      validTo: iso(days(now, 120)),
+      maxUses: 200,
+      usedCount: 47,
+      active: true,
+    },
+    {
+      /* Hit its ceiling with seven weeks still to run. This is the record the
+         warning tone exists for: customers are typing a code today that the
+         office thinks is live, and nothing else on the screen would say so. */
+      id: 'cpn_2',
+      code: 'MOVEOUT50',
+      kind: 'amount',
+      value: 50,
+      minOrder: 400,
+      services: ['umzugsreinigung'],
+      validFrom: iso(days(now, -40)),
+      validTo: iso(days(now, 50)),
+      maxUses: 50,
+      usedCount: 50,
+      active: true,
+    },
+    {
+      /* Last spring's campaign, left switched on. Expiry is what stopped it,
+         not the switch — which is why the state has to be read from the dates
+         and not from `active`. */
+      id: 'cpn_3',
+      code: 'SPRING25',
+      kind: 'percent',
+      value: 25,
+      services: ['grundreinigung', 'fensterreinigung'],
+      validFrom: iso(days(now, -200)),
+      validTo: iso(days(now, -110)),
+      maxUses: 40,
+      usedCount: 18,
+      active: true,
+    },
+    {
+      /* Written, then pulled before it ever ran — the commercial customers it
+         was aimed at negotiate their rate anyway. Kept rather than deleted so
+         the figure is there if the argument comes back. */
+      id: 'cpn_4',
+      code: 'OFFICE100',
+      kind: 'amount',
+      value: 100,
+      minOrder: 800,
+      services: ['bueroreinigung'],
+      validFrom: iso(days(now, -30)),
+      validTo: iso(days(now, 180)),
+      usedCount: 0,
+      active: false,
+    },
+    {
+      /* Three weeks out, uncapped, and switched on already — the case that
+         made `scheduled` necessary. Written now so it is not forgotten in
+         March, and the office needs the list to say it is not live yet. */
+      id: 'cpn_5',
+      code: 'WINDOWS15',
+      kind: 'percent',
+      value: 15,
+      services: ['fensterreinigung'],
+      validFrom: iso(days(now, 21)),
+      validTo: iso(days(now, 80)),
+      usedCount: 0,
+      active: true,
+    },
+  ];
+
+  /*
    * Nine conversations, not one.
    *
    * The screen groups by reference, orders by newest message, chips the
@@ -1990,6 +2093,7 @@ function baseData(now: Date): DataSet {
     ],
     keyLog,
     messages,
+    coupons,
     changeLog,
     photos,
     team: [owner(now)],
