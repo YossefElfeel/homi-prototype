@@ -2020,6 +2020,120 @@ function baseData(now: Date): DataSet {
     }),
   ];
 
+  /*
+   * The moderation queue, in the scenario a reviewer actually opens.
+   *
+   * `reviews` was `[]` here, so /admin/bewertungen opened on «Noch keine
+   * Bewertungen» in `demo` — and that empty state explains itself well enough
+   * (customers are asked after payment) that the screen read as finished
+   * rather than as never having held a card. Every control on it — the reply
+   * box, the consent gate, the critical-review warning, the publish button
+   * itself — could only be seen by switching to `busy` first.
+   *
+   * Five records, and each one is a different decision rather than a different
+   * name:
+   *
+   *   · published, with the owner's reply under it
+   *   · hidden — released once, off the site now, reply intact
+   *   · pending, consented, five stars: the one-click case
+   *   · pending, consented, one star: publishing waits for an answer (§17.2)
+   *   · pending, no consent: publishing is not the owner's to decide (§20.6)
+   *
+   * `rejected` is the one state not seeded here, deliberately. It is one click
+   * from three of these five, `states` carries a record in it, and taking a
+   * slot for it would have cost the only card on the screen whose publish
+   * button is enabled — a moderation queue where the primary action is greyed
+   * out on every row teaches the wrong thing about the screen.
+   *
+   * Each hangs off a job that has actually happened. That is not decoration:
+   * the customer's own review screen offers the most recent finished booking
+   * with no review against it, so a review seeded onto a job in the future
+   * would be a customer reviewing work nobody has done yet. B-1048 is left
+   * alone for the same reason — it is the demo account's only reviewable job,
+   * and taking it would leave screen 46 permanently on its empty state.
+   */
+  const reviews: Review[] = [
+    {
+      id: 'rev_published',
+      bookingId: 'bkg_9',
+      customerId: 'cus_m10',
+      rating: 5,
+      text: 'Every window inside and out, frames included, and not a streak in the low sun. On the minute, both times.',
+      status: 'published',
+      submittedAt: iso(days(now, -6)),
+      ownerReply: 'Thank you, Ms Ferrari — until next time.',
+      publishConsent: true,
+    },
+    {
+      /*
+       * The state «Zurückziehen» used to have nowhere to put a review.
+       *
+       * It is not rejected: the office released it, stands behind it, and
+       * means to put it back. It is off the site because it thanks a cleaner
+       * by name who has since left, and publishing the name of somebody who no
+       * longer works here is a promise the company cannot keep. The reply
+       * survives the trip, which is the whole difference from sending it back
+       * to «Wartet auf Freigabe» — that heading says nobody has read it yet,
+       * and somebody has.
+       */
+      id: 'rev_hidden',
+      bookingId: 'bkg_10',
+      customerId: 'cus_m7',
+      rating: 4,
+      text: 'The office clean has run reliably for months. Ms Kovač in particular thinks ahead — she tells us what needs reordering before it runs out.',
+      status: 'hidden',
+      submittedAt: iso(days(now, -11)),
+      ownerReply:
+        'Thank you, Ms Bachmann. We will pass that on, and we will come back to you about the supplies directly.',
+      publishConsent: true,
+    },
+    {
+      /* The one card on the screen whose «Veröffentlichen» is enabled on
+         arrival. Without it every publish button in the queue is greyed out
+         and the screen's primary action looks broken rather than gated. */
+      id: 'rev_pending',
+      bookingId: 'bkg_7',
+      customerId: 'cus_m6',
+      rating: 5,
+      text: 'Deep clean after the building work — the dust really was everywhere, and by the evening there was none of it left. The extra hour was announced beforehand.',
+      status: 'pending',
+      submittedAt: iso(days(now, -1)),
+      publishConsent: true,
+    },
+    {
+      /*
+       * The review the screen exists for, and the same story as B-1053's
+       * no-access charge: the customer disputes a fee that §4.2 allows.
+       * Consent is on file, so publishing is the owner's call — and the screen
+       * refuses to take it until there is an answer under the review. An
+       * unanswered one-star does the damage; an answered one shows the reader
+       * both sides.
+       */
+      id: 'rev_pending_critical',
+      bookingId: 'bkg_8',
+      customerId: 'cus_m8',
+      rating: 1,
+      text: 'Nobody was there, and we were charged half of it anyway. The key was with the neighbour, the way it always is.',
+      status: 'pending',
+      submittedAt: iso(days(now, -3)),
+      publishConsent: true,
+    },
+    {
+      /* Four stars and unpublishable — which is the point. The gate is not
+         about how bad the review is; it is about whether the person who wrote
+         it agreed to it being shown (§20.6). A screen that only ever refused
+         one-star reviews would teach the opposite rule. */
+      id: 'rev_pending_noconsent',
+      bookingId: 'bkg_off_refund',
+      customerId: 'cus_m11',
+      rating: 4,
+      text: 'We had to cancel at two days notice and the full amount was back on the card before the weekend. No arguing, no fee.',
+      status: 'pending',
+      submittedAt: iso(days(now, -1)),
+      publishConsent: false,
+    },
+  ];
+
   return {
     ...EMPTY,
     customers: [...customers, ...extraCustomers(now)],
@@ -2031,6 +2145,7 @@ function baseData(now: Date): DataSet {
     payments,
     subscriptions,
     invoices,
+    reviews,
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for
        one-off jobs — which is exactly the pair the screen's TWINT-blocked
@@ -3599,8 +3714,13 @@ function withAllStates(data: DataSet, now: Date): DataSet {
   ];
 
   /* Published, pending and rejected — the third had no record anywhere, so the
-     moderation screen's own filter had an option that matched nothing. */
+     moderation screen's own filter had an option that matched nothing. `hidden`
+     joins them below for the same reason, and the base set is kept rather than
+     replaced: this scenario claims every declared state at once, and dropping
+     the five records `demo` now carries would have taken the consent gate off
+     the one screen that exists to prove it is reachable. */
   const reviews: Review[] = [
+    ...data.reviews,
     {
       id: 'rev_s_published',
       bookingId: 'bkg_s_completed',
@@ -3632,6 +3752,23 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       submittedAt: iso(days(now, -3)),
       ownerReply:
         'The appointment was confirmed, nobody was there for 20 minutes, and that is documented with a photo and a timestamp. The fee is set out in §8 of our terms.',
+      publishConsent: true,
+    },
+    {
+      /* The fourth state, and the one that reads as a mistake without a record
+         in it: `hidden` and `rejected` both mean "not on the website", so a
+         screen showing only one of them makes the other look like a duplicate
+         of it. Off the site because the flat is being sold and Ms Marchand
+         asked for her address not to be identifiable while viewings run — not
+         a complaint, not a refusal, and it goes back up afterwards. */
+      id: 'rev_s_hidden',
+      bookingId: 'bkg_s_closed',
+      customerId: 'cus_3',
+      rating: 5,
+      text: 'End-of-tenancy clean, spotless, keys handed back the same day. The agency found nothing to object to.',
+      status: 'hidden',
+      submittedAt: iso(days(now, -44)),
+      ownerReply: 'Thank you very much, Ms Marchand — all the best.',
       publishConsent: true,
     },
   ];
@@ -3933,51 +4070,114 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           preferredInDays: i % 4 === 0 ? undefined : 4 + (i % 10),
         }),
       );
+      /*
+       * A fortnight's worth of reviews, on the jobs of that fortnight.
+       *
+       * The four this replaces (`rev_1`–`rev_4`) had two problems that only
+       * showed once the base scenario grew a queue of its own. Two of them
+       * named a customer who did not have the job they reviewed — `rev_3` was
+       * filed under cus_3 against B-1048, which is cus_2's — so the moderation
+       * card printed a name that had never been to that address, and the
+       * customer's own review screen counted the job as reviewed for the wrong
+       * person. And all four hung off `bkg_1`–`bkg_4`, three of which are
+       * scheduled *ahead* of today: a five-star review of work nobody has done
+       * yet, which is also why screen 46 could not be opened in this scenario
+       * at all — cus_2's only reviewable job already carried a review.
+       *
+       * These sit on finished `bkg_bz_*` jobs, matched to the service the text
+       * is about, and they extend the base set instead of replacing it, so the
+       * consent gate and the critical-review case seeded in `demo` are still
+       * on the screen when the queue gets long.
+       */
       const reviews: Review[] = [
+        ...data.reviews,
         {
-          id: 'rev_1',
-          bookingId: 'bkg_1',
-          customerId: 'cus_1',
+          id: 'rev_bz_maintenance',
+          bookingId: 'bkg_bz_0',
+          customerId: 'cus_m1',
           rating: 5,
           text: 'On time, thorough, and you can tell they think ahead. Highly recommended.',
-          status: 'published',
-          submittedAt: iso(days(now, -20)),
-          publishConsent: true,
-        },
-        {
-          id: 'rev_2',
-          bookingId: 'bkg_2',
-          customerId: 'cus_2',
-          rating: 5,
-          text: 'The final clean passed the handover first time. Exactly what was promised.',
           status: 'published',
           submittedAt: iso(days(now, -6)),
           publishConsent: true,
         },
         {
-          id: 'rev_3',
-          bookingId: 'bkg_3',
-          customerId: 'cus_3',
+          id: 'rev_bz_deep',
+          bookingId: 'bkg_bz_4',
+          customerId: 'cus_m5',
+          rating: 5,
+          text: 'Deep clean before we moved in. The kitchen looked new, and the price stayed at what the quote said.',
+          status: 'published',
+          submittedAt: iso(days(now, -4)),
+          publishConsent: true,
+        },
+        {
+          id: 'rev_bz_move',
+          bookingId: 'bkg_bz_5',
+          customerId: 'cus_m6',
+          rating: 5,
+          text: 'The final clean passed the handover first time. Exactly what was promised.',
+          status: 'published',
+          submittedAt: iso(days(now, -3)),
+          ownerReply: 'Thank you, Mr Steiner — and all the best in the new flat.',
+          publishConsent: true,
+        },
+        {
+          /* Four stars with a complaint in them is the review a queue is mostly
+             made of — not the one-star the screen was designed around. It
+             publishes in one click and it says something true that is not
+             flattering, which is the pair the owner has to weigh most often. */
+          id: 'rev_bz_late',
+          bookingId: 'bkg_bz_8',
+          customerId: 'cus_m9',
           rating: 4,
-          text: 'Very clean work. They arrived a little later than announced, but they told us beforehand.',
+          text: 'Very clean work. They arrived a little later than announced, but we were told the day before.',
           status: 'pending',
           submittedAt: iso(days(now, -2)),
           publishConsent: true,
         },
         {
-          // The one the moderation screen exists for. §17.2 leaves publishing
-          // to the owner; this is the case where that discretion matters, and
-          // the screen refuses to publish it without a reply.
-          id: 'rev_4',
-          bookingId: 'bkg_4',
-          customerId: 'cus_4',
+          /*
+           * Refused, with the answer that was written first.
+           *
+           * Consent is on file and the office could have published it. It did
+           * not, because two thirds of it is a dispute with the landlord and
+           * it names a neighbour — and neither of those is the customer's to
+           * consent to on somebody else's behalf. The reply stays on the
+           * record so the decision can be read a year later.
+           */
+          id: 'rev_bz_rejected',
+          /* Not `bkg_bz_12`, which is the same household's job one open day
+             back — the seed test caught the review landing four days before
+             the work it describes. The lift and the third floor are Daniel
+             Schoch's address either way. */
+          bookingId: 'bkg_bz_1',
+          customerId: 'cus_m2',
+          rating: 3,
+          text: 'The cleaning itself was fine. The rest was a farce — the managing agent had never passed the appointment on, and the neighbour on the third floor would not let anyone use the lift.',
+          status: 'rejected',
+          submittedAt: iso(days(now, -5)),
+          ownerReply:
+            'Thank you for telling us, Mr Schoch. We have taken the point about the managing agent: from now on the confirmation goes to you in writing as well.',
+          publishConsent: true,
+        },
+        {
+          /* The same decision without an answer under it — a review the office
+             read, refused and left. Two rejected records rather than one,
+             because "refused and answered" and "refused and left" look
+             identical in a status column and are not the same thing to find in
+             the log a year later. */
+          id: 'rev_bz_rejected_bare',
+          bookingId: 'bkg_bz_2',
+          customerId: 'cus_m3',
           rating: 2,
-          text: 'Two windows were missed and the kitchen was only done superficially. My message was not answered until the next day.',
-          status: 'pending',
-          submittedAt: iso(days(now, -1)),
-          // Deliberately withheld: the moderation screen has to show the case
-          // where publishing is not the owner's to decide (§20.6).
-          publishConsent: false,
+          text: 'Two windows were missed and the frames were only done superficially. My message was not answered until the next day.',
+          status: 'rejected',
+          /* `bkg_bz_2` is six *open* days back, which on a clock that has just
+             passed a Sunday is seven calendar days — so -6 put the review on
+             the wrong side of the job for one weekday in seven. */
+          submittedAt: iso(days(now, -4)),
+          publishConsent: true,
         },
       ];
       // §20.6 — only photos with recorded written consent reach the public

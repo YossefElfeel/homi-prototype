@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 import { useHydrated, useStore } from '@/mock/store';
+import { cn } from '@/lib/cn';
 import type { Theme } from '@/lib/theme';
 
 /**
@@ -12,8 +13,14 @@ import type { Theme } from '@/lib/theme';
  *
  * That is the point. At launch there are none, and a carousel announcing "no
  * reviews yet" costs more trust than it could ever earn — the written promise
- * block above carries the load instead. Load the `busy` scenario to see this
- * section appear on its own.
+ * block above carries the load instead. `fresh` is where that case lives now:
+ * the default scenario publishes one review and `busy` three, so the section
+ * is on screen by default and the empty case is launch day, which is the only
+ * day it is true of a real company.
+ *
+ * It also reads `status === 'published'` and nothing else, which is what makes
+ * «Ausblenden» on screen 78 mean something: a hidden review is off this page
+ * within the same render.
  */
 export function ReviewsSection({ theme }: { theme: Theme }) {
   const t = useTranslations('site.home.reviews');
@@ -27,7 +34,18 @@ export function ReviewsSection({ theme }: { theme: Theme }) {
   return (
     <Section>
       <SectionHeading theme={theme} eyebrow={t('eyebrow')} title={t('title')} />
-      <ul className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {/* One review is a quote, not a grid. The default scenario publishes a
+          single one — a company five months old that has just started asking
+          — and a lone card in a three-column grid reads as two cards that
+          failed to load rather than as the one review there is. */}
+      <ul
+        className={cn(
+          'mt-10 grid gap-5',
+          published.length === 1
+            ? 'max-w-xl'
+            : 'md:grid-cols-2 lg:grid-cols-3',
+        )}
+      >
         {published.map((review) => {
           const customer = customers.find((c) => c.id === review.customerId);
           return (

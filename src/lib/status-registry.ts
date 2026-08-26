@@ -96,10 +96,17 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     overdue: 'danger',
     cancelled: 'neutral',
   },
-  // §16
+  /* §16.
+     `hidden` is a warning and `rejected` is not, which is the whole difference
+     between them: a refused review is a closed record, while a hidden one is a
+     decision the office has parked — released once, off the site now, and
+     waiting for somebody to say whether it goes back up. Neutral for both
+     would have made the two indistinguishable on the one screen whose subject
+     is what the public can see. */
   review: {
     pending: 'progress',
     published: 'success',
+    hidden: 'warning',
     rejected: 'neutral',
   },
   // Hiring — basic pipeline only.

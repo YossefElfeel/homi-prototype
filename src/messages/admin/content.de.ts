@@ -355,11 +355,20 @@ export const adminContentDe = {
   reviews: {
     title: 'Bewertungen',
     lead: 'Jede Bewertung wird von Ihnen freigegeben, bevor sie auf der Website erscheint.',
-    pendingTitle: 'Wartet auf Freigabe',
-    publishedTitle: 'Veröffentlicht',
-    rejectedTitle: 'Nicht veröffentlicht',
+    /* Die vier Überschriften sind weg — der Status steht jetzt auf der Karte,
+       weil eine gefilterte Liste keine Gruppen mehr hat, über die er passen
+       würde. */
+    search: 'Suchen',
+    searchPlaceholder: 'Text, Antwort oder Name',
+    filterState: 'Status',
+    filterAll: 'Alle',
+    filterEmptyTitle: 'Keine Bewertung passt dazu',
+    filterEmptyBody:
+      'Mit dieser Suche und diesem Status bleibt nichts übrig. Die Bewertungen sind da — nur nicht diese.',
+    filterReset: 'Filter zurücksetzen',
     starsLabel: '{n} von 5 Sternen',
     publish: 'Veröffentlichen',
+    republish: 'Wieder veröffentlichen',
     reject: 'Nicht veröffentlichen',
     replyLabel: 'Ihre Antwort',
     replyHint: 'Erscheint unter der Bewertung.',
@@ -373,11 +382,28 @@ export const adminContentDe = {
        endgültig. Und ohne Einwilligung darf gar nicht veröffentlicht werden. */
     restore: 'Zurück zur Prüfung',
     restored: 'Bewertung wartet wieder auf Freigabe.',
-    unpublish: 'Zurückziehen',
-    unpublished: 'Bewertung ist nicht mehr öffentlich.',
+    /* Hiess «Zurückziehen» und schickte die Bewertung zurück in die
+       Warteschlange — also unter eine Überschrift, die sagt, dass sie noch
+       niemand gelesen hat. Sie war gelesen, freigegeben und beantwortet. */
+    hide: 'Ausblenden',
+    hiddenDone: 'Bewertung ist nicht mehr auf der Website.',
+    /* Das Antwortfeld ist das höchste Element auf einer Karte. Es öffnet sich
+       auf Klick — und von selbst nur dort, wo ohne Antwort nicht
+       veröffentlicht werden darf. */
+    replyAction: 'Antworten',
     editReply: 'Antwort bearbeiten',
     published: 'Bewertung veröffentlicht.',
     rejected: 'Bewertung nicht veröffentlicht.',
+    delete: 'Löschen',
+    deleteConfirmTitle: 'Bewertung endgültig löschen?',
+    /* Nennt beim Namen, was verschwindet. Es sind die Worte einer anderen
+       Person — die Rückfrage darf nicht klingen, als ginge es um eine Zeile
+       in einer Tabelle. */
+    deleteConfirmBody:
+      'Die Bewertung von {name} ({stars} Sterne) wird gelöscht — Text und Antwort. Das lässt sich nicht rückgängig machen. Im Protokoll bleibt vermerkt, dass gelöscht wurde, nicht was drinstand.',
+    deleteInstead:
+      'Soll sie nur vorübergehend von der Website verschwinden, ist «Ausblenden» der richtige Weg: die Bewertung bleibt erhalten und kann jederzeit zurück.',
+    deleteDone: 'Bewertung von {name} gelöscht.',
     replySaved: 'Antwort gespeichert.',
     noConsentTitle: 'Keine Einwilligung',
     noConsentBody:

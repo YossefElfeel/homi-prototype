@@ -78,6 +78,74 @@ for (const clock of CLOCKS) {
       check(`${tag} booking ${b.reference} → customer`, customerIds.has(b.customerId), b.customerId);
       check(`${tag} booking ${b.reference} → property`, propertyIds.has(b.propertyId), b.propertyId);
     }
+    /* --------------------------------------------------------- reviews
+       Every one of these caught something. `busy` filed two reviews under a
+       customer who did not have the job they were about — the moderation card
+       prints the customer's name, so it printed somebody who had never been to
+       that address — and three of its four hung off jobs scheduled *ahead* of
+       today, which is a five-star review of work nobody has done yet. The last
+       check is the one that matters for the screen the customer sees: a
+       booking may carry one review, and if every finished job of the demo
+       account already carries one, screen 46 has nothing to offer and sits on
+       its empty state for good. */
+    const bookingsById = new Map(d.bookings.map((b) => [b.id, b]));
+    const reviewedBookings = new Set<string>();
+
+    check(`${tag} review ids unique`, new Set(d.reviews.map((r) => r.id)).size === d.reviews.length);
+
+    for (const r of d.reviews) {
+      const booking = bookingsById.get(r.bookingId);
+      check(`${tag} review ${r.id} → customer`, customerIds.has(r.customerId), r.customerId);
+      check(`${tag} review ${r.id} → booking`, Boolean(booking), r.bookingId);
+      check(
+        `${tag} review ${r.id} rating in range`,
+        r.rating >= 1 && r.rating <= 5,
+        String(r.rating),
+      );
+      check(`${tag} review ${r.id} on one booking only`, !reviewedBookings.has(r.bookingId), r.bookingId);
+      reviewedBookings.add(r.bookingId);
+
+      if (booking) {
+        check(
+          `${tag} review ${r.id} matches the booking's customer`,
+          booking.customerId === r.customerId,
+          `review=${r.customerId} booking=${booking.customerId}`,
+        );
+        /* You cannot review a job that has not happened. */
+        check(
+          `${tag} review ${r.id} is about a job in the past`,
+          new Date(booking.start) < new Date(r.submittedAt),
+          `job=${booking.start} review=${r.submittedAt}`,
+        );
+      }
+
+      /* §20.6 — `published` is on the website now and `hidden` was on it
+         until somebody took it down. Neither is reachable without consent, so
+         a seeded record in either state without it is a website the seed
+         claims was published unlawfully. */
+      if (r.status === 'published' || r.status === 'hidden') {
+        check(`${tag} review ${r.id} ${r.status} implies consent`, r.publishConsent);
+      }
+    }
+
+    /* Screen 46 offers the most recent finished job with no review against it.
+       Review every one of them and the screen is unreachable — which is what
+       `busy` shipped. */
+    const DEMO_ACCOUNT = 'cus_2';
+    const reviewable = d.bookings.filter(
+      (b) =>
+        b.customerId === DEMO_ACCOUNT &&
+        new Date(b.start) < clock &&
+        (b.status === 'completed' || b.status === 'invoiced' || b.status === 'closed'),
+    );
+    if (reviewable.length > 0) {
+      check(
+        `${tag} the demo account still has a job to review`,
+        reviewable.some((b) => !reviewedBookings.has(b.id)),
+        reviewable.map((b) => b.reference).join(','),
+      );
+    }
+
     /* ------------------------------------------------------ pricing */
     for (const o of d.offers) {
       check(`${tag} ${o.reference} prices > 0`, offerTotal(o) > 0, String(offerTotal(o)));
@@ -310,6 +378,37 @@ for (const clock of CLOCKS) {
       check(`${tag} fresh has no payments`, d.payments.length === 0);
       check(`${tag} fresh has no bookings`, d.bookings.length === 0);
       check(`${tag} fresh has no holds`, seedHolds(d, clock).length === 0);
+      /* And no reviews — the promise block on the home page is the launch-day
+         design, and it only shows while nothing has been published. */
+      check(`${tag} fresh has no reviews`, d.reviews.length === 0);
+    }
+
+    /* `states` claims every declared state at once, and `hidden` is the one
+       that arrived without it — a status in the union that no seed carries is
+       a group heading nobody has ever seen rendered. */
+    if (name === 'states') {
+      const seen = new Set(d.reviews.map((r) => r.status));
+      for (const want of ['pending', 'published', 'hidden', 'rejected'] as const) {
+        check(`${tag} a ${want} review exists`, seen.has(want), [...seen].join(','));
+      }
+    }
+
+    /* The screen a reviewer opens on. It was `reviews: []` here, so the whole
+       moderation queue was an empty state in the default scenario. */
+    if (name === 'demo') {
+      check(`${tag} the moderation queue has cards`, d.reviews.length > 0);
+      check(
+        `${tag} a review that publishes in one click exists`,
+        d.reviews.some((r) => r.status === 'pending' && r.publishConsent && r.rating > 3),
+      );
+      check(
+        `${tag} a critical review awaiting a reply exists`,
+        d.reviews.some((r) => r.status === 'pending' && r.rating <= 3 && !r.ownerReply),
+      );
+      check(
+        `${tag} a review nobody consented to publishing exists`,
+        d.reviews.some((r) => !r.publishConsent),
+      );
     }
   }
 }
