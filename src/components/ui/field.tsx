@@ -39,7 +39,15 @@ export function Field({
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div className={cn('space-y-1.5', className)}>
+    /*
+      Three stacked rows — label, control, hint/error — rather than a block with
+      margins between them. Standalone the two render identically, but as a grid
+      a row of fields can hand its own tracks to the parent with
+      `grid-rows-subgrid`, and then a label that wraps to two lines stops
+      dropping its own box a line below its neighbour's. `content-start` keeps
+      the rows at their natural height if the field is ever stretched.
+    */
+    <div className={cn('grid content-start gap-1.5', className)}>
       <label htmlFor={id} className="flex items-baseline gap-2 text-sm font-medium">
         {label}
         {optional && (
