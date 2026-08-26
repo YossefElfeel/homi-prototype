@@ -205,8 +205,24 @@ Marco Brunner`;
    present in a blob from 24, so it is kept whole and the two never arrive.
    The status filter would then have an option that empties the table every
    time, on a screen whose whole point this wave is that availability is
-   readable. */
-const SCHEMA_VERSION = 25;
+   readable.
+
+   26: Same again, and this time the empty table was the *whole* screen. The
+   coupon list went from `coupons: []` in every scenario to five seeded codes,
+   one per state. `merge` cannot help — and here it is worth being exact about
+   why, because it is the one case that looks like it should be covered:
+   `merge` fills in collections that are *missing* from the persisted blob, and
+   `coupons` is not missing. It is present and empty, which is a value, so it
+   is kept whole and the five never arrive.
+
+   The result is the worst possible reading of this wave. A blob from 25 opens
+   /admin/gutscheine on the empty state — and that empty state used to say the
+   list was deliberately empty, so the screen would argue, convincingly, that
+   the seed was working as intended. Every state badge, the search box, the
+   filter and the switch would sit on a table with nothing in them, and the
+   edit screen would be unreachable again for exactly the reason this wave
+   existed to fix. */
+const SCHEMA_VERSION = 26;
 
 /**
  * §10 — the default payment term.
