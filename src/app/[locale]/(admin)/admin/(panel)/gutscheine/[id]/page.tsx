@@ -8,11 +8,13 @@ import { TicketPercent } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, NumberField, Select, Checkbox } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { SwitchField } from '@/components/ui/switch';
 import { couponRemaining, couponState } from '@/lib/coupon-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Coupon } from '@/mock/schema';
@@ -227,153 +229,180 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
         }
       />
 
-      <div className="space-y-5">
-        <Field label={t('codeLabel')} hint={t('codeHint')} error={codeError}>
-          {(props) => (
-            <Input
-              value={form.code}
-              onChange={(e) => patch({ code: e.target.value.toUpperCase() })}
-              className="font-mono tracking-wide"
-              autoCapitalize="characters"
-              {...props}
+      <div className="space-y-app-section">
+        <Card>
+          <CardHeader title={t('sectionCodeTitle')} />
+          <CardBody className="space-y-5">
+            <Field label={t('codeLabel')} hint={t('codeHint')} error={codeError}>
+              {(props) => (
+                <Input
+                  value={form.code}
+                  onChange={(e) => patch({ code: e.target.value.toUpperCase() })}
+                  className="font-mono tracking-wide"
+                  autoCapitalize="characters"
+                  {...props}
+                />
+              )}
+            </Field>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label={t('kindLabel')}>
+                {(props) => (
+                  <Select
+                    value={form.kind}
+                    onChange={(e) => patch({ kind: e.target.value as Coupon['kind'] })}
+                    {...props}
+                  >
+                    <option value="percent">{t('kindPercent')}</option>
+                    <option value="amount">{t('kindAmount')}</option>
+                  </Select>
+                )}
+              </Field>
+              <Field label={form.kind === 'percent' ? '%' : 'CHF'}>
+                {(props) => (
+                  <NumberField
+                    value={form.value}
+                    onCommit={(v) => patch({ value: v })}
+                    min={0}
+                    /* A percentage over 100 is the company paying the customer
+                       to be cleaned for. The cap belongs on the control rather
+                       than in a message, because there is no case where typing
+                       150 here meant anything. */
+                    max={form.kind === 'percent' ? 100 : undefined}
+                    {...props}
+                  />
+                )}
+              </Field>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('sectionDatesTitle')} />
+          <CardBody className="grid gap-5 sm:grid-cols-2">
+            <Field label={t('validFrom')}>
+              {(props) => (
+                <Input
+                  type="date"
+                  value={form.validFrom.slice(0, 10)}
+                  onChange={(e) => patch({ validFrom: e.target.value })}
+                  {...props}
+                />
+              )}
+            </Field>
+            <Field label={t('validTo')} error={dateError}>
+              {(props) => (
+                <Input
+                  type="date"
+                  value={form.validTo.slice(0, 10)}
+                  onChange={(e) => patch({ validTo: e.target.value })}
+                  {...props}
+                />
+              )}
+            </Field>
+            <Field label={t('minOrderLabel')} optional>
+              {(props) => (
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.minOrder ?? ''}
+                  onChange={(e) =>
+                    patch({ minOrder: e.target.value ? Number(e.target.value) : undefined })
+                  }
+                  {...props}
+                />
+              )}
+            </Field>
+            <Field
+              label={t('maxUsesLabel')}
+              /* On an existing coupon the ceiling is not an abstract number: it
+                 is being compared against a count that already happened, and
+                 lowering it below that count is what puts a live code into
+                 «aufgebraucht». Said here rather than discovered from the badge
+                 after saving — and said *under* the box, because in this
+                 two-column grid the line above the control is where the
+                 neighbouring cell shows a value. */
+              hint={
+                isNew || remaining === undefined
+                  ? t('maxUsesHint')
+                  : t('maxUsesRemaining', { n: remaining })
+              }
+              optional
+            >
+              {(props) => (
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={form.maxUses ?? ''}
+                  onChange={(e) =>
+                    patch({ maxUses: e.target.value ? Number(e.target.value) : undefined })
+                  }
+                  {...props}
+                />
+              )}
+            </Field>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title={t('servicesLabel')}
+            /* The convention belongs beside the heading that raises the
+               question, not in a line under the boxes: no ticks means every
+               service, and without it a coupon good on everything looks exactly
+               like one nobody finished writing. */
+            description={form.services.length === 0 ? t('servicesAll') : undefined}
+          />
+          <CardBody>
+            <fieldset>
+              {/* The card heading names the group on screen. The legend is what
+                  carries that name into the accessibility tree, where a heading
+                  above a fieldset does not group the boxes inside it. */}
+              <legend className="sr-only">{t('servicesLabel')}</legend>
+              <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                {services.map((s) => (
+                  <Checkbox
+                    key={s.id}
+                    label={s.name[locale]}
+                    checked={form.services.includes(s.slug)}
+                    onChange={(e) =>
+                      patch({
+                        services: e.target.checked
+                          ? [...form.services, s.slug]
+                          : form.services.filter((x) => x !== s.slug),
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </fieldset>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('sectionStatusTitle')} />
+          <CardBody>
+            {/*
+              A switch on the list and a switch here, and what separates them is
+              now written rather than drawn.
+
+              On the list the flip is the whole action: it applies at once and
+              the same click puts it back. Here it sits in a draft beside a
+              half-typed code and a date nobody has committed to, so applying it
+              alone would publish one decision out of a record the reader can
+              still see is unfinished. A switch normally promises the opposite,
+              which is what makes the hint load-bearing rather than decoration —
+              it is the only thing on the control saying the flip waits for the
+              save button.
+            */}
+            <SwitchField
+              label={t('activeLabel')}
+              hint={t('activeHint')}
+              checked={form.active}
+              onCheckedChange={(v) => patch({ active: v })}
             />
-          )}
-        </Field>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={t('kindLabel')}>
-            {(props) => (
-              <Select
-                value={form.kind}
-                onChange={(e) => patch({ kind: e.target.value as Coupon['kind'] })}
-                {...props}
-              >
-                <option value="percent">{t('kindPercent')}</option>
-                <option value="amount">{t('kindAmount')}</option>
-              </Select>
-            )}
-          </Field>
-          <Field label={form.kind === 'percent' ? '%' : 'CHF'}>
-            {(props) => (
-              <NumberField
-                value={form.value}
-                onCommit={(v) => patch({ value: v })}
-                min={0}
-                /* A percentage over 100 is the company paying the customer to
-                   be cleaned for. The cap belongs on the control rather than
-                   in a message, because there is no case where typing 150 here
-                   meant anything. */
-                max={form.kind === 'percent' ? 100 : undefined}
-                {...props}
-              />
-            )}
-          </Field>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={t('validFrom')}>
-            {(props) => (
-              <Input
-                type="date"
-                value={form.validFrom.slice(0, 10)}
-                onChange={(e) => patch({ validFrom: e.target.value })}
-                {...props}
-              />
-            )}
-          </Field>
-          <Field label={t('validTo')} error={dateError}>
-            {(props) => (
-              <Input
-                type="date"
-                value={form.validTo.slice(0, 10)}
-                onChange={(e) => patch({ validTo: e.target.value })}
-                {...props}
-              />
-            )}
-          </Field>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={t('minOrderLabel')} optional>
-            {(props) => (
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={form.minOrder ?? ''}
-                onChange={(e) =>
-                  patch({ minOrder: e.target.value ? Number(e.target.value) : undefined })
-                }
-                {...props}
-              />
-            )}
-          </Field>
-          <Field
-            label={t('maxUsesLabel')}
-            /* On an existing coupon the ceiling is not an abstract number: it
-               is being compared against a count that already happened, and
-               lowering it below that count is what puts a live code into
-               «aufgebraucht». Said here rather than discovered from the badge
-               after saving. */
-            hint={
-              isNew || remaining === undefined
-                ? t('maxUsesHint')
-                : t('maxUsesRemaining', { n: remaining })
-            }
-            optional
-          >
-            {(props) => (
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={form.maxUses ?? ''}
-                onChange={(e) =>
-                  patch({ maxUses: e.target.value ? Number(e.target.value) : undefined })
-                }
-                {...props}
-              />
-            )}
-          </Field>
-        </div>
-
-        <fieldset>
-          <legend className="label-type text-ink-secondary">{t('servicesLabel')}</legend>
-          <p className="mt-1 text-sm text-ink-tertiary">
-            {form.services.length === 0 ? t('servicesAll') : null}
-          </p>
-          <div className="mt-3 space-y-2.5">
-            {services.map((s) => (
-              <Checkbox
-                key={s.id}
-                label={s.name[locale]}
-                checked={form.services.includes(s.slug)}
-                onChange={(e) =>
-                  patch({
-                    services: e.target.checked
-                      ? [...form.services, s.slug]
-                      : form.services.filter((x) => x !== s.slug),
-                  })
-                }
-              />
-            ))}
-          </div>
-        </fieldset>
-
-        <Checkbox
-          label={t('activeLabel')}
-          /*
-             A checkbox here, a switch on the list, and the same field behind
-             both — which is the split rather than a drift.
-
-             On the list the flip is the whole action: nothing else is in
-             flight and the same click puts it back, so it applies at once and
-             says so. Here it sits in a draft next to a half-typed code and a
-             date nobody has committed to. Applying it on its own would publish
-             one decision out of a record the reader can still see is
-             unfinished — the office would pull a code and leave the dates it
-             was pulled in favour of unsaved beside it. */
-          checked={form.active}
-          onChange={(e) => patch({ active: e.target.checked })}
-        />
+          </CardBody>
+        </Card>
       </div>
 
       {/*

@@ -9,6 +9,11 @@ import { cn } from '@/lib/cn';
  * an add-on going live, a region being served. A checkbox promises a save
  * button somewhere; a switch does not, which is the honest signal for the
  * autosaving screens in this app.
+ *
+ * One screen deliberately breaks that: the coupon editor stages everything in a
+ * draft, so its switch has to say in its hint that the flip waits for save. A
+ * switch inside a draft form needs that sentence — without it the control
+ * promises something the screen does not do.
  */
 export function Switch({
   className,
