@@ -207,9 +207,13 @@ export default function PlansPage() {
           clearLabel: t('searchClear'),
         }}
         filters={
+          /* The name of each filter rides inside the control, not above it.
+             Printed above, «Leistung» and «Status» repeated the two table
+             columns of the same name one line further down: a title that says
+             nothing its own column header does not, costing the toolbar a row. */
           <>
             <label>
-              <span className="label-type mb-1 text-ink-tertiary">{t('colService')}</span>
+              <span className="sr-only">{t('colService')}</span>
               <Select
                 dense
                 value={service}
@@ -224,13 +228,15 @@ export default function PlansPage() {
               </Select>
             </label>
             <label>
-              <span className="label-type mb-1 text-ink-tertiary">{t('colStatus')}</span>
+              <span className="sr-only">{t('colStatus')}</span>
               <Select
                 dense
                 value={status}
                 onChange={(e) => setStatus(e.target.value as typeof status)}
               >
-                <option value="all">{t('filterAllStatus')}</option>
+                <option value="all">
+                  {t('colStatus')}: {t('filterAllStatus')}
+                </option>
                 <option value="active">{t('active')}</option>
                 <option value="retired">{t('retired')}</option>
               </Select>
