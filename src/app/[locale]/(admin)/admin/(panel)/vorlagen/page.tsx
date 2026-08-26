@@ -288,43 +288,43 @@ export default function AdminTemplatesPage() {
         count={t('count', { n: filtered.length, total: templates.length })}
         filters={
           <>
-            <Field label={t('filterFlow')} className="min-w-44">
-              {(props) => (
-                <Select
-                  {...props}
-                  dense
-                  value={flow}
-                  onChange={(e) => setFlow(e.target.value as TemplateFlow | 'all')}
-                >
-                  <option value="all">{t('filterAll')}</option>
-                  {TEMPLATE_FLOWS.map((one) => (
-                    <option key={one} value={one}>
-                      {flowLabel(one)}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
+            {/* A bare label, not a Field: Field is the form component, and its
+                title above the box gave a toolbar filter the weight of a field
+                you fill in. The name belongs in the closed select, where every
+                other list screen keeps it. */}
+            <label>
+              <span className="sr-only">{t('filterFlow')}</span>
+              <Select
+                dense
+                value={flow}
+                onChange={(e) => setFlow(e.target.value as TemplateFlow | 'all')}
+              >
+                <option value="all">
+                  {t('filterFlow')}: {t('filterAll')}
+                </option>
+                {TEMPLATE_FLOWS.map((one) => (
+                  <option key={one} value={one}>
+                    {flowLabel(one)}
+                  </option>
+                ))}
+              </Select>
+            </label>
             {/* Only offered once a tag exists — an empty filter is a control
                 that cannot change anything. */}
             {tags.length > 0 && (
-              <Field label={t('filterTag')} className="min-w-44">
-                {(props) => (
-                  <Select
-                    {...props}
-                    dense
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                  >
-                    <option value="">{t('filterAll')}</option>
-                    {tags.map((one) => (
-                      <option key={one} value={one}>
-                        {one}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
+              <label>
+                <span className="sr-only">{t('filterTag')}</span>
+                <Select dense value={tag} onChange={(e) => setTag(e.target.value)}>
+                  <option value="">
+                    {t('filterTag')}: {t('filterAll')}
+                  </option>
+                  {tags.map((one) => (
+                    <option key={one} value={one}>
+                      {one}
+                    </option>
+                  ))}
+                </Select>
+              </label>
             )}
           </>
         }
