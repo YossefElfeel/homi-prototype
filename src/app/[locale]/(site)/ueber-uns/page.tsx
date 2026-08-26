@@ -165,7 +165,7 @@ export default async function AboutPage({
               <span
                 data-numeric
                 aria-hidden
-                className={hv ? 'display-type text-ink-accent text-4xl leading-none' : 'label-type text-ink-accent'}
+                className={hv ? 'display-type text-ink-accent text-display-floor leading-none' : 'label-type text-ink-accent'}
               >
                 {String(i + 1).padStart(2, '0')}
               </span>

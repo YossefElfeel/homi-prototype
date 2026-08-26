@@ -15,7 +15,7 @@ export function Coverage() {
     <section className="py-20 lg:py-[70px]">
       <div className="hv-container grid gap-14 lg:grid-cols-[minmax(0,42%)_minmax(0,1fr)] lg:gap-16">
         <div>
-          <h2 className="display-type text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+          <h2 className="display-type text-display-3 leading-[0.95]">
             <DisplayLines key={locale}>
               {[
                 <span key="a" className="text-ink-accent">
@@ -29,7 +29,7 @@ export function Coverage() {
           </h2>
 
           <Reveal delay={0.12}>
-            <p className="text-ink-secondary mt-6 max-w-[520px] text-[17px] leading-[1.55] sm:text-lg">
+            <p className="text-ink-secondary mt-6 max-w-[520px] text-lead leading-[1.55] sm:text-lg">
               {t.coverage.body}
             </p>
           </Reveal>
@@ -80,7 +80,7 @@ export function Coverage() {
                * Smaller type below `sm` buys the room; `break-words` is the
                * guard so the next long name wraps instead of disappearing.
                */}
-              <p className="text-ink text-[15px] leading-none font-medium break-words sm:text-[17px]">
+              <p className="text-ink text-body leading-none font-medium break-words sm:text-lead">
                 {m.name}
               </p>
               <p className="text-ink-secondary group-hover:text-ink mt-3 text-sm tabular-nums transition-colors duration-400">

@@ -39,7 +39,7 @@ export function CoverageCheck() {
     <div>
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
         <div className="min-w-[12rem] flex-1">
-          <label htmlFor="plz" className="text-ink-inverse/60 block text-[15px]">
+          <label htmlFor="plz" className="text-ink-inverse/60 block text-body">
             {t("checkLabel")}
           </label>
           <input
@@ -78,7 +78,7 @@ export function CoverageCheck() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.45, ease: EASE }}
-              className="text-ink-inverse mt-4 block text-[17px] leading-[1.5]"
+              className="text-ink-inverse mt-4 block text-lead leading-[1.5]"
             >
               {result.state === "inside"
                 ? t("inside", { region: result.region.name })

@@ -305,6 +305,7 @@ export const en: Messages = {
     screens: 'Screen index',
     openQuestions: 'Open questions',
     foundations: 'Design tokens',
+    designSystem: 'Design system',
     roles: {
       visitor: 'Visitor',
       customer: 'Customer',

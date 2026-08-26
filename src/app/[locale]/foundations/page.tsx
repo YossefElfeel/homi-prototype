@@ -56,7 +56,7 @@ export default async function FoundationsPage({
       <Section title="Type" note="Display, body and label voices change per direction.">
         <div className="space-y-6">
           <p className="display-type text-6xl">Sauber. Zuverlässig.</p>
-          <p className="display-type text-3xl">Reinigung am rechten Zürichseeufer</p>
+          <p className="display-type text-display-6">Reinigung am rechten Zürichseeufer</p>
           <p className="max-w-[var(--measure)] text-base text-ink-secondary">
             Wir reinigen Privathaushalte und kleine Büros zwischen Küsnacht und
             Hombrechtikon. Fester Stundensatz, verbindliche Offerte innert 24 Stunden,
@@ -157,7 +157,7 @@ function Section({
 }) {
   return (
     <section className="border-b border-line-subtle py-block last:border-0">
-      <h2 className="display-type text-2xl">{title}</h2>
+      <h2 className="subhead-type text-2xl">{title}</h2>
       <p className="mt-2 mb-6 max-w-[var(--measure)] text-sm text-ink-secondary">{note}</p>
       {children}
     </section>

@@ -29,7 +29,7 @@ export function CtaBand() {
       />
 
       <div className="hv-container relative py-24 text-center lg:py-[100px]">
-        <h2 className="display-type mx-auto max-w-[1100px] text-[clamp(38px,8.1vw,118px)] leading-[0.92] text-ink-inverse">
+        <h2 className="display-type mx-auto max-w-[1100px] text-display-1 leading-[0.92] text-ink-inverse">
           <DisplayLines key={locale}>
             {[
               <span key="a">
@@ -44,7 +44,7 @@ export function CtaBand() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={inViewLoose}
           transition={{ duration: 0.75, ease: EASE, delay: 0.18 }}
-          className="mx-auto mt-7 max-w-[1000px] text-[17px] leading-[1.55] text-ink-inverse/85 sm:text-lg"
+          className="mx-auto mt-7 max-w-[1000px] text-lead leading-[1.55] text-ink-inverse/85 sm:text-lg"
         >
           {t.cta.body}
         </motion.p>

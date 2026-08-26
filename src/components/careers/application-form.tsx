@@ -121,7 +121,7 @@ export function ApplicationForm({ postingSlug }: { postingSlug?: string }) {
   return (
     <div className="max-w-2xl">
       <p className="label-type text-ink-tertiary">{t('stepOf', { step })}</p>
-      <h1 className="display-type mt-3 text-[clamp(1.75rem,3.4vw,2.5rem)]">
+      <h1 className="display-type mt-3 text-[clamp(2.25rem,3.4vw,2.5rem)]">
         {step === 1 ? t('step1Title') : t('step2Title')}
       </h1>
       <p className="mt-3 text-ink-secondary">

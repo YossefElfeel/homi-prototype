@@ -66,7 +66,7 @@ export function SectionHead({
   return (
     <div className={`flex flex-wrap items-center justify-between gap-8 ${className}`}>
       <div className="max-w-[46ch]">
-        <h2 className="display-type text-[clamp(36px,4.4vw,62px)] leading-[0.95]">
+        <h2 className="display-type text-display-4 leading-[0.95]">
           <span className="sr-only">{spokenHeadline(parsed)}</span>
           <DisplayLines ariaHidden className="block">
             {parsed.map((line, i) => (
@@ -80,7 +80,7 @@ export function SectionHead({
         </h2>
         {lead ? (
           <Reveal delay={0.12}>
-            <p className="text-ink-secondary mt-5 text-[17px] leading-[1.55]">{lead}</p>
+            <p className="text-ink-secondary mt-5 text-lead leading-[1.55]">{lead}</p>
           </Reveal>
         ) : null}
       </div>

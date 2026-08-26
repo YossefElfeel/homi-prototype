@@ -69,7 +69,7 @@ export function Footer() {
               />
             </span>
 
-            <h2 className="display-type mt-14 text-[clamp(36px,4vw,52px)] leading-[0.95] text-ink-inverse">
+            <h2 className="display-type mt-14 text-display-5 leading-[0.95] text-ink-inverse">
               <DisplayLines key={locale} each={0.08}>
                 {t.footer.tagline.map((line) => (
                   <span key={line}>{line}</span>
@@ -102,8 +102,8 @@ export function Footer() {
             />
 
             <div>
-              <h3 className="text-[17px] font-medium">{t.footer.supportTitle}</h3>
-              <ul className="mt-5 space-y-3.5 text-[15px] text-ink-inverse/65">
+              <h3 className="text-lead font-medium">{t.footer.supportTitle}</h3>
+              <ul className="mt-5 space-y-3.5 text-body text-ink-inverse/65">
                 <li>
                   <a
                     href={contact.phoneHref}
@@ -134,8 +134,8 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col gap-6 border-t border-page/12 pt-9 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[15px] text-ink-inverse/70">{t.footer.copyright}</p>
-            <ul className="mt-2 flex flex-wrap gap-5 text-[15px] text-ink-inverse/70">
+            <p className="text-body text-ink-inverse/70">{t.footer.copyright}</p>
+            <ul className="mt-2 flex flex-wrap gap-5 text-body text-ink-inverse/70">
               {t.footer.legal.map((item, i) => (
                 <li key={item}>
                   {/* Padded to a real target, with the underline moved onto an
@@ -161,7 +161,7 @@ export function Footer() {
           {/* The flag is the statement, so it is not `aria-hidden` with the
               words repeated beside it — the words *are* the alt text, and the
               mark reads as one thing to a screen reader instead of two. */}
-          <p className="text-ink-inverse/70 flex shrink-0 items-center gap-2.5 text-[15px]">
+          <p className="text-ink-inverse/70 flex shrink-0 items-center gap-2.5 text-body">
             <SwissFlag className="h-4 w-4 shrink-0" />
             {t.footer.madeIn}
           </p>
@@ -186,13 +186,13 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="text-[17px] font-medium">{title}</h3>
+      <h3 className="text-lead font-medium">{title}</h3>
       <ul className="mt-5 space-y-3.5">
         {items.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
-              className="group inline-flex items-center text-[15px] text-ink-inverse/65 transition-colors hover:text-ink-inverse"
+              className="group inline-flex items-center text-body text-ink-inverse/65 transition-colors hover:text-ink-inverse"
             >
               <span className="relative">
                 {item.label}
@@ -216,7 +216,7 @@ function FooterColumn({
 function Socials({ label }: { label: string }) {
   return (
     <div className="mt-10">
-      <p className="text-[15px] text-ink-inverse/70">{label}</p>
+      <p className="text-body text-ink-inverse/70">{label}</p>
       <motion.ul
         initial="hidden"
         whileInView="show"

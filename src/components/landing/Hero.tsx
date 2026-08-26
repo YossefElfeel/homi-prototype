@@ -67,7 +67,7 @@ export function Hero() {
               key={locale}
               immediate
               delay={0.3}
-              className="block text-[clamp(42px,7.55vw,110px)] leading-[0.9]"
+              className="block text-display-1 leading-[0.9]"
             >
               {t.hero.headline.map((line, i) => (
                 <span key={i} className="block">
@@ -85,7 +85,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: EASE, delay: 0.85 }}
-            className="mt-6 max-w-[660px] text-[17px] leading-[1.5] text-ink-inverse/75 sm:text-lg"
+            className="mt-6 max-w-[660px] text-lead leading-[1.5] text-ink-inverse/75 sm:text-lg"
           >
             {t.hero.sub}
           </motion.p>
@@ -125,7 +125,7 @@ function HeroBadge() {
       className="absolute right-6 bottom-[104px] hidden w-[262px] rounded-2xl bg-page/92 p-4 backdrop-blur-md lg:right-12 lg:bottom-[62px] lg:block"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-ink text-[15px] leading-[1.35]">
+        <p className="text-ink text-body leading-[1.35]">
           {t.hero.badge.line1}
           <br />
           <span className="text-ink-secondary">{t.hero.badge.line2}</span>
@@ -160,7 +160,11 @@ function HeroBadge() {
             </motion.span>
           ))}
         </div>
-        <span data-numeric className="display-type text-ink text-2xl normal-case tracking-normal">
+        {/* Not display-type: Bebas at 24px is under the 36px floor, and this
+            badge cannot grow to reach it without pushing the hero card off the
+            photograph. So it takes the step the floor prescribes — Geist, one
+            weight up — rather than setting the display face too small. */}
+        <span data-numeric className="subhead-type text-ink text-2xl font-semibold">
           {t.hero.badge.count}
         </span>
       </div>
@@ -185,7 +189,7 @@ function HeroTags() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE, delay: 1.05 + i * 0.09 }}
-            className={`pointer-events-auto rounded-full px-5 py-2.5 text-[15px] font-medium whitespace-nowrap transition-colors duration-300 ${
+            className={`pointer-events-auto rounded-full px-5 py-2.5 text-body font-medium whitespace-nowrap transition-colors duration-300 ${
               i === 0
                 ? "bg-inverse hover:bg-accent text-ink-inverse"
                 : "bg-sunken text-ink hover:bg-inverse hover:text-ink-inverse"

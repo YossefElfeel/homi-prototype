@@ -170,7 +170,7 @@ export default async function ServicePage({
         <div className="mx-auto grid max-w-7xl gap-10 px-gutter py-14 lg:grid-cols-12 lg:py-20">
           <div className="lg:col-span-7">
             <ServiceIcon slug={service.slug} className="size-7 text-ink-accent" />
-            <h1 className="display-type mt-5 text-[clamp(2rem,5vw,3.5rem)]">
+            <h1 className="display-type mt-5 text-display-4">
               {service.name[locale as Locale]}
             </h1>
             <span aria-hidden className="mt-6 block h-0.5 w-12 bg-rule" />

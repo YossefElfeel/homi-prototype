@@ -73,7 +73,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
           {t('badge')}
         </span>
 
-        <h1 className="display-type mt-5 text-[clamp(1.875rem,4vw,3rem)]">{t('title')}</h1>
+        <h1 className="display-type mt-5 text-[clamp(2.25rem,4vw,3rem)]">{t('title')}</h1>
 
         <p className="mt-4 flex items-baseline gap-3">
           <span className="label-type text-ink-tertiary">{t('reference')}</span>

@@ -19,7 +19,7 @@ export function Steps() {
     <section id="work" className="scroll-mt-28 py-20 lg:py-[80px]">
       <div className="hv-container">
         <div className="flex flex-wrap items-center justify-between gap-8">
-          <h2 className="display-type text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+          <h2 className="display-type text-display-3 leading-[0.95]">
             <DisplayLines key={locale}>
               {[
                 <span key="a">
@@ -90,7 +90,7 @@ export function Steps() {
                       {step.title}
                     </h3>
                     <p
-                      className={`mt-2 text-[15px] leading-[1.5] transition-colors duration-400 ${
+                      className={`mt-2 text-body leading-[1.5] transition-colors duration-400 ${
                         on ? "text-ink-inverse/72" : "text-ink-secondary"
                       }`}
                     >

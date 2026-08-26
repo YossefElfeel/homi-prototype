@@ -76,7 +76,7 @@ export function BookingStep({
 
       <div className="grid gap-10 pt-8 lg:grid-cols-12 lg:gap-14">
         <div className="lg:col-span-7">
-          <h1 className="display-type text-[clamp(1.75rem,4vw,2.75rem)]">{title}</h1>
+          <h1 className="display-type text-[clamp(2.25rem,4vw,2.75rem)]">{title}</h1>
           {lead && <p className="mt-4 max-w-[46ch] text-ink-secondary">{lead}</p>}
 
           <div className="mt-9">{children}</div>

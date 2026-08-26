@@ -67,7 +67,7 @@ export default function JobPostingPage({ params }: { params: Promise<{ slug: str
 
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         <div className="min-w-0">
-          <h1 className="display-type text-[clamp(36px,5vw,60px)]">
+          <h1 className="display-type text-display-4">
             {posting.title[locale]}
           </h1>
           <p className="mt-5 max-w-[var(--measure)] text-lg text-ink-secondary">

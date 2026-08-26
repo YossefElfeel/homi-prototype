@@ -194,7 +194,7 @@ export function ServiceMosaic({
 
               <span className="flex items-end justify-between gap-4">
                 <span className="flex min-w-0 flex-col">
-                  <span className="text-ink-inverse/85 text-[15px] leading-snug sm:text-base">
+                  <span className="text-ink-inverse/85 text-body leading-snug sm:text-base">
                     {service.name[locale]}
                   </span>
                   <span
@@ -203,7 +203,7 @@ export function ServiceMosaic({
                        which is 2.65:1 over a photograph. Lift it with the rest
                        of the price rather than leaving the qualifier the one
                        unreadable word on the tile. */
-                    className="display-type text-ink-inverse mt-1.5 text-[clamp(30px,3vw,42px)] leading-[0.85] [&_span]:text-ink-inverse/70"
+                    className="display-type text-ink-inverse mt-1.5 text-display-6 leading-[0.85] [&_span]:text-ink-inverse/70"
                   >
                     <Money amount={serviceFromPrice(service.minDuration)} from />
                   </span>

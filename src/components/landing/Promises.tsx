@@ -14,7 +14,7 @@ export function Promises() {
     <section id="about" className="scroll-mt-28 py-16 lg:py-[74px]">
       <div className="hv-container">
         <div className="flex flex-wrap items-center justify-between gap-8">
-          <h2 className="display-type text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+          <h2 className="display-type text-display-3 leading-[0.95]">
             <DisplayLines key={locale}>
               {[
                 <span key="a">
@@ -56,7 +56,7 @@ export function Promises() {
             >
               <h3 className="text-xl leading-snug font-medium">{item.title}</h3>
               <p
-                className={`mt-4 text-[15px] leading-[1.62] transition-colors duration-400 ${
+                className={`mt-4 text-body leading-[1.62] transition-colors duration-400 ${
                   item.featured
                     ? "text-ink-inverse/70 group-hover:text-ink-inverse/90"
                     : "text-ink-secondary group-hover:text-ink"

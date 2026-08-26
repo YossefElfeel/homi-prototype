@@ -41,7 +41,7 @@ export function Stats() {
               }}
             >
               <p
-                className={`display-type text-[clamp(54px,5.6vw,86px)] leading-[0.8] ${
+                className={`display-type text-figure-2 leading-[0.8] ${
                   i === 0 ? "text-ink-accent" : "text-ink"
                 }`}
               >

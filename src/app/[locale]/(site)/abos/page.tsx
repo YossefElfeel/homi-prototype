@@ -81,7 +81,7 @@ export default async function PlansPage({
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
             <div>
               <h2 className="font-medium">{t('commitmentNoticeTitle')}</h2>
-              <p className="mt-1.5 text-[15px] leading-[1.6] text-ink-secondary">
+              <p className="mt-1.5 text-body leading-[1.6] text-ink-secondary">
                 {t('commitmentNoticeBody')}
               </p>
             </div>

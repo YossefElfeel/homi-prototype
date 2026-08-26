@@ -107,7 +107,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
             <Wallet className="size-6" aria-hidden />
           </span>
-          <h1 className="display-type mt-7 text-[clamp(1.75rem,3.6vw,2.75rem)]">
+          <h1 className="display-type mt-7 text-[clamp(2.25rem,3.6vw,2.75rem)]">
             {t('coveredTitle')}
           </h1>
           <p className="mt-4 text-lg text-ink-secondary">{t('coveredSubscription')}</p>
@@ -150,7 +150,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
             <AlertTriangle className="size-3.5" aria-hidden />
             {f('badge')}
           </span>
-          <h1 className="display-type mt-5 text-[clamp(1.75rem,3.6vw,2.75rem)]">
+          <h1 className="display-type mt-5 text-[clamp(2.25rem,3.6vw,2.75rem)]">
             {f('title')}
           </h1>
           <p className="mt-4 text-lg text-ink-secondary">{f('body')}</p>
@@ -198,7 +198,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
     <OfferShell offer={offer} step="zahlung">
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">{t('title')}</h1>
+          <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">{t('title')}</h1>
           <p className="mt-4 max-w-[46ch] text-ink-secondary">{t('lead')}</p>
 
           <fieldset className="mt-8">
