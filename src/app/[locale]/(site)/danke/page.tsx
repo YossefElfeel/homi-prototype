@@ -35,7 +35,7 @@ export default async function ThanksPage({
       <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
         <Check className="size-6" aria-hidden />
       </span>
-      <h1 className="display-type mt-7 text-[clamp(36px,5vw,64px)]">{t('title')}</h1>
+      <h1 className="display-type mt-7 text-display-4">{t('title')}</h1>
       <p className="mt-5 text-lg text-ink-secondary">{t('lead')}</p>
 
       <h2 className="label-type mt-12 text-ink-tertiary">{t('nextTitle')}</h2>

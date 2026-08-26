@@ -37,11 +37,11 @@ export function ApplicationSent({ reference }: { reference: string }) {
         <Check className="size-5" aria-hidden />
       </span>
 
-      <h1 className="display-type mt-6 text-[clamp(1.75rem,3.4vw,2.5rem)]">{t('title')}</h1>
+      <h1 className="display-type mt-6 text-[clamp(2.25rem,3.4vw,2.5rem)]">{t('title')}</h1>
 
       <div className="surface-card mt-8 p-6">
         <p className="label-type text-ink-tertiary">{t('reference')}</p>
-        <p data-numeric className="display-type mt-2 text-3xl">
+        <p data-numeric className="subhead-type mt-2 text-3xl">
           {reference}
         </p>
         <p className="mt-3 text-sm text-ink-secondary">{t('referenceHint')}</p>

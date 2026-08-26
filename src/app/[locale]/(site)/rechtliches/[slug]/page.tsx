@@ -48,7 +48,7 @@ export default async function LegalPage({
   return (
     <div className="mx-auto max-w-7xl px-gutter py-block">
       <header className="border-b border-line-subtle pb-8">
-        <h1 className="display-type text-[clamp(36px,4.5vw,56px)]">{doc.title}</h1>
+        <h1 className="display-type text-display-4">{doc.title}</h1>
         <p className="mt-4 text-sm text-ink-tertiary">
           {t('updated')}{' '}
           <time data-numeric dateTime={doc.updated}>

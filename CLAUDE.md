@@ -69,6 +69,7 @@ it is the strongest evidence the check was real.
 npx tsc --noEmit
 npm run lint
 npm run build
+npm run test:type-floor
 ```
 
 Only one `next dev` can hold this directory at a time. If a server is already
@@ -77,8 +78,10 @@ running, either use it or stop it — a second `next dev` is refused, and
 eventually corrupt it; the symptom is a `JSON.parse` `SyntaxError` on every
 route including `/favicon.ico`, and the fix is `rm -rf .next`.
 
-Those three commands prove types, lint and that every route builds. They do not
-prove a screen renders, so anything visual still needs looking at.
+Those first three prove types, lint and that every route builds.
+`test:type-floor` proves the one typographic rule the direction cannot express
+in a token: nothing sets Bebas below 36px. None of them prove a screen renders,
+so anything visual still needs looking at.
 
 **To look at a screen, the browser pane has to be open on screen.** Not merely
 started — displayed. A pane that is closed renders its tab at 0×0 with

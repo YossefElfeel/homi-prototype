@@ -54,7 +54,7 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
             <Check className="size-6" aria-hidden />
           </span>
-          <h1 className="display-type mt-7 text-[clamp(1.75rem,3.6vw,2.75rem)]">
+          <h1 className="display-type mt-7 text-[clamp(2.25rem,3.6vw,2.75rem)]">
             {t('sentTitle')}
           </h1>
           <p className="mt-4 text-lg text-ink-secondary">
@@ -74,7 +74,7 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
   return (
     <OfferShell offer={offer}>
       <div className="max-w-2xl">
-        <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">{t('title')}</h1>
+        <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">{t('title')}</h1>
         <p className="mt-4 text-ink-secondary">{t('lead')}</p>
 
         <fieldset className="mt-8">

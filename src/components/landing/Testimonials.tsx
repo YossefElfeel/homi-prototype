@@ -39,7 +39,7 @@ export function Testimonials() {
       <div className="hv-container">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <Reveal>
-            <p className="display-type text-ink-accent text-[clamp(70px,9vw,121px)] leading-[0.72]">
+            <p className="display-type text-ink-accent text-figure-1 leading-[0.72]">
               160+
             </p>
 
@@ -91,7 +91,7 @@ export function Testimonials() {
                     ))}
                   </span>
                 </div>
-                <p className="text-ink-secondary mt-1 text-[15px]">{t.testimonials.rating}</p>
+                <p className="text-ink-secondary mt-1 text-body">{t.testimonials.rating}</p>
               </div>
             </div>
           </Reveal>
@@ -100,7 +100,7 @@ export function Testimonials() {
             <Reveal>
               <p className="text-ink-accent text-lg font-medium">{t.testimonials.eyebrow}</p>
             </Reveal>
-            <h2 className="display-type text-ink mt-2 text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+            <h2 className="display-type text-ink mt-2 text-display-3 leading-[0.95]">
               <DisplayLines key={locale}>
                 {[<span key="a">{t.testimonials.headline}</span>]}
               </DisplayLines>
@@ -150,7 +150,7 @@ export function Testimonials() {
                   label={t.testimonials.starsLabel.replace("{n}", String(item.rating ?? 5))}
                 />
 
-                <p className="mt-5 text-[15px] leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
+                <p className="mt-5 text-body leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
                   <span className="text-ink-inverse">{item.lead}</span>{" "}
                   {item.quote.startsWith(item.lead)
                     ? item.quote.slice(item.lead.length).trim()
@@ -167,7 +167,7 @@ export function Testimonials() {
                     />
                   </span>
                   <div>
-                    <p className="text-[17px] font-medium text-ink-inverse">{item.name}</p>
+                    <p className="text-lead font-medium text-ink-inverse">{item.name}</p>
                     <p className="mt-0.5 text-sm text-ink-inverse/55">{item.country}</p>
                   </div>
                 </div>

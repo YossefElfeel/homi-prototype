@@ -74,7 +74,7 @@ export default async function RegionsIndexPage({
                   one unbreakable word needing 121px inside a tile that gives
                   it 108 on a 375px screen, and the tile's `overflow-hidden`
                   was cutting it in half. */}
-              <span className="block text-[15px] leading-none font-medium break-words text-ink sm:text-[17px]">
+              <span className="block text-body leading-none font-medium break-words text-ink sm:text-lead">
                 {region.name}
               </span>
               <span

@@ -92,7 +92,7 @@ export function Plans({
     <section id="plans" className="scroll-mt-28 py-20 lg:py-[76px]">
       <div className="hv-container">
         <div className="flex flex-wrap items-center justify-between gap-8">
-          <h2 className="display-type text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+          <h2 className="display-type text-display-3 leading-[0.95]">
             <DisplayLines key={locale}>
               {[
                 <span key="a">
@@ -163,7 +163,7 @@ export function Plans({
                         The tab is a control, and a control is not a caption —
                         with the strip scrolled off, the rail would once again
                         be five prices with nothing saying what they buy. */}
-                    <p className="text-ink-secondary max-w-[70ch] text-[15px]">
+                    <p className="text-ink-secondary max-w-[70ch] text-body">
                       {group.service.short[routingLocale]}
                     </p>
                     {/* Not force-mounted, unlike the comparison table below.
@@ -190,7 +190,7 @@ export function Plans({
                   <h3 className="text-ink text-2xl tracking-[0.01em]">
                     {groups[0]!.service.name[routingLocale]}
                   </h3>
-                  <p className="text-ink-secondary text-[15px]">
+                  <p className="text-ink-secondary text-body">
                     {groups[0]!.service.short[routingLocale]}
                   </p>
                 </div>
@@ -307,7 +307,7 @@ function PlanCard({
             ? { animate: { opacity: 1, y: 0, scale: 1 } }
             : { whileInView: { opacity: 1, y: 0, scale: 1 }, viewport: inViewLoose })}
           transition={{ delay: 0.35, type: "spring", stiffness: 300, damping: 20 }}
-          className="bg-accent absolute -top-5 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 text-[15px] font-medium whitespace-nowrap text-ink-inverse"
+          className="bg-accent absolute -top-5 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 text-body font-medium whitespace-nowrap text-ink-inverse"
         >
           {p("recommended")}
         </motion.span>
@@ -342,7 +342,7 @@ function PlanCard({
 
       <p
         data-numeric
-        className={`display-type ${saving ? "mt-2.5" : "mt-6"} text-[clamp(44px,5.4vw,74px)] leading-[0.82] whitespace-nowrap ${
+        className={`display-type ${saving ? "mt-2.5" : "mt-6"} text-figure-3 leading-[0.82] whitespace-nowrap ${
           featured ? "text-ink-inverse" : "text-ink"
         }`}
       >

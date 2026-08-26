@@ -119,7 +119,7 @@ export function Header() {
                     key={item.href}
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className="group relative rounded-full px-4 py-2.5 text-[15px] font-medium"
+                    className="group relative rounded-full px-4 py-2.5 text-body font-medium"
                   >
                     {isActive ? (
                       <motion.span
@@ -233,7 +233,7 @@ export function Header() {
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.06 * i + 0.1, duration: 0.6, ease: EASE }}
-                    className="display-type flex items-center justify-between border-b border-page/12 py-5 text-[36px] text-ink-inverse"
+                    className="display-type flex items-center justify-between border-b border-page/12 py-5 text-display-floor text-ink-inverse"
                   >
                     {item.label}
                     <ArrowRight className="h-5 w-5 text-ink-inverse/40" />

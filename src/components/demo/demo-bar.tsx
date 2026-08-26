@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   HelpCircle,
   Palette,
+  Ruler,
   X,
 } from 'lucide-react';
 
@@ -312,6 +313,16 @@ export function DemoBar({
             icon={<Palette className="size-3.5" aria-hidden />}
           >
             {t('foundations')}
+          </ToolLink>
+          {/* The pair, and they answer different questions: /foundations proves
+              the token layer survives a theme switch, /design-system specifies
+              the one direction that ships. Linked side by side so a reviewer
+              does not have to guess which of the two they wanted. */}
+          <ToolLink
+            href="/design-system"
+            icon={<Ruler className="size-3.5" aria-hidden />}
+          >
+            {t('designSystem')}
           </ToolLink>
         </div>
 

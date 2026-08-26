@@ -48,7 +48,7 @@ export function ApplicationStatusCheck({ initialReference }: { initialReference?
 
   return (
     <div className="max-w-xl">
-      <h1 className="display-type text-[clamp(1.75rem,3.4vw,2.5rem)]">{t('title')}</h1>
+      <h1 className="display-type text-[clamp(2.25rem,3.4vw,2.5rem)]">{t('title')}</h1>
       <p className="mt-3 text-ink-secondary">{t('lead')}</p>
 
       <form

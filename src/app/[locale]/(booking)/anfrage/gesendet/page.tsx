@@ -39,7 +39,7 @@ export default function SentPage({
         <Check className="size-6" aria-hidden />
       </span>
 
-      <h1 className="display-type mt-7 text-[clamp(1.875rem,4vw,3rem)]">{t('title')}</h1>
+      <h1 className="display-type mt-7 text-[clamp(2.25rem,4vw,3rem)]">{t('title')}</h1>
 
       {ref && (
         <p className="mt-5 flex items-baseline gap-3">

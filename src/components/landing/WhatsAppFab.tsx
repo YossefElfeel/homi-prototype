@@ -61,7 +61,7 @@ export function WhatsAppFab() {
             <WhatsAppGlyph />
             <span className="grid grid-cols-[0fr] transition-[grid-template-columns] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:grid-cols-[1fr]">
               <span className="overflow-hidden">
-                <span className="block pl-3 text-[15px] font-medium whitespace-nowrap">
+                <span className="block pl-3 text-body font-medium whitespace-nowrap">
                   {t.actions.chat}
                 </span>
               </span>

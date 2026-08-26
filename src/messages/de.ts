@@ -323,6 +323,7 @@ export const de = {
     screens: 'Screen-Index',
     openQuestions: 'Offene Fragen',
     foundations: 'Design-Tokens',
+    designSystem: 'Design-System',
     roles: {
       visitor: 'Besucher',
       customer: 'Kunde',

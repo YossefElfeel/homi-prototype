@@ -67,7 +67,7 @@ const variants: Record<Variant, { base: string; wash: Wash; alt: Wash }> = {
 };
 
 const sizes: Record<Size, string> = {
-  md: "h-11 px-6 text-[15px]",
+  md: "h-11 px-6 text-body",
   lg: "h-[52px] px-7 text-base",
 };
 

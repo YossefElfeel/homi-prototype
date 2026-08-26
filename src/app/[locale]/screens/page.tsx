@@ -53,7 +53,7 @@ export default async function ScreensPage({
           return (
             <section key={track.id}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h2 className="display-type text-2xl">{track.en}</h2>
+                <h2 className="subhead-type text-2xl">{track.en}</h2>
                 <span data-numeric className="label-type text-ink-tertiary">
                   {done} / {track.screens.length}
                 </span>

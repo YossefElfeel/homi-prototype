@@ -105,7 +105,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
     return (
       <OfferShell offer={offer}>
         <div className="max-w-2xl">
-          <h1 className="display-type text-[clamp(1.875rem,4vw,3rem)]">
+          <h1 className="display-type text-[clamp(2.25rem,4vw,3rem)]">
             {t('declinedTitle')}
           </h1>
           <p className="mt-5 text-lg text-ink-secondary">{t('declinedBody')}</p>
@@ -121,7 +121,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
     return (
       <OfferShell offer={offer}>
         <div className="max-w-2xl">
-          <h1 className="display-type text-[clamp(1.875rem,4vw,3rem)]">{e('title')}</h1>
+          <h1 className="display-type text-[clamp(2.25rem,4vw,3rem)]">{e('title')}</h1>
           <p className="mt-5 text-lg text-ink-secondary">
             {e('body', {
               date: offer.expiresAt
@@ -150,7 +150,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
     <OfferShell offer={offer} step="offer">
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <h1 className="display-type text-[clamp(1.75rem,3.6vw,2.75rem)]">{t('title')}</h1>
+          <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">{t('title')}</h1>
           <p className="mt-3 text-ink-secondary">
             {t('for')} {customer.firstName} {customer.lastName} · {property.street},{' '}
             {property.postcode} {property.city}

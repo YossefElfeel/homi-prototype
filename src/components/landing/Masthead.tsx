@@ -92,7 +92,7 @@ export function Masthead({
           }`}
         >
           <div className={image ? "lg:max-w-[58%]" : undefined}>
-            <h1 className="display-type text-[clamp(38px,6vw,88px)] leading-[0.92] text-balance">
+            <h1 className="display-type text-display-2 leading-[0.92] text-balance">
               {/* Read as one sentence; the masks and the colour split are
                   presentation, and four announced fragments lose the sentence. */}
               <span className="sr-only">{spokenHeadline(parsed)}</span>
@@ -114,7 +114,7 @@ export function Masthead({
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: EASE, delay: 0.6 }}
-                className="text-ink-inverse/75 mt-7 max-w-[62ch] text-[17px] leading-[1.55] sm:text-lg"
+                className="text-ink-inverse/75 mt-7 max-w-[62ch] text-lead leading-[1.55] sm:text-lg"
               >
                 {lead}
               </motion.p>
@@ -161,11 +161,11 @@ export function Masthead({
                       wave-1 pattern this pass is retiring. */}
                   <dd
                     data-numeric
-                    className="display-type text-[clamp(34px,3.2vw,46px)] leading-[0.85]"
+                    className="display-type text-figure-4 leading-[0.85]"
                   >
                     {stat.value}
                   </dd>
-                  <dt className="text-ink-inverse/60 mt-2 max-w-[15rem] text-[15px] leading-[1.4]">
+                  <dt className="text-ink-inverse/60 mt-2 max-w-[15rem] text-body leading-[1.4]">
                     {stat.label}
                   </dt>
                 </div>

@@ -90,7 +90,7 @@ export function Services() {
     <section id="services" className="scroll-mt-28 overflow-x-clip py-20 lg:py-[70px]">
       <div className="hv-container grid items-start gap-12 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)] lg:gap-0">
         <div className="lg:pt-1 lg:pr-12">
-          <h2 className="display-type text-[clamp(36px,5.7vw,82px)] leading-[0.95]">
+          <h2 className="display-type text-display-3 leading-[0.95]">
             <DisplayLines key={locale}>
               {t.services.headline.map((line, i) => (
                 <span key={i}>
@@ -102,7 +102,7 @@ export function Services() {
           </h2>
 
           <Reveal delay={0.12}>
-            <p className="text-ink-secondary mt-6 max-w-[510px] text-[17px] leading-[1.55] sm:text-lg">
+            <p className="text-ink-secondary mt-6 max-w-[510px] text-lead leading-[1.55] sm:text-lg">
               {t.services.body}
             </p>
           </Reveal>
@@ -192,7 +192,7 @@ export function Services() {
 
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 sm:p-6">
                     <div>
-                      <p className="text-[15px] text-ink-inverse/85">{service.name}</p>
+                      <p className="text-body text-ink-inverse/85">{service.name}</p>
                       <p className="mt-1.5 text-lg font-semibold text-ink-inverse">
                         {service.price}
                       </p>
@@ -261,7 +261,7 @@ export function Services() {
               </button>
               <p
                 aria-live="polite"
-                className="text-ink text-[15px] font-medium whitespace-nowrap tabular-nums"
+                className="text-ink text-body font-medium whitespace-nowrap tabular-nums"
               >
                 {t.services.counter(active + 1, n)}
               </p>

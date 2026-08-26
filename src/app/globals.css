@@ -68,6 +68,67 @@
   --status-danger-border: #f3c9cb;
 }
 
+/* --------------------------------------------- 2b. TYPE SCALE (theme-stable)
+   Before this block the site set type in arbitrary values: fifteen distinct
+   `clamp()` expressions for headings — six of them the same expression typed
+   out six times — and `text-[15px]` in twenty-six places. Nothing was wrong
+   with the numbers. The problem was that there was no way to answer "what
+   size is a section heading" except by grepping, and no way to change one
+   without finding all six.
+
+   The steps below are those values, extracted. They are theme-stable for the
+   same reason the status colours are: every direction already rendered the
+   identical arbitrary value, so binding them per theme would invent four
+   behaviours where one shipped. Homivaro is what they were tuned against —
+   Bebas is condensed and caps-only, which is why the display steps run so
+   much larger than a normal grotesque would need.
+
+   THE FLOOR. Every display and figure step clamps at 36px, and that minimum
+   is the rule, not a coincidence: below it Bebas stops being a voice and
+   becomes a reading problem. A heading that needs to be smaller does not get
+   a smaller display step — it steps down to `subhead-type` and carries its
+   rank in Geist with weight instead. */
+:root {
+  /* Display — the heading voice, largest to smallest.
+     1  the poster headline. One per page: the hero, or the closing band.
+     2  the interior masthead — a page that opens on a dark card.
+     3  the section heading. The workhorse; six sections use it.
+     4  the page or panel title, under a masthead.
+     5  the footer tagline.
+     6  a card heading — the floor step, where the next stop is Geist. */
+  --text-display-1: clamp(42px, 7.55vw, 110px);
+  --text-display-2: clamp(38px, 6vw, 88px);
+  --text-display-3: clamp(36px, 5.7vw, 82px);
+  --text-display-4: clamp(36px, 4.6vw, 62px);
+  --text-display-5: clamp(36px, 4vw, 52px);
+  --text-display-6: clamp(36px, 3vw, 42px);
+
+  /* Figures — the same face used as a number rather than a sentence.
+     Separate from the display steps because they are set at tighter leading
+     (0.72–0.85) and because a figure's size answers to the number beside it,
+     not to the heading above it.
+     1  the single large claim — "160+".
+     2  a counter in a band of counters.
+     3  a price.
+     4  a stat inside a masthead or a table row. */
+  --text-figure-1: clamp(70px, 9vw, 121px);
+  --text-figure-2: clamp(54px, 5.6vw, 86px);
+  --text-figure-3: clamp(44px, 5.4vw, 74px);
+  --text-figure-4: clamp(36px, 3.4vw, 46px);
+
+  /* The floor itself, for the two places that want to sit on it rather than
+     scale above it: the mobile nav, and a price in a table row where a fluid
+     step would grow the figure until it crowded the label beside it. Naming
+     it means those two say "deliberately at the floor" instead of `36px`. */
+  --text-display-floor: 36px;
+
+  /* Body. Geist, and the two sizes the site actually uses between `text-sm`
+     and `text-lg`. `--text-body` is the site's real default for supporting
+     copy — it was `text-[15px]` in twenty-six places. */
+  --text-lead: 17px;
+  --text-body: 15px;
+}
+
 /* ======================================================== THEME: HOMIVARO
    The approved Figma design, and the only direction here that was drawn
    rather than proposed. The three below it are wave-1 exploration and stay
@@ -644,6 +705,26 @@
      value in six places before this. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1.45;
+
+  /* The type scale, as utilities. Deliberately no `--line-height` pair on the
+     display and figure steps: those are set per call site (0.72 on a figure,
+     0.95 on a heading) and a default here would silently win over half of
+     them. `display-type` already carries the leading a heading wants. */
+  --text-display-1: var(--text-display-1);
+  --text-display-2: var(--text-display-2);
+  --text-display-3: var(--text-display-3);
+  --text-display-4: var(--text-display-4);
+  --text-display-5: var(--text-display-5);
+  --text-display-6: var(--text-display-6);
+
+  --text-figure-1: var(--text-figure-1);
+  --text-figure-2: var(--text-figure-2);
+  --text-figure-3: var(--text-figure-3);
+  --text-figure-4: var(--text-figure-4);
+  --text-display-floor: var(--text-display-floor);
+
+  --text-lead: var(--text-lead);
+  --text-body: var(--text-body);
 }
 
 /* ------------------------------------------------------------- 4. BASE */

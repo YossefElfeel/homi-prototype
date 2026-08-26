@@ -148,7 +148,7 @@ export default async function FlowsPage({
                 label. With the rows underneath translated it was the last
                 German on the page, and a second name for something nobody
                 looks up by name. */}
-            <h2 className="display-type text-2xl">{flow.en}</h2>
+            <h2 className="subhead-type text-2xl">{flow.en}</h2>
 
             <p className="mt-2 flex flex-wrap gap-1.5">
               {flow.actors.map((actor) => (

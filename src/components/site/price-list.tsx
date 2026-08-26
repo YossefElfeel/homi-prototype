@@ -79,8 +79,8 @@ export async function PriceList({
                     display
                       ? // Money sets its "ab"/"from" prefix in tertiary grey,
                         // which is right beside body copy and too quiet beside
-                        // a 36px numeral. Lifted with the figure it qualifies.
-                        'display-type text-[30px] leading-none sm:text-[36px] [&_span]:text-ink-secondary'
+                        // a figure this size. Lifted with the figure it qualifies.
+                        'display-type text-display-floor leading-none [&_span]:text-ink-secondary'
                       : 'text-xl',
                   )}
                 >

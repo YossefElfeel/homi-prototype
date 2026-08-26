@@ -30,7 +30,7 @@ export default function ErrorBoundary({
         <AlertTriangle className="size-5" aria-hidden />
       </span>
 
-      <h1 className="display-type rule-accent mt-6 text-3xl sm:text-4xl">
+      <h1 className="subhead-type rule-accent mt-6 text-3xl sm:text-4xl">
         {t('genericTitle')}
       </h1>
       <p className="mt-5 max-w-[var(--measure)] text-lg text-ink-secondary">
