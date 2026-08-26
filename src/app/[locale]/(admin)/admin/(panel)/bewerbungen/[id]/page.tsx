@@ -143,7 +143,7 @@ export default function ApplicationDetailPage({
       </p>
 
       {application.status === 'rejected' && application.rejectionReason && (
-        <p className="mt-6 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
+        <p className="mt-6 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4 text-sm text-ink-secondary">
           {t('rejectedWith', { reason: reasonLabel(application.rejectionReason) ?? '—' })}
         </p>
       )}

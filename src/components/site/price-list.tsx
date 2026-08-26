@@ -25,6 +25,13 @@ import { cn } from '@/lib/cn';
  *
  * The short description carries its weight here: "billed per window" is the
  * answer to the question the method column was gesturing at.
+ *
+ * The hover then made the same mistake one level out. Moving the rows onto a
+ * white card fixed the rules, but the hover was still `surface-sunken` — and
+ * the slab this card sits on is `surface-sunken` too, so a hovered row matched
+ * the page around the card and read as a gap in it rather than a highlight.
+ * `hv-row-inverse` takes the row to navy, the one ground nothing else on the
+ * page is using.
  */
 export async function PriceList({
   locale,
@@ -43,7 +50,7 @@ export async function PriceList({
           <li key={service.slug}>
             <Link
               href={`/leistungen/${service.slug}`}
-              className="group flex items-start gap-5 p-5 transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:items-center sm:gap-6 sm:p-6"
+              className="hv-row-inverse group flex items-start gap-5 p-5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:items-center sm:gap-6 sm:p-6"
             >
               <span className="bg-accent-subtle text-ink-accent grid size-11 shrink-0 place-items-center rounded-full">
                 <ServiceIcon slug={service.slug} className="size-5" />

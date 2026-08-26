@@ -127,7 +127,7 @@ export default function AccountProfilePage() {
       <section className="mt-12">
         <h2 className="display-type text-xl">{t('notificationsTitle')}</h2>
 
-        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken p-5">
+        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
           <Lock className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
           <div>
             <h3 className="font-medium">{t('operational')}</h3>

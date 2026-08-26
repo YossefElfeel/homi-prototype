@@ -154,7 +154,7 @@ export default async function ContactPage({
             </span>
           </p>
 
-          <div className="mt-8 border-l-2 border-rule bg-sunken p-5">
+          <div className="mt-8 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
             <h2 className="font-medium">{t('quoteHintTitle')}</h2>
             <p className="mt-1.5 text-sm text-ink-secondary">{t('quoteHintBody')}</p>
             <Button asChild variant="link" className="mt-3">

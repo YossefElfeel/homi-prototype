@@ -110,7 +110,7 @@ export default function AccountMessagesPage() {
                       'max-w-[85%] p-5',
                       message.from === 'customer'
                         ? 'ms-auto surface-card'
-                        : 'border-l-2 border-rule bg-sunken',
+                        : 'border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)]',
                     )}
                   >
                     <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">

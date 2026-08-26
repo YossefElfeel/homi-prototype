@@ -56,6 +56,15 @@ export function Phone(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function Clock(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden {...base} strokeWidth={1.4} {...props}>
+      <circle cx="8" cy="8" r="5.9" />
+      <path d="M8 4.6V8l2.4 1.6" />
+    </svg>
+  );
+}
+
 export function Chat(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 16 16" aria-hidden {...base} strokeWidth={1.4} {...props}>

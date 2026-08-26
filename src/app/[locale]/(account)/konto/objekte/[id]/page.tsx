@@ -125,7 +125,7 @@ export default function AccountPropertyPage({
           <p className="mt-4 text-sm text-ink-tertiary">{t('accessNone')}</p>
         )}
 
-        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken p-4">
+        <div className="mt-5 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4">
           <Eye className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
           <div>
             <h3 className="text-sm font-medium">{t('accessWhoTitle')}</h3>

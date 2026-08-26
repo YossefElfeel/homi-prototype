@@ -38,7 +38,7 @@ export default function ErrorBoundary({
       </p>
 
       {error.digest && (
-        <p className="mt-6 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
+        <p className="mt-6 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4 text-sm text-ink-secondary">
           <span data-numeric className="font-mono">
             {t('reference', { id: error.digest })}
           </span>

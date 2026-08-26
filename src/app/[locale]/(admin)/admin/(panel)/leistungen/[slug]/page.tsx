@@ -135,7 +135,7 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
 
       {missing.length > 0 && (
         /*
-         * Was `border-l-2 border-rule bg-sunken` — the same grey well this app
+         * Was `border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)]` — the same grey well this app
          * uses for "here is some context", sitting directly under a heading
          * that says something is missing. A reader scanning the page had the
          * panel's colour telling them it was fine and its text telling them it

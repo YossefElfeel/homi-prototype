@@ -100,7 +100,7 @@ export default function AccountRequestPage({
           </Button>
         </div>
       ) : offer ? (
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken p-6">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-6">
           <div>
             <h2 className="font-medium">{t('offerTitle')}</h2>
             <p className="mt-1 text-sm text-ink-secondary">{t('offerBody')}</p>
@@ -113,7 +113,7 @@ export default function AccountRequestPage({
           </Button>
         </div>
       ) : (
-        <div className="mt-8 flex gap-3 border-l-2 border-rule bg-sunken p-6">
+        <div className="mt-8 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-6">
           <Clock className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
           <div>
             <h2 className="font-medium">{t('waitingTitle')}</h2>
