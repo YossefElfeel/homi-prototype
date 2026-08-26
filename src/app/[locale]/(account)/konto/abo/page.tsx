@@ -167,7 +167,7 @@ function PlanCard({
       </div>
 
       {paused && (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken p-5">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
           <div className="flex gap-3">
             <Pause className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
             <div>

@@ -1,21 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { BeforeAfter } from '@/components/site/before-after';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useHydrated, useStore } from '@/mock/store';
+import { SEED_SERVICES } from '@/mock/seed';
+import type { Locale } from '@/i18n/routing';
 import type { Photo } from '@/mock/schema';
+
+/** How many works a visitor gets before asking for more. */
+const PAGE = 6;
 
 interface Work {
   id: string;
   before: Photo;
   after: Photo;
+  /** The service the job was booked as. The photos do not carry one, so it is
+      joined through the booking they belong to. */
+  serviceSlug: string | undefined;
 }
 
 /**
@@ -30,20 +38,58 @@ interface Work {
  * Each work is a slider rather than two frames side by side. See `BeforeAfter`
  * for why: half-width frames a gutter apart make the reader align the two
  * pictures themselves, which is the work the component is supposed to do.
+ *
+ * The grid filters by service and pages. Somebody landing here is rarely asking
+ * "show me everything" — they are asking "what does a move-out clean look
+ * like", and an undifferentiated grid gave them no way to ask the narrower
+ * question.
+ *
+ * Both controls are driven by the consent that exists, never by a fixed list of
+ * services. Section 20.6 governs what may appear here, so a chip for a service
+ * with no released work would advertise photographs the business is not allowed
+ * to show. The row lists only services with something behind them and hides
+ * itself below two, and "show more" appears only when there is genuinely more.
  */
 export function Gallery() {
   const t = useTranslations('site.gallery');
+  const locale = useLocale() as Locale;
   const hydrated = useHydrated();
   const photos = useStore((s) => s.data.photos);
+  const bookings = useStore((s) => s.data.bookings);
   const [open, setOpen] = useState<Work | null>(null);
+  const [service, setService] = useState<string | null>(null);
+  const [shown, setShown] = useState(PAGE);
 
-  const consented = hydrated ? photos.filter((p) => p.publishConsent) : [];
-  const works: Work[] = [];
-  for (const photo of consented) {
-    if (photo.kind !== 'before' || !photo.bookingId) continue;
-    const after = consented.find((p) => p.bookingId === photo.bookingId && p.kind === 'after');
-    if (after) works.push({ id: photo.bookingId, before: photo, after });
-  }
+  const works = useMemo(() => {
+    const consented = hydrated ? photos.filter((p) => p.publishConsent) : [];
+    const out: Work[] = [];
+    for (const photo of consented) {
+      if (photo.kind !== 'before' || !photo.bookingId) continue;
+      const after = consented.find((p) => p.bookingId === photo.bookingId && p.kind === 'after');
+      if (!after) continue;
+      const booking = bookings.find((b) => b.id === photo.bookingId);
+      out.push({ id: photo.bookingId, before: photo, after, serviceSlug: booking?.serviceSlug });
+    }
+    return out;
+  }, [hydrated, photos, bookings]);
+
+  /* One entry per service that has released work, in the catalogue's order so
+     the row reads like every other service list on the site. */
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const work of works) {
+      if (!work.serviceSlug) continue;
+      counts.set(work.serviceSlug, (counts.get(work.serviceSlug) ?? 0) + 1);
+    }
+    return SEED_SERVICES.filter((entry) => counts.has(entry.slug)).map((entry) => ({
+      slug: entry.slug,
+      name: entry.name[locale],
+      count: counts.get(entry.slug) ?? 0,
+    }));
+  }, [works, locale]);
+
+  const filtered = service ? works.filter((work) => work.serviceSlug === service) : works;
+  const visible = filtered.slice(0, shown);
 
   if (works.length === 0) {
     return (
@@ -61,10 +107,38 @@ export function Gallery() {
     );
   }
 
+  const choose = (slug: string | null) => {
+    setService(slug);
+    /* Paging resets with the filter. Carrying "show 12" into a category with
+       three works leaves the button hidden and the count wrong. */
+    setShown(PAGE);
+  };
+
   return (
     <>
+      {/* One service is not a choice, so the row only earns its space at two. */}
+      {categories.length > 1 && (
+        <div className="mb-8">
+          <h2 className="label-type text-ink-tertiary">{t('filterLabel')}</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <FilterChip active={service === null} onClick={() => choose(null)}>
+              {t('filterAll')} <Count>{works.length}</Count>
+            </FilterChip>
+            {categories.map((category) => (
+              <FilterChip
+                key={category.slug}
+                active={service === category.slug}
+                onClick={() => choose(category.slug)}
+              >
+                {category.name} <Count>{category.count}</Count>
+              </FilterChip>
+            ))}
+          </div>
+        </div>
+      )}
+
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {works.map((work, i) => (
+        {visible.map((work, i) => (
           <li key={work.id}>
             <BeforeAfter
               beforeSrc={work.before.src}
@@ -96,6 +170,19 @@ export function Gallery() {
           </li>
         ))}
       </ul>
+
+      {/* Only when there is more. A button that pages nothing is a dead end
+          dressed as an affordance. */}
+      {visible.length < filtered.length && (
+        <div className="mt-10 flex flex-col items-center gap-3">
+          <Button variant="secondary" onClick={() => setShown((n) => n + PAGE)}>
+            {t('showMore')}
+          </Button>
+          <p aria-live="polite" className="label-type text-ink-tertiary">
+            {t('showingCount', { shown: visible.length, total: filtered.length })}
+          </p>
+        </div>
+      )}
 
       <Dialog.Root open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
         <Dialog.Portal>
@@ -134,5 +221,49 @@ export function Gallery() {
         </Dialog.Portal>
       </Dialog.Root>
     </>
+  );
+}
+
+/**
+ * A filter chip.
+ *
+ * Deliberately not `ui/chip.tsx`. That component is static by contract — "an
+ * interactive chip is a button" is written into it — and this one is a button
+ * that also reports whether it is the current filter, which is what
+ * `aria-pressed` is for.
+ */
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ' +
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus ' +
+        (active
+          ? 'border-transparent bg-accent text-on-accent'
+          : 'border-line text-ink hover:border-line-strong hover:bg-sunken')
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+/** The tally inside a chip, dimmed so the service name stays the label. */
+function Count({ children }: { children: React.ReactNode }) {
+  return (
+    <span data-numeric className="opacity-60">
+      {children}
+    </span>
   );
 }

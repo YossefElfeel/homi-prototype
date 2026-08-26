@@ -58,7 +58,7 @@ export default function TimeStep() {
 
   return (
     <BookingStep step="termin" title={t('title')} lead={t('lead')} canContinue={complete}>
-      <div className="flex gap-3 border-l-2 border-rule bg-sunken p-4">
+      <div className="flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4">
         <Info className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
         <div>
           <h2 className="font-medium">{t('noticeTitle')}</h2>

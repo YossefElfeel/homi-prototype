@@ -87,7 +87,7 @@ export default async function LegalPage({
               <h2 className="subhead-type text-xl">{section.heading}</h2>
 
               {section.placeholder && (
-                <p className="mt-4 flex gap-3 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
+                <p className="mt-4 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4 text-sm text-ink-secondary">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                   {t('placeholderNotice')}
                 </p>

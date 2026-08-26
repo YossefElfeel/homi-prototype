@@ -144,7 +144,7 @@ export default function ConfirmedPage({ params }: { params: Promise<{ id: string
           ))}
         </ol>
 
-        <section className="mt-8 border-l-2 border-rule bg-sunken p-5">
+        <section className="mt-8 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
           <h2 className="font-medium">{t('cancelTitle')}</h2>
           <p data-numeric className="mt-1.5 text-sm text-ink-secondary">
             {t('cancelBody')} ({settings.cancellationFreeHours} h)

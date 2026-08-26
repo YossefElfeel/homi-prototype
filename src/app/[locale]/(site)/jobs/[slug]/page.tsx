@@ -142,7 +142,7 @@ export default function JobPostingPage({ params }: { params: Promise<{ slug: str
             <p className="mt-3 text-sm text-ink-tertiary">{t('applyNote')}</p>
           </div>
 
-          <div className="mt-6 border-l-2 border-rule bg-sunken p-5">
+          <div className="mt-6 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
             <h2 className="font-medium">{t('contactTitle')}</h2>
             <p className="mt-2 text-sm text-ink-secondary">{t('contactBody')}</p>
             <a

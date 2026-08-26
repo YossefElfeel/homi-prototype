@@ -471,7 +471,7 @@ export default function AdminSettingsPage({
 
           <div className="border-t border-line-subtle pt-8">
             <h2 className="display-type text-xl">{t('insuranceTitle')}</h2>
-            <div className="mt-4 flex gap-3 border-l-2 border-rule bg-sunken p-5">
+            <div className="mt-4 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
               <p className="max-w-[var(--measure)] text-sm text-ink-secondary">
                 {t('insuranceHint')}

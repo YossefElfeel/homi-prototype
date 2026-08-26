@@ -886,6 +886,58 @@
   }
 
   /*
+   * A list row that inverts on hover.
+   *
+   * The price list sits on a white card on the grey slab, and its hover was
+   * `surface-sunken` — the same grey as the page behind it. The hovered row
+   * did not read as highlighted, it read as a hole punched through the card,
+   * because the colour it changed to was the colour already surrounding it.
+   * Two greys cannot signal anything to each other.
+   *
+   * So the row goes to the brand ground instead. Navy is the one surface here
+   * that no part of this page is already using, which is what makes it read
+   * as a state rather than as an absence.
+   *
+   * It re-binds the semantic tokens for its own subtree rather than asking
+   * every child for a `group-hover:` variant — the same move `.hv-footer`
+   * makes, and the reason the token layer exists. The markup does not change:
+   * `text-ink-secondary` still says "supporting copy" and simply resolves to
+   * a different value while the cursor is on the row.
+   *
+   * The accent has to move with it. `--content-accent` is the deep red, which
+   * is 1.95:1 on this navy — the service name would turn invisible at exactly
+   * the moment it is being pointed at. It takes the inverse accent, the one
+   * step lighter that clears 4:1 there, for the same reason the footer does.
+   */
+  .hv-row-inverse {
+    transition: background-color var(--motion-base) var(--ease-standard);
+  }
+
+  .hv-row-inverse:hover {
+    background: var(--surface-inverse);
+
+    /* Re-binding the token is not enough on its own, and this is the trap in
+       the whole technique: a custom property only moves the elements that name
+       it in a declaration. The service name and the price carry no colour class
+       — they inherit — and inheritance passes the *computed* colour down from
+       `body`, which resolved `--content-primary` long before the cursor arrived.
+       Without this line both of them stay navy and go invisible on the navy row
+       at the exact moment they are being pointed at. Declaring the colour here
+       makes the row the thing they inherit from. */
+    color: var(--content-inverse);
+
+    --content-primary: var(--content-inverse);
+    --content-secondary: var(--content-inverse-secondary);
+    --content-tertiary: var(--content-inverse-secondary);
+    --content-accent: var(--content-accent-inverse);
+    /* The icon chip is a near-white wash on the light row. Left alone it stays
+       near-white on navy and turns into the brightest thing in the row — so it
+       becomes a translucent white instead, which lets the navy through and
+       keeps the lighter red legible on top of it. */
+    --surface-accent-subtle: rgb(255 255 255 / 0.12);
+  }
+
+  /*
    * The "before" half of a gallery pair, until real before-photographs exist.
    *
    * TODO:asset — deleted the day the pairs arrive; nothing else has to change,
