@@ -113,7 +113,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
       <section className="mt-10">
         <h2 className="display-type text-xl">{t('accessTitle')}</h2>
         {member.role === 'owner' ? (
-          <p className="mt-3 border-l-2 border-rule bg-sunken p-5 text-sm text-ink-secondary">
+          <p className="mt-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5 text-sm text-ink-secondary">
             {t('ownerNote')}
           </p>
         ) : (

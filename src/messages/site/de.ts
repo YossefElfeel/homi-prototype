@@ -239,6 +239,10 @@ export const siteDe = {
     emptyBody:
       'Wir fotografieren jeden Einsatz vor und nach der Arbeit — veröffentlicht wird nur, was die Kundschaft ausdrücklich freigibt. Diese Galerie füllt sich, sobald die ersten Freigaben vorliegen.',
     emptyCta: 'Trotzdem Offerte anfordern',
+    filterAll: 'Alle Leistungen',
+    filterLabel: 'Nach Leistung filtern',
+    showMore: 'Mehr anzeigen',
+    showingCount: '{shown} von {total}',
   },
 
   about: {

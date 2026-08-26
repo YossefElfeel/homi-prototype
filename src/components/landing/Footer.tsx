@@ -6,6 +6,7 @@ import type { SVGProps } from "react";
 import { DisplayLines } from "@/components/landing/DisplayLines";
 import {
   Chat,
+  Clock,
   Facebook,
   Instagram,
   LinkedIn,
@@ -126,7 +127,14 @@ export function Footer() {
                     {contact.email}
                   </a>
                 </li>
-                <li className="pl-6">{t.footer.hours}</li>
+                {/* The only line in this column that was indented to *look*
+                    aligned instead of being aligned by an icon like the three
+                    above it. A phone, a chat and an envelope followed by a bare
+                    indent reads as a missing icon, because it is one. */}
+                <li className="flex items-center gap-2.5">
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                  {t.footer.hours}
+                </li>
               </ul>
             </div>
           </div>

@@ -134,7 +134,7 @@ export default function SubscriberPage({
       />
 
       {state === 'expired' && (
-        <div className="mb-app flex gap-3 border-l-2 border-rule bg-sunken p-5">
+        <div className="mb-app flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
           <div>
             <h2 className="font-medium">{t('expiredTitle')}</h2>

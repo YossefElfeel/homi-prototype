@@ -77,13 +77,26 @@ export default async function PlansPage({
             the one fact that decides whether a plan is the right purchase, and
             a caveat printed under the buy button is a caveat nobody read. */}
         <PageSection className="!pb-0">
-          <div className="hv-card hv-card-light flex max-w-3xl gap-4 p-6">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
-            <div>
-              <h2 className="font-medium">{t('commitmentNoticeTitle')}</h2>
-              <p className="mt-1.5 text-body leading-[1.6] text-ink-secondary">
-                {t('commitmentNoticeBody')}
-              </p>
+          {/* `max-w-3xl` was a width picked in isolation: 768px against a card
+              grid whose middle card ends at 905px, so the notice stopped 137px
+              short of it and lined up with nothing. It is not a measurement
+              problem — a number copied from the cards would go stale the first
+              time the grid changed.
+
+              So the notice borrows the grid instead of a width. Same template
+              as Plans, same gap, spanning the first two columns, which puts its
+              right edge exactly on the end of the raised middle card at any
+              container width. Both services seed three plans, so that template
+              is the one Plans renders on every tab of this page. */}
+          <div className="grid lg:grid-cols-[minmax(0,423fr)_minmax(0,466fr)_minmax(0,423fr)] lg:gap-4">
+            <div className="hv-card hv-card-light flex gap-4 p-6 lg:col-span-2">
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
+              <div>
+                <h2 className="font-medium">{t('commitmentNoticeTitle')}</h2>
+                <p className="mt-1.5 text-body leading-[1.6] text-ink-secondary">
+                  {t('commitmentNoticeBody')}
+                </p>
+              </div>
             </div>
           </div>
         </PageSection>
@@ -138,7 +151,7 @@ export default async function PlansPage({
           level={1}
         />
 
-        <div className="mt-8 flex max-w-2xl gap-4 border-l-2 border-rule bg-sunken p-5">
+        <div className="mt-8 flex max-w-2xl gap-4 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-ink-secondary" aria-hidden />
           <div>
             <h2 className="font-medium">{t('commitmentNoticeTitle')}</h2>

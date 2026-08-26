@@ -52,7 +52,7 @@ export default function AccountPhotosPage() {
         />
       ) : (
         <>
-          <div className="mt-8 flex gap-3 border-l-2 border-rule bg-sunken p-5">
+          <div className="mt-8 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
             <Shield className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
             <div>
               <h2 className="font-medium">{t('consentTitle')}</h2>

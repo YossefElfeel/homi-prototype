@@ -96,7 +96,7 @@ export default function ServiceStep({
     <BookingStep step="leistung" title={t('title')} lead={t('lead')} canContinue={complete}>
       {/* A silently pre-selected radio reads as a bug, so say it out loud. */}
       {prefilled && (
-        <p className="mb-6 flex gap-2 border-l-2 border-rule bg-sunken p-4 text-sm text-ink-secondary">
+        <p className="mb-6 flex gap-2 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4 text-sm text-ink-secondary">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           {t('prefilled')}
         </p>

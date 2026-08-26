@@ -161,7 +161,7 @@ export default function ReviewStep() {
         </section>
       )}
 
-      <section className="mt-8 border-l-2 border-rule bg-sunken p-5">
+      <section className="mt-8 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
         <h2 className="flex items-center gap-2 font-medium">
           <CalendarCheck className="size-4 text-ink-secondary" aria-hidden />
           {t('afterTitle')}

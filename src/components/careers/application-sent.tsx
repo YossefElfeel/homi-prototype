@@ -66,7 +66,7 @@ export function ApplicationSent({ reference }: { reference: string }) {
       </section>
 
       {application && (
-        <p className="mt-10 border-l-2 border-rule bg-sunken p-5 text-sm text-ink-secondary">
+        <p className="mt-10 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5 text-sm text-ink-secondary">
           {t('retention', {
             date: format.dateTime(new Date(application.retainUntil), {
               day: '2-digit',

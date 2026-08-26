@@ -362,7 +362,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
 
             {/* Answers the question the accept button provokes, before it is
                 asked: accepting is not the same as being charged. */}
-            <div className="border-l-2 border-rule bg-sunken p-5">
+            <div className="border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
               <h2 className="font-medium">{t('notBookedTitle')}</h2>
               <p className="mt-1.5 text-sm text-ink-secondary">{t('notBookedBody')}</p>
             </div>

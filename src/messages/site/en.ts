@@ -219,6 +219,10 @@ export const siteEn: typeof siteDe = {
     emptyBody:
       'We photograph every job before and after — but only publish what a customer explicitly releases. This gallery fills up as the first consents come in.',
     emptyCta: 'Request a quote anyway',
+    filterAll: 'All services',
+    filterLabel: 'Filter by service',
+    showMore: 'Show more',
+    showingCount: '{shown} of {total}',
   },
 
   about: {
