@@ -7,6 +7,8 @@ import { cn } from '@/lib/cn';
  *
  *  · every field has a visible label above it — never a placeholder standing
  *    in for one (the brief: "كل حقل له عنوان ظاهر فوقه مش placeholder بس")
+ *  · the hint is helper text under the control, never a paragraph wedged
+ *    between the label and the box that label names
  *  · optional fields are marked; required is the default, so it is not
  *    labelled and does not add noise
  *  · errors render next to the field and are wired with aria-describedby and
@@ -44,12 +46,25 @@ export function Field({
           <span className="text-xs font-normal text-ink-tertiary">optional</span>
         )}
       </label>
+      {children({ id, 'aria-invalid': Boolean(error), 'aria-describedby': describedBy })}
+      {/*
+        Under the control, not above it.
+
+        Above, the hint pushed the label a sentence away from the box it names,
+        and it landed in the one place a reader expects the value — directly
+        under the label, in a grid where the neighbouring cell has a filled
+        control there. On the pricing card the hint sat exactly where the rate
+        should be, which is why it read as the field's content rather than a
+        note about it.
+
+        Order still matches `describedBy` (hint, then error), so this does not
+        change what a screen reader announces.
+      */}
       {hint && (
         <p id={hintId} className="text-sm text-ink-tertiary">
           {hint}
         </p>
       )}
-      {children({ id, 'aria-invalid': Boolean(error), 'aria-describedby': describedBy })}
       {error && (
         <p
           id={errorId}
