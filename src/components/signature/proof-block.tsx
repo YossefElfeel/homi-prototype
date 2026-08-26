@@ -13,8 +13,9 @@ import type { Theme } from '@/lib/theme';
  * default state of the social-proof slot is not an empty carousel — it is a
  * written commitment. Every line here is a checkable promise, not a claim.
  *
- * The reviews carousel takes this slot automatically once reviews exist
- * (see the `busy` demo scenario).
+ * The reviews section takes the slot below automatically once reviews exist,
+ * which since the seed grew a moderation queue is the default. `fresh` is the
+ * scenario to load to see this block carry the page on its own.
  *
  * The insurance line only appears when a policy actually exists (§21 item 12).
  * With the toggle off it is replaced by a commitment we can keep today — the

@@ -133,6 +133,7 @@ export const en: Messages = {
     review: {
       pending: 'Awaiting review',
       published: 'Published',
+      hidden: 'Hidden',
       rejected: 'Not published',
     },
     application: {

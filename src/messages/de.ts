@@ -134,6 +134,7 @@ export const de = {
     review: {
       pending: 'Zur Prüfung',
       published: 'Veröffentlicht',
+      hidden: 'Ausgeblendet',
       rejected: 'Abgelehnt',
     },
     application: {

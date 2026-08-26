@@ -7,6 +7,7 @@ import {
   CalendarSync,
   ExternalLink,
   Eye,
+  EyeOff,
   FileCheck,
   FileText,
   Home,
@@ -101,6 +102,17 @@ export const ActionIcon = {
      that one is the reversal of `archive` and puts the row back where it was,
      while this closes the record for good — the key leaves the building. */
   handBack: Undo2,
+
+  /*
+   * Taking something off the public site again.
+   *
+   * Deliberately half a pair. The reverse of hiding a review is publishing it,
+   * and publishing already has a button with a name on it — giving the return
+   * trip an `Eye` would put rule 1's glyph on an action that is not "open this
+   * row", on the one screen where "what the public sees" and "what I am
+   * looking at" are different questions.
+   */
+  hide: EyeOff,
 
   /* Destructive. Both carry `tone="danger"` at the call site. */
   decline: X,

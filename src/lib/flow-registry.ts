@@ -973,6 +973,87 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    /*
+     * Not a new flow — a flow that had never been written down.
+     *
+     * Reviews cross three actors and four screens, and the board had no row
+     * for them at all, which is how «zurückziehen führt zurück in die
+     * Warteschlange» survived: nobody had ever laid the exits out next to each
+     * other and noticed that two of the four were the same one.
+     */
+    id: 'reviews',
+    en: 'Reviews',
+    actors: ['customer', 'owner', 'visitor'],
+    entries: [
+      ok(
+        'Write a review',
+        '/konto/bewertung',
+        'Offered on the most recent finished job with no review against it. One review per job, which is also why the seed leaves the demo account one unreviewed — review it in the seed and the screen is unreachable',
+      ),
+      added(
+        'The moderation queue',
+        '/admin/bewertungen',
+        '`reviews` was an empty array in the default scenario, so the screen opened on «Noch keine Bewertungen» — and that empty state explains itself well enough that it read as finished rather than as never having held a card',
+      ),
+      added(
+        'Search a review by its text, its answer or the household',
+        '/admin/bewertungen',
+        'The queue was four headed sections and nothing else, so «was hat die Frau Bachmann geschrieben» meant scrolling. The full name is searchable rather than the «Simone B.» the card prints — the initial is what the public may see, not what the office knows',
+      ),
+      added(
+        'Filter by state',
+        '/admin/bewertungen',
+        'The four headed sections answered this and nothing else, and they could not survive a search — a filtered list has no groups left to head. The state moved onto the card as a badge and became a filter instead',
+      ),
+      ok(
+        'The reviews on the website',
+        '/',
+        'Published ones only. With none, the written promise block holds the slot instead — an empty carousel costs more trust than it earns',
+      ),
+    ],
+    actions: [
+      ok(
+        'Agree to publication, or not',
+        '/konto/bewertung',
+        '§20.6, and the checkbox says exactly what would be shown: first name and one initial',
+      ),
+      ok(
+        'Reply, then publish',
+        '/admin/bewertungen',
+        'The reply box is inside the card, so answering is the path of least resistance rather than a second screen. A review at three stars or below cannot be published without one',
+      ),
+      added(
+        'Take a published review off the website',
+        '/admin/bewertungen',
+        'It went back to «Wartet auf Freigabe» — the queue of reviews nobody has read — so a decision the owner had made was filed as one they had not. `hidden` is its own state now, it keeps the reply, and the way back is one button',
+      ),
+      added(
+        'Delete a review',
+        '/admin/bewertungen',
+        'Nothing on the screen could remove one, which is the single thing §20.6 obliges the office to do when the person who wrote it withdraws their consent. Real, not archived, and the Protokoll records that a review went rather than what it said',
+      ),
+      ok('Send a refused review back for a second look', '/admin/bewertungen'),
+    ],
+    exits: [
+      ok('Published — on the website, with the reply under it', '/admin/bewertungen'),
+      added(
+        'Hidden — released once, off the site now',
+        '/admin/bewertungen',
+        'The seed carries one so the group is not a heading nobody has seen: a four-star review taken down because it thanks a cleaner who has since left',
+      ),
+      ok('Not published — refused, with or without an answer on the record'),
+      added('Deleted — gone, and the log keeps the trace rather than the text'),
+      open(
+        'Withdraw consent from the customer side',
+        'The consent is recorded once, in the form, and the customer has no screen that takes it back — they have to write, and somebody in the office has to act on it. Deliberately open: the deletion this wave adds is the half that had to exist first, because without it there was nothing for that request to be answered with',
+      ),
+      open(
+        'Correct the reply under a published review',
+        'The reply box only appears while a review is off the site, so fixing a typo means hiding it, editing and publishing again — three clicks instead of one. That is the trade on purpose: an answer the public has already read should not change under them silently, and the hide makes the correction a visible act',
+      ),
+    ],
+  },
+  {
     id: 'hiring',
     en: 'Hiring & team',
     actors: ['applicant', 'owner'],

@@ -58,7 +58,11 @@ export const TRACKS: Track[] = [
     en: 'Marketing site',
     note: 'Wave 1 · four visual directions · SEO targets the eight served municipalities, not Zurich',
     screens: [
-      done('1', 'Startseite', 'Home', '/', ['reviews empty (default)', 'reviews present']),
+      /* The default scenario now publishes a review, so the promise block is
+         no longer what a reviewer lands on — `fresh` is where the empty case
+         lives, and that is the honest home for it: launch day is the only day
+         a cleaning company has no reviews at all. */
+      done('1', 'Startseite', 'Home', '/', ['reviews present (default)', 'reviews empty (fresh)']),
       done('2', 'Leistung (Vorlage ×7)', 'Service template (×7)', '/leistungen'),
       done('3', 'Preise', 'Pricing', '/preise'),
       done('4', 'Abos', 'Plans', '/abos', ['table ≥lg', 'cards <lg']),
@@ -519,10 +523,24 @@ export const TRACKS: Track[] = [
         ['unsaved changes', 'duplicate code', 'end before start', 'new'],
         'Every field ran patchData on each keystroke, and only when editing an existing coupon — so an edit could not be abandoned and half-typed values reached the data. It now stages a draft and writes on the button, which is what makes the two checks possible',
       ),
-      done('78', 'Bewertungen', 'Reviews', '/admin/bewertungen', [
-        'empty',
-        'negative review',
-      ], 'A critical review cannot be published without a reply'),
+      done(
+        '78',
+        'Bewertungen',
+        'Reviews',
+        '/admin/bewertungen',
+        [
+          'awaiting release',
+          'published',
+          'hidden',
+          'not published',
+          'critical review',
+          'no consent',
+          'delete',
+          'filtered to nothing',
+          'empty (fresh)',
+        ],
+        'The queue was empty in the default scenario, so every control on it — the reply box, the consent gate, the critical-review warning — could only be seen by switching scenarios first. Five seeded reviews carry the cases; «Zurückziehen» became «Ausblenden», which is a state of its own rather than a trip back through the queue, and a review can now be deleted outright, which is what §20.6 obliges when consent is withdrawn. The four status headings are gone with them: the state rides on the card, which is what lets the list be searched and filtered at all',
+      ),
       done('79', 'Textvorlagen', 'Message templates', '/admin/vorlagen', [
         'translation gap',
         'vollständig',

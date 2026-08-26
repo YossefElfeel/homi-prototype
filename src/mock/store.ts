@@ -32,6 +32,7 @@ import type {
   Subscription,
   Property,
   RequestDraft,
+  ReviewStatus,
   SavedMethodKind,
   Service,
   ServiceRequest,
@@ -221,8 +222,21 @@ Marco Brunner`;
    the seed was working as intended. Every state badge, the search box, the
    filter and the switch would sit on a table with nothing in them, and the
    edit screen would be unreachable again for exactly the reason this wave
-   existed to fix. */
-const SCHEMA_VERSION = 26;
+   existed to fix.
+
+   27: Both kinds at once. `ReviewStatus` gained `hidden`, and `reviews` went
+   from `[]` in the default scenario to five seeded records — the same «present
+   and empty, so `merge` keeps it whole» case as 26, one screen along.
+
+   The shape half is the quieter of the two and worth naming, because a blob
+   from 26 does not crash on it: no persisted review carries `hidden`, so the
+   group is simply never rendered and the new button looks like it writes into
+   nothing. The data half is the loud one. /admin/bewertungen would open on
+   «Noch keine Bewertungen» for a reviewer who had opened the app before and on
+   five cards for one who had not — and that empty state explains itself well
+   (reviews arrive after payment), so the screen would argue the seed was
+   working. That is exactly the reading 26 was bumped to stop. */
+const SCHEMA_VERSION = 27;
 
 /**
  * §10 — the default payment term.
@@ -779,8 +793,23 @@ interface StoreState {
     },
     now: Date,
   ) => void;
-  setReviewStatus: (id: ID, status: 'pending' | 'published' | 'rejected') => void;
+  /* Was the three statuses written out by hand, which is how `hidden` could be
+     added to the union in `schema.ts` and still be unwritable from anywhere. */
+  setReviewStatus: (id: ID, status: ReviewStatus) => void;
   replyToReview: (id: ID, reply: string) => void;
+  /**
+   * Gone, not archived — the same position the applicant screen takes, and for
+   * the same law. A review is somebody else's words about their own household;
+   * when they withdraw them (§20.6 consent is revocable, revDSG art. 32), the
+   * office has to be able to make the record go away rather than move it to a
+   * status the customer would still call "you kept it". `hidden` is the state
+   * for a review the office is parking; this is for one that must not exist.
+   *
+   * The Protokoll keeps the trace, which is the point of deleting *here*
+   * rather than out of localStorage by hand: the entry records that a review
+   * was removed and by whom, and carries no word of what it said.
+   */
+  deleteReview: (id: ID) => void;
 
   /** Screen 88 — the no-access report, including whether the wait was shown. */
   recordNoAccess: (
@@ -3267,13 +3296,28 @@ export const useStore = create<StoreState>()(
           },
         })),
 
-      setReviewStatus: (id, status) =>
+      setReviewStatus: (id, status) => {
+        const review = get().data.reviews.find((r) => r.id === id);
+        if (!review) return;
+        /* §20.6 is not the moderation screen's rule to keep — it is the data's.
+           The button is disabled without consent, and so is the second tab. */
+        if (status === 'published' && !review.publishConsent) return;
+
         set((s) => ({
           data: {
             ...s.data,
             reviews: s.data.reviews.map((r) => (r.id === id ? { ...r, status } : r)),
           },
-        })),
+        }));
+        /* What the public can see is a published decision, and until now the
+           one screen that changes it wrote nothing anywhere. «Wer hat die
+           Ein-Stern-Bewertung runtergenommen, und wann» had no answer. */
+        get().logChange({
+          entity: 'review',
+          entityId: id,
+          summary: `Review ${review.rating}★ → ${status}`,
+        });
+      },
 
       replyToReview: (id, ownerReply) =>
         set((s) => ({
@@ -3282,6 +3326,23 @@ export const useStore = create<StoreState>()(
             reviews: s.data.reviews.map((r) => (r.id === id ? { ...r, ownerReply } : r)),
           },
         })),
+
+      deleteReview: (id) => {
+        const review = get().data.reviews.find((r) => r.id === id);
+        if (!review) return;
+
+        set((s) => ({
+          data: { ...s.data, reviews: s.data.reviews.filter((r) => r.id !== id) },
+        }));
+        /* The rating and nothing else. A log entry quoting the text would keep
+           the deleted review in the app under a different heading, which is
+           the one outcome an erasure request cannot end in. */
+        get().logChange({
+          entity: 'review',
+          entityId: id,
+          summary: `Review ${review.rating}★ deleted`,
+        });
+      },
 
       /**
        * §4.2 — the no-access fee "only stands if the wait actually happened",

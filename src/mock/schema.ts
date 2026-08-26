@@ -866,7 +866,23 @@ export interface Coupon {
 
 /* ------------------------------------------------------- proof and content */
 
-export type ReviewStatus = 'pending' | 'published' | 'rejected';
+/**
+ * §16 — and `hidden` is the state that was missing.
+ *
+ * The moderation screen's «Zurückziehen» sent a published review back to
+ * `pending`, because `pending` was the only state left that is not public.
+ * That is a different sentence from the one the owner means: `pending` is
+ * "nobody has looked at this yet", and it puts a decided review back into the
+ * queue of undecided ones, where it sits under a heading that says it is
+ * waiting for a first read. `rejected` is not it either — that is the review
+ * the office refused, and a five-star one taken down for a fortnight because
+ * the customer's name was about to change is not refused.
+ *
+ * So: `hidden` is published-and-off-the-site. It keeps the reply, it keeps the
+ * fact that it was released once, and putting it back is one button rather
+ * than a second trip through moderation.
+ */
+export type ReviewStatus = 'pending' | 'published' | 'hidden' | 'rejected';
 
 export interface Review {
   id: ID;
