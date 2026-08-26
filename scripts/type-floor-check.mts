@@ -109,10 +109,11 @@ const scale = readScale();
  * `sm:text-lg` is read as `text-lg`: a breakpoint prefix raises the size above
  * that width and says nothing about the width below it, which is the one the
  * floor is about — and a 30px mobile price stepping up to 36px at `sm` was one
- * of the twenty-six.
+ * of the twenty-six. Every prefix is stripped, not just the first: stopping
+ * at one meant `sm:hover:text-2xl` never matched and was skipped in silence.
  */
 function sizeOf(cls: string): number | null {
-  const key = cls.replace(/^[a-z]+:/, '').match(/^text-(.+)$/)?.[1];
+  const key = cls.replace(/^(?:[a-z-]+:|\[[^\]]*\]:)+/, '').match(/^text-(.+)$/)?.[1];
   if (!key) return null;
   const named = scale.get(key) ?? TAILWIND[key];
   if (named !== undefined) return named;
@@ -147,13 +148,17 @@ for (const root of ROOTS) {
     }
 
     src.split('\n').forEach((line, i) => {
-      if (!line.includes('display-type') || line.includes(STEPS_DOWN)) return;
+      if (!line.includes('display-type')) return;
 
       // Only the classes on the same element as display-type. Splitting on
       // quotes keeps a neighbouring className on the same source line from
-      // being read as part of this one.
+      // being read as part of this one — and a ternary like
+      // `hv ? 'display-type text-2xl' : 'subhead-type text-lg'` puts both
+      // branches on one line, so the steps-down guard has to be per chunk.
+      // As a line-level test it skipped that whole ternary, which is how a
+      // real 24px heading would have walked past this gate unmeasured.
       for (const chunk of line.split(/['"`]/)) {
-        if (!chunk.includes('display-type')) continue;
+        if (!chunk.includes('display-type') || chunk.includes(STEPS_DOWN)) continue;
         for (const cls of chunk.split(/\s+/)) {
           const size = sizeOf(cls);
           if (size === null) continue;

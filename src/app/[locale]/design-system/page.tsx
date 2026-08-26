@@ -488,13 +488,21 @@ export default async function DesignSystemPage({
                 <label htmlFor="ds-invalid" className="block text-sm font-medium">
                   Postleitzahl
                 </label>
+                {/* The form contract this page documents says an error is
+                    wired with aria-describedby and not just coloured red. A
+                    specimen that shows the red border and nothing else would
+                    be breaking the rule three sections further down. */}
                 <input
                   id="ds-invalid"
                   className="hv-field h-11 px-4"
                   aria-invalid
+                  aria-describedby="ds-invalid-error"
                   defaultValue="9000"
                   readOnly
                 />
+                <p id="ds-invalid-error" className="text-body text-ink-accent">
+                  9000 liegt ausserhalb des Einsatzgebiets.
+                </p>
               </div>
             </div>
           </div>
@@ -624,8 +632,17 @@ function TokenTable({
               Aa
             </span>
           ) : null}
-          <code className="w-64 shrink-0 text-2xs text-ink-tertiary">{token}</code>
-          <span className="min-w-0 flex-1 text-body text-ink-secondary">{note}</span>
+          {/* The token column was a fixed 16rem. Together with the 44px
+              specimen that is 320px, which does not fit a 375px row — it left
+              the note 36px to wrap in and the text spilled out of the page.
+              On mobile the token takes the rest of the first line and the note
+              drops to its own; the fixed column comes back at sm. */}
+          <code className="min-w-0 flex-1 text-2xs text-ink-tertiary sm:w-64 sm:flex-none">
+            {token}
+          </code>
+          <span className="min-w-0 basis-full text-body text-ink-secondary sm:flex-1 sm:basis-auto">
+            {note}
+          </span>
         </li>
       ))}
     </ul>
