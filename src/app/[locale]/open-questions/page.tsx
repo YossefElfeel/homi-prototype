@@ -270,6 +270,14 @@ const ENTRIES: Entry[] = [
     screens: '17, 27, 31, 76, 77',
     state: 'open',
   },
+  {
+    ref: '§9.4b',
+    question: 'Is the date on a coupon its start, or when it was written?',
+    decision:
+      'The label now reads «Erstellt am» / "Created at" and the field behind it is still `validFrom`. Worth confirming rather than undoing: the office asked for the wording, and for a code written on the day its window opens the two readings agree. They come apart the moment somebody writes a campaign in advance — which is exactly what `scheduled` exists for, and screen 76 carries a coupon three weeks out to keep that state reachable. So the screen labels a start date as a creation date, and the one coupon where that is wrong is the one the state registry was built around. `Coupon` stores no creation date at all, so this is a label placed over an existing field rather than a field renamed: a real `createdAt` is a schema change plus a value for every seeded coupon, and it buys nothing until the business says which of the two dates it wants to read here. If the answer is both, `validFrom` keeps driving `scheduled` and `createdAt` joins it read-only.',
+    screens: '76, 77',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {
