@@ -451,14 +451,18 @@ export const adminContentEn: typeof adminContentDe = {
     restoreDone: 'Template deleted — original text restored.',
 
     usageTitle: 'Used in',
-    usageNote: 'This template is offered in the pickers on these screens.',
+    usageNote: 'Where this text actually goes out.',
+    usageChannels: 'Sent as',
+    usageNoChannels:
+      'No channel selected — this template cannot be sent anywhere.',
+    usageScreens: 'Pickers',
+    usageNoScreens:
+      'No picker offers this area — this template only goes out automatically.',
+    usageUnused:
+      'Nothing sends this template: no automatic event, and no picker offers this area.',
     usage: {
-      messages: 'Messages',
       quote: 'Quotes',
       invoice: 'Invoices',
-      booking: 'Jobs',
-      review: 'Reviews',
-      request: 'Requests',
     },
 
     flows: {
@@ -487,6 +491,11 @@ export const adminContentEn: typeof adminContentDe = {
 
   template: {
     back: 'Back to templates',
+    sectionSetupTitle: 'Where it belongs',
+    sectionSetupHint: 'Decides where the template shows up and how it goes out.',
+    sectionTextTitle: 'Texts',
+    sectionTextHint:
+      'All four languages on one screen. Where one is missing, the German text is sent (§20.6).',
     newTitle: 'New template',
     saveAction: 'Save',
     savedDone: 'Template saved.',

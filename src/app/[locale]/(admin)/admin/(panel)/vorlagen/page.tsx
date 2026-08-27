@@ -158,8 +158,12 @@ export default function AdminTemplatesPage() {
       ),
     },
     {
+      /* The state column, last and `trailing` like every other list's — the
+         card's title row was holding the actions menu instead, which is what
+         put this chip down among the labelled rows on the phone. */
       key: 'languages',
       header: t('colLanguages'),
+      trailing: true,
       align: 'end',
       sortBy: (x) => filledLocales(x, routing.locales),
       cell: (x) => {
@@ -174,37 +178,42 @@ export default function AdminTemplatesPage() {
         );
       },
     },
-    {
-      key: 'actions',
-      header: '',
-      trailing: true,
-      align: 'end',
-      cell: (x) => (
-        <RowActions>
-          {/* Only an event can have a default, and promoting the one that
-              already holds the job is a control that does nothing. */}
-          {x.event && !x.isDefault && (
-            <RowActionButton label={t('makeStandard')} onClick={() => promote(x)}>
-              <Star className="size-4" aria-hidden />
-            </RowActionButton>
-          )}
-          <RowAction label={t('editAction')} href={`/admin/vorlagen/${x.id}`}>
-            <Pencil className="size-4" aria-hidden />
-          </RowAction>
-          <RowActionButton
-            label={t('deleteAction')}
-            tone="danger"
-            onClick={() => {
-              setDoomed(x);
-              setHeirId('');
-            }}
-          >
-            <Trash2 className="size-4" aria-hidden />
-          </RowActionButton>
-        </RowActions>
-      ),
-    },
   ];
+
+  /*
+   * The actions belong to `DataView`'s own trailing cell, not to a column.
+   *
+   * As a column they were a cell like any other, so `DataView` still had no
+   * `rowActions` and fell through to the branch that draws a chevron for a row
+   * you can open — leaving every row ending in a menu button *and* an arrow
+   * pointing at nothing you could click. This is the only one of the eighteen
+   * lists that had built its menu as a column; the other seventeen pass it
+   * here, where the component knows the row already carries its own affordance.
+   */
+  const menu = (x: MessageTemplate) => (
+    <RowActions>
+      {/* Only an event can have a default, and promoting the one that already
+          holds the job is a control that does nothing. */}
+      {x.event && !x.isDefault && (
+        <RowActionButton label={t('makeStandard')} onClick={() => promote(x)}>
+          <Star className="size-4" aria-hidden />
+        </RowActionButton>
+      )}
+      <RowAction label={t('editAction')} href={`/admin/vorlagen/${x.id}`}>
+        <Pencil className="size-4" aria-hidden />
+      </RowAction>
+      <RowActionButton
+        label={t('deleteAction')}
+        tone="danger"
+        onClick={() => {
+          setDoomed(x);
+          setHeirId('');
+        }}
+      >
+        <Trash2 className="size-4" aria-hidden />
+      </RowActionButton>
+    </RowActions>
+  );
 
   return (
     <div>
@@ -334,6 +343,7 @@ export default function AdminTemplatesPage() {
         items={filtered}
         columns={columns}
         getKey={(x) => x.id}
+        rowActions={menu}
         onSelect={(x) => router.push(`/admin/vorlagen/${x.id}`)}
         caption={t('title')}
         empty={

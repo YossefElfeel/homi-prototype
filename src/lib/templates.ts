@@ -310,29 +310,35 @@ export function planDelete(
  * screens goes stale the first time a picker moves, and nothing fails when it
  * does. The pickers read `flow` from here too, so a screen that stops offering
  * a flow stops claiming to offer it in the same edit.
+ *
+ * Which is precisely what this table had stopped doing. Every flow claimed
+ * Nachrichten and two claimed Einsätze, but `TemplatePicker` is mounted in
+ * exactly two places: the quote builder and the invoice detail. Screen 48
+ * types its replies on purpose and says so in its own header — a thread there
+ * can be about a request, a quote or an invoice, and a picker that cannot tell
+ * them apart offers the wrong text as readily as the right one. So the editor
+ * sent admins to a screen with no picker to find, on every template it could
+ * show. A registry naming screens nobody wired up is worth less than no
+ * registry at all, because it reads as verified.
+ *
+ * An empty list is a real answer now rather than a gap: four of the six flows
+ * are automatic-only, and the editor says so instead of implying a picker.
  */
 export interface TemplateUsage {
   /** Key into `admin.templates.usage` for the screen's name. */
-  key: 'messages' | 'quote' | 'invoice' | 'booking' | 'review' | 'request';
+  key: 'quote' | 'invoice';
   href: string;
 }
 
 export const USAGE: Record<TemplateFlow, TemplateUsage[]> = {
-  requests: [{ key: 'messages', href: '/admin/nachrichten' }],
-  quotes: [
-    { key: 'quote', href: '/admin/offerten' },
-    { key: 'messages', href: '/admin/nachrichten' },
-  ],
-  bookings: [
-    { key: 'booking', href: '/admin/buchungen' },
-    { key: 'messages', href: '/admin/nachrichten' },
-  ],
-  invoices: [
-    { key: 'invoice', href: '/admin/rechnungen' },
-    { key: 'messages', href: '/admin/nachrichten' },
-  ],
-  reviews: [{ key: 'messages', href: '/admin/nachrichten' }],
-  general: [{ key: 'messages', href: '/admin/nachrichten' }],
+  requests: [],
+  /* The picker itself sits in the quote builder, one level in from a request.
+     The list is the entry every admin walks through to reach it. */
+  quotes: [{ key: 'quote', href: '/admin/offerten' }],
+  bookings: [],
+  invoices: [{ key: 'invoice', href: '/admin/rechnungen' }],
+  reviews: [],
+  general: [],
 };
 
 /** SMS is one segment at 160 characters; past that it silently bills as two. */
