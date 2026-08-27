@@ -469,15 +469,18 @@ export const adminContentDe = {
     restoreDone: 'Vorlage gelöscht — Originaltext wiederhergestellt.',
 
     usageTitle: 'Wird verwendet in',
-    usageNote:
-      'Diese Vorlage steht in den Auswahllisten der folgenden Bereiche zur Verfügung.',
+    usageNote: 'Wo dieser Text tatsächlich rausgeht.',
+    usageChannels: 'Versand über',
+    usageNoChannels:
+      'Kein Kanal ausgewählt — so kann diese Vorlage nirgends versendet werden.',
+    usageScreens: 'Auswahllisten',
+    usageNoScreens:
+      'Keine Auswahlliste bietet diesen Bereich an — diese Vorlage geht nur automatisch raus.',
+    usageUnused:
+      'Nichts versendet diese Vorlage: kein automatischer Anlass, und keine Auswahlliste bietet diesen Bereich an.',
     usage: {
-      messages: 'Nachrichten',
       quote: 'Offerten',
       invoice: 'Rechnungen',
-      booking: 'Einsätze',
-      review: 'Bewertungen',
-      request: 'Anfragen',
     },
 
     flows: {
@@ -506,6 +509,12 @@ export const adminContentDe = {
 
   template: {
     back: 'Zurück zu den Vorlagen',
+    sectionSetupTitle: 'Einordnung',
+    sectionSetupHint:
+      'Entscheidet, wo die Vorlage auftaucht und worüber sie rausgeht.',
+    sectionTextTitle: 'Texte',
+    sectionTextHint:
+      'Alle vier Sprachen auf einer Seite. Fehlt eine, wird der deutsche Text versendet (§20.6).',
     newTitle: 'Neue Vorlage',
     saveAction: 'Speichern',
     savedDone: 'Vorlage gespeichert.',

@@ -3,14 +3,16 @@
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ArrowLeft, ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info, Mail, MessageSquare } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useStore } from '@/mock/store';
 import type {
@@ -57,7 +59,11 @@ const EVENT_KEYS: MessageTemplateKey[] = [
  * The usage panel is the brief's last point answered structurally. It reads
  * `USAGE` in `lib/templates.ts`, the same table the pickers read to decide what
  * they offer, so "used in Invoices" cannot become a lie while the picker still
- * says otherwise.
+ * says otherwise. That was the design and not what shipped: `USAGE` listed
+ * Nachrichten under every flow, a screen with no picker at all, so the panel
+ * had been lying on every template it could show. The table now holds only the
+ * two screens that mount `TemplatePicker`, and the panel leads with the
+ * channels — a fact that comes off the record rather than a registry.
  */
 export default function EditTemplatePage({
   params,
@@ -110,12 +116,10 @@ export default function EditTemplatePage({
   if (!isNew && !existing) {
     return (
       <div>
-        <Button asChild variant="link" className="mb-6">
-          <Link href="/admin/vorlagen">
-            <ArrowLeft className="size-4" aria-hidden />
-            {t('back')}
-          </Link>
-        </Button>
+        <PageHeader
+          title={listT('emptyTitle')}
+          back={{ href: '/admin/vorlagen', label: t('back') }}
+        />
         <Alert tone="warning">{listT('emptyTitle')}</Alert>
       </div>
     );
@@ -152,158 +156,201 @@ export default function EditTemplatePage({
 
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/vorlagen">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <PageHeader
+        title={
+          isNew
+            ? t('newTitle')
+            : textFor(template.subject, locale) || listT('untitled')
+        }
+        back={{ href: '/admin/vorlagen', label: t('back') }}
+      />
 
-      <h1 className="display-type text-3xl">
-        {isNew
-          ? t('newTitle')
-          : textFor(template.subject, locale) || listT('untitled')}
-      </h1>
+      <div className="gap-app grid lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        {/*
+          The form is on a card now.
 
-      <div className="gap-app mt-8 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-        <div className="space-y-5">
-          <Field label={t('flowLabel')} hint={t('flowHint')}>
-            {(props) => (
-              <Select
-                {...props}
-                value={template.flow}
-                onChange={(e) => patch({ flow: e.target.value as TemplateFlow })}
-              >
-                {TEMPLATE_FLOWS.map((one) => (
-                  <option key={one} value={one}>
-                    {listT(`flows.${one}` as 'flows.quotes')}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+          It was laid straight onto the page background while the two panels
+          beside it were cards — so the only surfaces on this screen were the
+          reference material, and the fields an admin came here to fill in read
+          as the gap between them. Every other edit screen in the panel puts its
+          fields on a card, and this one claims in its own header to follow the
+          coupon screens.
 
-          <Field label={t('eventLabel')} hint={t('eventHint')}>
-            {(props) => (
-              <Select
-                {...props}
-                value={template.event ?? ''}
-                onChange={(e) =>
-                  patch({
-                    event: (e.target.value || undefined) as
-                      | MessageTemplateKey
-                      | undefined,
-                  })
-                }
-              >
-                <option value="">{t('eventNone')}</option>
-                {EVENT_KEYS.map((one) => (
-                  <option key={one} value={one}>
-                    {listT(`events.${one}` as 'events.offer-sent')}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-
-          <fieldset>
-            <legend className="text-sm font-medium">{t('channelsLabel')}</legend>
-            <div className="mt-2 flex flex-wrap gap-4">
-              {CHANNELS.map((channel) => (
-                <Checkbox
-                  key={channel}
-                  label={listT(
-                    channel === 'email' ? 'channelEmail' : 'channelSms',
-                  )}
-                  checked={template.channels.includes(channel)}
-                  onChange={(e) =>
-                    patch({
-                      channels: e.target.checked
-                        ? [...template.channels, channel]
-                        : template.channels.filter(
-                            (c: TemplateChannel) => c !== channel,
-                          ),
-                    })
-                  }
-                />
-              ))}
-            </div>
-          </fieldset>
-
-          <Field label={t('tagsLabel')} hint={t('tagsHint')}>
-            {(props) => (
-              <Input
-                {...props}
-                value={template.tags.join(', ')}
-                onChange={(e) =>
-                  patch({
-                    tags: e.target.value
-                      .split(',')
-                      .map((x) => x.trim())
-                      .filter(Boolean),
-                  })
-                }
-              />
-            )}
-          </Field>
-
-          {germanMissing && (
-            <Alert tone="warning" title={t('requiredTitle')}>
-              {t('requiredBody')}
-            </Alert>
-          )}
-
-          <div className="space-y-6 border-t border-line-subtle pt-6">
-            {routing.locales.map((l) => {
-              const body = template.body[l] ?? '';
-              const smsOverrun =
-                template.channels.includes('sms') && body.length > SMS_LIMIT;
-              return (
-                <div key={l} className="space-y-3">
-                  <h2 className="display-type text-lg">{LOCALE_LABELS[l]}</h2>
-
-                  <Field
-                    label={t('subjectLabel')}
-                    hint={
-                      l === 'de' && subjectMissing ? t('subjectMissing') : undefined
+          Two cards rather than one, split where the coupon screen splits: what
+          the template *is* above, what it *says* below. The language blocks are
+          the long part, and a single card would put the flow select and the
+          Italian textarea inside one unbroken box.
+        */}
+        <div className="space-y-app-section">
+          <Card>
+            <CardHeader
+              title={t('sectionSetupTitle')}
+              description={t('sectionSetupHint')}
+            />
+            <CardBody className="space-y-5">
+              <Field label={t('flowLabel')} hint={t('flowHint')}>
+                {(props) => (
+                  <Select
+                    {...props}
+                    value={template.flow}
+                    onChange={(e) =>
+                      patch({ flow: e.target.value as TemplateFlow })
                     }
                   >
-                    {(props) => (
-                      <Input
-                        {...props}
-                        value={template.subject[l] ?? ''}
-                        onChange={(e) =>
-                          patch({
-                            subject: { ...template.subject, [l]: e.target.value },
-                          })
-                        }
-                      />
-                    )}
-                  </Field>
+                    {TEMPLATE_FLOWS.map((one) => (
+                      <option key={one} value={one}>
+                        {listT(`flows.${one}` as 'flows.quotes')}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
 
-                  <Field
-                    label={t('bodyLabel')}
-                    hint={body.trim() ? undefined : listT('emptyForLocale')}
-                    error={smsOverrun ? listT('smsWarning', { limit: SMS_LIMIT }) : undefined}
+              <Field label={t('eventLabel')} hint={t('eventHint')}>
+                {(props) => (
+                  <Select
+                    {...props}
+                    value={template.event ?? ''}
+                    onChange={(e) =>
+                      patch({
+                        event: (e.target.value || undefined) as
+                          | MessageTemplateKey
+                          | undefined,
+                      })
+                    }
                   >
-                    {(props) => (
-                      <Textarea
-                        {...props}
-                        rows={body.trim() ? 7 : 3}
-                        value={body}
-                        onFocus={() => setActiveLocale(l)}
-                        onChange={(e) =>
-                          patch({ body: { ...template.body, [l]: e.target.value } })
-                        }
-                      />
-                    )}
-                  </Field>
-                </div>
-              );
-            })}
-          </div>
+                    <option value="">{t('eventNone')}</option>
+                    {EVENT_KEYS.map((one) => (
+                      <option key={one} value={one}>
+                        {listT(`events.${one}` as 'events.offer-sent')}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
 
-          <div className="flex flex-wrap gap-3 border-t border-line-subtle pt-6">
+              <fieldset>
+                <legend className="text-sm font-medium">
+                  {t('channelsLabel')}
+                </legend>
+                <div className="mt-2 flex flex-wrap gap-4">
+                  {CHANNELS.map((channel) => (
+                    <Checkbox
+                      key={channel}
+                      label={listT(
+                        channel === 'email' ? 'channelEmail' : 'channelSms',
+                      )}
+                      checked={template.channels.includes(channel)}
+                      onChange={(e) =>
+                        patch({
+                          channels: e.target.checked
+                            ? [...template.channels, channel]
+                            : template.channels.filter(
+                                (c: TemplateChannel) => c !== channel,
+                              ),
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </fieldset>
+
+              <Field label={t('tagsLabel')} hint={t('tagsHint')}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={template.tags.join(', ')}
+                    onChange={(e) =>
+                      patch({
+                        tags: e.target.value
+                          .split(',')
+                          .map((x) => x.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                  />
+                )}
+              </Field>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={t('sectionTextTitle')}
+              description={t('sectionTextHint')}
+            />
+            <CardBody className="space-y-6">
+              {germanMissing && (
+                <Alert tone="warning" title={t('requiredTitle')}>
+                  {t('requiredBody')}
+                </Alert>
+              )}
+
+              {routing.locales.map((l) => {
+                const body = template.body[l] ?? '';
+                const smsOverrun =
+                  template.channels.includes('sms') && body.length > SMS_LIMIT;
+                return (
+                  <div
+                    key={l}
+                    className="space-y-3 border-t border-line-subtle pt-6 first:border-0 first:pt-0"
+                  >
+                    <h3 className="display-type text-lg">{LOCALE_LABELS[l]}</h3>
+
+                    <Field
+                      label={t('subjectLabel')}
+                      hint={
+                        l === 'de' && subjectMissing
+                          ? t('subjectMissing')
+                          : undefined
+                      }
+                    >
+                      {(props) => (
+                        <Input
+                          {...props}
+                          value={template.subject[l] ?? ''}
+                          onChange={(e) =>
+                            patch({
+                              subject: {
+                                ...template.subject,
+                                [l]: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      )}
+                    </Field>
+
+                    <Field
+                      label={t('bodyLabel')}
+                      hint={body.trim() ? undefined : listT('emptyForLocale')}
+                      error={
+                        smsOverrun
+                          ? listT('smsWarning', { limit: SMS_LIMIT })
+                          : undefined
+                      }
+                    >
+                      {(props) => (
+                        <Textarea
+                          {...props}
+                          rows={body.trim() ? 7 : 3}
+                          value={body}
+                          onFocus={() => setActiveLocale(l)}
+                          onChange={(e) =>
+                            patch({
+                              body: { ...template.body, [l]: e.target.value },
+                            })
+                          }
+                        />
+                      )}
+                    </Field>
+                  </div>
+                );
+              })}
+            </CardBody>
+          </Card>
+
+          <div className="flex flex-wrap gap-3">
             <Button onClick={save}>{t('saveAction')}</Button>
             <Button asChild variant="ghost">
               <Link href="/admin/vorlagen">{listT('deleteCancel')}</Link>
@@ -330,27 +377,73 @@ export default function EditTemplatePage({
             </div>
           </div>
 
-          {/* The brief's fifth point. Generated from the same table the pickers
-              read, so this cannot claim a screen the picker does not serve. */}
+          {/*
+            The brief's fifth point — which had been answered with a screen that
+            cannot serve a template.
+
+            Every flow's USAGE row led with Nachrichten, so this panel sent the
+            admin off to pick their text on screen 48. Screen 48 has no picker,
+            and says why in its own header: one thread there can be about a
+            request, a quote or an invoice at once. Following the link left you
+            hunting for a control that was never built.
+
+            So the panel leads with the channels instead. That answer is true of
+            every template, it comes off the record in front of you rather than
+            a table of screens, and it is what an admin is actually checking
+            before they save — an SMS-only template with 400 characters in it
+            bills as two messages, and the field above already says so.
+          */}
           <div className="surface-card p-5">
             <h2 className="label-type text-ink-tertiary">{listT('usageTitle')}</h2>
             <p className="mt-2 flex items-start gap-2 text-sm text-ink-secondary">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
               {listT('usageNote')}
             </p>
-            <ul className="mt-3 space-y-1.5">
-              {usage.map((one) => (
-                <li key={one.key}>
-                  <Link
-                    href={one.href}
-                    className="inline-flex items-center gap-1.5 text-sm underline underline-offset-2 hover:text-ink-accent"
-                  >
-                    {listT(`usage.${one.key}` as 'usage.messages')}
-                    <ExternalLink className="size-3.5" aria-hidden />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+
+            <p className="label-type mt-4 text-ink-tertiary">
+              {listT('usageChannels')}
+            </p>
+            {template.channels.length > 0 ? (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {template.channels.includes('email') && (
+                  <Chip icon={Mail}>{listT('channelEmail')}</Chip>
+                )}
+                {template.channels.includes('sms') && (
+                  <Chip icon={MessageSquare}>{listT('channelSms')}</Chip>
+                )}
+              </div>
+            ) : (
+              /* Both boxes unticked is reachable from the fieldset above, so it
+                 gets a sentence rather than an empty row that reads as a
+                 rendering fault. */
+              <p className="mt-1.5 text-sm text-status-warning-fg">
+                {listT('usageNoChannels')}
+              </p>
+            )}
+
+            <p className="label-type mt-4 text-ink-tertiary">
+              {listT('usageScreens')}
+            </p>
+            {usage.length > 0 ? (
+              <ul className="mt-1.5 space-y-1.5">
+                {usage.map((one) => (
+                  <li key={one.key}>
+                    <Link
+                      href={one.href}
+                      className="inline-flex items-center gap-1.5 text-sm underline underline-offset-2 hover:text-ink-accent"
+                    >
+                      {listT(`usage.${one.key}` as 'usage.quote')}
+                      <ExternalLink className="size-3.5" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1.5 text-sm text-ink-secondary">
+                {template.event ? listT('usageNoScreens') : listT('usageUnused')}
+              </p>
+            )}
+
             {template.event && (
               <p className="mt-4 border-t border-line-subtle pt-3 text-sm text-ink-secondary">
                 {listT('automaticOn', {
