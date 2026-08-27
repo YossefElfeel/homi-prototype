@@ -334,13 +334,6 @@ export default function RequestsPage() {
       cell: (r) => propertyOf(r.propertyId)?.city ?? '—',
     },
     {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      sortBy: (r) => r.status,
-      cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
-    },
-    {
       key: 'received',
       header: t('colReceived'),
       align: 'end',
@@ -385,6 +378,13 @@ export default function RequestsPage() {
           </span>
         );
       },
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      sortBy: (r) => r.status,
+      cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
     },
   ];
 

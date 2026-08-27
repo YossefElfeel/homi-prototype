@@ -21,6 +21,13 @@ import { SkeletonRows } from './skeleton';
  * `primary` marks the column that becomes the card's title. `trailing` sits on
  * the card's title row (a status badge, an amount). Everything else becomes a
  * label/value pair inside the card.
+ *
+ * Order in the table is order in this array, and state belongs at the end of
+ * it: the row's status column last but one, a switch that changes that status
+ * after it, then the actions cell this component appends. It was wherever each
+ * screen happened to put it — second on invoices, seventh on requests — so a
+ * reader moving between two lists had to find the badge again on each. One
+ * position across every table is one lookup.
  */
 export interface Column<T> {
   key: string;

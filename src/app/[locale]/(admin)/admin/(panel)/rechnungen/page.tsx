@@ -169,16 +169,6 @@ export default function InvoicesPage() {
       cell: (i) => nameOf(i.customerId),
     },
     {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      sortBy: (i) => effectiveInvoiceStatus(i, now),
-      /* The badge reads the derived status, not the stored one. It used to
-         read `i.status`, so a row whose own «Fällig» column said «12 T.
-         überfällig» wore a blue «Versendet» badge beside it. */
-      cell: (i) => <StatusBadge entity="invoice" state={effectiveInvoiceStatus(i, now)} size="sm" />,
-    },
-    {
       key: 'reference',
       header: t('colReference'),
       sortBy: (i) => i.reference,
@@ -269,6 +259,16 @@ export default function InvoicesPage() {
           </span>
         );
       },
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      sortBy: (i) => effectiveInvoiceStatus(i, now),
+      /* The badge reads the derived status, not the stored one. It used to
+         read `i.status`, so a row whose own «Fällig» column said «12 T.
+         überfällig» wore a blue «Versendet» badge beside it. */
+      cell: (i) => <StatusBadge entity="invoice" state={effectiveInvoiceStatus(i, now)} size="sm" />,
     },
   ];
 

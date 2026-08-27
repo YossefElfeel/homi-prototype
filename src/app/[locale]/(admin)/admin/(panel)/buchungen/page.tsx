@@ -130,12 +130,6 @@ export default function BookingsPage() {
       cell: (b) => <span data-numeric>{b.reference}</span>,
     },
     {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      cell: (b) => <StatusBadge entity="booking" state={b.status} size="sm" />,
-    },
-    {
       key: 'customer',
       header: t('colCustomer'),
       sortBy: nameOf,
@@ -260,6 +254,12 @@ export default function BookingsPage() {
         if (!invoice) return <span className="text-ink-tertiary">—</span>;
         return <StatusBadge entity="invoice" state={invoice.status} size="sm" />;
       },
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      cell: (b) => <StatusBadge entity="booking" state={b.status} size="sm" />,
     },
   ];
 

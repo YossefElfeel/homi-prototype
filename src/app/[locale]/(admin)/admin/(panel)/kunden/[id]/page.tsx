@@ -253,13 +253,6 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       ),
     },
     {
-      key: 'status',
-      header: t('colPaymentStatus'),
-      trailing: true,
-      sortBy: (i) => i.status,
-      cell: (i) => <StatusBadge entity="invoice" state={i.status} size="sm" />,
-    },
-    {
       key: 'service',
       header: t('colService'),
       cell: (i) => (
@@ -302,6 +295,13 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       trailing: true,
       sortBy: (i) => invoiceTotal(i),
       cell: (i) => <Money amount={invoiceTotal(i)} />,
+    },
+    {
+      key: 'status',
+      header: t('colPaymentStatus'),
+      trailing: true,
+      sortBy: (i) => i.status,
+      cell: (i) => <StatusBadge entity="invoice" state={i.status} size="sm" />,
     },
   ];
 

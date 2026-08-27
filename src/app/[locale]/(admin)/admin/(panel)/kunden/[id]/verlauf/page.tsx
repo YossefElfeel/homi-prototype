@@ -149,13 +149,6 @@ export default function CustomerHistoryPage({
       ),
     },
     {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      sortBy: (e) => e.badge.state,
-      cell: (e) => <StatusBadge entity={e.badge.entity} state={e.badge.state} size="sm" />,
-    },
-    {
       key: 'when',
       header: t('colWhen'),
       sortBy: (e) => e.at,
@@ -190,6 +183,13 @@ export default function CustomerHistoryPage({
         ) : (
           <Money amount={e.amount} />
         ),
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      sortBy: (e) => e.badge.state,
+      cell: (e) => <StatusBadge entity={e.badge.entity} state={e.badge.state} size="sm" />,
     },
   ];
 
