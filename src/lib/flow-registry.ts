@@ -1060,7 +1060,7 @@ export const FLOWS: Flow[] = [
     entries: [
       ok('Application', '/jobs/bewerbung', 'The work permit is the first question'),
       ok('Speculative application', '/jobs', 'When no position is open'),
-      ok('Create a position', '/admin/stellen'),
+      ok('Create a job', '/admin/stellen'),
     ],
     actions: [
       ok('Check the status', '/jobs/status'),
@@ -1068,6 +1068,11 @@ export const FLOWS: Flow[] = [
         'Review, reject, delete',
         '/admin/bewerbungen/app_1',
         'Deleting is real, not archived — revDSG',
+      ),
+      ok(
+        'Read the CV',
+        '/admin/bewerbungen/app_8',
+        'A real PDF, generated on download — the record carries a filename and a size, never bytes, and the file says so on its first page',
       ),
       ok('Turn into a staff account', '/admin/bewerbungen/app_1/konto'),
     ],

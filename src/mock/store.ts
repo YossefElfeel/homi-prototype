@@ -235,8 +235,22 @@ Marco Brunner`;
    «Noch keine Bewertungen» for a reviewer who had opened the app before and on
    five cards for one who had not — and that empty state explains itself well
    (reviews arrive after payment), so the screen would argue the seed was
-   working. That is exactly the reading 26 was bumped to stop. */
-const SCHEMA_VERSION = 27;
+   working. That is exactly the reading 26 was bumped to stop.
+
+   28: Data only, and the third instance of the same case — `postings` went
+   from six to eleven and `applications` from fourteen to twenty. No shape
+   moved, so nothing crashes and nothing looks obviously wrong, which is what
+   makes this one worth a bump rather than a shrug: `merge` fills in
+   collections that are *missing*, and both of these are present in any blob
+   written since the hiring seed moved into `baseData`. A reviewer who had
+   opened the app before would keep the old six and fourteen for ever.
+
+   The states the new records exist for are the ones nothing else reaches —
+   the jobs list past its ten-row page, `createPosting`'s own untouched output,
+   an accepted application with no account behind it yet, a record three days
+   from erasure. Every one of them would have been invisible to exactly the
+   person most likely to be checking for them. */
+const SCHEMA_VERSION = 28;
 
 /**
  * §10 — the default payment term.
@@ -2246,7 +2260,7 @@ export const useStore = create<StoreState>()(
         const posting: JobPosting = {
           id: `job_${stamp}`,
           slug,
-          title: { ...blank, de: 'Neue Stelle', en: 'New role' },
+          title: { ...blank, de: 'Neue Stelle', en: 'New job' },
           kind: 'part-time',
           workload: [40, 80],
           regions: [],

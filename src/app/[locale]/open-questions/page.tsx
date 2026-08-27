@@ -278,6 +278,14 @@ const ENTRIES: Entry[] = [
     screens: '76, 77',
     state: 'open',
   },
+  {
+    ref: '§7.2b',
+    question: 'Where does the end date of a fixed-term job live?',
+    decision:
+      'Nowhere, and the seed says so in prose. `JobPosting` has `kind: temporary` and nothing else — no end date, no season — so the seasonal role that runs March to October announces that in its summary text, where nothing can read it. Three things follow that a reviewer should see before the schema is settled. The jobs page cannot sort or filter by it. A fixed-term role that has ended stays published until somebody remembers to switch it off, which is the same failure the `validTo` on a coupon exists to prevent. And an accepted applicant becomes a `TeamMember` with a `startedAt` and no end, so the contract type stops being recorded the moment it starts to matter for payroll. The cheap version is a nullable `endsAt` on the posting; the honest version is that the term belongs on the employment, not on the advertisement, and this prototype has no employment record to put it on.',
+    screens: 'C1, C2, H3, H4, H7',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

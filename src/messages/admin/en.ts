@@ -23,7 +23,7 @@ export const adminEn: typeof adminDe = {
       reviews: 'Reviews',
       templates: 'Templates',
       applications: 'Applications',
-      postings: 'Roles',
+      postings: 'Jobs',
       teamMembers: 'Team',
       settings: 'Settings',
       changelog: 'Change log',
