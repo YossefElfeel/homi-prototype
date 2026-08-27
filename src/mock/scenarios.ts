@@ -2211,7 +2211,19 @@ function baseData(now: Date): DataSet {
     coupons,
     changeLog,
     photos,
-    team: [owner(now)],
+    team: [owner(now), ...hiredMembers(now)],
+    /*
+     * The hiring track, in the scenario the app opens on.
+     *
+     * Postings and applications used to be seeded only by `hiring`, so
+     * /admin/stellen and /admin/bewerbungen were two empty screens by default
+     * — and the applications screen is owner-only, so the one reviewer who
+     * can see it at all was the one who saw nothing. Neither list is a
+     * scenario in its own right: an established company has open roles and a
+     * queue of applicants the same way it has customers and invoices.
+     */
+    postings: hiringPostings(now),
+    applications: hiringApplications(now),
   };
 }
 
@@ -2272,135 +2284,537 @@ function withClosure(data: DataSet, now: Date): DataSet {
   };
 }
 
-function withHiring(data: DataSet, now: Date): DataSet {
-  const postings: JobPosting[] = [
+/* ------------------------------------------------------------- hiring seed */
+
+/**
+ * §20.6 — German carries French and Italian until translation lands.
+ *
+ * The two postings this seed started with wrote `fr: []` and `it: []` for the
+ * three content lists while their title and summary already fell back to
+ * German. A French visitor therefore got a job page with a headline, a
+ * summary, and three empty headings underneath — which reads as a broken page
+ * rather than as an untranslated one. Same rule for both now.
+ */
+function ls(de: string[], en: string[]): Record<Locale, string[]> {
+  return { de, en, fr: de, it: de };
+}
+
+function lt(de: string, en: string): Record<Locale, string> {
+  return { de, en, fr: de, it: de };
+}
+
+/**
+ * The postings.
+ *
+ * Eleven rather than two, and the shape of the set is the point: all four
+ * `EmploymentKind` values, three drafts next to eight published jobs, and two
+ * published jobs nobody has applied to. Before this the list could only ever
+ * show `part-time` and `freelance`, both published, both with applications —
+ * so the «Entwurf» chip, two of the four contract labels and the zero in the
+ * applications column were drawn by nothing.
+ *
+ * The last five exist for the states the first six still could not reach:
+ * a flat `100–100%` workload where every other row is a band, a job that has
+ * been open five months, a draft with two of its three content blocks never
+ * written, `createPosting`'s own untouched output — which is what the create
+ * flow lands on, and which is the only record that exercises the «Ohne
+ * Bezeichnung» fallback for an unnamed job — and an eleventh row, because the
+ * list paginates at ten and six postings left the pager unreachable.
+ */
+function hiringPostings(now: Date): JobPosting[] {
+  return [
     {
       id: 'job_1',
       slug: 'reinigungskraft-teilzeit',
-      title: {
-        de: 'Reinigungskraft 40–60% (m/w/d)',
-        en: 'Cleaner 40–60%',
-        fr: 'Reinigungskraft 40–60% (m/w/d)',
-        it: 'Reinigungskraft 40–60% (m/w/d)',
-      },
+      title: lt('Reinigungskraft 40–60% (m/w/d)', 'Cleaner 40–60%'),
       kind: 'part-time',
       workload: [40, 60],
       regions: ['8700', '8706', '8707', '8708', '8712'],
-      summary: {
-        de: 'Sie reinigen Privathaushalte am rechten Zürichseeufer — feste Kundschaft, planbare Einsätze, Fahrzeug von Vorteil.',
-        en: 'You clean private homes on the right shore of Lake Zurich — regular clients, predictable shifts, a car helps.',
-        fr: 'Sie reinigen Privathaushalte am rechten Zürichseeufer.',
-        it: 'Sie reinigen Privathaushalte am rechten Zürichseeufer.',
-      },
-      responsibilities: {
-        de: [
+      summary: lt(
+        'Sie reinigen Privathaushalte am rechten Zürichseeufer — feste Kundschaft, planbare Einsätze, Fahrzeug von Vorteil.',
+        'You clean private homes on the right shore of Lake Zurich — regular clients, predictable shifts, a car helps.',
+      ),
+      responsibilities: ls(
+        [
           'Unterhalts- und Grundreinigungen in Privathaushalten',
           'Arbeiten nach Checkliste, Fotos vor und nach dem Einsatz',
           'Ein- und Auschecken über das Mobiltelefon',
           'Schlüssel und Zutrittscodes vertraulich behandeln',
         ],
-        en: [
+        [
           'Regular and deep cleaning in private homes',
           'Working to a checklist, photos before and after',
           'Checking in and out from your phone',
           'Handling keys and access codes confidentially',
         ],
-        fr: [],
-        it: [],
-      },
-      requirements: {
-        de: [
+      ),
+      requirements: ls(
+        [
           'Gültige Arbeitsbewilligung für die Schweiz',
           'Deutsch für die Verständigung mit der Kundschaft',
           'Mindestens zwei Jahre Reinigungserfahrung',
           'Zuverlässigkeit — die Kundschaft ist oft nicht zuhause',
         ],
-        en: [
+        [
           'A valid Swiss work permit',
           'German good enough to talk with clients',
           'At least two years of cleaning experience',
           'Reliability — clients are often not at home',
         ],
-        fr: [],
-        it: [],
-      },
-      offer: {
-        de: [
+      ),
+      offer: ls(
+        [
           'Feste Einsätze in einem engen Gebiet — keine langen Fahrten',
           'Material und Ausrüstung werden gestellt',
           'Planbare Zeiten, kein Einsatz an Sonntagen',
           'Einarbeitung durch die Geschäftsleitung persönlich',
         ],
-        en: [
+        [
           'Regular jobs in a compact area — no long drives',
           'Materials and equipment provided',
           'Predictable hours, never on Sundays',
           'Personal onboarding by the owner',
         ],
-        fr: [],
-        it: [],
-      },
+      ),
       published: true,
       createdAt: iso(days(now, -18)),
     },
     {
       id: 'job_2',
       slug: 'moebelmonteur-aushilfe',
-      title: {
-        de: 'Möbelmonteur:in auf Abruf',
-        en: 'Furniture assembler, on call',
-        fr: 'Möbelmonteur:in auf Abruf',
-        it: 'Möbelmonteur:in auf Abruf',
-      },
+      title: lt('Möbelmonteur:in auf Abruf', 'Furniture assembler, on call'),
       kind: 'freelance',
       workload: [10, 30],
       regions: ['8700', '8706', '8708', '8712', '8132'],
-      summary: {
-        de: 'Sie montieren Möbel bei Privatkundschaft — einzelne Einsätze, nach Absprache, mit eigenem Werkzeug.',
-        en: 'You assemble furniture for private clients — single jobs, by arrangement, with your own tools.',
-        fr: 'Sie montieren Möbel bei Privatkundschaft.',
-        it: 'Sie montieren Möbel bei Privatkundschaft.',
-      },
-      responsibilities: {
-        de: [
+      summary: lt(
+        'Sie montieren Möbel bei Privatkundschaft — einzelne Einsätze, nach Absprache, mit eigenem Werkzeug.',
+        'You assemble furniture for private clients — single jobs, by arrangement, with your own tools.',
+      ),
+      responsibilities: ls(
+        [
           'Montage von Schränken, Betten, Küchen- und Büromöbeln',
           'Verpackungsmaterial mitnehmen und entsorgen',
           'Abnahme mit der Kundschaft vor Ort',
         ],
-        en: [
+        [
           'Assembling wardrobes, beds, kitchen and office furniture',
           'Taking the packaging away and disposing of it',
           'Signing off with the client on site',
         ],
-        fr: [],
-        it: [],
-      },
-      requirements: {
-        de: [
+      ),
+      requirements: ls(
+        [
           'Gültige Arbeitsbewilligung für die Schweiz',
           'Eigenes Werkzeug und Fahrzeug',
           'Erfahrung mit gängigen Möbelsystemen',
         ],
-        en: [
+        [
           'A valid Swiss work permit',
           'Your own tools and a vehicle',
           'Experience with common furniture systems',
         ],
-        fr: [],
-        it: [],
-      },
-      offer: {
-        de: ['Einsätze nach Absprache', 'Abrechnung pro Einsatz', 'Kein Verkaufsdruck'],
-        en: ['Jobs by arrangement', 'Paid per job', 'No sales targets'],
-        fr: [],
-        it: [],
-      },
+      ),
+      offer: ls(
+        ['Einsätze nach Absprache', 'Abrechnung pro Einsatz', 'Kein Verkaufsdruck'],
+        ['Jobs by arrangement', 'Paid per job', 'No sales targets'],
+      ),
       published: true,
       createdAt: iso(days(now, -6)),
     },
+    {
+      /* The only `permanent` role, and the only one with staff responsibility
+         — which is why it is the posting the two strongest applications name. */
+      id: 'job_3',
+      slug: 'teamleitung-reinigung',
+      title: lt('Teamleitung Reinigung 80–100%', 'Cleaning team lead 80–100%'),
+      kind: 'permanent',
+      workload: [80, 100],
+      regions: ['8700', '8706', '8707', '8708', '8712', '8132', '8627', '8634'],
+      summary: lt(
+        'Sie führen die Einsatzplanung im Alltag, arbeiten selbst mit und sind die erste Ansprechperson für Kundschaft und Team.',
+        'You run the day-to-day scheduling, work the jobs yourself, and are the first point of contact for clients and team.',
+      ),
+      responsibilities: ls(
+        [
+          'Tagesplanung und Zuteilung der Einsätze',
+          'Qualitätskontrolle nach Grund- und Umzugsreinigungen',
+          'Einarbeitung neuer Mitarbeitender',
+          'Erste Ansprechperson bei Reklamationen',
+        ],
+        [
+          'Planning the day and assigning the jobs',
+          'Checking quality after deep and move-out cleans',
+          'Onboarding new team members',
+          'First point of contact when something goes wrong',
+        ],
+      ),
+      requirements: ls(
+        [
+          'Gültige Arbeitsbewilligung für die Schweiz',
+          'Mindestens fünf Jahre Reinigungserfahrung, davon eines mit Führung',
+          'Sehr gutes Deutsch in Wort und Schrift',
+          'Führerausweis Kategorie B',
+        ],
+        [
+          'A valid Swiss work permit',
+          'At least five years in cleaning, one of them leading',
+          'Strong written and spoken German',
+          'A category B driving licence',
+        ],
+      ),
+      offer: ls(
+        [
+          'Festanstellung mit 13. Monatslohn',
+          'Geschäftsfahrzeug, auch für den Arbeitsweg',
+          'Fünf Wochen Ferien',
+          'Mitsprache bei der Einsatzplanung',
+        ],
+        [
+          'A permanent contract with a 13th month',
+          'A company vehicle, yours for the commute too',
+          'Five weeks of holiday',
+          'A real say in how the week is planned',
+        ],
+      ),
+      published: true,
+      createdAt: iso(days(now, -31)),
+    },
+    {
+      /* Fixed term, and the dates are in the summary rather than in the
+         schema: `JobPosting` has no end date, so a temporary role can only say
+         so in words. Written down on /open-questions as §7.2b. */
+      id: 'job_4',
+      slug: 'saisonhilfe-umzugsreinigung',
+      title: lt('Saisonhilfe Umzugsreinigung', 'Seasonal help, move-out cleaning'),
+      kind: 'temporary',
+      workload: [50, 80],
+      regions: ['8700', '8706', '8708', '8712', '8634'],
+      summary: lt(
+        'Befristet über die Umzugssaison von März bis Oktober — Wohnungsübergaben mit Abnahmegarantie, im Zweierteam.',
+        'A fixed term over the moving season, March to October — handovers with our acceptance guarantee, working in pairs.',
+      ),
+      responsibilities: ls(
+        [
+          'Umzugsreinigungen inklusive Fenster und Storen',
+          'Vorbereitung der Wohnung auf die Abnahme',
+          'Nacharbeiten, wenn die Verwaltung etwas beanstandet',
+        ],
+        [
+          'Move-out cleans including windows and blinds',
+          'Getting the flat ready for the handover inspection',
+          'Going back if the letting agent flags something',
+        ],
+      ),
+      requirements: ls(
+        [
+          'Gültige Arbeitsbewilligung für die Schweiz',
+          'Belastbarkeit — Umzugstage sind lang',
+          'Erfahrung mit Wohnungsabnahmen von Vorteil',
+        ],
+        [
+          'A valid Swiss work permit',
+          'Stamina — handover days run long',
+          'Experience with flat handovers is a plus',
+        ],
+      ),
+      offer: ls(
+        [
+          'Klar befristeter Vertrag, März bis Oktober',
+          'Immer im Zweierteam, nie allein auf einer Abnahme',
+          'Übernahme in eine Festanstellung möglich',
+        ],
+        [
+          'A clearly bounded contract, March to October',
+          'Always in a pair, never alone at a handover',
+          'A permanent contract afterwards is possible',
+        ],
+      ),
+      published: true,
+      createdAt: iso(days(now, -12)),
+    },
+    {
+      /* The draft. Nothing on the jobs page shows it, and that is what the
+         «Entwurf» chip in the list has to be able to say. */
+      id: 'job_5',
+      slug: 'bueroreinigung-abendteam',
+      title: lt('Büroreinigung Abendteam 20–40%', 'Office cleaning, evening team 20–40%'),
+      kind: 'part-time',
+      workload: [20, 40],
+      regions: ['8700', '8706', '8712'],
+      summary: lt(
+        'Reinigung von Büroflächen zwischen 18 und 22 Uhr — noch nicht ausgeschrieben, die Zeiten sind mit der Kundschaft nicht bestätigt.',
+        'Cleaning office space between 18:00 and 22:00 — not posted yet, the hours are not confirmed with the client.',
+      ),
+      responsibilities: ls(
+        ['Unterhaltsreinigung von Büroflächen', 'Auffüllen von Verbrauchsmaterial'],
+        ['Regular cleaning of office space', 'Restocking consumables'],
+      ),
+      requirements: ls(
+        ['Gültige Arbeitsbewilligung für die Schweiz', 'Einsatz am Abend möglich'],
+        ['A valid Swiss work permit', 'Available in the evening'],
+      ),
+      offer: ls(['Feste Objekte, feste Zeiten'], ['The same buildings, the same hours']),
+      published: false,
+      createdAt: iso(days(now, -3)),
+    },
+    {
+      /* Published two days ago and nobody has applied. The zero in the
+         applications column is a state the list has to draw, and with every
+         seeded posting carrying applications it never had to. */
+      id: 'job_6',
+      slug: 'springer-ferienvertretung',
+      title: lt('Springer:in Ferienvertretung', 'Cover for holidays, on call'),
+      kind: 'temporary',
+      workload: [30, 60],
+      regions: ['8132', '8627', '8634'],
+      summary: lt(
+        'Sie springen ein, wenn jemand im Team ausfällt oder in den Ferien ist — kurzfristig, im Oberland.',
+        'You step in when somebody is off sick or away — at short notice, in the Oberland.',
+      ),
+      responsibilities: ls(
+        ['Übernahme geplanter Einsätze bei Ausfällen', 'Arbeiten nach der Checkliste des Objekts'],
+        ['Taking over planned jobs when somebody drops out', "Working to the property's checklist"],
+      ),
+      requirements: ls(
+        ['Gültige Arbeitsbewilligung für die Schweiz', 'Eigenes Fahrzeug', 'Kurzfristig verfügbar'],
+        ['A valid Swiss work permit', 'Your own vehicle', 'Available at short notice'],
+      ),
+      offer: ls(
+        ['Zuschlag für kurzfristige Einsätze', 'Keine Mindeststundenzahl'],
+        ['A premium for short-notice work', 'No minimum hours'],
+      ),
+      published: true,
+      createdAt: iso(days(now, -2)),
+    },
+    {
+      /*
+       * The only full-time role, and the only 100–100% workload. Every other
+       * posting is a range, so the list's «40–60%» column had never had to
+       * draw a band with nothing in it — and «100–100%» is what it renders,
+       * which is worth being able to see before deciding it is acceptable.
+       */
+      id: 'job_7',
+      slug: 'objektleitung-unterhaltsreinigung',
+      title: lt('Objektleitung Unterhaltsreinigung 100%', 'Site manager, regular cleaning 100%'),
+      kind: 'permanent',
+      workload: [100, 100],
+      regions: ['8700', '8706', '8707', '8708', '8712', '8132'],
+      summary: lt(
+        'Sie führen die Unterhaltsreinigung mehrerer Objekte, planen die Einsätze und sind für die Kundschaft die erste Ansprechperson.',
+        'You run regular cleaning across several buildings, plan the shifts, and are the first person the client calls.',
+      ),
+      responsibilities: ls(
+        [
+          'Einsatzplanung für vier bis sechs Objekte',
+          'Qualitätskontrollen vor Ort, mit Protokoll',
+          'Einarbeitung neuer Mitarbeitender',
+          'Materialbestellung und Lagerhaltung',
+        ],
+        [
+          'Planning the shifts for four to six buildings',
+          'On-site quality checks, written up',
+          'Onboarding new team members',
+          'Ordering materials and keeping the store',
+        ],
+      ),
+      requirements: ls(
+        [
+          'Gültige Arbeitsbewilligung für die Schweiz',
+          'Mehrjährige Führungserfahrung in der Reinigung',
+          'Deutsch verhandlungssicher',
+          'Führerausweis Kategorie B',
+        ],
+        [
+          'A valid Swiss work permit',
+          'Several years leading a cleaning team',
+          'German at negotiation level',
+          'A category B driving licence',
+        ],
+      ),
+      offer: ls(
+        [
+          'Geschäftsfahrzeug, auch zur privaten Nutzung',
+          'Fünf Wochen Ferien',
+          'Beteiligung an der Weiterbildung',
+        ],
+        ['A company car, private use included', 'Five weeks of holiday', 'Training paid for'],
+      ),
+      published: true,
+      createdAt: iso(days(now, -11)),
+    },
+    {
+      /*
+       * Published in March and still open. The list sorts by nothing in
+       * particular and shows no age, so a posting that has been up for five
+       * months with nobody applying looks exactly like one published
+       * yesterday — that is the point of seeding one.
+       */
+      id: 'job_8',
+      slug: 'reinigungskraft-wochenende',
+      title: lt('Reinigungskraft Wochenende 20%', 'Cleaner, weekends 20%'),
+      kind: 'part-time',
+      workload: [20, 20],
+      regions: ['8627', '8634'],
+      summary: lt(
+        'Samstags Umzugs- und Endreinigungen im Oberland. Seit Monaten offen — der Samstag ist der Grund.',
+        'Move-out and final cleans in the Oberland, on Saturdays. Open for months — the Saturday is why.',
+      ),
+      responsibilities: ls(
+        ['Umzugs- und Endreinigungen am Samstag', 'Übergabe an die Verwaltung vor Ort'],
+        ['Move-out and final cleans on Saturdays', 'Handover to the letting agent on site'],
+      ),
+      requirements: ls(
+        ['Gültige Arbeitsbewilligung für die Schweiz', 'Samstags verfügbar', 'Eigenes Fahrzeug'],
+        ['A valid Swiss work permit', 'Available on Saturdays', 'Your own vehicle'],
+      ),
+      offer: ls(
+        ['Wochenendzuschlag', 'Nur ein Tag pro Woche — gut als Zweitbeschäftigung'],
+        ['A weekend premium', 'One day a week — it works as a second job'],
+      ),
+      published: true,
+      createdAt: iso(days(now, -158)),
+    },
+    {
+      /*
+       * Half written and put down. Responsibilities were typed, the other two
+       * blocks never were — which is what a draft actually looks like, and
+       * which the jobs page has to render without implying the empty blocks
+       * are a fault.
+       */
+      id: 'job_9',
+      slug: 'fensterreinigung-saison',
+      title: lt('Fensterreinigung Saison 30–50%', 'Window cleaning, seasonal 30–50%'),
+      kind: 'temporary',
+      workload: [30, 50],
+      regions: ['8700', '8712'],
+      summary: lt(
+        'Fensterreinigung von März bis Oktober. Entwurf — Pensum und Saisonstart sind noch offen.',
+        'Window cleaning from March to October. A draft — the workload and the start of the season are still open.',
+      ),
+      responsibilities: ls(
+        ['Fenster- und Rahmenreinigung', 'Arbeiten mit Teleskopstange und Leiter'],
+        ['Cleaning windows and frames', 'Working from a pole and a ladder'],
+      ),
+      requirements: ls([], []),
+      offer: ls([], []),
+      published: false,
+      createdAt: iso(days(now, -9)),
+    },
+    {
+      /*
+       * What «Stelle anlegen» actually produces: `createPosting`'s own record,
+       * untouched. Nothing seeded this shape, so the empty editor — the first
+       * screen anybody creating a job sees — could only be reached by creating
+       * one, and the list's own «Ohne Bezeichnung» fallback was never drawn.
+       */
+      id: 'job_10',
+      slug: 'neue-stelle-entwurf',
+      title: lt('', ''),
+      kind: 'part-time',
+      workload: [40, 80],
+      regions: [],
+      summary: lt('', ''),
+      responsibilities: ls([], []),
+      requirements: ls([], []),
+      offer: ls([], []),
+      published: false,
+      createdAt: iso(days(now, -1)),
+    },
+    {
+      /*
+       * The eleventh, which is the point of it: the list paginates at ten, and
+       * with six postings the pager was a control no reviewer could reach. The
+       * title is also the longest in the set, so the column that has to
+       * truncate one gets one to truncate.
+       */
+      id: 'job_11',
+      slug: 'reinigungskraft-arztpraxen-und-therapieraeume',
+      title: lt(
+        'Reinigungskraft für Arztpraxen und Therapieräume 30–50% (m/w/d)',
+        'Cleaner for medical practices and therapy rooms 30–50%',
+      ),
+      kind: 'part-time',
+      workload: [30, 50],
+      regions: ['8700', '8706', '8707', '8708', '8712', '8132', '8627', '8634'],
+      summary: lt(
+        'Reinigung von Praxen und Therapieräumen ausserhalb der Sprechzeiten — mit Hygienevorgaben, die schriftlich festgehalten sind.',
+        'Cleaning practices and therapy rooms outside consulting hours — to hygiene rules that are written down.',
+      ),
+      responsibilities: ls(
+        [
+          'Reinigung und Flächendesinfektion nach Hygieneplan',
+          'Entsorgung nach den Vorgaben der Praxis',
+          'Dokumentation jedes Einsatzes',
+        ],
+        [
+          'Cleaning and surface disinfection to the hygiene plan',
+          "Disposal to the practice's own rules",
+          'Documenting every visit',
+        ],
+      ),
+      requirements: ls(
+        [
+          'Gültige Arbeitsbewilligung für die Schweiz',
+          'Erfahrung mit Hygienevorgaben von Vorteil',
+          'Einsatz am frühen Morgen oder am Abend',
+          'Absolute Diskretion — Sie arbeiten in Behandlungsräumen',
+        ],
+        [
+          'A valid Swiss work permit',
+          'Experience with hygiene rules is an advantage',
+          'Available early morning or evening',
+          'Complete discretion — you work in treatment rooms',
+        ],
+      ),
+      offer: ls(
+        [
+          'Einführung in den Hygieneplan, bezahlt',
+          'Feste Objekte mit festen Zeiten',
+          'Zuschlag für Einsätze vor 06:00',
+        ],
+        [
+          'Paid introduction to the hygiene plan',
+          'The same buildings at the same hours',
+          'A premium for anything before 06:00',
+        ],
+      ),
+      published: true,
+      createdAt: iso(days(now, -25)),
+    },
   ];
+}
 
-  const applications: Application[] = [
+/**
+ * The applications.
+ *
+ * Twenty rather than seven, chosen so that every value the screen can draw
+ * has a record carrying it: all four `ApplicationStatus` values, all seven
+ * `WorkPermit` values, and all seven rejection reasons the decision dialog
+ * offers. Four of those seven reasons could previously be chosen and never
+ * read back, and three of the seven permits — G, L and «anderer» — had never
+ * been rendered at all, in a list whose permit column is the first thing §20
+ * makes the owner check.
+ *
+ * The last six are the states the first fourteen still could not reach, and
+ * every one of them is a branch on H2 rather than another name in the list:
+ * accepted with no account created yet, four attachments where three was the
+ * most anyone sent, a submission carrying nothing optional at all, a record
+ * three days from erasure, a motivation letter of the length people actually
+ * write, and a `new` row on a G permit — the permit column had only ever
+ * carried one on a decision already taken.
+ *
+ * The spread is deliberate in the smaller things too, because each of them is
+ * a branch on screen H2: with and without documents, with and without
+ * references, with and without a motivation letter and an internal note, from
+ * no experience at all to twelve years, and two records inside the retention
+ * window so the deletion flag on the list is not a single-row feature.
+ *
+ * `none` is missing from the language levels on purpose: the public form maps
+ * that option to an empty value and stores the language not at all, so a
+ * record carrying `'none'` would be a state the form cannot produce.
+ */
+function hiringApplications(now: Date): Application[] {
+  return [
     {
       id: 'app_1',
       reference: 'BW-0031',
@@ -2593,33 +3007,513 @@ function withHiring(data: DataSet, now: Date): DataSet {
       retainUntil: iso(days(now, 9)),
       consentGivenAt: iso(days(now, -171)),
     },
+    {
+      /* L permit — a short-term one. It runs out inside the year, which is
+         exactly the sort of thing the internal note is for and exactly why the
+         permit column is on the list rather than only on the detail. */
+      id: 'app_8',
+      reference: 'BW-0032',
+      postingId: 'job_3',
+      spontaneous: false,
+      firstName: 'Ana',
+      lastName: 'Sousa',
+      email: 'ana.sousa@example.ch',
+      phone: '+41 78 000 00 20',
+      postcode: '8707',
+      city: 'Uetikon am See',
+      permit: 'l',
+      languages: { de: 'fluent', en: 'conversational', fr: 'basic', it: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: false,
+      yearsExperience: 7,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5, 6], earliest: '06:30', latest: '18:00' },
+      startFrom: iso(days(now, 45)),
+      references: [
+        { name: 'Frau Steiner', company: 'Steiner Facility AG', phone: '+41 79 000 00 21' },
+        { name: 'Herr Aebi', company: 'Privat', phone: '+41 79 000 00 22' },
+      ],
+      documents: [
+        { id: 'doc_7', name: 'Lebenslauf_Sousa.pdf', kind: 'cv', sizeKb: 288 },
+        { id: 'doc_8', name: 'Arbeitszeugnis_Steiner.pdf', kind: 'certificate', sizeKb: 447 },
+        { id: 'doc_9', name: 'Referenzschreiben_Aebi.pdf', kind: 'reference', sizeKb: 132 },
+      ],
+      motivation:
+        'I have led a team of four for the past two years and would like to keep doing that somewhere the rounds are not two hours apart.',
+      status: 'inReview',
+      submittedAt: iso(days(now, -5)),
+      retainUntil: iso(days(now, 175)),
+      consentGivenAt: iso(days(now, -5)),
+      internalNotes:
+        'Second interview on the 20th. The L permit runs to the end of March — clarify with the cantonal office before an offer goes out.',
+    },
+    {
+      /* «Anderer Ausweis» — the catch-all in the permit list. It is not a
+         missing permit, and the screen must not treat it as one. */
+      id: 'app_9',
+      reference: 'BW-0033',
+      postingId: 'job_4',
+      spontaneous: false,
+      firstName: 'Nikola',
+      lastName: 'Petrović',
+      email: 'n.petrovic@example.ch',
+      phone: '+41 78 000 00 23',
+      postcode: '8634',
+      city: 'Hombrechtikon',
+      permit: 'other',
+      languages: { de: 'conversational', en: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 7,
+      experienceAreas: ['cleaning', 'assembly'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '07:00', latest: '19:00' },
+      references: [],
+      documents: [{ id: 'doc_10', name: 'CV_Petrovic.pdf', kind: 'cv', sizeKb: 164 }],
+      status: 'new',
+      submittedAt: iso(days(now, -3)),
+      retainUntil: iso(days(now, 177)),
+      consentGivenAt: iso(days(now, -3)),
+    },
+    {
+      /* G permit — a cross-border commuter, and the one case where the
+         address is the reason. §6 lists eight postcodes; hers is in none of
+         them, which is what «wohnt ausserhalb des Einsatzgebiets» means. */
+      id: 'app_10',
+      reference: 'BW-0025',
+      spontaneous: true,
+      firstName: 'Céline',
+      lastName: 'Dubois',
+      email: 'c.dubois@example.com',
+      phone: '+33 6 00 00 00 24',
+      postcode: '79761',
+      city: 'Waldshut-Tiengen (DE)',
+      permit: 'g',
+      languages: { de: 'conversational', en: 'basic', fr: 'native' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 5,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '08:00', latest: '17:00' },
+      references: [{ name: 'Mme Girard', company: 'Privat', phone: '+33 6 00 00 00 25' }],
+      documents: [{ id: 'doc_11', name: 'CV_Dubois.pdf', kind: 'cv', sizeKb: 198 }],
+      status: 'rejected',
+      rejectionReason: 'region',
+      submittedAt: iso(days(now, -46)),
+      retainUntil: iso(days(now, 134)),
+      consentGivenAt: iso(days(now, -46)),
+      internalNotes: 'Ninety minutes each way. Not workable for a 40% role.',
+    },
+    {
+      id: 'app_11',
+      reference: 'BW-0024',
+      postingId: 'job_1',
+      spontaneous: false,
+      firstName: 'Bashkim',
+      lastName: 'Rexhepi',
+      email: 'b.rexhepi@example.ch',
+      phone: '+41 78 000 00 26',
+      postcode: '8700',
+      city: 'Küsnacht',
+      permit: 'b',
+      languages: { de: 'basic', en: 'conversational' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 4,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '07:00', latest: '16:00' },
+      references: [{ name: 'Herr Frei', company: 'Frei Reinigungen', phone: '+41 79 000 00 27' }],
+      documents: [{ id: 'doc_12', name: 'Lebenslauf_Rexhepi.pdf', kind: 'cv', sizeKb: 221 }],
+      status: 'rejected',
+      rejectionReason: 'language',
+      submittedAt: iso(days(now, -53)),
+      retainUntil: iso(days(now, 127)),
+      consentGivenAt: iso(days(now, -53)),
+      internalNotes:
+        'Good record. Turned down on German only — worth writing to again once the evening role is posted.',
+    },
+    {
+      /* Turned down because somebody else got the job, not because of
+         anything on this record. That distinction is the whole reason
+         «Stelle bereits besetzt» is in the reason list. */
+      id: 'app_12',
+      reference: 'BW-0023',
+      postingId: 'job_2',
+      spontaneous: false,
+      firstName: 'Ivana',
+      lastName: 'Horvat',
+      email: 'i.horvat@example.ch',
+      phone: '+41 78 000 00 28',
+      postcode: '8132',
+      city: 'Egg',
+      permit: 'c',
+      languages: { de: 'fluent', en: 'fluent' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 6,
+      experienceAreas: ['assembly'],
+      availability: { days: [2, 4, 6], earliest: '09:00', latest: '18:00' },
+      references: [{ name: 'Herr Baumann', company: 'Möbel Baumann', phone: '+41 79 000 00 29' }],
+      documents: [
+        { id: 'doc_13', name: 'CV_Horvat.pdf', kind: 'cv', sizeKb: 190 },
+        { id: 'doc_14', name: 'Zeugnis_Baumann.pdf', kind: 'certificate', sizeKb: 356 },
+      ],
+      motivation: 'I have my own tools and would like the assembly work to become the main job.',
+      status: 'rejected',
+      rejectionReason: 'filled',
+      submittedAt: iso(days(now, -68)),
+      retainUntil: iso(days(now, 112)),
+      consentGivenAt: iso(days(now, -68)),
+    },
+    {
+      /* «Anderer Grund» plus the second record inside the retention window.
+         With only one expiring row the flag on the list read as a property of
+         that row rather than as a rule the screen applies. */
+      id: 'app_13',
+      reference: 'BW-0021',
+      spontaneous: true,
+      firstName: 'Tobias',
+      lastName: 'Meier',
+      email: 't.meier@example.ch',
+      phone: '+41 78 000 00 30',
+      postcode: '8627',
+      city: 'Grüningen',
+      permit: 'ch',
+      languages: { de: 'native', en: 'basic' },
+      hasDrivingLicence: false,
+      hasCar: false,
+      yearsExperience: 1,
+      experienceAreas: ['cleaning'],
+      availability: { days: [6, 0], earliest: '10:00', latest: '16:00' },
+      references: [],
+      documents: [],
+      status: 'rejected',
+      rejectionReason: 'other',
+      submittedAt: iso(days(now, -159)),
+      retainUntil: iso(days(now, 21)),
+      consentGivenAt: iso(days(now, -159)),
+      internalNotes: 'Weekends only, and §5 puts no jobs on a Sunday. Nothing to offer here.',
+    },
+    {
+      /* The second hire, and the newer one: the arc from application to
+         account has to be visible more than once for it to read as the way in
+         rather than as one seeded exception. */
+      id: 'app_14',
+      reference: 'BW-0022',
+      postingId: 'job_3',
+      spontaneous: false,
+      firstName: 'Yusuf',
+      lastName: 'Demir',
+      email: 'yusuf.demir@example.ch',
+      phone: '+41 78 000 00 31',
+      postcode: '8712',
+      city: 'Stäfa',
+      permit: 'c',
+      languages: { de: 'fluent', en: 'conversational' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 8,
+      experienceAreas: ['cleaning', 'assembly'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '07:00', latest: '18:00' },
+      startFrom: iso(days(now, -14)),
+      references: [
+        { name: 'Frau Lüthi', company: 'Lüthi Hauswartungen', phone: '+41 79 000 00 32' },
+      ],
+      documents: [
+        { id: 'doc_15', name: 'Lebenslauf_Demir.pdf', kind: 'cv', sizeKb: 265 },
+        { id: 'doc_16', name: 'Arbeitszeugnis_Luethi.pdf', kind: 'certificate', sizeKb: 412 },
+      ],
+      motivation:
+        'Eight years in cleaning and I do the furniture work too — I would rather have both in one job than in two.',
+      status: 'accepted',
+      submittedAt: iso(days(now, -40)),
+      retainUntil: iso(days(now, 140)),
+      consentGivenAt: iso(days(now, -40)),
+      convertedTeamMemberId: 'tm_yusuf',
+    },
+    {
+      /*
+       * Accepted, and no account yet — the gap between pressing «Annehmen»
+       * and finishing H5, which is where an application sits if the owner is
+       * interrupted on the account screen. Both other accepted records carry
+       * a `convertedTeamMemberId`, so H2 had no way to show what it does when
+       * the decision is made and the account is not: the «Im Team» banner is
+       * absent and the decision card is gone with it, which leaves the screen
+       * saying «Angenommen» and offering nothing. Worth being able to look at.
+       */
+      id: 'app_15',
+      reference: 'BW-0034',
+      postingId: 'job_7',
+      spontaneous: false,
+      firstName: 'Miriam',
+      lastName: 'Bucher',
+      email: 'm.bucher@example.ch',
+      phone: '+41 78 000 00 33',
+      postcode: '8708',
+      city: 'Männedorf',
+      permit: 'ch',
+      languages: { de: 'native', en: 'conversational', fr: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 11,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '06:00', latest: '17:00' },
+      startFrom: iso(days(now, 30)),
+      references: [
+        { name: 'Herr Frei', company: 'Frei Immobilien AG', phone: '+41 79 000 00 40' },
+        { name: 'Frau Widmer', company: 'Privat', phone: '+41 79 000 00 41' },
+      ],
+      documents: [
+        { id: 'doc_17', name: 'Lebenslauf_Bucher.pdf', kind: 'cv', sizeKb: 302 },
+        { id: 'doc_18', name: 'Arbeitszeugnis_Frei.pdf', kind: 'certificate', sizeKb: 388 },
+      ],
+      motivation:
+        'Elf Jahre Reinigung, davon vier mit Objektverantwortung. Ich möchte wieder ein festes Gebiet statt wechselnder Aufträge.',
+      status: 'accepted',
+      submittedAt: iso(days(now, -9)),
+      retainUntil: iso(days(now, 171)),
+      consentGivenAt: iso(days(now, -9)),
+      internalNotes: 'Zugesagt am Telefon. Konto noch anlegen — Eintritt ist der 1.',
+    },
+    {
+      /*
+       * Four attachments. Three was the most any record carried, and the
+       * documents card is the one block on H2 whose height is set by the
+       * applicant rather than by us — a person who sends everything they own
+       * is the normal case it has to survive, not an outlier.
+       */
+      id: 'app_16',
+      reference: 'BW-0035',
+      postingId: 'job_11',
+      spontaneous: false,
+      firstName: 'Fatima',
+      lastName: 'El Amrani',
+      email: 'f.elamrani@example.ch',
+      phone: '+41 78 000 00 34',
+      postcode: '8706',
+      city: 'Meilen',
+      permit: 'b',
+      languages: { de: 'conversational', en: 'basic', fr: 'fluent' },
+      hasDrivingLicence: true,
+      hasCar: false,
+      yearsExperience: 5,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '05:30', latest: '09:00' },
+      startFrom: iso(days(now, 60)),
+      references: [
+        { name: 'Dr. Bühler', company: 'Praxis Bühler', phone: '+41 79 000 00 42' },
+        { name: 'Frau Kern', company: 'Kern Reinigungen GmbH', phone: '+41 79 000 00 43' },
+      ],
+      documents: [
+        { id: 'doc_19', name: 'Lebenslauf_ElAmrani.pdf', kind: 'cv', sizeKb: 244 },
+        { id: 'doc_20', name: 'Arbeitszeugnis_Kern.pdf', kind: 'certificate', sizeKb: 401 },
+        { id: 'doc_21', name: 'Hygienekurs_Zertifikat.pdf', kind: 'certificate', sizeKb: 176 },
+        { id: 'doc_22', name: 'Referenz_Praxis_Buehler.pdf', kind: 'reference', sizeKb: 118 },
+      ],
+      motivation:
+        "J'ai travaillé cinq ans dans des cabinets médicaux à Genève. Le plan d'hygiène ne me fait pas peur — c'est ce que je connais le mieux.",
+      status: 'inReview',
+      submittedAt: iso(days(now, -4)),
+      retainUntil: iso(days(now, 176)),
+      consentGivenAt: iso(days(now, -4)),
+      internalNotes:
+        'Kein eigenes Fahrzeug — für die Praxen in Stäfa und Hombrechtikon vorher klären, ob der Frühdienst mit dem Bus überhaupt geht.',
+    },
+    {
+      /*
+       * The barest submission the public form can produce: no documents, no
+       * references, no motivation, no note. Three records carried the empty
+       * documents and references states and all three were rejected, so both
+       * empty states could only be seen on a record nobody would open twice.
+       * On a `new` one they are what the owner meets first.
+       */
+      id: 'app_17',
+      reference: 'BW-0036',
+      spontaneous: true,
+      firstName: 'Tobias',
+      lastName: 'Graf',
+      email: 't.graf@example.ch',
+      phone: '+41 78 000 00 35',
+      postcode: '8132',
+      city: 'Egg',
+      permit: 'ch',
+      languages: { de: 'native' },
+      hasDrivingLicence: false,
+      hasCar: false,
+      yearsExperience: 0,
+      experienceAreas: [],
+      availability: { days: [6], earliest: '09:00', latest: '16:00' },
+      references: [],
+      documents: [],
+      status: 'new',
+      submittedAt: iso(days(now, -1)),
+      retainUntil: iso(days(now, 179)),
+      consentGivenAt: iso(days(now, -1)),
+    },
+    {
+      /*
+       * Three days from erasure. The list flags anything inside thirty days,
+       * and the two records that carried the flag sat at nine and twenty-one —
+       * comfortable numbers. This one is the case the flag exists for, and it
+       * is the record to delete from when checking that the deletion is real.
+       */
+      id: 'app_18',
+      reference: 'BW-0037',
+      spontaneous: true,
+      firstName: 'Sandra',
+      lastName: 'Odermatt',
+      email: 's.odermatt@example.ch',
+      phone: '+41 78 000 00 36',
+      postcode: '8712',
+      city: 'Stäfa',
+      permit: 'ch',
+      languages: { de: 'native', en: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 3,
+      experienceAreas: ['cleaning'],
+      availability: { days: [2, 4], earliest: '08:00', latest: '14:00' },
+      references: [],
+      documents: [{ id: 'doc_23', name: 'CV_Odermatt.pdf', kind: 'cv', sizeKb: 152 }],
+      status: 'rejected',
+      rejectionReason: 'availability',
+      submittedAt: iso(days(now, -177)),
+      retainUntil: iso(days(now, 3)),
+      consentGivenAt: iso(days(now, -177)),
+      internalNotes: 'Nur Dienstag und Donnerstag Vormittag — passt zu keiner Tour.',
+    },
+    {
+      /*
+       * A motivation letter of the length people actually write. Every other
+       * one here is two sentences, so the `max-w-[var(--measure)]` clamp on
+       * that block had nothing to clamp.
+       */
+      id: 'app_19',
+      reference: 'BW-0038',
+      postingId: 'job_7',
+      spontaneous: false,
+      /* The ć is the reason this name is here as well as the letter: it is
+         the one applicant whose CV filename has to survive `toWinAnsi` on the
+         way into a PDF, and «Jovanovic» is what should come out. */
+      firstName: 'Dragan',
+      lastName: 'Jovanović',
+      email: 'd.jovanovic@example.ch',
+      phone: '+41 78 000 00 37',
+      postcode: '8707',
+      city: 'Uetikon am See',
+      permit: 'c',
+      languages: { de: 'fluent', en: 'conversational', it: 'basic' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 14,
+      experienceAreas: ['cleaning', 'assembly'],
+      availability: { days: [1, 2, 3, 4, 5], earliest: '06:00', latest: '19:00' },
+      startFrom: iso(days(now, 90)),
+      references: [
+        { name: 'Herr Zimmermann', company: 'Zimmermann Facility', phone: '+41 79 000 00 44' },
+      ],
+      documents: [
+        { id: 'doc_24', name: 'Lebenslauf_Jovanovic.pdf', kind: 'cv', sizeKb: 271 },
+        { id: 'doc_25', name: 'Arbeitszeugnisse_gesammelt.pdf', kind: 'certificate', sizeKb: 1240 },
+      ],
+      motivation:
+        'Ich arbeite seit vierzehn Jahren in der Reinigung, die letzten sechs als Vorarbeiter bei einem Betrieb mit achtzehn Leuten. Was ich dort gelernt habe, ist weniger das Putzen als das Planen: welche Tour in welcher Reihenfolge, wer mit wem gut arbeitet, und wann man einem Kunden sagen muss, dass die vereinbarte Stundenzahl für das, was er möchte, nicht reicht. Das letzte Gespräch dieser Art hat mich fast den Auftrag gekostet und uns am Ende einen besseren Vertrag gebracht. Ich möchte weg von den Grossobjekten und zurück in ein Gebiet, in dem man die Kundschaft mit Namen kennt — Ihre Ausschreibung liest sich genau so.',
+      status: 'new',
+      submittedAt: iso(days(now, -2)),
+      retainUntil: iso(days(now, 178)),
+      consentGivenAt: iso(days(now, -2)),
+    },
+    {
+      /*
+       * The twentieth, which is what makes the list's second page a full one
+       * rather than four rows — and a G permit on a `new` record, where the
+       * permit column had only ever carried one on a decision already made.
+       */
+      id: 'app_20',
+      reference: 'BW-0039',
+      postingId: 'job_11',
+      spontaneous: false,
+      firstName: 'Céline',
+      lastName: 'Boucher',
+      email: 'c.boucher@example.fr',
+      phone: '+41 78 000 00 38',
+      postcode: '8700',
+      city: 'Küsnacht',
+      permit: 'g',
+      languages: { de: 'conversational', en: 'fluent', fr: 'native' },
+      hasDrivingLicence: true,
+      hasCar: true,
+      yearsExperience: 2,
+      experienceAreas: ['cleaning'],
+      availability: { days: [1, 3, 5], earliest: '17:00', latest: '22:00' },
+      references: [
+        { name: 'Mme Rochat', company: 'Net & Clair Sàrl', phone: '+41 79 000 00 45' },
+      ],
+      documents: [{ id: 'doc_26', name: 'CV_Boucher.pdf', kind: 'cv', sizeKb: 187 }],
+      motivation:
+        'Je cherche un poste en soirée qui me laisse la journée pour mes études.',
+      status: 'new',
+      submittedAt: iso(days(now, -3)),
+      retainUntil: iso(days(now, 177)),
+      consentGivenAt: iso(days(now, -3)),
+    },
   ];
+}
 
-  const marta: TeamMember = {
-    id: 'tm_marta',
-    firstName: 'Marta',
-    lastName: 'Nowak',
-    email: 'marta.nowak@homivaro.ch',
-    phone: '+41 78 000 00 14',
-    role: 'contractor',
-    active: true,
-    regions: ['8700', '8706', '8707', '8708', '8712'],
-    skills: ['unterhaltsreinigung', 'einmalreinigung', 'grundreinigung'],
-    startedAt: iso(days(now, -40)),
-    fromApplicationId: 'app_3',
-  };
+/**
+ * The two people the accepted applications turned into.
+ *
+ * They live in `baseData` rather than in the hiring scenario now, because
+ * without them screen H2 draws an accepted application with no «Im Team»
+ * banner — `convertedTeamMemberId` pointing at nobody — which is the one thing
+ * on that screen that says the acceptance actually did something. Yusuf has no
+ * jobs assigned, which is H7's empty state and had no record to stand on.
+ */
+function hiredMembers(now: Date): TeamMember[] {
+  return [
+    {
+      id: 'tm_marta',
+      firstName: 'Marta',
+      lastName: 'Nowak',
+      email: 'marta.nowak@homivaro.ch',
+      phone: '+41 78 000 00 14',
+      role: 'contractor',
+      active: true,
+      regions: ['8700', '8706', '8707', '8708', '8712'],
+      skills: ['unterhaltsreinigung', 'einmalreinigung', 'grundreinigung'],
+      startedAt: iso(days(now, -40)),
+      fromApplicationId: 'app_3',
+    },
+    {
+      id: 'tm_yusuf',
+      firstName: 'Yusuf',
+      lastName: 'Demir',
+      email: 'yusuf.demir@homivaro.ch',
+      phone: '+41 78 000 00 31',
+      role: 'contractor',
+      active: true,
+      regions: ['8708', '8712', '8634'],
+      skills: ['unterhaltsreinigung', 'umzugsreinigung', 'moebelmontage'],
+      startedAt: iso(days(now, -14)),
+      fromApplicationId: 'app_14',
+    },
+  ];
+}
 
-  // The point of this scenario is the whole arc: applied → accepted → working.
-  // Without reassigning the day, "switch to the contractor" would show an
-  // empty field screen and the last third of that arc would be untestable.
-  const bookings = data.bookings.map((b) => ({ ...b, assigneeId: 'tm_marta' }));
-
+/**
+ * The hiring scenario, on top of the seeded hiring data.
+ *
+ * The postings, the applications and the two hires used to live here, which
+ * meant /admin/bewerbungen and /admin/stellen were two empty screens in the
+ * scenario the app opens on — a reviewer had to know the demo bar existed and
+ * switch to «Personal» before either screen had anything in it. They are in
+ * `baseData` now. What is left here is the part that really is scenario-only:
+ * handing the week's jobs to Marta, so that switching to the contractor role
+ * shows a day rather than an empty state.
+ */
+function withHiring(data: DataSet): DataSet {
   return {
     ...data,
-    postings,
-    applications,
-    bookings,
-    team: [...data.team, marta],
+    bookings: data.bookings.map((b) => ({ ...b, assigneeId: 'tm_marta' })),
   };
 }
 
@@ -2714,9 +3608,10 @@ const SERVICE_NOTES: Record<ServiceSlug, string> = {
  * Every state in the model, carried by a real record — and every combination
  * of service and request status.
  *
- * Built on top of `withHiring(baseData(…))` rather than from scratch: the
- * applications track already stages all four `ApplicationStatus` values, and
- * duplicating them here would give two sources for the same thing.
+ * Built on top of `baseData(…)` rather than from scratch: the seeded
+ * applications already carry all four `ApplicationStatus` values, all seven
+ * `WorkPermit` values and all seven rejection reasons, and duplicating them
+ * here would give two sources for the same thing.
  *
  * The seventy requests are generated rather than typed out. Seven services
  * times ten statuses is a table, and a table written by hand acquires holes:
@@ -4586,7 +5481,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
     }
 
     case 'hiring': {
-      const data = withHiring(baseData(now), now);
+      const data = withHiring(baseData(now));
       /*
        * Interviews.
        *
@@ -4652,11 +5547,13 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
       return { ...data, events: [...interviews, ...data.events] };
     }
 
-    /* Stacked on hiring rather than on baseData: the applications track
-       already carries all four ApplicationStatus values, and staging them a
-       second time here would give the same states two sources. */
+    /* The applications are seeded data now, so this no longer stacks on
+       hiring to *get* them — every ApplicationStatus, WorkPermit and rejection
+       reason is already on the base set, and staging them a second time here
+       would give the same states two sources. It still runs `withHiring` for
+       the one thing that scenario does: putting the week on a contractor. */
     case 'states':
-      return withAllStates(withHiring(baseData(now), now), now);
+      return withAllStates(withHiring(baseData(now)), now);
 
     case 'demo':
     default:

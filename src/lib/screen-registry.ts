@@ -576,13 +576,19 @@ export const TRACKS: Track[] = [
         'owner only',
         'retention expiring',
       ], 'Contractors lose this screen entirely — a redacted version would still leak that somebody applied'),
-      done('H2', 'Bewerbung', 'Application detail', '/admin/bewerbungen/app_1', [
-        'reject with reason',
-        'delete record',
-        'no permit',
+      done(
+        'H2',
+        'Bewerbung',
+        'Application detail',
+        '/admin/bewerbungen/app_1',
+        ['reject with reason', 'delete record', 'no permit', 'download a document'],
+        'The download really produces a PDF — generated on the spot, and it says so on its first page',
+      ),
+      done('H3', 'Stellen', 'Jobs', '/admin/stellen', ['six seeded', 'empty']),
+      done('H4', 'Stelle bearbeiten', 'Edit job', '/admin/stellen/reinigungskraft-teilzeit', [
+        'published',
+        'draft',
       ]),
-      done('H3', 'Stellen', 'Postings', '/admin/stellen', ['empty']),
-      done('H4', 'Stelle bearbeiten', 'Edit posting', '/admin/stellen/reinigungskraft-teilzeit'),
       done(
         'H5',
         'In Mitarbeiterkonto umwandeln',
@@ -591,8 +597,18 @@ export const TRACKS: Track[] = [
         [],
         'The permission summary is the screen — four plain sentences before the button',
       ),
-      done('H6', 'Team', 'Team', '/admin/team', ['owner only']),
-      done('H7', 'Teammitglied', 'Team member', '/admin/team/tm_marta'),
+      done(
+        'H6',
+        'Team',
+        'Team',
+        '/admin/team',
+        ['owner only'],
+        'No longer in the sidebar — reached from the «Im Team» banner on an accepted application, which is also the only way somebody gets onto it',
+      ),
+      done('H7', 'Teammitglied', 'Team member', '/admin/team/tm_marta', [
+        'jobs assigned (hiring)',
+        'no jobs yet (default)',
+      ]),
     ],
   },
   {

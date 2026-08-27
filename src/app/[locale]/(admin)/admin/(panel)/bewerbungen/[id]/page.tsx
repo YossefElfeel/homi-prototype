@@ -5,11 +5,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Car,
+  Download,
   FileText,
   Mail,
+  MapPin,
   Phone,
   RotateCcw,
   Trash2,
@@ -22,11 +23,15 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { routing, LOCALE_LABELS, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
+import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { buildTextPdf, downloadBlob } from '@/lib/pdf';
 import { canSeeApplicants, useHydrated, useStore } from '@/mock/store';
+import type { ApplicantDocument } from '@/mock/schema';
 
 const REASONS = [
   { value: 'permit', key: 'reasonPermit' },
@@ -56,6 +61,13 @@ const LEVEL_KEY = {
   native: 'levelNative',
 } as const;
 
+const DOC_KIND_KEY = {
+  cv: 'docCv',
+  certificate: 'docCertificate',
+  reference: 'docReference',
+  other: 'docOther',
+} as const;
+
 /**
  * Screen H2 — one application.
  *
@@ -69,6 +81,22 @@ const LEVEL_KEY = {
  *    the wording is consistent instead of improvised at 22:00.
  *  · Deleting is a real deletion with a confirmation, not an archive flag.
  *    revDSG asks for erasure, and an "archived" record is still a record.
+ *
+ * **What changed here.** The whole record was one flat run of `<section>`s on
+ * the grey page ground, and it read as one undifferentiated column of facts
+ * about a stranger. Two costs, both of them the same cost:
+ *
+ *  · **the personal details were scattered.** Name was in the `<h1>`, email
+ *    and phone and postcode were a wrapped row of links, the permit was its
+ *    own section two blocks down, the languages a third — four places for the
+ *    eight answers of step one of the public form. They are one card now, in
+ *    the form's own order and under the form's own labels, because they are
+ *    one thing: what this person told us about themselves.
+ *  · **the attachments were text.** A CV was a filename, a file icon and a
+ *    size in KB, with nothing to click. The one action the owner actually
+ *    wants from an application — read the CV — was the one thing the screen
+ *    could not do. Each document downloads now, and really does produce a
+ *    file; see `lib/pdf.ts` for what is and is not in it.
  */
 export default function ApplicationDetailPage({
   params,
@@ -77,6 +105,9 @@ export default function ApplicationDetailPage({
 }) {
   const { id } = use(params);
   const t = useTranslations('admin.application');
+  /* «3 Jahre» is worded once, in the namespace the list column already reads
+     it from. A second copy here is a second thing to keep in step. */
+  const listT = useTranslations('admin.applications');
   const dismissLabel = useDismissLabel();
   const form = useTranslations('careers.form');
   const format = useFormatter();
@@ -121,204 +152,308 @@ export default function ApplicationDetailPage({
   const longDate = (iso: string) =>
     format.dateTime(new Date(iso), { day: '2-digit', month: 'long', year: 'numeric' });
 
+  /*
+   * The file is generated here rather than fetched, because there is nothing
+   * to fetch — `ApplicantDocument` carries a name, a kind and a size, and no
+   * bytes. Saying so on the first page of the PDF is the point: a stand-in
+   * that does not announce itself is worse than the toast it replaced.
+   */
+  function download(doc: ApplicantDocument) {
+    downloadBlob(
+      doc.name,
+      buildTextPdf([
+        { text: doc.name, size: 18, lead: 14 },
+        { text: t('pdfStandIn'), size: 9, lead: 22 },
+        { text: `${t('pdfApplicant')}: ${application!.firstName} ${application!.lastName}` },
+        { text: `${t('pdfReference')}: ${application!.reference}` },
+        { text: `${t('pdfSubmitted')}: ${longDate(application!.submittedAt)}` },
+        { text: `${t('pdfKind')}: ${t(DOC_KIND_KEY[doc.kind])}` },
+        { text: `${t('pdfSize')}: ${doc.sizeKb} KB` },
+      ]),
+    );
+    toast.success(t('downloaded', { name: doc.name }));
+  }
+
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/bewerbungen">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <PageHeader
+        title={`${application.firstName} ${application.lastName}`}
+        back={{ href: '/admin/bewerbungen', label: t('back') }}
+        meta={<StatusBadge entity="application" state={application.status} />}
+        lead={
+          <>
+            {posting
+              ? t('forPosting', { title: posting.title[locale] })
+              : t('spontaneous')}
+            {' · '}
+            <span data-numeric>{application.reference}</span>
+            {' · '}
+            {t('submittedOn', { date: longDate(application.submittedAt) })}
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="display-type text-3xl">
-          {application.firstName} {application.lastName}
-        </h1>
-        <StatusBadge entity="application" state={application.status} />
-      </div>
-      <p className="mt-2 text-ink-secondary">
-        {posting ? t('forPosting', { title: posting.title[locale] }) : t('spontaneous')}
-        {' · '}
-        <span data-numeric>{application.reference}</span>
-      </p>
-
-      {application.status === 'rejected' && application.rejectionReason && (
-        <p className="mt-6 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4 text-sm text-ink-secondary">
-          {t('rejectedWith', { reason: reasonLabel(application.rejectionReason) ?? '—' })}
-        </p>
-      )}
-
-      {member && (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-l-2 border-status-success-line bg-status-success p-5">
-          <div>
-            <h2 className="font-medium text-status-success-fg">{t('convertedTitle')}</h2>
-            <p className="mt-1 text-sm text-status-success-fg">
-              {t('convertedBody', { date: longDate(member.startedAt) })}
-            </p>
-          </div>
-          <Button asChild variant="secondary" size="sm">
-            <Link href={`/admin/team/${member.id}`}>
-              {t('convertedLink')}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      )}
-
-      <section className="mt-10">
-        <h2 className="label-type text-ink-tertiary">{t('contactTitle')}</h2>
-        <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2">
-          <a
-            href={`mailto:${application.email}`}
-            className="inline-flex min-h-11 items-center gap-2 underline-offset-4 hover:underline"
-          >
-            <Mail className="size-4 text-ink-tertiary" aria-hidden />
-            {application.email}
-          </a>
-          <a
-            href={`tel:${application.phone.replace(/\s/g, '')}`}
-            className="inline-flex min-h-11 items-center gap-2 underline-offset-4 hover:underline"
-          >
-            <Phone className="size-4 text-ink-tertiary" aria-hidden />
-            <span data-numeric>{application.phone}</span>
-          </a>
-          <span className="inline-flex min-h-11 items-center gap-2 text-ink-secondary">
-            <span data-numeric>{application.postcode}</span> {application.city}
-          </span>
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="label-type text-ink-tertiary">{t('permitTitle')}</h2>
-        <p className="mt-2 text-lg">{form(PERMIT_KEY[application.permit])}</p>
-        {application.permit === 'none' && (
-          <Alert tone="danger" icon={AlertTriangle} className="mt-3">
-            {t('permitNoneWarning')}
+      <div className="space-y-app-section">
+        {application.status === 'rejected' && application.rejectionReason && (
+          <Alert tone="neutral">
+            {t('rejectedWith', { reason: reasonLabel(application.rejectionReason) ?? '—' })}
           </Alert>
         )}
-      </section>
 
-      <div className="mt-8 grid gap-8 sm:grid-cols-2">
-        <section>
-          <h2 className="label-type text-ink-tertiary">{t('languagesTitle')}</h2>
-          <dl className="mt-3 space-y-1.5 text-sm">
-            {routing.locales
-              .filter((l) => application.languages[l])
-              .map((l) => (
-                <div key={l} className="flex justify-between gap-4">
-                  <dt className="text-ink-secondary">{LOCALE_LABELS[l]}</dt>
-                  <dd>{form(LEVEL_KEY[application.languages[l] ?? 'none'])}</dd>
-                </div>
-              ))}
-          </dl>
-        </section>
-
-        <section>
-          <h2 className="label-type text-ink-tertiary">{t('mobilityTitle')}</h2>
-          <ul className="mt-3 space-y-1.5 text-sm">
-            <li className="flex items-center gap-2">
-              <Car className="size-4 text-ink-tertiary" aria-hidden />
-              {t('licence')}: {application.hasDrivingLicence ? t('yes') : t('no')}
-            </li>
-            <li className="ps-6">
-              {t('car')}: {application.hasCar ? t('yes') : t('no')}
-            </li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="label-type text-ink-tertiary">{t('experienceTitle')}</h2>
-          <p data-numeric className="mt-3 text-sm">
-            {application.yearsExperience} · {application.experienceAreas
-              .map((a) => (a === 'cleaning' ? form('areaCleaning') : form('areaAssembly')))
-              .join(', ') || '—'}
-          </p>
-        </section>
-
-        <section>
-          <h2 className="label-type text-ink-tertiary">{t('availabilityTitle')}</h2>
-          <p data-numeric className="mt-3 text-sm">
-            {application.availability.days
-              .map((day) =>
-                new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'de-CH', {
-                  weekday: 'short',
-                  timeZone: 'UTC',
-                }).format(new Date(Date.UTC(2024, 0, day))),
-              )
-              .join(', ')}
-            {' · '}
-            {application.availability.earliest}–{application.availability.latest}
-          </p>
-        </section>
-      </div>
-
-      <section className="mt-8">
-        <h2 className="label-type text-ink-tertiary">{t('referencesTitle')}</h2>
-        {application.references.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-tertiary">{t('referencesEmpty')}</p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm">
-            {application.references.map((ref) => (
-              <li key={ref.phone} className="flex flex-wrap gap-x-3">
-                <span className="font-medium">{ref.name}</span>
-                {ref.company && <span className="text-ink-secondary">{ref.company}</span>}
-                <a
-                  href={`tel:${ref.phone.replace(/\s/g, '')}`}
-                  data-numeric
-                  className="underline-offset-4 hover:underline"
-                >
-                  {ref.phone}
-                </a>
-              </li>
-            ))}
-          </ul>
+        {member && (
+          <Alert
+            tone="success"
+            title={t('convertedTitle')}
+            action={
+              <Button asChild variant="secondary" size="sm">
+                <Link href={`/admin/team/${member.id}`}>
+                  {t('convertedLink')}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Button>
+            }
+          >
+            {t('convertedBody', { date: longDate(member.startedAt) })}
+          </Alert>
         )}
-      </section>
 
-      <section className="mt-8">
-        <h2 className="label-type text-ink-tertiary">{t('documentsTitle')}</h2>
-        {application.documents.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-tertiary">{t('documentsEmpty')}</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {application.documents.map((doc) => (
-              <li key={doc.id} className="flex items-center gap-2.5 text-sm">
-                <FileText className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-                <span>{doc.name}</span>
-                <span data-numeric className="text-ink-tertiary">
-                  {doc.sizeKb} KB
-                </span>
-              </li>
-            ))}
-          </ul>
+        {/*
+          Step one of the public form, in the public form's order and reading
+          its labels out of `careers.form` rather than a second copy in the
+          admin namespace. One namespace means «PLZ» cannot become «Postleitzahl»
+          on the screen that reads the answer back.
+        */}
+        <Card>
+          <CardHeader title={t('personalTitle')} description={t('personalHint')} />
+          <CardBody>
+            <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+              <Detail label={form('firstName')} value={application.firstName} />
+              <Detail label={form('lastName')} value={application.lastName} />
+              <Detail
+                label={form('email')}
+                value={
+                  <a
+                    href={`mailto:${application.email}`}
+                    className="inline-flex items-center gap-2 break-all underline-offset-4 hover:underline"
+                  >
+                    <Mail className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    {application.email}
+                  </a>
+                }
+              />
+              <Detail
+                label={form('phone')}
+                value={
+                  <a
+                    href={`tel:${application.phone.replace(/\s/g, '')}`}
+                    className="inline-flex items-center gap-2 underline-offset-4 hover:underline"
+                  >
+                    <Phone className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    <span data-numeric>{application.phone}</span>
+                  </a>
+                }
+              />
+              <Detail
+                label={form('postcode')}
+                value={<span data-numeric>{application.postcode}</span>}
+              />
+              <Detail
+                label={form('city')}
+                value={
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    {application.city}
+                  </span>
+                }
+              />
+              <Detail
+                label={form('permitTitle')}
+                value={form(PERMIT_KEY[application.permit])}
+              />
+              <Detail
+                label={form('languagesTitle')}
+                value={
+                  routing.locales
+                    .filter((l) => application.languages[l])
+                    .map(
+                      (l) =>
+                        `${LOCALE_LABELS[l]} — ${form(LEVEL_KEY[application.languages[l] ?? 'none'])}`,
+                    )
+                    .join(' · ') || '—'
+                }
+              />
+            </dl>
+
+            {application.permit === 'none' && (
+              <Alert tone="danger" icon={AlertTriangle} className="mt-6">
+                {t('permitNoneWarning')}
+              </Alert>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('profileTitle')} />
+          <CardBody>
+            <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+              <Detail
+                label={t('experienceTitle')}
+                value={
+                  <>
+                    <span data-numeric>
+                      {listT('years', { n: application.yearsExperience })}
+                    </span>
+                    {application.experienceAreas.length > 0 && (
+                      <>
+                        {' · '}
+                        {application.experienceAreas
+                          .map((a) =>
+                            a === 'cleaning' ? form('areaCleaning') : form('areaAssembly'),
+                          )
+                          .join(', ')}
+                      </>
+                    )}
+                  </>
+                }
+              />
+              <Detail
+                label={t('mobilityTitle')}
+                value={
+                  <span className="inline-flex items-center gap-2">
+                    <Car className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    {t('licence')}: {application.hasDrivingLicence ? t('yes') : t('no')}
+                    {' · '}
+                    {t('car')}: {application.hasCar ? t('yes') : t('no')}
+                  </span>
+                }
+              />
+              <Detail
+                label={t('availabilityTitle')}
+                value={
+                  <span data-numeric>
+                    {application.availability.days
+                      .map((day) =>
+                        new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'de-CH', {
+                          weekday: 'short',
+                          timeZone: 'UTC',
+                        }).format(new Date(Date.UTC(2024, 0, day))),
+                      )
+                      .join(', ')}
+                    {' · '}
+                    {application.availability.earliest}–{application.availability.latest}
+                  </span>
+                }
+              />
+              {/* Asked for on the public form and shown nowhere until now — so
+                  "can this person start before the end of the month" was a
+                  question the record could answer and the screen could not. */}
+              <Detail
+                label={form('startFrom')}
+                value={
+                  application.startFrom ? longDate(application.startFrom) : '—'
+                }
+              />
+            </dl>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('referencesTitle')} />
+          <CardBody>
+            {application.references.length === 0 ? (
+              <p className="text-sm text-ink-tertiary">{t('referencesEmpty')}</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {application.references.map((ref) => (
+                  <li key={ref.phone} className="flex flex-wrap gap-x-3">
+                    <span className="font-medium">{ref.name}</span>
+                    {ref.company && (
+                      <span className="text-ink-secondary">{ref.company}</span>
+                    )}
+                    <a
+                      href={`tel:${ref.phone.replace(/\s/g, '')}`}
+                      data-numeric
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {ref.phone}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('documentsTitle')} description={t('documentsHint')} />
+          <CardBody>
+            {application.documents.length === 0 ? (
+              <p className="text-sm text-ink-tertiary">{t('documentsEmpty')}</p>
+            ) : (
+              <ul className="space-y-2">
+                {application.documents.map((doc) => (
+                  <li
+                    key={doc.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius-md)] border border-line-subtle bg-sunken p-3"
+                  >
+                    <FileText className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    <span className="min-w-0 flex-1 break-all text-sm">
+                      {doc.name}
+                      <span className="ms-2 text-ink-tertiary">
+                        {t(DOC_KIND_KEY[doc.kind])}
+                        {' · '}
+                        <span data-numeric>{doc.sizeKb} KB</span>
+                      </span>
+                    </span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label={t('downloadLabel', { name: doc.name })}
+                      onClick={() => download(doc)}
+                    >
+                      <Download className="size-4" aria-hidden />
+                      {t('download')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
+        </Card>
+
+        {application.motivation && (
+          <Card>
+            <CardHeader title={t('motivationTitle')} />
+            <CardBody>
+              <p className="max-w-[var(--measure)] text-ink-secondary">
+                {application.motivation}
+              </p>
+            </CardBody>
+          </Card>
         )}
-      </section>
 
-      {application.motivation && (
-        <section className="mt-8">
-          <h2 className="label-type text-ink-tertiary">{t('motivationTitle')}</h2>
-          <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">
-            {application.motivation}
-          </p>
-        </section>
-      )}
+        {/* No CardHeader on this one: the field carries its own visible label
+            and hint, and a card title above them would be the same words a
+            second time. */}
+        <Card>
+          <Field label={t('notesTitle')} hint={t('notesHint')}>
+            {(props) => (
+              <Textarea
+                rows={3}
+                value={application.internalNotes ?? ''}
+                onChange={(e) =>
+                  updateApplication(application.id, { internalNotes: e.target.value })
+                }
+                {...props}
+              />
+            )}
+          </Field>
+        </Card>
 
-      <Field label={t('notesTitle')} hint={t('notesHint')} className="mt-8">
-        {(props) => (
-          <Textarea
-            rows={3}
-            value={application.internalNotes ?? ''}
-            onChange={(e) => updateApplication(application.id, { internalNotes: e.target.value })}
-            {...props}
-          />
-        )}
-      </Field>
-
-      {application.status !== 'accepted' && (
-        <section className="mt-10 border-t border-line-subtle pt-8">
-          <h2 className="display-type text-xl">{t('actionsTitle')}</h2>
-
-          <div className="mt-5 flex flex-wrap gap-3">
+        {application.status !== 'accepted' && (
+          <Card>
+            <CardHeader title={t('actionsTitle')} />
+            <CardBody className="flex flex-wrap items-center gap-2">
               {application.status === 'new' && (
                 <Button
                   variant="secondary"
@@ -360,24 +495,28 @@ export default function ApplicationDetailPage({
                   {t('reject')}
                 </Button>
               )}
-          </div>
-        </section>
-      )}
+            </CardBody>
+          </Card>
+        )}
 
-      <section className="mt-10 border-t border-line-subtle pt-8">
-        <h2 className="display-type text-xl">{t('retentionTitle')}</h2>
-        <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-secondary">
-          {t('retentionBody', {
-            date: longDate(application.retainUntil),
-            consent: longDate(application.consentGivenAt),
-          })}
-        </p>
-
-        <Button variant="quiet" className="mt-5" onClick={() => setConfirmDelete(true)}>
-          <Trash2 className="size-4" aria-hidden />
-          {t('deleteAction')}
-        </Button>
-      </section>
+        <Card>
+          <CardHeader title={t('retentionTitle')} />
+          <CardBody>
+            <p className="max-w-[var(--measure)] text-sm text-ink-secondary">
+              {t('retentionBody', {
+                date: longDate(application.retainUntil),
+                consent: longDate(application.consentGivenAt),
+              })}
+            </p>
+          </CardBody>
+          <CardFooter>
+            <Button variant="quiet" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="size-4" aria-hidden />
+              {t('deleteAction')}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
 
       {/*
         Both decisions used to open a block *underneath* the buttons — a
@@ -427,6 +566,22 @@ export default function ApplicationDetailPage({
           router.push('/admin/bewerbungen');
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * One answer, with the question above it.
+ *
+ * A `<dl>` rather than a two-column table of `<div>`s because that is what
+ * this is — and it is what lets a screen reader read "Arbeitsbewilligung,
+ * Ausweis B" as a pair instead of as two loose strings on the same row.
+ */
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="label-type text-ink-tertiary">{label}</dt>
+      <dd className="mt-1 min-h-6">{value}</dd>
     </div>
   );
 }

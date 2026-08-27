@@ -23,7 +23,6 @@ import {
   Tags,
   UserPlus,
   Users,
-  UsersRound,
 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
@@ -107,10 +106,19 @@ const NAV: {
   {
     group: 'hiring',
     collapsed: true,
+    /*
+     * Team is not in the sidebar.
+     *
+     * H6 and H7 still exist and are still reachable — from the «Im Team»
+     * banner on an accepted application, and from the screen the account is
+     * created on, which is the only way somebody gets onto the team in the
+     * first place. What they are not is a place the owner navigates *to*: the
+     * roster is two contractors, it is read from the application it came from,
+     * and a third of the People group was pointing at it.
+     */
     items: [
       { href: '/admin/bewerbungen', key: 'applications', icon: UserPlus },
       { href: '/admin/stellen', key: 'postings', icon: Briefcase },
-      { href: '/admin/team', key: 'teamMembers', icon: UsersRound },
     ],
   },
   {
