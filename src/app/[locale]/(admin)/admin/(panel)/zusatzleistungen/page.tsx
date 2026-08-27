@@ -182,6 +182,38 @@ export default function AdminAddOnsPage() {
       },
     },
     {
+      key: 'price',
+      header: t('colPrice'),
+      align: 'end',
+      sortBy: (a) => a.price,
+      /* `per="visit"` rather than a bare figure. The whole point the screen has
+         to carry is that this price is charged once for the job and not by the
+         hour — printing it naked next to an hours column invited exactly the
+         reading the pricing engine refuses. */
+      cell: (a) => <Money amount={a.price} per="visit" />,
+    },
+    {
+      key: 'duration',
+      header: t('colDuration'),
+      align: 'end',
+      sortBy: (a) => a.extraDuration,
+      cell: (a) => (
+        <span data-numeric className="text-ink-secondary">
+          {a.extraDuration > 0 ? `+${a.extraDuration} h` : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'services',
+      header: t('colServices'),
+      tableOnly: true,
+      cell: (a) => (
+        <span className="text-sm text-ink-secondary">
+          {a.services.length === 0 ? '—' : addOnServiceNames(a, services, locale).join(', ')}
+        </span>
+      ),
+    },
+    {
       key: 'status',
       header: t('colStatus'),
       trailing: true,
@@ -221,38 +253,6 @@ export default function AdminAddOnsPage() {
             onCheckedChange={() => toggle(a)}
             aria-label={t(a.active ? 'switchOff' : 'switchOn', { name: a.name[locale] })}
           />
-        </span>
-      ),
-    },
-    {
-      key: 'price',
-      header: t('colPrice'),
-      align: 'end',
-      sortBy: (a) => a.price,
-      /* `per="visit"` rather than a bare figure. The whole point the screen has
-         to carry is that this price is charged once for the job and not by the
-         hour — printing it naked next to an hours column invited exactly the
-         reading the pricing engine refuses. */
-      cell: (a) => <Money amount={a.price} per="visit" />,
-    },
-    {
-      key: 'duration',
-      header: t('colDuration'),
-      align: 'end',
-      sortBy: (a) => a.extraDuration,
-      cell: (a) => (
-        <span data-numeric className="text-ink-secondary">
-          {a.extraDuration > 0 ? `+${a.extraDuration} h` : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'services',
-      header: t('colServices'),
-      tableOnly: true,
-      cell: (a) => (
-        <span className="text-sm text-ink-secondary">
-          {a.services.length === 0 ? '—' : addOnServiceNames(a, services, locale).join(', ')}
         </span>
       ),
     },

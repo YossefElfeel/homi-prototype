@@ -240,49 +240,6 @@ export default function OffersPage() {
       sortBy: (o) => offerTotal(o),
       cell: (o) => <Money amount={offerTotal(o)} />,
     },
-    /*
-     * Where the quote stands, then where the money stands, then how it was
-     * paid — the three read left to right as one sentence about this row.
-     * Status used to open the row and the coverage chip sat between the two
-     * halves of that sentence; coverage is now on the detail, where there is
-     * room to say what is left rather than only that something covers it.
-     */
-    {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      align: 'end',
-      cell: (o) => {
-        const state = stateOf(o);
-        return (
-          <StatusBadge
-            entity="request"
-            state={state === 'sent' ? 'offerSent' : state}
-            size="sm"
-          />
-        );
-      },
-    },
-    {
-      key: 'paymentStatus',
-      header: t('colPayment'),
-      align: 'end',
-      cell: (o) => {
-        const payment = offerPayment(o.id, payments);
-        if (payment) {
-          return <StatusBadge entity="payment" state={payment.status} size="sm" />;
-        }
-        const coverage = requestCoverage(requestOf(o), subscriptions, plans, now);
-        /* A covered job never produces a payment and never will. Leaving the
-           cell blank would read as "not paid yet" for a job that owes
-           nothing. */
-        return (
-          <span className="text-sm text-ink-tertiary">
-            {coverage.kind === 'payable' ? '—' : t('paymentNotDue')}
-          </span>
-        );
-      },
-    },
     {
       /* Stacked under the badge before, at a size that made "TWINT" and "Karte"
          read as a footnote to the status rather than an answer to "how did
@@ -319,6 +276,50 @@ export default function OffersPage() {
             >
               {left === null ? '—' : gone ? t('expired') : t('expiresIn', { days: left })}
             </span>
+          </span>
+        );
+      },
+    },
+    /*
+     * The two states this row is read for, at the end of it: where the quote
+     * stands, then where the money stands. They sat mid-table, in a different
+     * position from the state column on every other list, so scanning a set of
+     * lists meant hunting for the badge on each one. Everything a state is
+     * derived from — the method, the validity — stays in the data columns to
+     * the left of them.
+     */
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      align: 'end',
+      cell: (o) => {
+        const state = stateOf(o);
+        return (
+          <StatusBadge
+            entity="request"
+            state={state === 'sent' ? 'offerSent' : state}
+            size="sm"
+          />
+        );
+      },
+    },
+    {
+      key: 'paymentStatus',
+      header: t('colPayment'),
+      align: 'end',
+      cell: (o) => {
+        const payment = offerPayment(o.id, payments);
+        if (payment) {
+          return <StatusBadge entity="payment" state={payment.status} size="sm" />;
+        }
+        const coverage = requestCoverage(requestOf(o), subscriptions, plans, now);
+        /* A covered job never produces a payment and never will. Leaving the
+           cell blank would read as "not paid yet" for a job that owes
+           nothing. */
+        return (
+          <span className="text-sm text-ink-tertiary">
+            {coverage.kind === 'payable' ? '—' : t('paymentNotDue')}
           </span>
         );
       },

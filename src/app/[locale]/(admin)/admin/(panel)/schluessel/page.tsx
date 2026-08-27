@@ -169,17 +169,6 @@ export default function KeyLogPage({
       sortBy: (k) => (propertyOf(k.propertyId)?.label ?? '').toLowerCase(),
     },
     {
-      key: 'status',
-      header: t('colStatus'),
-      trailing: true,
-      /* Was two hand-typed sets of `status-*` classes in this cell, which made
-         the key log the one screen writing its own state colours — and the
-         property record drew the same two states as a `Chip` with its own
-         tones. Both now read `status-registry.ts`. */
-      cell: (k) => <StatusBadge entity="key" state={k.status} size="sm" />,
-      sortBy: (k) => k.status,
-    },
-    {
       key: 'customer',
       header: t('colCustomer'),
       cell: (k) => customerName(propertyOf(k.propertyId)?.customerId),
@@ -235,6 +224,17 @@ export default function KeyLogPage({
           <span className="text-ink-tertiary">{t('stillHeld')}</span>
         ),
       sortBy: (k) => k.returnedAt ?? null,
+    },
+    {
+      key: 'status',
+      header: t('colStatus'),
+      trailing: true,
+      /* Was two hand-typed sets of `status-*` classes in this cell, which made
+         the key log the one screen writing its own state colours — and the
+         property record drew the same two states as a `Chip` with its own
+         tones. Both now read `status-registry.ts`. */
+      cell: (k) => <StatusBadge entity="key" state={k.status} size="sm" />,
+      sortBy: (k) => k.status,
     },
   ];
 

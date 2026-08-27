@@ -206,6 +206,55 @@ export default function AdminServicesPage() {
       ),
     },
     {
+      /* The column the «Art» filter filters. Added with it rather than after:
+         a filter over an attribute no column shows is a control whose effect
+         the reader has to infer from which rows vanished. */
+      key: 'type',
+      header: t('colType'),
+      sortBy: (s) => s.durationProfile,
+      cell: (s) => <span className="text-ink-secondary">{profileLabel(s.durationProfile)}</span>,
+    },
+    {
+      key: 'calc',
+      header: t('colCalc'),
+      sortBy: (s) => s.calc,
+      cell: (s) => <span className="text-ink-secondary">{calcLabel(s)}</span>,
+    },
+    {
+      key: 'base',
+      header: t('colBase'),
+      align: 'end',
+      sortBy: (s) => s.basePrice,
+      cell: (s) => <Money amount={s.basePrice} per={calcUnit(s.calc)} />,
+    },
+    {
+      key: 'min',
+      header: t('colMin'),
+      align: 'end',
+      sortBy: (s) => s.minDuration,
+      cell: (s) => (
+        <span data-numeric className="text-ink-secondary">
+          {s.minDuration} h
+        </span>
+      ),
+    },
+    {
+      key: 'translations',
+      header: t('colLanguages'),
+      align: 'end',
+      sortBy: (s) => missingTranslations(s),
+      cell: (s) => {
+        const missing = missingTranslations(s);
+        return missing === 0 ? (
+          <span className="text-sm text-ink-tertiary">—</span>
+        ) : (
+          <span className="rounded-sm border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-xs text-status-warning-fg">
+            {t('translationGap', { n: missing })}
+          </span>
+        );
+      },
+    },
+    {
       key: 'status',
       header: t('colStatus'),
       trailing: true,
@@ -264,55 +313,6 @@ export default function AdminServicesPage() {
           />
         </span>
       ),
-    },
-    {
-      /* The column the «Art» filter filters. Added with it rather than after:
-         a filter over an attribute no column shows is a control whose effect
-         the reader has to infer from which rows vanished. */
-      key: 'type',
-      header: t('colType'),
-      sortBy: (s) => s.durationProfile,
-      cell: (s) => <span className="text-ink-secondary">{profileLabel(s.durationProfile)}</span>,
-    },
-    {
-      key: 'calc',
-      header: t('colCalc'),
-      sortBy: (s) => s.calc,
-      cell: (s) => <span className="text-ink-secondary">{calcLabel(s)}</span>,
-    },
-    {
-      key: 'base',
-      header: t('colBase'),
-      align: 'end',
-      sortBy: (s) => s.basePrice,
-      cell: (s) => <Money amount={s.basePrice} per={calcUnit(s.calc)} />,
-    },
-    {
-      key: 'min',
-      header: t('colMin'),
-      align: 'end',
-      sortBy: (s) => s.minDuration,
-      cell: (s) => (
-        <span data-numeric className="text-ink-secondary">
-          {s.minDuration} h
-        </span>
-      ),
-    },
-    {
-      key: 'translations',
-      header: t('colLanguages'),
-      align: 'end',
-      sortBy: (s) => missingTranslations(s),
-      cell: (s) => {
-        const missing = missingTranslations(s);
-        return missing === 0 ? (
-          <span className="text-sm text-ink-tertiary">—</span>
-        ) : (
-          <span className="rounded-sm border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-xs text-status-warning-fg">
-            {t('translationGap', { n: missing })}
-          </span>
-        );
-      },
     },
   ];
 
