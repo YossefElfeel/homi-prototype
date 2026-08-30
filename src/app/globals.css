@@ -848,6 +848,23 @@
   box-shadow: var(--shadow-sm);
 }
 
+/**
+ * Drop WebKit's built-in clear button on an input[type="search"].
+ *
+ * For a search box that already draws its own — `Toolbar` does, with a label a
+ * screen reader can read — the browser's is a second cross a centimetre from
+ * the first, and the one that ignores the token system. Opt-in rather than a
+ * blanket reset in `base`: /admin/suche has no clear button of its own, and
+ * there the browser's is the only one there is.
+ */
+@utility clear-button-none {
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
 /* --------------------------------------------- 5a. HOMIVARO COMPOSITES
    Scoped to the one direction that uses them, so switching to Raster cannot
    inherit a rounded shell or a card that lifts. Everything here reads from

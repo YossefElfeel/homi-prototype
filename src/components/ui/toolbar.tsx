@@ -100,6 +100,10 @@ export function Toolbar({
           <div className="relative min-w-56 flex-1">
             <Input
               type="search"
+              /* The `trailing` cross below is this box's clear button. WebKit
+                 draws one too, so every search field in the app was wearing
+                 two of them side by side. */
+              className="clear-button-none"
               dense
               value={search.value}
               onChange={(e) => search.onChange(e.target.value)}
