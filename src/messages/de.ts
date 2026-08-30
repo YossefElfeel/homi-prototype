@@ -203,6 +203,41 @@ export const de = {
     savedDraft: 'Ihre Angaben sind gespeichert. Sie können jederzeit weitermachen.',
   },
 
+  /* Das Formular, mit dem ein Zahlungsmittel hinterlegt wird — hier oben und
+     nicht unter `account` oder `admin`, weil es beide Bildschirme betrifft: die
+     Kundin unter /konto/zahlungsmittel und der Inhaber auf dem Kundendatensatz.
+     Die Kartenfelder standen bisher nur in `admin.crm`, wo Bildschirm 45 nicht
+     hinkam — und genau deshalb fragte 45 gar nichts ab. */
+  paymentForm: {
+    cardNumber: 'Kartennummer',
+    cardNumberError: 'Eine Kartennummer hat 13 bis 19 Ziffern.',
+    cardName: 'Name auf der Karte',
+    cardExpiry: 'Gültig bis',
+    cardExpiryHint: 'MM/JJ',
+    cardExpiryError: 'Der Monat muss zwischen 01 und 12 liegen.',
+    cardCvv: 'Prüfziffer',
+    cardCvvHint: 'Drei Ziffern auf der Rückseite.',
+    cardStorage:
+      'Gespeichert werden Kartentyp, die letzten vier Ziffern und das Ablaufdatum. Nummer, Name und Prüfziffer werden nicht abgelegt.',
+    twintPhone: 'Mobilnummer',
+    /* Ohne Possessivpronomen, weil zwei Leute dasselbe Feld ausfüllen: die
+       Kundin ihre eigene Nummer, der Inhaber die der Kundin am Telefon. «Ihre»
+       ist auf Bildschirm 65 schlicht die falsche Person. */
+    twintPhoneHint: 'Die Mobilnummer, mit der TWINT registriert ist.',
+    twintPhoneError: 'Bitte eine Schweizer Mobilnummer, z. B. 079 123 45 66.',
+    twintStorage:
+      'Gespeichert werden die ersten drei und die letzten zwei Ziffern. TWINT gilt für einmalige Aufträge — das Abo wird davon nicht abgebucht.',
+    walletDevice: 'Gerät',
+    walletDeviceHint: 'Auf welchem Gerät ist das Wallet hinterlegt?',
+    /* Der Satz ist die einzige Stelle, an der der Prototyp zugibt, dass er ein
+       Sheet ersetzt, das er nicht öffnen kann. Ohne ihn liest sich die
+       Geräteauswahl wie ein verkürztes Kartenformular. */
+    walletStorage:
+      'Im fertigen Produkt wird das im Wallet auf dem Gerät bestätigt; Kartendaten werden nie eingetippt. Gespeichert wird nur, welches Gerät es war.',
+    save: 'Hinterlegen',
+    cancel: 'Abbrechen',
+  },
+
   empty: {
     genericTitle: 'Noch nichts vorhanden',
     genericBody: 'Sobald hier etwas eintrifft, sehen Sie es an dieser Stelle.',

@@ -212,19 +212,23 @@ export const TRACKS: Track[] = [
     id: 'account',
     de: 'Kundenbereich',
     en: 'Customer dashboard',
-    note: 'Wave 8',
+    /* Was the string «Wave 8» — the one track note on this board that made no
+       claim about what it contains. Every list here now carries the same
+       toolbar the office's do, and every state a screen shows is derived from
+       the clock rather than read off a stored field. */
+    note: 'Waves 8, 71–76 · every list searches, filters and sorts · same toolbar as the admin panel',
     screens: [
       done('32', 'Anmelden', 'Sign in', '/anmelden', ['error', 'magic link sent'], 'The email link leads; most customers here never chose a password'),
       done('33', 'Konto aktivieren', 'Activate account', '/konto-aktivieren', ['live rules']),
       done('34', 'Passwort zurücksetzen', 'Reset password', '/passwort', ['sent'], 'The confirmation never reveals whether the account exists'),
       done('35', 'Übersicht', 'Dashboard', '/konto', ['empty']),
       done('36', 'Meine Anfragen', 'My requests', '/konto/anfragen', ['empty', 'searched', 'filtered', 'nothing found', 'paged'], 'Twenty requests on the demo account — one in every state it can be in, two years of settled history behind them — so search, both menus and the second page all have something to act on'),
-      done('37', 'Anfrage-Detail', 'Request detail', '/konto/anfragen/req_3', ['waiting', 'quote ready', 'quote closed', 'withdrawn'], 'req_acc_new waits, req_acc_accepted runs the rail to the end, req_acc_expired and req_acc_withdrawn stop it early'),
-      done('38', 'Meine Offerten', 'My quotes', '/konto/offerten', ['empty', 'expiring']),
-      done('39', 'Meine Rechnungen', 'My invoices', '/konto/rechnungen', ['empty']),
+      done('37', 'Anfrage-Detail', 'Request detail', '/konto/anfragen/req_3', ['waiting', 'quote ready', 'quote closed', 'withdrawn'], 'req_acc_new waits, req_acc_accepted runs the rail to the end, req_acc_expired and req_acc_withdrawn stop it early. The badge, the quote card and the rail all read the derived state, so a quote that lapses by date closes all three at once — a state no scenario can stage, because moving the demo clock rebuilds the seed along with it'),
+      done('38', 'Meine Offerten', 'My quotes', '/konto/offerten', ['empty', 'expiring', 'searched', 'filtered', 'nothing found', 'sorted', 'paged'], 'Thirteen quotes on the demo account across five states, so the menu, the search and the second page all have something to act on'),
+      done('39', 'Meine Rechnungen', 'My invoices', '/konto/rechnungen', ['empty', 'searched', 'filtered', 'nothing found', 'sorted'], 'Five invoices — one page, so paging is the one list state this screen cannot show'),
       done('40', 'Rechnungs-Detail', 'Invoice detail', '/konto/rechnungen/inv_paid', ['overdue', 'paid']),
-      done('41', 'Meine Objekte', 'My properties', '/konto/objekte', ['empty']),
-      done('42', 'Objekt-Detail', 'Property detail', '/konto/objekte/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account'),
+      done('41', 'Meine Objekte', 'My properties', '/konto/objekte', ['empty', 'searched', 'filtered', 'nothing found', 'sorted'], 'Two properties, a flat and an office, so the type menu has both of its live options'),
+      done('42', 'Objekt-Detail', 'Property detail', '/konto/objekte/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account. The visit history pages at ten; prp_2 carries four, so the line under it states the capacity and no scenario reaches a second page'),
       done('43', 'Meine Abos', 'My plans', '/konto/abo', [
         'no plan',
         'two plans, two properties',
@@ -235,11 +239,28 @@ export const TRACKS: Track[] = [
         'every plan on sale, stacked or side by side',
         'the upgrades one plan can move to',
         'buying one: address, method, confirm',
-      ], 'Two halves: the packages held, and every package on sale. Buying and moving up both finish here — the demo customer holds one plan on a flat and one on an office, and has a third address with none'),
-      done('45', 'Zahlungsmittel', 'Payment methods', '/konto/zahlungsmittel', ['TWINT unavailable']),
+      ], 'One card per *section*, not one slab per plan — the plan, then a card each for skipping, moving up and cancelling — and under them every package on sale. Buying and moving up both finish here. The demo customer holds one plan on a flat and one on an office, has a third address carrying none, and the cards of a plan sit closer to each other than two plans do'),
+      done(
+        '45',
+        'Zahlungsmittel',
+        'Payment methods',
+        '/konto/zahlungsmittel',
+        ['TWINT unavailable', 'card form', 'TWINT form', 'wallet form', 'nothing on file'],
+        'Each of the four kinds opens the form it needs. Saving used to be the click itself — every card came out labelled «Karte», so two of them were one row. The four tiles that open those forms are real cards rather than buttons wearing a copy of the card treatment',
+      ),
       done('46', 'Bewertung schreiben', 'Write a review', '/konto/bewertung', ['nothing to review', 'sent']),
-      done('47', 'Vorher / Nachher', 'Before & after', '/konto/fotos', ['empty', 'consent off']),
-      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty']),
+      /* No longer a screen of its own. `empty` went with the tab: a card that
+         renders nothing when the job has no photographs needs no empty state,
+         and the one it had spoke for a list across every job the customer ever
+         had. What it costs is named in the note — a plan visit carries a
+         `subscriptionId` and no request, so its pair has no customer-facing
+         home until §20.6a on /open-questions is answered. */
+      done('47', 'Vorher / Nachher', 'Before & after', '/konto/anfragen/req_acc_h4', ['consent off'], 'A card on the request that produced the job, not a tab. Photos on a plan visit or on a booking with no quote behind it (bkg_3) are unreachable from the account until a job screen exists'),
+      /* Wave 76 gave this search over a stack of open threads; the note then
+         read «the threads stay bubbles, so there is no table state to show».
+         They are a rail now, so there is: which thread is open, and which kind
+         the strip is filtered to. */
+      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty', 'filtered by kind', 'searched', 'nothing found', 'single kind (no tabs)'], 'Four threads on the demo account, one of each kind — a request, a quote, a job and an invoice — so every tab in the strip has something under it. The rail pages at ten, which four threads never reach: the line under it states the capacity and the pager stays out of sight'),
       done('49', 'Profil & Benachrichtigungen', 'Profile & notifications', '/konto/profil'),
     ],
   },

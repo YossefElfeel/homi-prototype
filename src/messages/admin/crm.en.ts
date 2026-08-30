@@ -144,23 +144,13 @@ export const adminCrmEn: typeof adminCrmDe = {
     paymentAddLead:
       'For the customer who says on the phone how they pay. Otherwise they add it themselves in their account.',
     paymentKind: 'Kind',
-    paymentLabelField: 'Label',
-    /* The hint is not politeness: this field is a label, not a payment-data
-       field. A full card number belongs nowhere in this record — not even
-       "just as a reminder". */
-    paymentLabelHint: 'For recognition only: the last four digits. Never the full number.',
-    paymentLabelPlaceholder: 'e.g. Visa · 4242',
-    /* The form asked for a *label* — "type Visa · 4242 yourself" — which is
-       the shape of the record, not the thing being read down the phone. Four
-       fields, two of them kept. */
+    /* "Label" is gone, and with it the card fields that were duplicated here.
+       The field asked the owner to type "Visa · 4242" themselves — the shape
+       of the record rather than what is read down the phone, on the one field
+       whose typo the customer reads back in their own account. Every kind has
+       its own fields now, and they live under `paymentForm` because screen 45
+       needs the same ones. */
     paymentExpires: 'expires {date}',
-    cardNumber: 'Card number',
-    cardName: 'Name on the card',
-    cardExpiry: 'Expires',
-    cardCvv: 'Security code',
-    cardCvvHint: 'Three digits on the back.',
-    cardStorageNote:
-      'We keep the card type, the last four digits and the expiry date. The number and the security code are not stored.',
     paymentAddSave: 'Save',
     paymentCancel: 'Cancel',
     paymentAdded: 'Method saved.',

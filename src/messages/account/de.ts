@@ -10,7 +10,6 @@ export const accountDe = {
       properties: 'Objekte',
       subscription: 'Abo',
       payment: 'Zahlungsmittel',
-      photos: 'Vorher / Nachher',
       review: 'Bewertung abgeben',
       messages: 'Nachrichten',
       profile: 'Profil',
@@ -206,8 +205,24 @@ export const accountDe = {
     expiresSoon: 'Läuft in {days} Tagen ab',
     rowOpen: 'Details ansehen',
     rowRequest: 'Anfrage öffnen',
+    /* Referenz und Leistung — genau das, was in der Zeile steht. Der Betrag
+       nicht: nach «1200» zu suchen findet die Offerte über 1'200.50 nicht, und
+       das liest sich wie ein kaputtes Feld. */
+    search: 'Referenz oder Leistung',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Keine Offerte in dieser Auswahl',
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade keine Ihrer Offerten. Filter zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Offerte. Gesucht wird in Referenz und Leistung.',
     emptyTitle: 'Keine Offerten',
     emptyBody: 'Sobald wir auf eine Anfrage antworten, finden Sie die Offerte hier.',
+    /* Eine Offerte kann man nicht selbst auslösen — die Anfrage, die zu einer
+       führt, schon. */
+    emptyAction: 'Offerte anfordern',
   },
 
   invoices: {
@@ -231,11 +246,19 @@ export const accountDe = {
     filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Rechnungen',
     emptyBody: 'Rechnungen erscheinen hier, sobald ein Auftrag abgeschlossen ist.',
+    /* Eine Rechnung stellen wir — auslösen lässt sich hier also nur der
+       Auftrag, aus dem eine wird. */
+    emptyAction: 'Offerte anfordern',
     /* Keine überfällige Rechnung zu haben ist eine gute Nachricht und kein
        leeres Konto — deshalb ein eigener Text statt «Keine Rechnungen». */
-    filterEmptyTitle: 'Keine Rechnung gefunden',
+    filterEmptyTitle: 'Keine Rechnung in dieser Auswahl',
     filterEmptyBody:
-      'Suche und Filter schliessen alle Ihre Rechnungen aus. Zurücksetzen zeigt wieder alle.',
+      'Zu dieser Auswahl gehört gerade keine Ihrer Rechnungen. Zurücksetzen zeigt wieder alle.',
+    /* Die Suche kann sagen, woran sie gescheitert ist; der Filter nur, welche
+       Menüs stehen. Zwei Texte, weil es zwei verschiedene Nichts sind. */
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Rechnung. Gesucht wird in Nummer und QR-Referenz.',
   },
 
   invoice: {
@@ -268,6 +291,23 @@ export const accountDe = {
     rooms: '{n} Zimmer',
     bathrooms: '{n} Bäder',
     area: '{n} m²',
+    colLabel: 'Bezeichnung',
+    colAddress: 'Adresse',
+    colKind: 'Art',
+    colSize: 'Grösse',
+    colNextVisit: 'Nächster Termin',
+    nothingBooked: 'Nichts gebucht',
+    rowOpen: 'Details ansehen',
+    search: 'Bezeichnung oder Adresse',
+    filterKind: 'Art',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Kein Objekt in dieser Auswahl',
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade keines Ihrer Objekte. Filter zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es kein Objekt. Gesucht wird in Bezeichnung und Adresse.',
     addAction: 'Objekt hinzufügen',
     addDone: 'Objekt erfasst.',
     newTitle: 'Objekt erfassen',
@@ -479,7 +519,14 @@ export const accountDe = {
     lead: 'Für einmalige Aufträge und für die Abbuchung im Abo.',
     savedTitle: 'Hinterlegt',
     savedNone: 'Noch kein Zahlungsmittel hinterlegt.',
+    expires: 'gültig bis {date}',
     addTitle: 'Hinzufügen',
+    /* Die vier Knöpfe legten früher direkt los. Dass jetzt ein Formular kommt,
+       steht hier — sonst wirkt der erste Klick wie ein Fehlgriff. */
+    addLead: 'Jede Art fragt nach dem, was sie braucht.',
+    addDialogTitle: '{method} hinterlegen',
+    addLeadCard: 'Für einmalige Aufträge und für die monatliche Abbuchung im Abo.',
+    addLeadOneOff: 'Für einmalige Aufträge. Das Abo wird davon nicht abgebucht.',
     card: 'Karte',
     twint: 'TWINT',
     applePay: 'Apple Pay',
@@ -514,28 +561,57 @@ export const accountDe = {
     emptyBody: 'Nach dem ersten abgeschlossenen Einsatz fragen wir Sie hier nach Ihrer Meinung.',
     /* Die Dankesseite war eine Sackgasse: Häkchen, Titel, Text — kein Link. */
     thanksToOverview: 'Zur Übersicht',
-    thanksToPhotos: 'Vorher / Nachher ansehen',
+    /* Hiess «Vorher / Nachher ansehen» und führte auf den eigenen Bereich, den
+       es nicht mehr gibt. Die Fotos liegen jetzt auf der Anfrage, aus der der
+       Auftrag entstanden ist — der Weg dahin führt über die Liste. */
+    thanksToRequests: 'Zu Ihren Anfragen',
     emptyAction: 'Anfragen ansehen',
   },
 
+  /* War ein eigener Bereich mit Titel, Lead und Leerzustand. Jetzt eine Karte
+     auf der Anfrage, die den Auftrag hervorgebracht hat — «Fotos, die das Team
+     bei Ihren Einsätzen aufgenommen hat» galt für eine Liste über alle
+     Aufträge hinweg und stimmt für einen einzelnen nicht mehr. */
   photos: {
     title: 'Vorher / Nachher',
-    lead: 'Fotos, die das Team bei Ihren Einsätzen aufgenommen hat.',
     before: 'Vorher',
     after: 'Nachher',
-    consentTitle: 'Veröffentlichung',
     consentBody:
       'Diese Fotos gehören Ihnen. Auf der Website erscheinen sie nur, wenn Sie schriftlich zustimmen — und ohne erkennbare Details.',
     consentLabel: 'Diese Fotos dürfen auf der Website erscheinen',
-    emptyTitle: 'Noch keine Fotos',
-    emptyBody: 'Nach dem ersten Einsatz finden Sie hier die Aufnahmen von vorher und nachher.',
   },
 
   messages: {
     title: 'Nachrichten',
     lead: 'Alles, was zu Ihren Aufträgen geschrieben wurde — an einem Ort.',
-    subject: 'Betreff {reference}',
+    /* «Betreff {reference}» stand als Überschrift über jedem Gespräch, als
+       noch alle offen untereinander standen. Die Liste links nennt das
+       Gespräch bereits — die Überschrift wiederholte nur die Zeile, die man
+       gerade angeklickt hat. */
     unread: 'Ungelesen',
+    /* Referenz *und* Text: die Referenz ist eine Nummer, und niemand weiss
+       auswendig, unter welcher der gesuchte Satz steht. Hiess «Betreff oder
+       Text» — das Wort steht nun nirgends mehr auf dem Bildschirm. */
+    search: 'Referenz oder Text',
+    tabAll: 'Alle',
+    /* Woran ein Gespräch hängt. Die Referenz allein — «O-2494-1» — sagt einer
+       Kundin nichts; das Wort davor schon. */
+    kind: {
+      request: 'Anfrage',
+      offer: 'Offerte',
+      booking: 'Auftrag',
+      invoice: 'Rechnung',
+      other: 'Sonstiges',
+    },
+    filterReset: 'Suche leeren',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Nachricht. Gesucht wird in Referenz und Text.',
+    pickTitle: 'Gespräch auswählen',
+    pickBody: 'Wählen Sie links ein Gespräch aus, um es zu lesen und zu antworten.',
+    /* Eine Nachricht darf aus einem Anhang allein bestehen. In der Liste
+       stünde sonst eine leere Zeile da, wo etwas angekommen ist. */
+    attachmentOnly: 'Nur ein Anhang',
     replyLabel: 'Antworten',
     replyPlaceholder: 'Ihre Nachricht',
     send: 'Senden',

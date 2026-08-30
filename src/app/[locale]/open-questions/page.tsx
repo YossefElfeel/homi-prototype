@@ -263,6 +263,14 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§11.4a',
+    question: 'What does an Apple Pay or Google Pay method "on file" actually stand for?',
+    decision:
+      'OPEN, and the form ships the honest version. A card asks for its four fields and keeps three facts; TWINT asks for the number it is registered to. A wallet has no equivalent — the sheet on the device picks the card and authenticates it, a browser cannot open one, and what the real integration hands back is a token bound to that device. So the form asks which device and says on the form that this is what it is standing in for, which is also the only thing that separates a customer\'s two wallet entries: the seed already labels one «Apple Pay · iPhone». Two things the business has to settle. First, whether a wallet belongs on file at all — a wallet is normally tapped fresh at each checkout, and a saved one that cannot be re-authenticated from the office is a row that promises more than it can do. Second, whether the device list is right: it is four Apple products and three Google ones, picked because they are proper nouns in all four locales, and a real integration would return the device name rather than offer a menu of them. Both answers change the row, not the flow — the card and TWINT halves stand either way.',
+    screens: '45, 65',
+    state: 'open',
+  },
+  {
     ref: '§9.4a',
     question: 'Where does a customer actually type a coupon code?',
     decision:
@@ -284,6 +292,14 @@ const ENTRIES: Entry[] = [
     decision:
       'Nowhere, and the seed says so in prose. `JobPosting` has `kind: temporary` and nothing else — no end date, no season — so the seasonal role that runs March to October announces that in its summary text, where nothing can read it. Three things follow that a reviewer should see before the schema is settled. The jobs page cannot sort or filter by it. A fixed-term role that has ended stays published until somebody remembers to switch it off, which is the same failure the `validTo` on a coupon exists to prevent. And an accepted applicant becomes a `TeamMember` with a `startedAt` and no end, so the contract type stops being recorded the moment it starts to matter for payroll. The cheap version is a nullable `endsAt` on the posting; the honest version is that the term belongs on the employment, not on the advertisement, and this prototype has no employment record to put it on.',
     screens: 'C1, C2, H3, H4, H7',
+    state: 'open',
+  },
+  {
+    ref: '§20.6a',
+    question: 'Where does a customer see the photos of a job that has no request behind it?',
+    decision:
+      'Nowhere, as of this wave, and the answer decides whether a customer-facing job screen has to exist. «Vorher / Nachher» was a tab of its own listing every job the customer ever had; it is a card on the request that produced the job now, which is where somebody actually asks the question — and which is also where the §20.6 consent switch went, because that switch is the only way a customer can take a photograph back off the public gallery. Two kinds of job have no request to hang it on. A plan visit is created from the subscription and carries a `subscriptionId` instead, so the whole of a plan customer’s photography is now unreachable from their own account — and a plan customer is the one who accumulates the most of it. A booking entered by the office without a quote behind it, `bkg_3` in the seed, has neither. Both are still visible to the office and both still reach /referenzen if consent was recorded, so the gap is not in what is stored: it is that the person whose flat is in the picture can no longer withdraw it. The cheap version is a link from the plan to its visits. The honest version is the customer-facing job screen this prototype has never had — every route into a finished job today goes through the request, and two of the three ways a job can be created do not start with one.',
+    screens: '37, 43, 47, 5',
     state: 'open',
   },
 ];

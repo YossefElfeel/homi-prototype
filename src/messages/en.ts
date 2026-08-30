@@ -200,6 +200,41 @@ export const en: Messages = {
     savedDraft: 'Your answers are saved. You can pick this up any time.',
   },
 
+  /* The form a payment method is put on file with — up here rather than under
+     `account` or `admin`, because both screens do it: the customer under
+     /konto/zahlungsmittel and the owner on the customer record. The card fields
+     used to live only in `admin.crm`, where screen 45 could not reach them —
+     which is exactly why 45 asked for nothing at all. */
+  paymentForm: {
+    cardNumber: 'Card number',
+    cardNumberError: 'A card number has 13 to 19 digits.',
+    cardName: 'Name on the card',
+    cardExpiry: 'Expires',
+    cardExpiryHint: 'MM/YY',
+    cardExpiryError: 'The month has to be between 01 and 12.',
+    cardCvv: 'Security code',
+    cardCvvHint: 'Three digits on the back.',
+    cardStorage:
+      'We keep the card type, the last four digits and the expiry date. The number, the name and the security code are not stored.',
+    twintPhone: 'Mobile number',
+    /* No possessive, because two people fill this one field in: the customer
+       with her own number, the owner with hers off the phone. "Your" is simply
+       the wrong person on screen 65. */
+    twintPhoneHint: 'The mobile number TWINT is registered to.',
+    twintPhoneError: 'Please enter a Swiss mobile number, e.g. 079 123 45 66.',
+    twintStorage:
+      'We keep the first three and the last two digits. TWINT covers one-off jobs — a plan is never charged to it.',
+    walletDevice: 'Device',
+    walletDeviceHint: 'Which device is the wallet on?',
+    /* The one place the prototype admits it is standing in for a sheet it
+       cannot open. Without it the device picker reads as a shortened card
+       form. */
+    walletStorage:
+      'In the finished product this is confirmed in the wallet on the device; card details are never typed in. All we keep is which device it was.',
+    save: 'Save',
+    cancel: 'Cancel',
+  },
+
   empty: {
     genericTitle: 'Nothing here yet',
     genericBody: 'As soon as something arrives, it will show up here.',
