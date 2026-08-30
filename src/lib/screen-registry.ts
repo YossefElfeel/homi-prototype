@@ -245,8 +245,18 @@ export const TRACKS: Track[] = [
         'Each of the four kinds opens the form it needs. Saving used to be the click itself — every card came out labelled «Karte», so two of them were one row',
       ),
       done('46', 'Bewertung schreiben', 'Write a review', '/konto/bewertung', ['nothing to review', 'sent']),
-      done('47', 'Vorher / Nachher', 'Before & after', '/konto/fotos', ['empty', 'consent off']),
-      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty', 'searched', 'nothing found'], 'Three threads on the demo account. Search only — the threads stay bubbles, so there is no table state to show'),
+      /* No longer a screen of its own. `empty` went with the tab: a card that
+         renders nothing when the job has no photographs needs no empty state,
+         and the one it had spoke for a list across every job the customer ever
+         had. What it costs is named in the note — a plan visit carries a
+         `subscriptionId` and no request, so its pair has no customer-facing
+         home until §20.6a on /open-questions is answered. */
+      done('47', 'Vorher / Nachher', 'Before & after', '/konto/anfragen/req_acc_h4', ['consent off'], 'A card on the request that produced the job, not a tab. Photos on a plan visit or on a booking with no quote behind it (bkg_3) are unreachable from the account until a job screen exists'),
+      /* Wave 76 gave this search over a stack of open threads; the note then
+         read «the threads stay bubbles, so there is no table state to show».
+         They are a rail now, so there is: which thread is open, and which kind
+         the strip is filtered to. */
+      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty', 'filtered by kind', 'searched', 'nothing found', 'single kind (no tabs)'], 'Four threads on the demo account, one of each kind — a request, a quote, a job and an invoice — so every tab in the strip has something under it'),
       done('49', 'Profil & Benachrichtigungen', 'Profile & notifications', '/konto/profil'),
     ],
   },

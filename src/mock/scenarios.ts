@@ -890,7 +890,7 @@ function baseData(now: Date): DataSet {
      * by anyone reviewing the build.
      *
      * The empty state stays reachable, and by the control that governs it:
-     * a customer turns consent off in /konto/fotos and the work disappears
+     * a customer turns consent off on their own request and the work disappears
      * from here. That is the rule working, not a fixture being deleted.
      */
     ...(
@@ -1378,6 +1378,41 @@ function baseData(now: Date): DataSet {
       from: 'homivaro',
       body: 'Of course. It is also in your account under «Invoices» — you can download it as a PDF there at any time.',
       at: hoursAgo(194),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+
+    /*
+     * A thread on the quote itself — `O-2479-1`, the live one for A-2479.
+     *
+     * The demo account wrote about a request, a job and an invoice and never
+     * about a quote, which is the one reference a customer is most likely to
+     * have a question on: it has a price in it. That gap was invisible while
+     * every thread was rendered open in one column and is not now that the
+     * rail files threads by what they hang off — «Offerte» was a tab nobody
+     * signed in as this customer could reach.
+     *
+     * Read on both sides. Two threads here are already unread, which is what
+     * puts a number on the bell; a third would move a count other screens are
+     * seeded against.
+     */
+    {
+      id: 'msg_off_1',
+      customerId: 'cus_2',
+      subject: 'O-2479-1',
+      from: 'customer',
+      body: 'One question about the quote: is the balcony glazing in the price, or is that the extra line at the bottom?',
+      at: hoursAgo(30),
+      readByCustomer: true,
+      readByAdmin: true,
+    },
+    {
+      id: 'msg_off_2',
+      customerId: 'cus_2',
+      subject: 'O-2479-1',
+      from: 'homivaro',
+      body: 'The balcony glazing is included — both sides. The line at the bottom is the removal of the lime scale on the frames, which we only bill if it is actually needed.',
+      at: hoursAgo(28),
       readByCustomer: true,
       readByAdmin: true,
     },
@@ -2043,6 +2078,42 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /*
+   * The before-and-after pair for A-2444 — the one finished job on the demo
+   * account, and the only reachable instance of what used to be screen 47.
+   *
+   * That screen was a tab listing every job the customer had; it is a card on
+   * the request now. Every consented pair already in the seed hangs off a
+   * booking with no request behind it — `bkg_3` was never quoted, `bkg_9` and
+   * `bkg_10` belong to customers nobody can sign in as — so without this the
+   * card existed and no route in the prototype could open it.
+   *
+   * Unconsented, unlike those three. §20.6 makes internal the default, and it
+   * puts the switch in front of a reviewer in the state that demonstrates it:
+   * ticking it here is what makes a fourth work appear on /referenzen, and
+   * clearing it takes the work away again. That is the whole rule, in two
+   * clicks, without hand-editing the store.
+   *
+   * TODO:asset — a real pair of the assembled furniture replaces these. There
+   * is no photograph of a `moebelmontage` job in the repository, so both
+   * halves carry a room we do have; the slider, the labels and the consent
+   * switch are real and reviewable, and only the subject is standing in.
+   */
+  const accountPhotos: Photo[] = (['before', 'after'] as const).map((kind) => ({
+    id: `pho_acc_h4_${kind}`,
+    src: '/img/service-1.webp',
+    source: 'field' as const,
+    kind,
+    visibleToCustomer: true,
+    publishConsent: false,
+    note: 'Möbelmontage, Wohnung Meilen',
+    bookingId: 'bkg_acc_h4',
+    /* Written the same way the booking's own start is, rather than as a count
+       of calendar days near it. A photo dated before its own job is the kind
+       of detail a reviewer spots. */
+    takenAt: iso(at(pastOpenDay(now, -252), kind === 'before' ? 13 : 16)),
+  }));
+
   const quoteBookings: Booking[] = [
     {
       id: 'bkg_off_paid',
@@ -2529,7 +2600,7 @@ function baseData(now: Date): DataSet {
     messages,
     coupons,
     changeLog,
-    photos,
+    photos: [...photos, ...accountPhotos],
     team: [owner(now), ...hiredMembers(now)],
     /*
      * The hiring track, in the scenario the app opens on.

@@ -294,6 +294,14 @@ const ENTRIES: Entry[] = [
     screens: 'C1, C2, H3, H4, H7',
     state: 'open',
   },
+  {
+    ref: '§20.6a',
+    question: 'Where does a customer see the photos of a job that has no request behind it?',
+    decision:
+      'Nowhere, as of this wave, and the answer decides whether a customer-facing job screen has to exist. «Vorher / Nachher» was a tab of its own listing every job the customer ever had; it is a card on the request that produced the job now, which is where somebody actually asks the question — and which is also where the §20.6 consent switch went, because that switch is the only way a customer can take a photograph back off the public gallery. Two kinds of job have no request to hang it on. A plan visit is created from the subscription and carries a `subscriptionId` instead, so the whole of a plan customer’s photography is now unreachable from their own account — and a plan customer is the one who accumulates the most of it. A booking entered by the office without a quote behind it, `bkg_3` in the seed, has neither. Both are still visible to the office and both still reach /referenzen if consent was recorded, so the gap is not in what is stored: it is that the person whose flat is in the picture can no longer withdraw it. The cheap version is a link from the plan to its visits. The honest version is the customer-facing job screen this prototype has never had — every route into a finished job today goes through the request, and two of the three ways a job can be created do not start with one.',
+    screens: '37, 43, 47, 5',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

@@ -33,7 +33,8 @@ interface Work {
  * written consent. So the empty state is not an edge case — it is what the
  * page shows the day nobody has signed one, and it has to explain *why* it is
  * empty rather than look broken. It is reached from the control that governs
- * it: a customer turning consent off in /konto/fotos empties this page.
+ * it: a customer turning consent off on their own request — the «Vorher /
+ * Nachher» card on /konto/anfragen/[id] — empties this page.
  *
  * Each work is a slider rather than two frames side by side. See `BeforeAfter`
  * for why: half-width frames a gutter apart make the reader align the two
