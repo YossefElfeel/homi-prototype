@@ -27,10 +27,13 @@ import { customerHistory, invoiceSubject, invoiceTotal } from '@/lib/customer-hi
 import {
   METHOD_ICONS,
   SAVABLE_METHODS,
-  cardBrand,
-  cardLastFour,
+  blankDraft,
   invoicePayment,
+  methodDraftReady,
+  methodDraftRecord,
+  type PaymentDraft,
 } from '@/lib/payment-methods';
+import { PaymentMethodFields } from '@/components/payment/method-fields';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
@@ -47,7 +50,7 @@ import {
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money } from '@/components/ui/money';
-import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { Field, Select, Textarea } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RowAction, RowActionButton, RowActions } from '@/components/ui/row-actions';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -104,13 +107,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   const [adding, setAdding] = useState(false);
   const [kind, setKind] = useState<SavedMethodKind>('card');
-  const [label, setLabel] = useState('');
-  /* The four a card is read off the phone as. Only the brand, the last four
-     and the expiry survive `saveMethod`. */
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
+  /* Everything a method is read off the phone as, for whichever kind is picked
+     above. Only what `methodDraftRecord` returns survives the save. */
+  const [draft, setDraft] = useState<PaymentDraft>(() => blankDraft('card'));
   /** The invoice open in the popup, by id — never the record, which the store replaces. */
   const [openInvoice, setOpenInvoice] = useState<string | null>(null);
   /* One record on this screen, so a flag is enough — the list needs
@@ -191,44 +190,37 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   }
 
   /*
-   * A card has four fields, and only two of them are kept.
+   * Every kind has fields now, and only the label survives them.
    *
-   * The dialog asked for a *label* — "type Visa · 4242 yourself" — which is
-   * the shape of the record leaking into the form. Nobody reading a card off
-   * the phone has a label; they have a number, a name, an expiry and a
-   * security code, and the label is what the product should work out.
+   * A card already asked for its four — that much was right. Everything else
+   * asked for a *label*: "type Visa · 4242 yourself", the shape of the record
+   * leaking into the form, on the three kinds where a slip becomes the row the
+   * customer reads on their own screen. Nobody taking TWINT down over the
+   * phone has a label; they have the number it is registered to.
    *
-   * So the four are typed and the save keeps the brand, the last four and the
-   * expiry. The number and the code never reach the store, and `SavedPaymentMethod`
-   * has nowhere to put them — a prototype that models a stored PAN is a
-   * prototype somebody builds for real.
+   * So the fields come from the same component screen 45 uses, and the save
+   * keeps only what `methodDraftRecord` returns — for a card, the brand, the
+   * last four and the expiry. The number and the security code never reach the
+   * store, and `SavedPaymentMethod` has nowhere to put them: a prototype that
+   * models a stored PAN is a prototype somebody builds for real.
    */
-  const cardReady =
-    cardLastFour(cardNumber).length === 4 &&
-    cardName.trim().length > 0 &&
-    /^\d{2}\/\d{2}$/.test(cardExpiry) &&
-    /^\d{3,4}$/.test(cardCvv);
-  const canSave = kind === 'card' ? cardReady : label.trim().length > 0;
+  const canSave = methodDraftReady(kind, draft);
+
+  /* The kind selector reseeds the draft rather than clearing it, because a
+     wallet needs its first device already picked — and `blankDraft` is the one
+     place that knows which. */
+  function pickKind(next: SavedMethodKind) {
+    setKind(next);
+    setDraft(blankDraft(next));
+  }
 
   function saveMethod() {
     addPaymentMethod(
-      kind === 'card'
-        ? {
-            customerId: customer!.id,
-            kind,
-            label: `${cardBrand(cardNumber)} · ${cardLastFour(cardNumber)}`,
-            expiresAt: cardExpiry,
-          }
-        : { customerId: customer!.id, kind, label: label.trim() },
+      { customerId: customer!.id, kind, ...methodDraftRecord(kind, draft) },
       now,
     );
     setAdding(false);
-    setLabel('');
-    setCardNumber('');
-    setCardName('');
-    setCardExpiry('');
-    setCardCvv('');
-    setKind('card');
+    pickKind('card');
     toast.success(t('paymentAdded'));
   }
 
@@ -717,7 +709,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 <Select
                   {...props}
                   value={kind}
-                  onChange={(e) => setKind(e.target.value as SavedMethodKind)}
+                  onChange={(e) => pickKind(e.target.value as SavedMethodKind)}
                 >
                   {SAVABLE_METHODS.map((value) => (
                     <option key={value} value={value}>
@@ -727,82 +719,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 </Select>
               )}
             </Field>
-            {kind === 'card' ? (
-              <>
-                <Field label={t('cardNumber')}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      data-numeric
-                      inputMode="numeric"
-                      autoComplete="off"
-                      maxLength={19}
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="4242 4242 4242 4242"
-                    />
-                  )}
-                </Field>
-                <Field label={t('cardName')}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      autoComplete="off"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      placeholder={`${customer.firstName} ${customer.lastName}`}
-                    />
-                  )}
-                </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label={t('cardExpiry')}>
-                    {(props) => (
-                      <Input
-                        {...props}
-                        data-numeric
-                        inputMode="numeric"
-                        autoComplete="off"
-                        maxLength={5}
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="09/28"
-                      />
-                    )}
-                  </Field>
-                  <Field label={t('cardCvv')} hint={t('cardCvvHint')}>
-                    {(props) => (
-                      <Input
-                        {...props}
-                        data-numeric
-                        inputMode="numeric"
-                        autoComplete="off"
-                        maxLength={4}
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value)}
-                        placeholder="123"
-                      />
-                    )}
-                  </Field>
-                </div>
-                {/* Says what survives the save, on the form that collects it.
-                    An owner typing a customer's card number over the phone is
-                    entitled to know which parts of it we keep. */}
-                <p className="rounded-[var(--radius-sm)] bg-sunken p-3 text-xs text-ink-tertiary">
-                  {t('cardStorageNote')}
-                </p>
-              </>
-            ) : (
-              <Field label={t('paymentLabelField')} hint={t('paymentLabelHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder={t('paymentLabelPlaceholder')}
-                  />
-                )}
-              </Field>
-            )}
+            {/* The same fields the customer fills in on screen 45. Shared
+                rather than copied: the owner takes these details down over the
+                phone and the customer types them in themselves, and the two
+                asking for different things is how one card ends up on the
+                record as «Visa · 4242» and the next as «Kreditkarte». */}
+            <PaymentMethodFields
+              kind={kind}
+              draft={draft}
+              onChange={setDraft}
+              namePlaceholder={`${customer.firstName} ${customer.lastName}`}
+            />
           </div>
 
           <DialogFooter>

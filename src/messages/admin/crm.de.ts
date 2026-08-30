@@ -163,23 +163,13 @@ export const adminCrmDe = {
     paymentAddLead:
       'Für den Kunden, der am Telefon sagt, womit er zahlt. Der Kunde selbst hinterlegt es sonst in seinem Konto.',
     paymentKind: 'Art',
-    paymentLabelField: 'Bezeichnung',
-    /* Der Hinweis ist keine Höflichkeit: das Feld ist eine Bezeichnung, kein
-       Zahlungsdatenfeld. Eine volle Kartennummer gehört nirgendwo in diesen
-       Datensatz — auch nicht «nur zur Erinnerung». */
-    paymentLabelHint: 'Nur zum Wiedererkennen: die letzten vier Ziffern. Nie die ganze Nummer.',
-    paymentLabelPlaceholder: 'z. B. Visa · 4242',
-    /* Das Formular fragte nach einer *Bezeichnung* — «tippen Sie Visa · 4242
-       selbst» — also nach der Form des Datensatzes statt nach dem, was am
-       Telefon vorgelesen wird. Vier Felder, zwei bleiben. */
+    /* «Bezeichnung» ist weg, und mit ihm die Kartenfelder, die hier doppelt
+       standen. Das Feld verlangte vom Inhaber, «Visa · 4242» selbst zu tippen
+       — die Form des Datensatzes statt dessen, was am Telefon vorgelesen wird,
+       und das auf einem Feld, dessen Tippfehler die Kundin in ihrem eigenen
+       Konto liest. Jede Art hat jetzt eigene Felder, und sie stehen unter
+       `paymentForm`, weil Bildschirm 45 dieselben braucht. */
     paymentExpires: 'gültig bis {date}',
-    cardNumber: 'Kartennummer',
-    cardName: 'Name auf der Karte',
-    cardExpiry: 'Gültig bis',
-    cardCvv: 'Prüfziffer',
-    cardCvvHint: 'Drei Ziffern auf der Rückseite.',
-    cardStorageNote:
-      'Gespeichert werden Kartentyp, die letzten vier Ziffern und das Ablaufdatum. Nummer und Prüfziffer werden nicht abgelegt.',
     paymentAddSave: 'Hinterlegen',
     paymentCancel: 'Abbrechen',
     paymentAdded: 'Zahlungsmittel hinterlegt.',

@@ -401,7 +401,14 @@ export const accountEn: typeof accountDe = {
     lead: 'For one-off jobs and for charging your plan.',
     savedTitle: 'On file',
     savedNone: 'No payment method on file yet.',
+    expires: 'expires {date}',
     addTitle: 'Add one',
+    /* The four buttons used to save on the click. That a form now opens is
+       said here, or the first click reads as a misfire. */
+    addLead: 'Each kind asks for what it needs.',
+    addDialogTitle: 'Add {method}',
+    addLeadCard: 'For one-off jobs and for the monthly charge on your plan.',
+    addLeadOneOff: 'For one-off jobs. A plan is never charged to it.',
     card: 'Card',
     twint: 'TWINT',
     applePay: 'Apple Pay',
