@@ -6,7 +6,6 @@ import {
   CreditCard,
   FileText,
   Home,
-  Images,
   LayoutDashboard,
   MessageSquare,
   Receipt,
@@ -30,7 +29,6 @@ type NavKey =
   | 'properties'
   | 'subscription'
   | 'payment'
-  | 'photos'
   | 'review'
   | 'messages'
   | 'profile';
@@ -52,7 +50,9 @@ const NAV: {
       { href: '/konto/offerten', key: 'offers', icon: FileText },
       { href: '/konto/rechnungen', key: 'invoices', icon: Receipt },
       { href: '/konto/nachrichten', key: 'messages', icon: MessageSquare },
-      { href: '/konto/fotos', key: 'photos', icon: Images },
+      /* «Vorher / Nachher» stood here as a tab of its own. The pair belongs to
+         the job that produced it, so it is a card on the request now — one
+         fewer place to look for something that was never a category. */
       { href: '/konto/bewertung', key: 'review', icon: Star },
     ],
   },
