@@ -43,7 +43,14 @@ import type {
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
-import { cancelBlock, type CancelBlock } from '@/lib/plan-facts';
+import {
+  cancelBlock,
+  nextPlanVisit,
+  upgradeBlock,
+  upgradeQuote,
+  type CancelBlock,
+  type UpgradeBlock,
+} from '@/lib/plan-facts';
 import { propertyUsage } from '@/lib/property-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
@@ -795,6 +802,18 @@ interface StoreState {
    * are different things to tell a customer.
    */
   cancelSubscription: (id: ID, now: Date) => CancelBlock | null;
+  /**
+   * Moves a running plan up to a bigger package on the same service.
+   *
+   * `UpgradeBlock` rather than a boolean, for the same reason `CancelBlock` is
+   * one: "your plan is paused", "that package is not sold any more" and "that
+   * is not a bigger plan" are three different sentences to a customer, and a
+   * button that just fails to do anything says none of them.
+   */
+  upgradeSubscription: (
+    input: { id: ID; toPlanId: ID; method: PaymentMethod },
+    now: Date,
+  ) => { invoiceId: ID } | { blocked: UpgradeBlock };
 
   /* ---- reviews (screens 46 + 78) ---- */
   submitReview: (
@@ -3160,14 +3179,11 @@ export const useStore = create<StoreState>()(
           const subscription = s.data.subscriptions.find((x) => x.id === id);
           if (!subscription) return s;
 
-          const next = s.data.bookings
-            .filter(
-              (b) =>
-                b.subscriptionId === subscription.id &&
-                b.status === 'scheduled' &&
-                new Date(b.start) > now,
-            )
-            .sort((a, b) => a.start.localeCompare(b.start))[0];
+          /* The same booking the screen named before the customer pressed the
+             button. Picked here by the same rule, from the same function —
+             two copies of "the next visit" is two chances for the one that is
+             cancelled to differ from the one that was promised. */
+          const next = nextPlanVisit(subscription.id, s.data.bookings, now);
 
           return {
             data: {
@@ -3285,6 +3301,131 @@ export const useStore = create<StoreState>()(
           summary: `Plan ${subscription.reference} cancelled${refund ? ' and refunded' : ''}`,
         });
         return null;
+      },
+
+      /**
+       * Moves a running plan up to a bigger package, and bills the difference.
+       *
+       * §21.7 settled the rule — upgrade now, downgrade at the next term — and
+       * the screen offering it linked to the contact form, so the rule only
+       * ever existed on paper. What was missing was never the button: it was
+       * that nothing decided what happens to the year already paid for.
+       *
+       * It is the *same* subscription, not a second one. The address keeps one
+       * plan, its reference and its history carry on, and every screen that
+       * already renders a subscription renders this one unchanged. Opening a
+       * new record instead would have meant closing the old one, and the only
+       * status available for that is `cancelled` — which every screen reads as
+       * "refunded", because that is the one way this product is cancelled.
+       *
+       * The term restarts because a whole package was bought: 52 visits handed
+       * to somebody with ten months left would be 52 visits that cannot
+       * physically be taken. The credit for what is left of the old one is
+       * `upgradeQuote`, and it goes on the invoice as its own line — a customer
+       * comparing the amount against the plan price has to be able to see where
+       * the difference went.
+       */
+      upgradeSubscription: ({ id, toPlanId, method }, now) => {
+        const s = get();
+        const subscription = s.data.subscriptions.find((x) => x.id === id);
+        if (!subscription) return { blocked: 'notActive' as const };
+
+        const from = s.plans.find((x) => x.id === subscription.planId);
+        const to = s.plans.find((x) => x.id === toPlanId);
+        const block = upgradeBlock(subscription, from, to, now);
+        if (block || !from || !to) return { blocked: block ?? ('notAnUpgrade' as const) };
+
+        const { credit, due, visitsLeft: left } = upgradeQuote(subscription, from, to);
+
+        const stamp = now.getTime().toString(36).toUpperCase().slice(-4);
+        const end = new Date(now);
+        end.setMonth(end.getMonth() + to.validityMonths);
+
+        const seq = 52 + s.data.invoices.length;
+        const invoice: Invoice = {
+          id: `inv_${stamp}U`,
+          reference: `RE-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
+          customerId: subscription.customerId,
+          subscriptionId: id,
+          lines: [
+            {
+              label: `Plan ${to.name.en} — ${to.includedVisits} visits, ${to.validityMonths} months`,
+              quantity: 1,
+              unitPrice: to.price,
+            },
+            /* The credit as its own negative line rather than folded into the
+               price. An invoice reading "CHF 3456.92" against a plan the site
+               sells at CHF 6500 is an invoice the customer has to phone about. */
+            {
+              label: `Credit — ${left} unused visits from ${from.name.en}`,
+              quantity: 1,
+              unitPrice: -credit,
+            },
+          ],
+          /* Paid, like `openSubscription` and unlike `renewSubscription`: this
+             one is settled at the moment the customer confirms it, with a
+             method they already have on file. */
+          status: 'paid',
+          createdAt: now.toISOString(),
+          issuedAt: now.toISOString(),
+          dueAt: now.toISOString(),
+          paidAt: now.toISOString(),
+          qrReference: buildQrReference(seq),
+        };
+
+        /* No payment record when the credit covers the whole package. A
+           `Payment` of nought francs is not a payment that happened. */
+        const payment: Payment | null =
+          due > 0
+            ? {
+                id: `pay_${stamp}U`,
+                invoiceId: invoice.id,
+                amount: due,
+                method,
+                at: now.toISOString(),
+                status: 'succeeded',
+                gatewayRef: `mock_${stamp}U`,
+              }
+            : null;
+
+        set({
+          data: {
+            ...s.data,
+            invoices: [invoice, ...s.data.invoices],
+            payments: payment ? [...s.data.payments, payment] : s.data.payments,
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id !== id
+                ? x
+                : {
+                    ...x,
+                    planId: to.id,
+                    startDate: now.toISOString(),
+                    endDate: end.toISOString(),
+                    /* Reset, because a new package was bought. The visits
+                       already delivered are not lost from the record — they
+                       are what the credit was calculated against, and the
+                       history line names them. */
+                    visitsUsed: 0,
+                    invoiceId: invoice.id,
+                    history: [
+                      ...x.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'upgraded',
+                        label: `Upgraded — ${from.name.en} → ${to.name.en}, ${left} visits credited`,
+                      },
+                      { at: now.toISOString(), kind: 'paid', label: `Paid — ${invoice.reference}` },
+                    ],
+                  },
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'subscription',
+          entityId: id,
+          summary: `Plan ${subscription.reference} upgraded — ${from.name.en} → ${to.name.en}`,
+        });
+        return { invoiceId: invoice.id };
       },
 
       submitReview: ({ bookingId, customerId, rating, text, publishConsent }, now) =>

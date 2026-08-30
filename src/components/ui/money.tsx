@@ -38,14 +38,28 @@ const UNIT_SUFFIX: Record<Exclude<MoneyUnit, 'none'>, Record<'de' | 'en', string
 const APOSTROPHES = /['’']/g;
 
 export function formatChf(amount: number, locale: Locale) {
+  /*
+   * The sign is placed by hand, because ICU jams it against the code.
+   *
+   * `Intl` renders −3043.10 as "CHF-3'043.10" in both de-CH and en-CH — the
+   * minus taking the place of the no-break space, so the currency code and the
+   * figure run together and the whole thing reads as a code rather than a
+   * number. Nothing here was ever negative until a plan upgrade put a credit
+   * line on an invoice, which is where it showed up.
+   *
+   * Formatting the magnitude and prefixing the minus keeps the space, and the
+   * character is a real minus (U+2212) rather than a hyphen, which is the same
+   * decision every other figure on these screens already makes.
+   */
   const formatted = new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: 'currency',
     currency: 'CHF',
     minimumFractionDigits: 2,
-  }).format(amount);
+  }).format(Math.abs(amount));
 
   // Swiss convention writes whole francs as "49.–", not "49.00".
-  return swissSeparators(formatted.replace(/([.,])00$/, '$1–'));
+  const swiss = swissSeparators(formatted.replace(/([.,])00$/, '$1–'));
+  return amount < 0 ? `−${swiss}` : swiss;
 }
 
 /**

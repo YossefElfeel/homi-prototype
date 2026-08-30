@@ -16,8 +16,10 @@
 
 import { isOffered } from '@/lib/service-catalogue';
 import type {
+  Booking,
   ID,
   Plan,
+  Property,
   Service,
   Settings,
   Subscription,
@@ -82,6 +84,19 @@ export function planSaving(
 }
 
 /**
+ * The plans anybody can buy today, cheapest package first.
+ *
+ * Two flags, one answer: `active` is whether it is still sold at all,
+ * `visibleOnSite` is whether it is advertised. Every screen that offers a plan
+ * has to satisfy both, and each of them wrote the pair out again. Two copies
+ * were already two chances for one screen to keep selling something the office
+ * had retired; the account catalogue would have been the third.
+ */
+export function sellablePlans(plans: Plan[]): Plan[] {
+  return plans.filter((p) => p.active && p.visibleOnSite).sort((a, b) => a.order - b.order);
+}
+
+/**
  * The plans a visitor can buy, grouped by the service they buy it for.
  *
  * A plan has always named a `serviceSlug` and no marketing screen has ever
@@ -100,9 +115,7 @@ export function plansByService(
   plans: Plan[],
   services: Service[],
 ): { service: Service; plans: Plan[] }[] {
-  const sellable = plans
-    .filter((p) => p.active && p.visibleOnSite)
-    .sort((a, b) => a.order - b.order);
+  const sellable = sellablePlans(plans);
 
   return services
     .filter(isOffered)
@@ -135,6 +148,127 @@ export function subscriptionState(
     to see in the used count, not a negative balance to puzzle over. */
 export function visitsLeft(subscription: Subscription, plan: Plan | undefined): number {
   return Math.max(0, (plan?.includedVisits ?? 0) - subscription.visitsUsed);
+}
+
+/** What one visit inside the package cost. The figure that makes two packages
+    comparable — a bigger price for proportionally more visits is not dearer,
+    and the price on its own cannot say which of the two is happening. */
+export function perVisitPrice(plan: Plan): number {
+  return plan.includedVisits > 0 ? plan.price / plan.includedVisits : 0;
+}
+
+/**
+ * The plans this one can move up to.
+ *
+ * Same service, more visits. Both halves are the rule: across services it
+ * would not be an upgrade but a different product — office visits instead of
+ * household ones — and a package with the same or fewer visits is the
+ * downgrade §21.7 puts at the end of the term rather than now.
+ *
+ * Derived here because two screens now ask it. The account screen had the
+ * filter written inline, which was fine while it was the only caller; the
+ * catalogue below it asks the same question to decide which cards a customer
+ * on a plan may still buy, and two copies of a rule about money is one too
+ * many.
+ */
+export function upgradesFor(plan: Plan | undefined, plans: Plan[]): Plan[] {
+  if (!plan) return [];
+  return sellablePlans(plans).filter(
+    (p) => p.serviceSlug === plan.serviceSlug && p.includedVisits > plan.includedVisits,
+  );
+}
+
+/**
+ * What moving up to a bigger package costs today.
+ *
+ * A plan is a year bought outright, so an upgrade cannot be a change of rate —
+ * it is the new package bought now, less whatever is left of the one being
+ * replaced. The credit is the unused visits at the price the customer actually
+ * paid for a visit on the old plan: no rate is invented here, it is their own
+ * receipt divided by what it bought.
+ *
+ * Rounded to five rappen, the smallest coin in circulation, and never more than
+ * the new package costs — a credit larger than the purchase would owe the
+ * customer money, and giving money back is `cancelSubscription`'s job.
+ *
+ * §21.7 leaves the *policy* open, and it stays open: whether the business
+ * credits unused visits at all is theirs to confirm. What is closed here is the
+ * arithmetic, and it is put on the screen rather than behind it so a customer
+ * can check the figure instead of being handed it.
+ */
+export function upgradeQuote(
+  subscription: Subscription,
+  from: Plan,
+  to: Plan,
+): { visitsLeft: number; perVisit: number; credit: number; due: number } {
+  const left = visitsLeft(subscription, from);
+  const perVisit = perVisitPrice(from);
+  const credit = Math.min(to.price, Math.round(left * perVisit * 20) / 20);
+  return { visitsLeft: left, perVisit, credit, due: to.price - credit };
+}
+
+/**
+ * The live plan on an address, if it has one.
+ *
+ * One plan per property is the store's rule — two packages on one address give
+ * the same visits to two records to argue over — and it lived only inside
+ * `openSubscription`, where no screen could read it. So the address picker had
+ * no way to say *why* an address could not be chosen, and the only feedback
+ * left was the action failing after the customer had committed to it.
+ */
+export function planOnProperty(
+  propertyId: ID,
+  subscriptions: Subscription[],
+  now: Date,
+): Subscription | undefined {
+  return subscriptions.find(
+    (s) => s.propertyId === propertyId && s.status !== 'cancelled' && new Date(s.endDate) > now,
+  );
+}
+
+/** Every address the customer owns, each carrying the plan that blocks it. The
+    blocked ones are listed rather than dropped: "my other flat is missing from
+    this list" is a worse question than "why is that one greyed out", and only
+    the second one has its answer on the row. */
+export function propertyOptions(
+  properties: Property[],
+  subscriptions: Subscription[],
+  now: Date,
+): { property: Property; heldBy?: Subscription }[] {
+  return properties.map((property) => ({
+    property,
+    heldBy: planOnProperty(property.id, subscriptions, now),
+  }));
+}
+
+
+/**
+ * The visit a skip would actually cancel.
+ *
+ * `skipNextVisit` has always picked one — this plan's own next scheduled job —
+ * and no screen could say which. So "skip the next visit" was a button whose
+ * effect the customer found out about afterwards, on a plan whose visits are
+ * proposed by the office rather than chosen, and where nothing else in the
+ * account cancels a job.
+ *
+ * It also answers the case the button was silently wrong about. With nothing
+ * scheduled, the action recorded a skip against the monthly allowance and
+ * cancelled nothing: a free skip spent on no visit. A screen that can see there
+ * is nothing to skip can decline to offer it.
+ */
+export function nextPlanVisit(
+  subscriptionId: ID,
+  bookings: Booking[],
+  now: Date,
+): Booking | undefined {
+  return bookings
+    .filter(
+      (b) =>
+        b.subscriptionId === subscriptionId &&
+        b.status === 'scheduled' &&
+        new Date(b.start) > now,
+    )
+    .sort((a, b) => a.start.localeCompare(b.start))[0];
 }
 
 /**
@@ -185,6 +319,37 @@ export function cancelBlock(
   deadline.setDate(deadline.getDate() + settings.planCancellationDays);
   if (now > deadline) return 'windowClosed';
 
+  return null;
+}
+
+
+/**
+ * Why a plan cannot be moved up, or nothing if it can.
+ *
+ * Same shape as `CancelBlock` and for the same reason: each of these is a
+ * different sentence to say to a customer. A paused plan has to be resumed
+ * first, an expired one is renewed rather than upgraded, and a package that
+ * has been taken off sale cannot be bought at any price — telling all three of
+ * them apart with one greyed-out button is how somebody ends up telephoning to
+ * ask which it was.
+ *
+ * `notAnUpgrade` guards the direction. §21.7 puts a downgrade at the next term,
+ * so it is not this action; and a plan on another service is a different
+ * product, not a bigger one.
+ */
+export type UpgradeBlock = 'notActive' | 'retired' | 'notAnUpgrade';
+
+export function upgradeBlock(
+  subscription: Subscription,
+  from: Plan | undefined,
+  to: Plan | undefined,
+  now: Date,
+): UpgradeBlock | null {
+  if (subscriptionState(subscription, now) !== 'active') return 'notActive';
+  if (!to || !to.active) return 'retired';
+  if (!from) return 'notAnUpgrade';
+  if (to.serviceSlug !== from.serviceSlug) return 'notAnUpgrade';
+  if (to.includedVisits <= from.includedVisits) return 'notAnUpgrade';
   return null;
 }
 

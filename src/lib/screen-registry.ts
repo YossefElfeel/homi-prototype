@@ -234,8 +234,12 @@ export const TRACKS: Track[] = [
         'two plans, two properties',
         'paused',
         'skips used up',
+        'nothing scheduled to skip',
         'expired with visits left',
-      ], 'One card per *section*, not one slab per plan — the plan, then a card each for skipping, changing and cancelling. The demo customer holds one plan on a flat and one on an office, and the cards of a plan sit closer to each other than two plans do'),
+        'every plan on sale, stacked or side by side',
+        'the upgrades one plan can move to',
+        'buying one: address, method, confirm',
+      ], 'One card per *section*, not one slab per plan — the plan, then a card each for skipping, moving up and cancelling — and under them every package on sale. Buying and moving up both finish here. The demo customer holds one plan on a flat and one on an office, has a third address carrying none, and the cards of a plan sit closer to each other than two plans do'),
       done(
         '45',
         'Zahlungsmittel',

@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 
 import type { Locale } from '@/i18n/routing';
-import type { Plan } from '@/mock/schema';
+import type { ID, Plan } from '@/mock/schema';
 import { formatChf } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
 import { planSaving, plansByService, recommendedPlan } from '@/lib/plan-facts';
@@ -42,7 +42,7 @@ export function PlanComparison() {
 
   /* One service, no tabs. A tab strip with a single tab is a control that
      cannot be operated, and it would still take a row of the page to say so. */
-  if (groups.length === 1) return <ComparisonTable plans={groups[0]!.plans} />;
+  if (groups.length === 1) return <PlanComparisonTable plans={groups[0]!.plans} />;
 
   return (
     <Tabs defaultValue={groups[0]!.service.slug}>
@@ -75,14 +75,31 @@ export function PlanComparison() {
           forceMount
           className="data-[state=inactive]:hidden"
         >
-          <ComparisonTable plans={group.plans} />
+          <PlanComparisonTable plans={group.plans} />
         </TabsContent>
       ))}
     </Tabs>
   );
 }
 
-function ComparisonTable({ plans }: { plans: Plan[] }) {
+/**
+ * The table on its own, for callers that already know which plans to compare.
+ *
+ * The account's plan catalogue asks the same question the marketing page does —
+ * what is the difference between these packages — about the same records, and
+ * building a second table for it would have been a second set of rows to keep
+ * in step with the first. The one difference is that a signed-in reader has a
+ * plan already, and the column that is *theirs* is the one they are comparing
+ * everything else against: without it marked, the table answers "which is best"
+ * when the question is "what would change".
+ */
+export function PlanComparisonTable({
+  plans,
+  currentPlanId,
+}: {
+  plans: Plan[];
+  currentPlanId?: ID;
+}) {
   const t = useTranslations('site.plans');
   const rhythmT = useTranslations('admin.rhythm');
   const locale = useLocale() as Locale;
@@ -103,6 +120,12 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
    * tinted here is by construction the card that is raised there.
    */
   const recommended = recommendedPlan(plans);
+  /* The reader's own plan outranks the suggestion on its column. A header
+     carrying both «Empfohlen» and «Ihr Abo» says the second thing loudest and
+     the first one pointlessly — nobody needs recommending what they hold. */
+  const marker = (plan: Plan) =>
+    plan.id === currentPlanId ? t('yourPlan') : recommended?.id === plan.id ? t('recommended') : null;
+  const tinted = (plan: Plan) => plan.id === currentPlanId || recommended?.id === plan.id;
 
   const rows: { label: string; value: (plan: Plan) => string; strong?: boolean }[] = [
     { label: t('rowPrice'), value: (p) => formatChf(p.price, locale), strong: true },
@@ -159,14 +182,14 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
                     'subhead-type px-4 pb-4 text-xl',
                     // The tint runs the height of the column, so the header
                     // cell opens it rather than sitting on top of it.
-                    recommended?.id === plan.id
+                    tinted(plan)
                       ? 'rounded-t-[var(--radius-md)] bg-accent-subtle pt-3'
                       : 'pt-4',
                   )}
                 >
-                  {recommended?.id === plan.id && (
+                  {marker(plan) && (
                     <span className="label-type mb-1.5 block text-ink-accent">
-                      {t('recommended')}
+                      {marker(plan)}
                     </span>
                   )}
                   {plan.name[locale]}
@@ -187,10 +210,10 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
                     className={cn(
                       'px-4 py-3.5',
                       row.strong && 'text-lg font-medium',
-                      recommended?.id === plan.id && 'bg-accent-subtle',
+                      tinted(plan) && 'bg-accent-subtle',
                       // Closes the tinted column on the last row. `last:` on
                       // the cell would match the last cell of every row.
-                      recommended?.id === plan.id &&
+                      tinted(plan) &&
                         rowIndex === rows.length - 1 &&
                         'rounded-b-[var(--radius-md)]',
                     )}
@@ -214,11 +237,11 @@ function ComparisonTable({ plans }: { plans: Plan[] }) {
             className={cn(
               'surface-card p-6',
               // No column to tint on a phone, so the block itself carries it.
-              recommended?.id === plan.id && 'border-line-strong bg-accent-subtle',
+              tinted(plan) && 'border-line-strong bg-accent-subtle',
             )}
           >
-            {recommended?.id === plan.id && (
-              <p className="label-type mb-1.5 text-ink-accent">{t('recommended')}</p>
+            {marker(plan) && (
+              <p className="label-type mb-1.5 text-ink-accent">{marker(plan)}</p>
             )}
             <h4 className="subhead-type text-xl">{plan.name[locale]}</h4>
             <dl className="mt-4 divide-y divide-line border-t border-line">

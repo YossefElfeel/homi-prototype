@@ -174,6 +174,7 @@ export const siteEn: typeof siteDe = {
     title: 'Regular cleaning without planning it every time',
     lead: 'A package of visits, paid once, valid for a year. We propose the slot; you can move it whenever you like.',
     recommended: 'Our recommendation',
+    yourPlan: 'Your plan',
     wasPrice: 'Bought one visit at a time:',
     saveBadge: 'Save {percent}%',
     priceNote: '{visits} visits · valid {months} months · paid once',

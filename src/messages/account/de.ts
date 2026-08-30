@@ -382,10 +382,12 @@ export const accountDe = {
     leadOne: 'Was in Ihrem Paket steckt, wie viel davon noch offen ist, und bis wann.',
     leadMany:
       '{n} Abos auf verschiedenen Objekten. Jede Karte zeigt, für welche Adresse sie gilt.',
+    leadNone:
+      'Sie haben noch kein Abo. Alle Pakete stehen weiter unten — abschliessen können Sie direkt hier.',
     propertyUnknown: 'Objekt nicht hinterlegt',
     visitsTitle: 'Einsätze in Ihrem Paket',
     visitsOf: '{used} von {total} genutzt',
-    visitsLeft: 'Noch {n} Einsätze offen',
+    visitsLeft: 'Noch {n, plural, one {# Einsatz} other {# Einsätze}} offen',
     visitsNone: 'Alle Einsätze aufgebraucht. Weitere Einsätze rechnen wir mit Ihrem Rabatt ab.',
     rhythm: 'Rhythmus',
     paid: 'Bezahlt',
@@ -393,28 +395,53 @@ export const accountDe = {
     discount: 'Ihr Rabatt ausserhalb des Pakets',
     renewals: 'Bereits verlängert',
     benefitsTitle: 'Was enthalten ist',
-    skipTitle: 'Termin überspringen',
-    skipBody: '{used} von {free} kostenlosen Verschiebungen in diesem Monat genutzt.',
-    skipAction: 'Nächsten Termin überspringen',
+
+    skipTitle: 'Einsatz überspringen',
+    skipExplainer:
+      'Überspringen sagt den nächsten geplanten Einsatz ab. Der Einsatz bleibt Ihnen erhalten: er wird nicht vom Paket abgezogen und kostet nichts. Ein Ersatztermin wird nicht gesetzt — Sie behalten den Einsatz für später.',
+    skipBody: '{used} von {free} kostenlosen Absagen in diesem Monat genutzt.',
+    skipTarget: 'Abgesagt wird der Einsatz am {date} ({reference}).',
+    skipAction: 'Diesen Einsatz absagen',
+    skipNothingScheduled:
+      'Zurzeit ist kein Einsatz geplant, den Sie absagen könnten. Sobald ein Termin steht, finden Sie ihn hier.',
     skipBlocked:
-      'Die kostenlose Verschiebung für diesen Monat ist aufgebraucht. Ein weiterer Ausfall wird als Einsatz gerechnet.',
-    skipped: 'Nächster Einsatz übersprungen.',
+      'Die kostenlosen Absagen für diesen Monat sind aufgebraucht — am 1. des nächsten Monats steht Ihnen wieder eine zu. Soll der Termin trotzdem ausfallen, melden Sie sich bei uns; er wird dann als Einsatz gerechnet.',
+    skipped: 'Einsatz am {date} abgesagt.',
+
     pausedTitle: 'Abo pausiert',
     pausedBody: 'Es werden keine Termine geplant. Ihre offenen Einsätze bleiben erhalten.',
     resume: 'Abo fortsetzen',
     resumed: 'Abo läuft wieder.',
+
     upgradeTitle: 'Grösseres Abo',
     upgradeBody:
-      'Ein Wechsel nach oben gilt sofort, ein Wechsel nach unten ab der nächsten Laufzeit. Schreiben Sie uns, wir rechnen die schon bezahlten Einsätze an.',
-    upgradeTo: 'Auf {name} wechseln',
+      'Für diese Adresse {n, plural, one {steht # grösseres Paket} other {stehen # grössere Pakete}} offen. Der Wechsel gilt sofort, die noch nicht genutzten Einsätze rechnen wir Ihnen an.',
+    upgradeAction: 'Passende Abos anzeigen',
+    upgradeRailTitle: 'Von {name} nach oben',
+    upgradeRailLead:
+      'Nur die Pakete, auf die dieses Abo wechseln kann: gleiche Leistung, mehr Einsätze.',
+    upgradeClear: 'Alle Abos zeigen',
+    upgradeNoneBody:
+      '{name} ist bereits das grösste Paket dieser Leistung. Ein Wechsel nach unten gilt erst ab der nächsten Laufzeit — melden Sie sich dafür bei uns.',
+    upgradePick: 'Auf dieses Abo wechseln',
+    upgradeFor: 'Für {property}',
+    upgradeDone: 'Gewechselt auf {name}. Die Rechnung liegt in Ihrem Konto.',
+    upgradeBlocked: {
+      notActive:
+        'Nur ein laufendes Abo kann wechseln. Ein pausiertes setzen Sie zuerst fort, ein abgelaufenes verlängern Sie.',
+      retired: 'Dieses Paket wird nicht mehr verkauft.',
+      notAnUpgrade: 'Das ist kein grösseres Paket derselben Leistung.',
+    },
+
     expiredTitle: 'Laufzeit abgelaufen',
     expiredBody: 'Ihr Abo ist am {date} ausgelaufen. Verlängern Sie es hier.',
     expiredWithLeft:
-      'Ihr Abo ist am {date} ausgelaufen — mit {n} nicht genutzten Einsätzen. Die verfallen mit der Laufzeit.',
+      'Ihr Abo ist am {date} ausgelaufen — mit {n, plural, one {# nicht genutzten Einsatz} other {# nicht genutzten Einsätzen}}. Die verfallen mit der Laufzeit.',
     renew: 'Um ein Jahr verlängern',
     renewDone: 'Verlängert. Die Rechnung liegt in Ihrem Konto.',
     renewBlocked: 'Dieses Abo wird nicht mehr angeboten.',
     renewRetired: 'Dieses Abo wird nicht mehr angeboten. Sehen Sie sich die aktuellen an.',
+
     cancelTitle: 'Stornieren',
     cancelBody:
       'Solange kein Einsatz stattgefunden hat, stornieren wir bis zum {date} und erstatten den vollen Betrag.',
@@ -426,10 +453,65 @@ export const accountDe = {
         'Die Widerrufsfrist ist abgelaufen. Ihre offenen Einsätze bleiben Ihnen bis zum Ende der Laufzeit.',
       notActive: 'Nur ein laufendes Abo kann storniert werden.',
     },
+
     emptyTitle: 'Kein laufendes Abo',
     emptyBody:
       'Ein Abo ist ein Paket Einsätze, das Sie einmal bezahlen und ein Jahr lang abrufen — mit Rabatt auf alles darüber hinaus.',
-    emptyAction: 'Pakete ansehen',
+
+    catalogueTitle: 'Alle Abos',
+    catalogueLead:
+      'Jedes Paket, das wir verkaufen — mit allen Details und im direkten Vergleich. Abschliessen können Sie hier, ohne Anfrage und ohne Telefon.',
+    catalogueTabs: 'Abos nach Leistung',
+    catalogueEmptyTitle: 'Zurzeit ist kein Abo im Verkauf',
+    catalogueEmptyBody:
+      'Sobald wir wieder ein Paket anbieten, steht es hier. Laufende Abos bleiben davon unberührt.',
+    cataloguePick: 'Abo abschliessen',
+    catalogueAnother: 'Für eine weitere Adresse',
+    alreadyHeld: 'Dieses Abo läuft bereits',
+    alreadyHeldBadge: 'Ihr Abo',
+    perVisit: '{amount} pro Einsatz',
+    viewLabel: 'Darstellung der Abo-Karten',
+    viewStacked: 'Untereinander',
+    viewSide: 'Nebeneinander',
+    detailsToggle: 'Details',
+    detailReference: 'Paket-Nr.',
+    detailVisits: 'Enthaltene Einsätze',
+    detailTerm: 'Laufzeit',
+    detailRhythm: 'Rhythmus',
+    detailDiscount: 'Rabatt ausserhalb des Pakets',
+    detailSkips: 'Kostenlos absagen',
+    detailCancellation: 'Widerrufsfrist',
+    compareShow: '{n, plural, one {# Abo} other {# Abos}} vergleichen',
+    compareHide: 'Vergleich schliessen',
+
+    close: 'Schliessen',
+    confirmTitle: '{name} abschliessen',
+    confirmUpgradeTitle: 'Auf {name} wechseln',
+    confirmLead: '{visits} Einsätze, {months} Monate gültig, {rhythm}. Einmalig zahlbar.',
+    changeVisits: 'Einsätze',
+    changeRhythm: 'Rhythmus',
+    changeDiscount: 'Rabatt ausserhalb',
+    changePerVisit: 'Pro Einsatz',
+    pickProperty: 'Für welche Adresse?',
+    propertyTaken: 'Hier läuft schon {plan}, bis {date}.',
+    allPropertiesTaken:
+      'Auf jeder Ihrer Adressen läuft bereits ein Abo — pro Adresse ist ein Paket möglich. Für eine weitere Adresse melden Sie sich bei uns.',
+    noProperties:
+      'Für Ihr Konto ist keine Adresse hinterlegt. Adressen entstehen mit der ersten Anfrage.',
+    pickMethod: 'Womit bezahlen?',
+    noMethod: 'Sie haben noch kein Zahlungsmittel hinterlegt.',
+    addMethod: 'Zahlungsmittel hinterlegen',
+    duePlan: 'Paket {name}',
+    dueCredit: 'Gutschrift für {n, plural, one {# nicht genutzten Einsatz} other {# nicht genutzte Einsätze}}',
+    dueNow: 'Jetzt fällig',
+    dueNote:
+      '{visits} Einsätze, {months} Monate gültig, einmalig zahlbar. Solange kein Einsatz stattgefunden hat, stornieren Sie innerhalb von {days} Tagen und erhalten den vollen Betrag zurück.',
+    confirmPay: '{amount} bezahlen',
+    confirmWorking: 'Wird abgeschlossen …',
+    confirmSecure: 'Verschlüsselte Verbindung. Im Prototyp wird kein Geld bewegt.',
+    subscribeDone: '{name} läuft. Die Rechnung liegt in Ihrem Konto.',
+    subscribeRefused:
+      'Das Abo konnte nicht eröffnet werden. Prüfen Sie, ob auf dieser Adresse bereits ein Paket läuft.',
   },
 
   payment: {

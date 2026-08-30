@@ -345,10 +345,12 @@ export const accountEn: typeof accountDe = {
     title: 'My plans',
     leadOne: 'What is in your package, how much of it is left, and until when.',
     leadMany: '{n} plans across different properties. Each card names the address it covers.',
+    leadNone:
+      'You do not have a plan yet. Every package is below — you can take one out right here.',
     propertyUnknown: 'No property on file',
     visitsTitle: 'Visits in your package',
     visitsOf: '{used} of {total} used',
-    visitsLeft: '{n} visits left',
+    visitsLeft: '{n, plural, one {# visit} other {# visits}} left',
     visitsNone: 'Every visit used. Further work is billed with your discount applied.',
     rhythm: 'Rhythm',
     paid: 'Paid',
@@ -356,28 +358,53 @@ export const accountEn: typeof accountDe = {
     discount: 'Your discount outside the package',
     renewals: 'Renewed so far',
     benefitsTitle: 'What is included',
+
     skipTitle: 'Skip a visit',
-    skipBody: '{used} of {free} free moves used this month.',
-    skipAction: 'Skip the next visit',
+    skipExplainer:
+      'Skipping calls off your next scheduled visit. The visit stays yours: it is not deducted from the package and costs nothing. No replacement date is set — you keep the visit for later.',
+    skipBody: '{used} of {free} free cancellations used this month.',
+    skipTarget: 'This calls off the visit on {date} ({reference}).',
+    skipAction: 'Call off this visit',
+    skipNothingScheduled:
+      'Nothing is scheduled for you to skip at the moment. As soon as a date is set, it appears here.',
     skipBlocked:
-      'The free move for this month is used up. A further miss counts as a delivered visit.',
-    skipped: 'Next visit skipped.',
+      'The free cancellations for this month are used up — you get another on the 1st. If the visit should be called off anyway, write to us; it then counts as a delivered visit.',
+    skipped: 'Visit on {date} called off.',
+
     pausedTitle: 'Plan paused',
     pausedBody: 'No visits are being scheduled. Your remaining visits are kept.',
     resume: 'Resume the plan',
     resumed: 'The plan is running again.',
+
     upgradeTitle: 'A larger plan',
     upgradeBody:
-      'Moving up takes effect immediately; moving down applies from the next term. Write to us and we will credit the visits you have already paid for.',
-    upgradeTo: 'Switch to {name}',
+      '{n, plural, one {# larger package is} other {# larger packages are}} open to this address. The change applies immediately, and we credit the visits you have not used.',
+    upgradeAction: 'Show the plans I can move to',
+    upgradeRailTitle: 'Moving up from {name}',
+    upgradeRailLead:
+      'Only the packages this plan can move to: same service, more visits.',
+    upgradeClear: 'Show every plan',
+    upgradeNoneBody:
+      '{name} is already the largest package for this service. Moving down applies from the next term — write to us for that.',
+    upgradePick: 'Move to this plan',
+    upgradeFor: 'For {property}',
+    upgradeDone: 'Moved to {name}. The invoice is in your account.',
+    upgradeBlocked: {
+      notActive:
+        'Only a running plan can move. Resume a paused one first, or renew one that has ended.',
+      retired: 'This package is no longer sold.',
+      notAnUpgrade: 'That is not a larger package of the same service.',
+    },
+
     expiredTitle: 'Term has ended',
     expiredBody: 'Your plan ended on {date}. Renew it here.',
     expiredWithLeft:
-      'Your plan ended on {date} with {n} visits unused. They lapse with the term.',
+      'Your plan ended on {date} with {n, plural, one {# visit} other {# visits}} unused. They lapse with the term.',
     renew: 'Renew for a year',
     renewDone: 'Renewed. The invoice is in your account.',
     renewBlocked: 'This plan is no longer offered.',
     renewRetired: 'This plan is no longer offered. Have a look at the current ones.',
+
     cancelTitle: 'Cancel',
     cancelBody:
       'As long as no visit has happened, we cancel until {date} and refund the full amount.',
@@ -389,10 +416,65 @@ export const accountEn: typeof accountDe = {
         'The cooling-off period has passed. Your remaining visits stay yours until the term ends.',
       notActive: 'Only a running plan can be cancelled.',
     },
+
     emptyTitle: 'No plan running',
     emptyBody:
       'A plan is a package of visits you pay for once and draw on for a year — with a discount on everything beyond it.',
-    emptyAction: 'See the packages',
+
+    catalogueTitle: 'Every plan',
+    catalogueLead:
+      'Every package we sell, with the full detail and side by side. You can take one out here — no request, no phone call.',
+    catalogueTabs: 'Plans by service',
+    catalogueEmptyTitle: 'No plan is on sale at the moment',
+    catalogueEmptyBody:
+      'As soon as we offer a package again it appears here. Running plans are untouched by this.',
+    cataloguePick: 'Take out this plan',
+    catalogueAnother: 'For another address',
+    alreadyHeld: 'You are already on this plan',
+    alreadyHeldBadge: 'Your plan',
+    perVisit: '{amount} per visit',
+    viewLabel: 'How the plan cards are laid out',
+    viewStacked: 'Stacked',
+    viewSide: 'Side by side',
+    detailsToggle: 'Details',
+    detailReference: 'Package no.',
+    detailVisits: 'Visits included',
+    detailTerm: 'Term',
+    detailRhythm: 'Rhythm',
+    detailDiscount: 'Discount outside the package',
+    detailSkips: 'Free cancellations',
+    detailCancellation: 'Cooling-off',
+    compareShow: 'Compare {n, plural, one {# plan} other {# plans}}',
+    compareHide: 'Close the comparison',
+
+    close: 'Close',
+    confirmTitle: 'Take out {name}',
+    confirmUpgradeTitle: 'Move to {name}',
+    confirmLead: '{visits} visits, valid {months} months, {rhythm}. Paid once.',
+    changeVisits: 'Visits',
+    changeRhythm: 'Rhythm',
+    changeDiscount: 'Discount outside',
+    changePerVisit: 'Per visit',
+    pickProperty: 'Which address is it for?',
+    propertyTaken: '{plan} is already running here, until {date}.',
+    allPropertiesTaken:
+      'Every one of your addresses already has a plan — one package per address. Write to us to add another address.',
+    noProperties:
+      'No address is on file for your account. Addresses are created with your first request.',
+    pickMethod: 'How would you like to pay?',
+    noMethod: 'You have no payment method on file yet.',
+    addMethod: 'Add a payment method',
+    duePlan: 'Package {name}',
+    dueCredit: 'Credit for {n, plural, one {# unused visit} other {# unused visits}}',
+    dueNow: 'Due now',
+    dueNote:
+      '{visits} visits, valid {months} months, paid once. As long as no visit has happened you can cancel within {days} days and get the full amount back.',
+    confirmPay: 'Pay {amount}',
+    confirmWorking: 'Going through …',
+    confirmSecure: 'Encrypted connection. No money moves in the prototype.',
+    subscribeDone: '{name} is running. The invoice is in your account.',
+    subscribeRefused:
+      'The plan could not be opened. Check whether a package is already running at that address.',
   },
 
   payment: {

@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Check, Pause, RefreshCw, SkipForward } from 'lucide-react';
+import { ArrowUp, Check, Pause, RefreshCw, SkipForward } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
@@ -17,13 +18,17 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Progress } from '@/components/ui/progress';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { PlanCatalogue, type PlanView } from '@/components/account/plan-catalogue';
+import { SubscribeDialog, type SubscribeIntent } from '@/components/account/subscribe-dialog';
 import { planRhythm } from '@/lib/offer-facts';
 import {
   cancelBlock,
   cancelDeadline,
+  nextPlanVisit,
   planOf,
   skipsLeft,
   subscriptionState,
+  upgradesFor,
   visitsLeft,
 } from '@/lib/plan-facts';
 import { useAccount } from '@/lib/use-account';
@@ -31,17 +36,19 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Plan, Subscription } from '@/mock/schema';
 
 /**
- * Screen 43 — the plans this customer holds.
+ * Screen 43 — the plans this customer holds, and the ones they could.
  *
- * Plans, plural, and that is the change. This screen did
- * `subscriptions.find((s) => s.status !== 'cancelled')` — it took the first one
- * and threw the rest away, and it never named the property. A customer with a
- * flat and an office therefore saw one plan, could not tell which address it
- * was for, and had no way to reach the other.
+ * The screen knew what had been bought and nothing whatever about what was on
+ * sale. Every question that follows from holding a plan — what else do you
+ * offer, what would the bigger one give me, how does mine compare — was
+ * answered only on the marketing site, signed out, and both controls that
+ * pointed that way left the account. "Change plan" pointed at
+ * `/kontakt?abo=<id>`, a contact form that never read the parameter, so the
+ * package the customer picked was lost on arrival.
  *
- * What each card has to answer is what the plan is *worth now*: how many of the
- * visits are left, when the year ends, and what the two things the customer
- * came here to do — skip a visit, get out — actually cost them.
+ * So the screen is two halves now. Above: the packages held, one card per
+ * section, and the three things a holder does — skip, move up, get out. Below:
+ * everything on sale, comparable, and buyable without leaving the page.
  */
 export default function AccountSubscriptionPage() {
   const t = useTranslations('account.subscription');
@@ -50,6 +57,14 @@ export default function AccountSubscriptionPage() {
 
   const { subscriptions } = useAccount();
   const plans = useStore((s) => s.plans);
+
+  /* Three pieces of screen state, all of them about the catalogue below, and
+     all of them owned here because the cards above write to two: the "move up"
+     button on a held plan is what filters the rail, and the buy button on a
+     rail card is what opens the dialog. */
+  const [view, setView] = useState<PlanView>('side');
+  const [upgradeFor, setUpgradeFor] = useState<Subscription | null>(null);
+  const [intent, setIntent] = useState<SubscribeIntent | null>(null);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -60,40 +75,74 @@ export default function AccountSubscriptionPage() {
     .filter((s) => s.status !== 'cancelled')
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
 
-  if (held.length === 0) {
-    return (
-      <>
-        <PageHeader title={t('title')} />
-        <EmptyState
-          title={t('emptyTitle')}
-          body={t('emptyBody')}
-          action={
-            <Button asChild>
-              <Link href="/abos">{t('emptyAction')}</Link>
-            </Button>
-          }
-        />
-      </>
-    );
+  function startUpgrade(subscription: Subscription) {
+    setUpgradeFor(subscription);
+    /* The rail is below the fold on a plan this tall, and a filter applied to
+       something the reader cannot see reads as a button that did nothing. */
+    document.getElementById('abo-katalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   return (
     <div>
       <PageHeader
         title={t('title')}
-        lead={held.length > 1 ? t('leadMany', { n: held.length }) : t('leadOne')}
+        lead={
+          held.length === 0
+            ? t('leadNone')
+            : held.length > 1
+              ? t('leadMany', { n: held.length })
+              : t('leadOne')
+        }
       />
 
-      <div className="space-y-app-section">
-        {held.map((subscription) => (
-          <PlanCard
-            key={subscription.id}
-            subscription={subscription}
-            plan={planOf(subscription, plans)}
-            now={now}
-          />
-        ))}
-      </div>
+      {held.length === 0 ? (
+        /*
+         * The empty state keeps its explanation and loses its exit.
+         *
+         * It used to end at a link to `/abos` — out of the account, onto the
+         * marketing page, into the six-step request wizard, for somebody whose
+         * address and card are both already on file. The packages are on this
+         * page now, so the empty state says what a plan is and the catalogue
+         * directly under it sells one.
+         */
+        <EmptyState
+          className="mb-app-section"
+          headingLevel={2}
+          title={t('emptyTitle')}
+          body={t('emptyBody')}
+        />
+      ) : (
+        <div className="mb-app-section space-y-app-section">
+          {held.map((subscription) => (
+            <PlanCard
+              key={subscription.id}
+              subscription={subscription}
+              plan={planOf(subscription, plans)}
+              now={now}
+              onUpgrade={() => startUpgrade(subscription)}
+            />
+          ))}
+        </div>
+      )}
+
+      <PlanCatalogue
+        upgradeFor={upgradeFor}
+        onClearUpgrade={() => setUpgradeFor(null)}
+        onPick={setIntent}
+        view={view}
+        onViewChange={setView}
+      />
+
+      <SubscribeDialog
+        intent={intent}
+        onClose={() => {
+          setIntent(null);
+          /* The filter clears with the purchase: after an upgrade the plan it
+             was filtering for no longer runs on that address, so leaving it on
+             would show a rail of upgrades for a package nobody holds. */
+          setUpgradeFor(null);
+        }}
+      />
     </div>
   );
 }
@@ -102,10 +151,12 @@ function PlanCard({
   subscription,
   plan,
   now,
+  onUpgrade,
 }: {
   subscription: Subscription;
   plan: Plan | undefined;
   now: Date;
+  onUpgrade: () => void;
 }) {
   const t = useTranslations('account.subscription');
   const rhythmT = useTranslations('admin.rhythm');
@@ -113,6 +164,7 @@ function PlanCard({
   const locale = useLocale() as Locale;
 
   const properties = useStore((s) => s.data.properties);
+  const bookings = useStore((s) => s.data.bookings);
   const plans = useStore((s) => s.plans);
   const settings = useStore((s) => s.settings);
   const resumeSubscription = useStore((s) => s.resumeSubscription);
@@ -130,16 +182,13 @@ function PlanCard({
   const paused = state === 'paused';
   const expired = state === 'expired';
 
-  /* A better plan on the same service, for the upgrade link. Offering "change
-     plan" with nothing to change to is a dead end; offering it across services
-     would swap what the plan is for. */
-  const upgrades = plans.filter(
-    (p) =>
-      p.active &&
-      p.visibleOnSite &&
-      p.serviceSlug === plan.serviceSlug &&
-      p.includedVisits > plan.includedVisits,
-  );
+  /* The visit a skip would actually call off, and the packages this one can
+     move up to. Both were written out inline here — the second as a four-line
+     filter — and both are now rules the store reads from the same place, so
+     the booking that gets cancelled cannot differ from the one named on the
+     card. */
+  const nextVisit = nextPlanVisit(subscription.id, bookings, now);
+  const upgrades = upgradesFor(plan, plans);
 
   /*
    * One card per section, not one card per plan.
@@ -311,20 +360,53 @@ function PlanCard({
           <Card>
             <CardHeader
               title={t('skipTitle')}
-              description={t('skipBody', {
-                used: settings.monthlyFreeSkips - skips,
-                free: settings.monthlyFreeSkips,
-              })}
+              /*
+                What skipping *does*, before what it costs.
+                The card carried the allowance and nothing else — "1 of 1 free
+                reschedules used this month" — which answers a question nobody
+                has yet. Nothing said the visit is not deducted, nothing said a
+                booking gets cancelled, and nothing said which one. This is also
+                the only control in the whole account that calls off a job, so a
+                customer who reads it as "move the date" and gets a cancelled
+                visit has been misled by the screen rather than by themselves.
+
+                Spans rather than paragraphs: `description` renders inside a
+                `<p>`, and a nested one is invalid markup the browser silently
+                unnests, taking the styling with it.
+              */
+              description={
+                <>
+                  {t('skipExplainer')}
+                  <span className="mt-2 block">
+                    {t('skipBody', {
+                      used: settings.monthlyFreeSkips - skips,
+                      free: settings.monthlyFreeSkips,
+                    })}
+                  </span>
+                  {nextVisit && skips > 0 && (
+                    <span className="mt-2 block text-ink">
+                      {t('skipTarget', {
+                        date: format.dateTime(new Date(nextVisit.start), 'dayMonth'),
+                        reference: nextVisit.reference,
+                      })}
+                    </span>
+                  )}
+                </>
+              }
               /* The button rides the header rather than sitting under it: title,
                  consequence and control on one line is the shape every other
                  action card in the account uses. */
               actions={
-                skips > 0 ? (
+                nextVisit && skips > 0 ? (
                   <Button
                     disabled={paused}
                     onClick={() => {
                       skipNextVisit(subscription.id, now);
-                      toast.success(t('skipped'));
+                      toast.success(
+                        t('skipped', {
+                          date: format.dateTime(new Date(nextVisit.start), 'dayMonth'),
+                        }),
+                      );
                     }}
                   >
                     <SkipForward className="size-4" aria-hidden />
@@ -333,31 +415,48 @@ function PlanCard({
                 ) : undefined
               }
             />
-            {skips <= 0 && (
+            {(!nextVisit || skips <= 0) && (
               <CardBody>
-                <Alert tone="warning">{t('skipBlocked')}</Alert>
+                {/*
+                  Two different refusals, and they are not the same sentence.
+
+                  With nothing scheduled the action used to be offered anyway:
+                  it recorded a skip against the monthly allowance, cancelled
+                  nothing, and reported success — so the customer spent their
+                  one free skip of the month on a visit that did not exist.
+                  Neither is a warning; only the spent allowance is.
+                */}
+                <Alert tone={nextVisit ? 'warning' : 'neutral'}>
+                  {nextVisit ? t('skipBlocked') : t('skipNothingScheduled')}
+                </Alert>
               </CardBody>
             )}
           </Card>
 
           {/*
-            Changing plan, which this screen never offered at all. /open-questions
-            §21.7 settled the rule long ago — upgrade now, downgrade at the next
-            term — and the customer had no way to ask for either, so the answer
-            only existed on paper.
+            Moving up a plan, which this card offered as a row of links to the
+            contact form — one per larger package, none of which carried the
+            choice with it. /open-questions §21.7 settled the rule long ago,
+            "upgrade now, downgrade at the next term", and the customer had no
+            way to do either.
+
+            One button now, not one per plan: the packages themselves are in the
+            catalogue below with their prices, their differences and a
+            comparison, and a row of buttons naming plans without saying what
+            any of them costs was asking for a decision on no information.
           */}
           {upgrades.length > 0 && (
             <Card>
-              <CardHeader title={t('upgradeTitle')} description={t('upgradeBody')} />
-              <CardBody className="flex flex-wrap gap-3">
-                {upgrades.map((option) => (
-                  <Button key={option.id} asChild variant="secondary">
-                    <Link href={`/kontakt?abo=${option.id}`}>
-                      {t('upgradeTo', { name: option.name[locale] })}
-                    </Link>
+              <CardHeader
+                title={t('upgradeTitle')}
+                description={t('upgradeBody', { n: upgrades.length })}
+                actions={
+                  <Button variant="secondary" onClick={onUpgrade}>
+                    <ArrowUp className="size-4" aria-hidden />
+                    {t('upgradeAction')}
                   </Button>
-                ))}
-              </CardBody>
+                }
+              />
             </Card>
           )}
 
