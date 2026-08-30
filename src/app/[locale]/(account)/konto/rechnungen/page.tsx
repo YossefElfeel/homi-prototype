@@ -8,6 +8,8 @@ import { DataView, type Column } from '@/components/ui/data-view';
 import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { Money } from '@/components/ui/money';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
@@ -26,7 +28,7 @@ export default function AccountInvoicesPage() {
 
   const { invoices } = useAccount();
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const columns: Column<Invoice>[] = [
     {
@@ -71,9 +73,8 @@ export default function AccountInvoicesPage() {
 
   return (
     <>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+      <PageHeader title={t('title')} />
       <DataView
-        className="mt-8"
         // §10 — a draft invoice is internal until the owner approves it. Showing
         // one here would let a customer read a number that can still change.
         items={invoices

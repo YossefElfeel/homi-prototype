@@ -11,6 +11,8 @@ import { DataView, type Column } from '@/components/ui/data-view';
 import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
@@ -27,7 +29,7 @@ export default function AccountRequestsPage() {
   const { requests, properties, offers } = useAccount();
   const services = useStore((s) => s.services);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const columns: Column<ServiceRequest>[] = [
     {
@@ -72,9 +74,8 @@ export default function AccountRequestsPage() {
 
   return (
     <>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+      <PageHeader title={t('title')} />
       <DataView
-        className="mt-8"
         items={[...requests].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))}
         columns={columns}
         getKey={(r) => r.id}

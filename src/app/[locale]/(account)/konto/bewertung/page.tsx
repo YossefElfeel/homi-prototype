@@ -9,8 +9,9 @@ import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Textarea, Checkbox } from '@/components/ui/field';
+import { Textarea, Checkbox } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { useAccount } from '@/lib/use-account';
@@ -27,6 +28,11 @@ import { cn } from '@/lib/cn';
  *
  * The prompt asks what worked and what did not, in that order. A form that
  * only invites praise collects praise and learns nothing.
+ *
+ * The screen also used to open three different ways depending on which branch
+ * you landed in: `PageHeader` on the empty state, a hand-set `h1` on the form,
+ * and a bare glyph above a heading on the thank-you. One opening now, and the
+ * form sits on a surface like every other form in the account.
  */
 export default function AccountReviewPage() {
   const t = useTranslations('account.review');
@@ -58,24 +64,30 @@ export default function AccountReviewPage() {
 
   if (sent) {
     return (
-      <div className="max-w-2xl">
-        <span className="inline-flex size-11 items-center justify-center rounded-full bg-status-success text-status-success-fg">
-          <Check className="size-5" aria-hidden />
-        </span>
-        <h1 className="display-type mt-6 text-3xl">{t('thanksTitle')}</h1>
-        <p className="mt-3 max-w-[var(--measure)] text-ink-secondary">{t('thanksBody')}</p>
-        {/* This screen had a checkmark, a title, a body — and no link and no
-            button. The only escape was the shell nav, which does not exist on
-            a phone until you open the menu. */}
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link href="/konto">{t('thanksToOverview')}</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/konto/fotos">{t('thanksToPhotos')}</Link>
-          </Button>
-        </div>
-      </div>
+      <>
+        <PageHeader title={t('thanksTitle')} />
+        <Card>
+          <CardBody className="mt-0">
+            <span className="inline-flex size-11 items-center justify-center rounded-full bg-status-success text-status-success-fg">
+              <Check className="size-5" aria-hidden />
+            </span>
+            <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">
+              {t('thanksBody')}
+            </p>
+          </CardBody>
+          {/* This screen had a checkmark, a title, a body — and no link and no
+              button. The only escape was the shell nav, which does not exist on
+              a phone until you open the menu. */}
+          <CardFooter>
+            <Button asChild>
+              <Link href="/konto">{t('thanksToOverview')}</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/konto/fotos">{t('thanksToPhotos')}</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </>
     );
   }
 
@@ -117,65 +129,78 @@ export default function AccountReviewPage() {
 
   return (
     <div>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 text-ink-secondary">
-        {t('lead', {
+      <PageHeader
+        title={t('title')}
+        lead={t('lead', {
           date: format.dateTime(new Date(booking.start), 'full'),
           service:
             services.find((s) => s.slug === booking.serviceSlug)?.name[locale] ?? '—',
         })}
-      </p>
-
-      <fieldset className="mt-10">
-        <legend className="text-sm font-medium">{t('ratingLabel')}</legend>
-        <div className="mt-3 flex gap-1">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-label={t('star', { n })}
-              aria-pressed={rating === n}
-              onClick={() => setRating(n)}
-              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] transition-colors hover:bg-sunken"
-            >
-              <Star
-                className={cn(
-                  'size-6',
-                  n <= rating ? 'fill-accent text-accent' : 'text-ink-tertiary',
-                )}
-                aria-hidden
-              />
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <Field label={t('textLabel')} hint={t('textHint')} className="mt-8">
-        {(props) => (
-          <Textarea
-            rows={5}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            {...props}
-          />
-        )}
-      </Field>
-
-      <Checkbox
-        className="mt-8"
-        label={
-          <>
-            {t('publishLabel')}
-            <span className="mt-1 block text-xs text-ink-tertiary">{t('publishHint')}</span>
-          </>
-        }
-        checked={publish}
-        onChange={(e) => setPublish(e.target.checked)}
       />
 
-      <Button className="mt-8" disabled={rating === 0 || !text.trim()} onClick={send}>
-        {t('submit')}
-      </Button>
+      <div className="space-y-app-section">
+        <Card>
+          <CardHeader title={t('ratingLabel')} />
+          <CardBody>
+            <fieldset>
+              {/* The card's heading is the question, so the legend only has to
+                  reach a screen reader — printing it again would put the same
+                  sentence on the card twice. */}
+              <legend className="sr-only">{t('ratingLabel')}</legend>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={t('star', { n })}
+                    aria-pressed={rating === n}
+                    onClick={() => setRating(n)}
+                    className="inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] transition-colors hover:bg-sunken"
+                  >
+                    <Star
+                      className={cn(
+                        'size-6',
+                        n <= rating ? 'fill-accent text-accent' : 'text-ink-tertiary',
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t('textLabel')} description={t('textHint')} />
+          <CardBody>
+            <Textarea
+              rows={5}
+              aria-label={t('textLabel')}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <Checkbox
+              className="mt-6"
+              label={
+                <>
+                  {t('publishLabel')}
+                  <span className="mt-1 block text-xs text-ink-tertiary">
+                    {t('publishHint')}
+                  </span>
+                </>
+              }
+              checked={publish}
+              onChange={(e) => setPublish(e.target.checked)}
+            />
+          </CardBody>
+          <CardFooter>
+            <Button disabled={rating === 0 || !text.trim()} onClick={send}>
+              {t('submit')}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }

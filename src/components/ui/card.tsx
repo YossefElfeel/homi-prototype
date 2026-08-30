@@ -1,3 +1,4 @@
+import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
 
@@ -48,10 +49,28 @@ const card = cva('rounded-[var(--radius-lg)]', {
 
 export interface CardProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof card> {}
+    VariantProps<typeof card> {
+  /**
+   * Render as the child element — a `Link`, an `<a>`, a `<button>` — so a
+   * whole-card link is this component rather than a copy of it. Without it,
+   * `interactive` was unreachable from the one place it was written for: a
+   * card that is entirely a link cannot have a div wrapped round it, so the
+   * property tiles and the offer tiles had each pasted their own hover
+   * treatment and neither matched what `interactive` draws.
+   */
+  asChild?: boolean;
+}
 
-export function Card({ className, tone, pad, interactive, ...props }: CardProps) {
-  return <div className={cn(card({ tone, pad, interactive }), className)} {...props} />;
+export function Card({
+  className,
+  tone,
+  pad,
+  interactive,
+  asChild = false,
+  ...props
+}: CardProps) {
+  const Comp = asChild ? Slot : 'div';
+  return <Comp className={cn(card({ tone, pad, interactive }), className)} {...props} />;
 }
 
 /**
