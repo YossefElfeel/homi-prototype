@@ -263,6 +263,14 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§11.4a',
+    question: 'What does an Apple Pay or Google Pay method "on file" actually stand for?',
+    decision:
+      'OPEN, and the form ships the honest version. A card asks for its four fields and keeps three facts; TWINT asks for the number it is registered to. A wallet has no equivalent — the sheet on the device picks the card and authenticates it, a browser cannot open one, and what the real integration hands back is a token bound to that device. So the form asks which device and says on the form that this is what it is standing in for, which is also the only thing that separates a customer\'s two wallet entries: the seed already labels one «Apple Pay · iPhone». Two things the business has to settle. First, whether a wallet belongs on file at all — a wallet is normally tapped fresh at each checkout, and a saved one that cannot be re-authenticated from the office is a row that promises more than it can do. Second, whether the device list is right: it is four Apple products and three Google ones, picked because they are proper nouns in all four locales, and a real integration would return the device name rather than offer a menu of them. Both answers change the row, not the flow — the card and TWINT halves stand either way.',
+    screens: '45, 65',
+    state: 'open',
+  },
+  {
     ref: '§9.4a',
     question: 'Where does a customer actually type a coupon code?',
     decision:
