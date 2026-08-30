@@ -359,10 +359,20 @@ export const FLOWS: Flow[] = [
         '/admin/kunden',
         'The status column became a switch before it became a filter — "who have we blocked?" meant reading every row. Plus the result count every other admin list had through the `Toolbar` long ago',
       ),
-      added(
+      ok(
         'See, store and default a payment method',
         '/admin/kunden/cus_2',
-        'The customer saw their cards on screen 45 and the owner nowhere — and on the phone it is the owner who gets asked, not the customer. The field is a label, never a card number',
+        'The customer saw their cards on screen 45 and the owner nowhere — and on the phone it is the owner who gets asked, not the customer',
+      ),
+      added(
+        'Put one on file, asking what that method actually needs',
+        '/konto/zahlungsmittel',
+        'The four buttons wrote a record on the click, labelled with the name of the method: every card saved came out as «Karte», so two of them were one row and the plan had no expiry to warn on. A card now asks for its four fields, TWINT for the number it is registered to, a wallet for the device it lives on — and the same fields serve screen 65, where three of the four used to be a free-text «Bezeichnung» the owner filled in themselves',
+      ),
+      added(
+        'Refuse what cannot be a payment method',
+        '/konto/zahlungsmittel',
+        'A landline typed into TWINT, a month of 13, a card number four digits long. All three saved silently before — there was nothing to check, because nothing was asked. `13/28` got as far as the owner\'s dialog, which did check the shape and not the month',
       ),
       ok(
         'Remove a payment method',
@@ -391,6 +401,19 @@ export const FLOWS: Flow[] = [
         'Archive and restore',
         '/admin/kunden',
         'Out of the working list, still in the records — with a tab of its own, because a soft delete you cannot look at anywhere is indistinguishable from a real one',
+      ),
+      added(
+        'A method on file that says which one it is',
+        '/konto/zahlungsmittel',
+        'A card leaves its brand, its last four and its expiry — «Mastercard · 1234, gültig bis 03/31». The number, the name and the security code are read by the form and go no further: `SavedPaymentMethod` has nowhere to put them, and a prototype that models a stored PAN is one somebody builds for real',
+      ),
+      open(
+        'Confirm a wallet in the wallet',
+        'Apple Pay and Google Pay are a sheet on the device, and a web prototype cannot open one. The form therefore asks for the device instead — which is the one fact a saved wallet token actually carries, and the thing that tells a customer\'s two wallet entries apart — and says on the form that this is what it is standing in for. Whether a wallet is even worth keeping *on file*, as opposed to being tapped fresh at each checkout, is the question underneath; see §11.4a on /open-questions',
+      ),
+      open(
+        'Pay a quote with a method already on file',
+        'The checkout on /offerte/[id]/zahlung still draws its own card fields, and they collect nothing — no state, no validation, no record. It never offers the card the customer has already saved either, so somebody with a Visa on file types it again to pay. Left alone in this pass because it is a *charge*, not a save: what it needs is a payment against an offer, and that is the money flow rather than this one',
       ),
       open(
         'Delete a customer for good (revDSG)',

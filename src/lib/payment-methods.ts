@@ -75,3 +75,173 @@ export function invoicePayment(invoiceId: ID, payments: Payment[]): Payment | un
     .filter((p) => p.invoiceId === invoiceId)
     .sort((a, b) => b.at.localeCompare(a.at))[0];
 }
+
+/* ------------------------------------------------- putting one on file (45) */
+
+/**
+ * Everything a customer types to save a method, before most of it is discarded.
+ *
+ * Screen 45 asked for none of it. The four buttons under «Hinzufügen» wrote a
+ * record on the click, labelled with the name of the method — so saving a card
+ * produced «Karte», saving a second one produced «Karte» again, and the list
+ * whose whole subject is *which* instruments we hold could not tell two of them
+ * apart. Nothing was collected, so nothing could be shown: the plan card had no
+ * expiry to warn on and the TWINT row no number to recognise.
+ *
+ * One draft covers all four kinds rather than a union per kind, because the
+ * form is one dialog that switches its fields — the admin's copy (65) even
+ * keeps a kind selector above them, and re-keying the state on every change of
+ * that selector would throw away a half-typed number the moment somebody
+ * checked what else was in the list.
+ */
+export interface PaymentDraft {
+  cardNumber: string;
+  cardName: string;
+  cardExpiry: string;
+  cardCvv: string;
+  /** TWINT is registered to a mobile number; that is the whole of its identity. */
+  phone: string;
+  /** Which device the wallet was confirmed on — see `WALLET_DEVICES`. */
+  device: string;
+}
+
+export type WalletKind = 'apple-pay' | 'google-pay';
+
+export function isWalletKind(kind: SavedMethodKind): kind is WalletKind {
+  return kind === 'apple-pay' || kind === 'google-pay';
+}
+
+/**
+ * The wallets ask for a device, and that is not a stand-in for a card form.
+ *
+ * Apple Pay and Google Pay never take a number: the sheet on the device does
+ * the choosing and the authenticating, and what comes back is a token bound to
+ * *that* device. So the one fact worth keeping is which device it was — which
+ * is exactly what the seed already labels (`Apple Pay · iPhone`) and the only
+ * thing that separates a customer's two wallet entries.
+ *
+ * A list rather than a text field because these are product names, not
+ * something to be typed and mistyped, and it keeps the label out of the reach
+ * of a locale: every entry here is a proper noun in all four.
+ */
+export const WALLET_DEVICES: Record<WalletKind, readonly string[]> = {
+  'apple-pay': ['iPhone', 'iPad', 'Mac', 'Apple Watch'],
+  'google-pay': ['Android', 'Chrome', 'Wear OS'],
+};
+
+const WALLET_BRAND: Record<WalletKind, string> = {
+  'apple-pay': 'Apple Pay',
+  'google-pay': 'Google Pay',
+};
+
+export function blankDraft(kind: SavedMethodKind): PaymentDraft {
+  return {
+    cardNumber: '',
+    cardName: '',
+    cardExpiry: '',
+    cardCvv: '',
+    phone: '',
+    /* Pre-picked, because the wallet form is one control and an empty select
+       would make «Bestätigen» look disabled for no stated reason. */
+    device: isWalletKind(kind) ? WALLET_DEVICES[kind][0]! : '',
+  };
+}
+
+/** Groups the digits in fours as they are typed. A 16-digit run read off a card
+    over the phone is unreadable back, and this is the field most often retyped. */
+export function formatCardNumber(input: string): string {
+  return input
+    .replace(/\D/g, '')
+    .slice(0, 19)
+    .replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+/** Puts the slash in, and only once there is something after it — otherwise
+    backspacing through «09/» would restore the slash the customer just deleted
+    and the field could never be emptied. */
+export function formatCardExpiry(input: string): string {
+  const digits = input.replace(/\D/g, '').slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
+
+/** A month, then a year. `13/28` used to pass — the admin's dialog checked only
+    that two digits stood either side of the slash. */
+export function cardExpiryValid(value: string): boolean {
+  return /^(0[1-9]|1[0-2])\/\d{2}$/.test(value);
+}
+
+/** Thirteen to nineteen digits covers every brand `cardBrand` can name; below
+    that `cardLastFour` would happily cut four digits out of a phone number. */
+export function cardNumberValid(value: string): boolean {
+  return /^\d{13,19}$/.test(value.replace(/\D/g, ''));
+}
+
+/**
+ * The Swiss mobile number as ten digits, however it was written.
+ *
+ * `+41 79`, `0041 79` and `079` are one number typed three ways, and the label
+ * is cut out of a fixed position — so they have to agree before anything reads
+ * an index into them.
+ */
+export function twintDigits(input: string): string {
+  const digits = input.replace(/\D/g, '');
+  if (digits.startsWith('0041')) return `0${digits.slice(4)}`;
+  if (digits.startsWith('41')) return `0${digits.slice(2)}`;
+  return digits;
+}
+
+export function twintValid(input: string): boolean {
+  return /^07[5-9]\d{7}$/.test(twintDigits(input));
+}
+
+/** "TWINT · 079 ··· 66" — the operator prefix and the last two digits, which is
+    the shape the seed labels one with and as much of a number as a saved method
+    may carry. */
+export function twintLabel(input: string): string {
+  const digits = twintDigits(input);
+  return `TWINT · ${digits.slice(0, 3)} ··· ${digits.slice(-2)}`;
+}
+
+/** Whether the draft is finished enough to save. Per kind, because the four
+    have nothing in common but the button underneath them. */
+export function methodDraftReady(kind: SavedMethodKind, draft: PaymentDraft): boolean {
+  switch (kind) {
+    case 'card':
+      return (
+        cardNumberValid(draft.cardNumber) &&
+        draft.cardName.trim().length > 0 &&
+        cardExpiryValid(draft.cardExpiry) &&
+        /^\d{3,4}$/.test(draft.cardCvv)
+      );
+    case 'twint':
+      return twintValid(draft.phone);
+    default:
+      return draft.device.trim().length > 0;
+  }
+}
+
+/**
+ * What survives the save — and this function is the whole reason the draft is
+ * not the record.
+ *
+ * A card leaves behind its brand, its last four and its expiry. The number, the
+ * name and the security code are read here and go no further: `SavedPaymentMethod`
+ * has nowhere to put them, and a prototype that models a stored PAN is one
+ * somebody builds for real.
+ */
+export function methodDraftRecord(
+  kind: SavedMethodKind,
+  draft: PaymentDraft,
+): { label: string; expiresAt?: string } {
+  switch (kind) {
+    case 'card':
+      return {
+        label: `${cardBrand(draft.cardNumber)} · ${cardLastFour(draft.cardNumber)}`,
+        expiresAt: draft.cardExpiry,
+      };
+    case 'twint':
+      return { label: twintLabel(draft.phone) };
+    default:
+      return { label: `${WALLET_BRAND[kind]} · ${draft.device}` };
+  }
+}
