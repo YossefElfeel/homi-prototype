@@ -90,19 +90,30 @@ export default function AccountInvoicePage({
 
   return (
     <div>
-      <PageHeader
-        back={{ href: '/konto/rechnungen', label: t('back') }}
-        title={<span data-numeric>{invoice.reference}</span>}
-        /* The derived status, so a bill past its date does not greet the
-           person who owes it with a neutral «Versendet». */
-        meta={<StatusBadge entity="invoice" state={status} />}
-        actions={
-          <Button variant="secondary" onClick={() => toast.info(t('downloadToast'))}>
-            <Download className="size-4" aria-hidden />
-            {t('download')}
-          </Button>
-        }
-      />
+      {/*
+        The number, the state and the download are the invoice's letterhead,
+        and they were the one block on this screen still standing on the grey
+        page ground with three white cards underneath. On a document that block
+        *is* the document — floating it above the paper made it read as loose
+        page furniture rather than as the top of the bill. `flush` hands the
+        spacing under it to the card, which owns it now.
+      */}
+      <Card className="mb-app-section">
+        <PageHeader
+          flush
+          back={{ href: '/konto/rechnungen', label: t('back') }}
+          title={<span data-numeric>{invoice.reference}</span>}
+          /* The derived status, so a bill past its date does not greet the
+             person who owes it with a neutral «Versendet». */
+          meta={<StatusBadge entity="invoice" state={status} />}
+          actions={
+            <Button variant="secondary" onClick={() => toast.info(t('downloadToast'))}>
+              <Download className="size-4" aria-hidden />
+              {t('download')}
+            </Button>
+          }
+        />
+      </Card>
 
       {overdue && (
         <Alert tone="danger" className="mb-app-section" title={t('overdueTitle')}>

@@ -182,8 +182,23 @@ export const accountEn: typeof accountDe = {
     colAmount: 'Amount',
     colStatus: 'Status',
     rowOpen: 'View details',
+    /* The QR reference is in here because it is what a bank statement shows:
+       pasting the number from e-banking answers "what was this payment for". */
+    search: 'Number or QR reference',
+    filterStatus: 'Status',
+    filterAll: 'All',
+    /* "Open" is not a status but the question behind them — and from the
+       customer's side the only one that matters: sent and overdue are both
+       money still to be paid. */
+    filterOutstanding: 'Open',
+    filterReset: 'Clear filter',
     emptyTitle: 'No invoices',
     emptyBody: 'Invoices appear here once a job is finished.',
+    /* Having no overdue invoice is good news, not an empty account — hence
+       its own wording rather than "No invoices". */
+    filterEmptyTitle: 'No invoice found',
+    filterEmptyBody:
+      'The search and filter rule out every invoice you have. Clearing them brings them all back.',
   },
 
   invoice: {

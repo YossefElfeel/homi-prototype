@@ -195,8 +195,24 @@ export const accountDe = {
     colAmount: 'Betrag',
     colStatus: 'Status',
     rowOpen: 'Details ansehen',
+    /* Die QR-Referenz steht drin, weil sie auf dem Kontoauszug erscheint: die
+       Nummer aus dem E-Banking hierher zu kopieren beantwortet «wofür war
+       diese Zahlung». */
+    search: 'Nummer oder QR-Referenz',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    /* «Offen» ist kein Status, sondern die Frage dahinter — und für die Kundin
+       die eigentliche: versendet und überfällig sind beides Geld, das noch zu
+       zahlen ist. */
+    filterOutstanding: 'Offen',
+    filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Rechnungen',
     emptyBody: 'Rechnungen erscheinen hier, sobald ein Auftrag abgeschlossen ist.',
+    /* Keine überfällige Rechnung zu haben ist eine gute Nachricht und kein
+       leeres Konto — deshalb ein eigener Text statt «Keine Rechnungen». */
+    filterEmptyTitle: 'Keine Rechnung gefunden',
+    filterEmptyBody:
+      'Suche und Filter schliessen alle Ihre Rechnungen aus. Zurücksetzen zeigt wieder alle.',
   },
 
   invoice: {

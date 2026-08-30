@@ -20,6 +20,7 @@ export function PageHeader({
   crumbs,
   meta,
   actions,
+  flush = false,
   className,
 }: {
   title: React.ReactNode;
@@ -30,10 +31,22 @@ export function PageHeader({
   /** Status badges, reference numbers — anything that qualifies the title. */
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /**
+   * Drop the section margin: for a header sitting *inside* a Card, where the
+   * card's own padding is the spacing.
+   *
+   * A prop rather than `className="mb-0"` at the call site, because that does
+   * not work and does not look broken either. `cn` is `tailwind-merge`, which
+   * only collapses classes it recognises — it has no idea `mb-app-section` is
+   * a margin, so both survive, and Tailwind emits `.mb-app-section` *after*
+   * `.mb-0`. Equal specificity, later rule wins: the override is silently the
+   * losing half of the pair.
+   */
+  flush?: boolean;
   className?: string;
 }) {
   return (
-    <header className={cn('mb-app-section', className)}>
+    <header className={cn(!flush && 'mb-app-section', className)}>
       {crumbs && crumbs.length > 0 && (
         <nav aria-label="Breadcrumb" className="mb-3">
           <ol className="flex flex-wrap items-center gap-1 text-sm text-ink-tertiary">
