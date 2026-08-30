@@ -10,7 +10,6 @@ export const accountDe = {
       properties: 'Objekte',
       subscription: 'Abo',
       payment: 'Zahlungsmittel',
-      photos: 'Vorher / Nachher',
       review: 'Bewertung abgeben',
       messages: 'Nachrichten',
       profile: 'Profil',
@@ -480,28 +479,57 @@ export const accountDe = {
     emptyBody: 'Nach dem ersten abgeschlossenen Einsatz fragen wir Sie hier nach Ihrer Meinung.',
     /* Die Dankesseite war eine Sackgasse: Häkchen, Titel, Text — kein Link. */
     thanksToOverview: 'Zur Übersicht',
-    thanksToPhotos: 'Vorher / Nachher ansehen',
+    /* Hiess «Vorher / Nachher ansehen» und führte auf den eigenen Bereich, den
+       es nicht mehr gibt. Die Fotos liegen jetzt auf der Anfrage, aus der der
+       Auftrag entstanden ist — der Weg dahin führt über die Liste. */
+    thanksToRequests: 'Zu Ihren Anfragen',
     emptyAction: 'Anfragen ansehen',
   },
 
+  /* War ein eigener Bereich mit Titel, Lead und Leerzustand. Jetzt eine Karte
+     auf der Anfrage, die den Auftrag hervorgebracht hat — «Fotos, die das Team
+     bei Ihren Einsätzen aufgenommen hat» galt für eine Liste über alle
+     Aufträge hinweg und stimmt für einen einzelnen nicht mehr. */
   photos: {
     title: 'Vorher / Nachher',
-    lead: 'Fotos, die das Team bei Ihren Einsätzen aufgenommen hat.',
     before: 'Vorher',
     after: 'Nachher',
-    consentTitle: 'Veröffentlichung',
     consentBody:
       'Diese Fotos gehören Ihnen. Auf der Website erscheinen sie nur, wenn Sie schriftlich zustimmen — und ohne erkennbare Details.',
     consentLabel: 'Diese Fotos dürfen auf der Website erscheinen',
-    emptyTitle: 'Noch keine Fotos',
-    emptyBody: 'Nach dem ersten Einsatz finden Sie hier die Aufnahmen von vorher und nachher.',
   },
 
   messages: {
     title: 'Nachrichten',
     lead: 'Alles, was zu Ihren Aufträgen geschrieben wurde — an einem Ort.',
-    subject: 'Betreff {reference}',
+    /* «Betreff {reference}» stand als Überschrift über jedem Gespräch, als
+       noch alle offen untereinander standen. Die Liste links nennt das
+       Gespräch bereits — die Überschrift wiederholte nur die Zeile, die man
+       gerade angeklickt hat. */
     unread: 'Ungelesen',
+    /* Referenz *und* Text: die Referenz ist eine Nummer, und niemand weiss
+       auswendig, unter welcher der gesuchte Satz steht. Hiess «Betreff oder
+       Text» — das Wort steht nun nirgends mehr auf dem Bildschirm. */
+    search: 'Referenz oder Text',
+    tabAll: 'Alle',
+    /* Woran ein Gespräch hängt. Die Referenz allein — «O-2494-1» — sagt einer
+       Kundin nichts; das Wort davor schon. */
+    kind: {
+      request: 'Anfrage',
+      offer: 'Offerte',
+      booking: 'Auftrag',
+      invoice: 'Rechnung',
+      other: 'Sonstiges',
+    },
+    filterReset: 'Suche leeren',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Nachricht. Gesucht wird in Referenz und Text.',
+    pickTitle: 'Gespräch auswählen',
+    pickBody: 'Wählen Sie links ein Gespräch aus, um es zu lesen und zu antworten.',
+    /* Eine Nachricht darf aus einem Anhang allein bestehen. In der Liste
+       stünde sonst eine leere Zeile da, wo etwas angekommen ist. */
+    attachmentOnly: 'Nur ein Anhang',
     replyLabel: 'Antworten',
     replyPlaceholder: 'Ihre Nachricht',
     send: 'Senden',
@@ -510,13 +538,6 @@ export const accountDe = {
     noteTitle: 'Kein Live-Chat',
     noteBody:
       'Wir antworten innerhalb eines Arbeitstags. Dringendes bitte telefonisch — die Geschäftsleitung geht selbst ans Telefon.',
-    /* Betreff *und* Text: der Betreff ist eine Referenznummer, und niemand
-       weiss auswendig, unter welcher der gesuchte Satz steht. */
-    search: 'Betreff oder Text',
-    filterReset: 'Suche leeren',
-    searchEmptyTitle: 'Nichts gefunden',
-    searchEmptyBody:
-      'Zu «{query}» gibt es keine Nachricht. Gesucht wird in Betreff und Text.',
     emptyTitle: 'Keine Nachrichten',
     emptyBody: 'Sobald zu einem Auftrag etwas geschrieben wird, erscheint es hier.',
     sent: 'Nachricht gesendet.',

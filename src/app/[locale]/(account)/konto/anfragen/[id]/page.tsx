@@ -8,6 +8,7 @@ import { ArrowRight, CircleSlash, Clock, FileQuestion } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
+import { BeforeAfter } from '@/components/account/before-after';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
@@ -60,7 +61,7 @@ export default function AccountRequestPage({
   const hydrated = useHydrated();
 
   const now = useNow();
-  const { requests, offers, properties, payments, bookings } = useAccount();
+  const { requests, offers, properties, payments, bookings, photos } = useAccount();
   const holds = useStore((s) => s.holds);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
@@ -115,6 +116,22 @@ export default function AccountRequestPage({
     offer &&
       !isExpired(offer, now) &&
       (offer.status === 'sent' || offer.status === 'revisionRequested'),
+  );
+
+  /* Hoisted out of the lifecycle rail, which used to be the only thing that
+     needed it. The job is also what the photographs hang off — they carry a
+     `bookingId`, not a `requestId` — so the two readers have to agree on which
+     booking this request became. */
+  const booking = offer ? offerBooking(offer.id, bookings) : undefined;
+
+  /* Screen 47 was a tab listing every job the customer ever had; the pair for
+     one job belongs on that job. `requestId` is here as well as `bookingId`
+     because a photograph sent in with the request itself carries the former —
+     the field app and the seeds both attach one or the other, never both. */
+  const jobPhotos = photos.filter(
+    (p) =>
+      (p.kind === 'before' || p.kind === 'after') &&
+      ((booking && p.bookingId === booking.id) || p.requestId === request.id),
   );
 
   /*
@@ -176,7 +193,7 @@ export default function AccountRequestPage({
                 offer,
                 hold: holds.find((h) => h.offerId === offer?.id),
                 payment: offer ? offerPayment(offer.id, payments) : undefined,
-                booking: offer ? offerBooking(offer.id, bookings) : undefined,
+                booking,
               },
               {
                 received: t('stageReceived'),
@@ -332,6 +349,10 @@ export default function AccountRequestPage({
             </Card>
           )}
 
+          {/* Last in the column because it is the last thing that happens: the
+              record above says what was asked for, this says how it came out.
+              It renders itself away on every request that has not run yet. */}
+          <BeforeAfter photos={jobPhotos} />
         </div>
 
         {/* The rail used to hold this column and the withdraw card sat under

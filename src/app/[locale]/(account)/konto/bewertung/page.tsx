@@ -83,7 +83,7 @@ export default function AccountReviewPage() {
               <Link href="/konto">{t('thanksToOverview')}</Link>
             </Button>
             <Button asChild variant="secondary">
-              <Link href="/konto/fotos">{t('thanksToPhotos')}</Link>
+              <Link href="/konto/anfragen">{t('thanksToRequests')}</Link>
             </Button>
           </CardFooter>
         </Card>
