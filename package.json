@@ -15,6 +15,7 @@
     "test:plans": "npx --yes tsx@4 scripts/plan-test.mts",
     "test:properties": "npx --yes tsx@4 scripts/property-test.mts",
     "test:invoices": "npx --yes tsx@4 scripts/invoice-test.mts",
+    "test:expiry": "npx --yes tsx@4 scripts/quote-expiry-test.mts",
     "test:coupons": "npx --yes tsx@4 scripts/coupon-test.mts",
     "test:lang": "npx --yes tsx@4 scripts/lang-check.mts",
     "test:type-floor": "npx --yes tsx@4 scripts/type-floor-check.mts"

@@ -18,6 +18,8 @@ import { Lifecycle } from '@/components/ui/lifecycle';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { quoteStages } from '@/lib/quote-lifecycle';
+import { requestBadgeState } from '@/lib/offer-label';
+import { isExpired } from '@/mock/engines/offers';
 import { offerBooking, offerPayment } from '@/lib/offer-facts';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
@@ -92,31 +94,50 @@ export default function AccountRequestPage({
   const property = properties.find((p) => p.id === request.propertyId);
   const service = services.find((s) => s.slug === request.serviceSlug);
   const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
+
+  /*
+   * The state everything below reads, rather than the one on the record.
+   *
+   * `expired` is never written down — §9.3 makes the date end a quote, and a
+   * date cannot set a field. So a request whose quote had quietly run out still
+   * said «Offerte erhalten» here and on the list, while /konto/offerten and the
+   * office's own queue both called the same quote «Abgelaufen». One record,
+   * three screens, two answers.
+   */
+  const state = requestBadgeState(request, offer, now);
+
   /* Still something the customer can act on, as opposed to a quote that is now
      only a record: accepted, declined and expired are all `offer` and none of
-     them is waiting for an answer. */
-  const offerOpen = offer?.status === 'sent' || offer?.status === 'revisionRequested';
+     them is waiting for an answer. The date counts as one of the ways it
+     closes — the quote below is still worth opening, but nothing on this screen
+     may go on calling it live. */
+  const offerOpen = Boolean(
+    offer &&
+      !isExpired(offer, now) &&
+      (offer.status === 'sent' || offer.status === 'revisionRequested'),
+  );
 
   /*
    * Open means "still ours to call off". Once a quote has been signed the job
    * is booked and cancelling belongs to the booking, under its own notice
-   * period (§11) — offering "withdraw" here would quietly bypass that.
+   * period (§11) — offering "withdraw" here would quietly bypass that. A
+   * request whose quote has lapsed is over too: withdrawing it is an action
+   * with nothing left to act on.
    */
   const cancellable =
-    request.status === 'new' ||
-    request.status === 'inReview' ||
-    request.status === 'offerSent' ||
-    request.status === 'revisionRequested';
+    state === 'new' ||
+    state === 'inReview' ||
+    state === 'offerSent' ||
+    state === 'revisionRequested';
 
-  const cancelled =
-    request.status === 'cancelledByCustomer' || request.status === 'cancelledByCompany';
+  const cancelled = state === 'cancelledByCustomer' || state === 'cancelledByCompany';
 
   return (
     <div>
       <PageHeader
         back={{ href: '/konto/anfragen', label: t('back') }}
         title={<span data-numeric>{request.reference}</span>}
-        meta={<StatusBadge entity="request" state={request.status} />}
+        meta={<StatusBadge entity="request" state={state} />}
         lead={
           <>
             {t('sentOn')}{' '}
@@ -142,7 +163,16 @@ export default function AccountRequestPage({
             label={t('progressTitle')}
             stages={quoteStages(
               {
-                request,
+                /*
+                 * The derived state, not the stored one. `quoteStages` reads
+                 * `request.status` to decide whether the rail ends in a failure
+                 * mark, and it has no clock of its own — so a quote that ran
+                 * out by date left the rail drawing grey dots the reader was
+                 * invited to wait for. Normalising here rather than teaching
+                 * the function about `now` keeps its signature, and the office
+                 * screen that shares it, exactly as they are.
+                 */
+                request: { ...request, status: state },
                 offer,
                 hold: holds.find((h) => h.offerId === offer?.id),
                 payment: offer ? offerPayment(offer.id, payments) : undefined,

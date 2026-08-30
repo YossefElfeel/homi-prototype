@@ -17,9 +17,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Toolbar } from '@/components/ui/toolbar';
+import { requestBadgeState } from '@/lib/offer-label';
 import { statesOf } from '@/lib/status-registry';
 import { useAccount } from '@/lib/use-account';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceRequest } from '@/mock/schema';
 
 /**
@@ -40,6 +41,7 @@ export default function AccountRequestsPage() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const hydrated = useHydrated();
+  const now = useNow();
 
   const { requests, properties, offers } = useAccount();
   const services = useStore((s) => s.services);
@@ -63,10 +65,17 @@ export default function AccountRequestsPage() {
   const serviceName = (slug: string) =>
     services.find((s) => s.slug === slug)?.name[locale] ?? '';
   const propertyOf = (id: string) => properties.find((p) => p.id === id);
+  const offerOf = (r: ServiceRequest) =>
+    offers.find((o) => o.requestId === r.id && o.status !== 'draft');
+
+  /* Read once per row and used by both the filter and the badge. They were the
+     stored status, which no longer matches what the badge prints — and a menu
+     that disagreed with the pill beside it would be worse than no menu. */
+  const stateOf = (r: ServiceRequest) => requestBadgeState(r, offerOf(r), now);
 
   const q = query.trim().toLowerCase();
   const rows = [...requests]
-    .filter((r) => (status === 'all' ? true : r.status === status))
+    .filter((r) => (status === 'all' ? true : stateOf(r) === status))
     .filter((r) => (service === 'all' ? true : r.serviceSlug === service))
     /*
      * The three things actually printed on the row, and nothing behind it.
@@ -106,20 +115,30 @@ export default function AccountRequestsPage() {
     {
       key: 'service',
       header: t('colService'),
+      sortBy: (r) => serviceName(r.serviceSlug).toLowerCase(),
       cell: (r) => serviceName(r.serviceSlug) || '—',
     },
     {
       key: 'property',
       header: t('colProperty'),
       tableOnly: true,
+      sortBy: (r) => propertyOf(r.propertyId)?.street?.toLowerCase() ?? null,
       cell: (r) => (
         <span className="text-ink-secondary">{propertyOf(r.propertyId)?.street ?? '—'}</span>
       ),
     },
     {
+      /*
+       * Sortable, like every table the office has and none the customer had.
+       * Not the reference column: A-2510 sorts by our numbering, which is a
+       * fact about our filing rather than anything the reader asked for — and
+       * the list is already in date order, so it would only ever be a slower
+       * way to get back to where it started.
+       */
       key: 'created',
       header: t('colCreated'),
       align: 'end',
+      sortBy: (r) => r.createdAt,
       cell: (r) => (
         <span data-numeric className="text-sm text-ink-tertiary">
           {format.dateTime(new Date(r.createdAt), 'short')}
@@ -131,7 +150,8 @@ export default function AccountRequestsPage() {
       header: t('colStatus'),
       trailing: true,
       align: 'end',
-      cell: (r) => <StatusBadge entity="request" state={r.status} size="sm" />,
+      sortBy: (r) => stateOf(r),
+      cell: (r) => <StatusBadge entity="request" state={stateOf(r)} size="sm" />,
     },
   ];
 
@@ -139,10 +159,19 @@ export default function AccountRequestsPage() {
     <>
       <PageHeader title={t('title')} />
 
-      {/* Only once there is something to narrow. One row under a search box
-          and two menus is three controls that cannot do anything, and the
-          empty account would open on a toolbar before it had a request. */}
-      {requests.length > 1 && (
+      {/*
+        Shown whenever the account has a request at all, which is the same rule
+        the other three lists in here now follow.
+
+        It used to appear only above two rows or more, on the argument that one
+        row under a search box and two menus is three controls that cannot do
+        anything. True as far as it goes — but keying the chrome to the row
+        count means the screen changes shape with the data, so a customer with
+        one request and a customer with two are looking at different screens,
+        and neither can be told where the filter is. The toolbar goes when the
+        list is genuinely empty; there the empty state does the talking.
+      */}
+      {requests.length > 0 && (
         <Toolbar
           search={{
             value: query,
@@ -150,14 +179,14 @@ export default function AccountRequestsPage() {
             label: t('search'),
             clearLabel: appT('clearSearch'),
           }}
-          /* Unfiltered the count would restate a number the rows already are;
-             under a filter it is the one thing on screen confirming the search
-             box did anything, which is why the admin queue shows it on the
-             same condition. */
+          /* Always, not only under a filter. It is `aria-live`, so it is the
+             one thing that confirms a keystroke narrowed anything — and idle it
+             still answers "how many do I have", which the rows only answer by
+             being counted. */
           count={
             filtering
               ? appT('results', { shown: rows.length, total: requests.length })
-              : null
+              : appT('resultsAll', { total: requests.length })
           }
           filters={
             <>

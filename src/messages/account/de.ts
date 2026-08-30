@@ -206,8 +206,24 @@ export const accountDe = {
     expiresSoon: 'Läuft in {days} Tagen ab',
     rowOpen: 'Details ansehen',
     rowRequest: 'Anfrage öffnen',
+    /* Referenz und Leistung — genau das, was in der Zeile steht. Der Betrag
+       nicht: nach «1200» zu suchen findet die Offerte über 1'200.50 nicht, und
+       das liest sich wie ein kaputtes Feld. */
+    search: 'Referenz oder Leistung',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Keine Offerte in dieser Auswahl',
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade keine Ihrer Offerten. Filter zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Offerte. Gesucht wird in Referenz und Leistung.',
     emptyTitle: 'Keine Offerten',
     emptyBody: 'Sobald wir auf eine Anfrage antworten, finden Sie die Offerte hier.',
+    /* Eine Offerte kann man nicht selbst auslösen — die Anfrage, die zu einer
+       führt, schon. */
+    emptyAction: 'Offerte anfordern',
   },
 
   invoices: {
@@ -231,11 +247,19 @@ export const accountDe = {
     filterReset: 'Filter zurücksetzen',
     emptyTitle: 'Keine Rechnungen',
     emptyBody: 'Rechnungen erscheinen hier, sobald ein Auftrag abgeschlossen ist.',
+    /* Eine Rechnung stellen wir — auslösen lässt sich hier also nur der
+       Auftrag, aus dem eine wird. */
+    emptyAction: 'Offerte anfordern',
     /* Keine überfällige Rechnung zu haben ist eine gute Nachricht und kein
        leeres Konto — deshalb ein eigener Text statt «Keine Rechnungen». */
-    filterEmptyTitle: 'Keine Rechnung gefunden',
+    filterEmptyTitle: 'Keine Rechnung in dieser Auswahl',
     filterEmptyBody:
-      'Suche und Filter schliessen alle Ihre Rechnungen aus. Zurücksetzen zeigt wieder alle.',
+      'Zu dieser Auswahl gehört gerade keine Ihrer Rechnungen. Zurücksetzen zeigt wieder alle.',
+    /* Die Suche kann sagen, woran sie gescheitert ist; der Filter nur, welche
+       Menüs stehen. Zwei Texte, weil es zwei verschiedene Nichts sind. */
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Rechnung. Gesucht wird in Nummer und QR-Referenz.',
   },
 
   invoice: {
@@ -268,6 +292,23 @@ export const accountDe = {
     rooms: '{n} Zimmer',
     bathrooms: '{n} Bäder',
     area: '{n} m²',
+    colLabel: 'Bezeichnung',
+    colAddress: 'Adresse',
+    colKind: 'Art',
+    colSize: 'Grösse',
+    colNextVisit: 'Nächster Termin',
+    nothingBooked: 'Nichts gebucht',
+    rowOpen: 'Details ansehen',
+    search: 'Bezeichnung oder Adresse',
+    filterKind: 'Art',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Kein Objekt in dieser Auswahl',
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade keines Ihrer Objekte. Filter zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es kein Objekt. Gesucht wird in Bezeichnung und Adresse.',
     addAction: 'Objekt hinzufügen',
     addDone: 'Objekt erfasst.',
     newTitle: 'Objekt erfassen',
@@ -462,6 +503,13 @@ export const accountDe = {
     noteTitle: 'Kein Live-Chat',
     noteBody:
       'Wir antworten innerhalb eines Arbeitstags. Dringendes bitte telefonisch — die Geschäftsleitung geht selbst ans Telefon.',
+    /* Betreff *und* Text: der Betreff ist eine Referenznummer, und niemand
+       weiss auswendig, unter welcher der gesuchte Satz steht. */
+    search: 'Betreff oder Text',
+    filterReset: 'Suche leeren',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Nachricht. Gesucht wird in Betreff und Text.',
     emptyTitle: 'Keine Nachrichten',
     emptyBody: 'Sobald zu einem Auftrag etwas geschrieben wird, erscheint es hier.',
     sent: 'Nachricht gesendet.',
