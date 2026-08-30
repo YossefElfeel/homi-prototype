@@ -6,6 +6,13 @@ Every PR on this repo follows the shape PR #16 set. It is not decoration: this
 prototype replaces a Figma click-through, so the PR body is where a reviewer who
 cannot read the diff finds out what moved and why.
 
+**Two readers, not one.** A developer reads the body to review the change. A
+UI/UX designer reads it to *open the prototype and look* — and they cannot do
+that from a diff, a component name or a file path. Every PR therefore has to
+answer four things for them, in their own words: what was done, **what was
+removed**, what still needs deciding, and **how to reach each screen**. A body
+that only a developer can act on is not finished.
+
 **Language.** Title and body in Egyptian Arabic, the way the team talks. Technical
 nouns stay in English inline — `flow`, `schema`, `typecheck`, `store`, route paths,
 file names, component names. Do not translate them and do not transliterate them.
@@ -27,19 +34,53 @@ for a correction pass. Say the outcome, not the file count.
 3. `## اللي اتغيّر في الـ PR ده` — numbered sections (`**١.**`, `**٢.**` …), each
    with a bold heading. Use a `| كان | بقى |` table whenever several small gaps
    closed at once. For each change, say why it was wrong before — a list of what
-   you added is not a review.
-4. `## رايحين على فين` — what this opens up, and what is still deliberately
-   open. Anything left undone gets its reason here, not silence.
-5. `## الفحص` — a fenced block with the commands actually run and their real
+   you added is not a review. Open each numbered section with the route it lives
+   on, so the reader never has to guess which screen is being described.
+4. `## للـ designer — روح شوفها بنفسك` — one table, one row per screen touched:
+
+   | الشاشة | تروح لها إزاي | تبصّ على إيه | اتشال إيه |
+
+   - **الشاشة** — the real route, with a seed id that exists:
+     `/konto/anfragen/req_3`, never `/konto/anfragen/[id]`. A route nobody can
+     open is not a route.
+   - **تروح لها إزاي** — the click path from a cold start, and it **must begin
+     with the role**. Every screen under `/konto` and `/admin` is gated: paste
+     the URL without switching role in «Demo-Steuerung» and you get an access
+     gate, which reads as a broken link to somebody who does not know the
+     prototype. Say the role, then the clicks.
+   - **تبصّ على إيه** — what visibly moved, in design words. «الكارت اللي على
+     الشمال» — not «`CardHeader` بـ `divided`».
+   - **اتشال إيه** — see below. `مفيش` when nothing went.
+
+   Add the state that is hard to reach — an empty list, an overdue invoice, an
+   expired plan — and say how to get to it, or say plainly that you could not.
+5. `## رايحين على فين` — what this opens up, and what is still deliberately
+   open. Anything left undone gets its reason here, not silence. Close it with a
+   bold `**محتاج قرار منكم**` list: every question the designer or the business
+   has to answer, each one naming the screen it is on. Copy you flagged and did
+   not change goes here. `مفيش` when there is nothing.
+6. `## الفحص` — a fenced block with the commands actually run and their real
    results. Then the file count and `+added / −removed`.
 
 Close with the Claude Code attribution footer.
+
+**Removals get named.** Anything that used to be on a screen and is not any more
+goes in the `اتشال إيه` column, and if it went for a product reason rather than
+because two blocks merged, it gets its own line in section 3 saying why. This is
+the rule people skip, and it is the one that costs most: a designer who opens
+the prototype looking for a control they remember and cannot find it files a bug
+against work that was deliberate. Renames and merges count as removals — the old
+label is gone from the screen either way.
 
 **Honesty rules for the body.** State what was verified and *how*. If something
 could not be checked, say so in the same breath as the claim — a passing
 `tsc --noEmit` proves types, not that a table renders. Never write a check you
 did not run. If a check surfaced a bug you then fixed, that belongs in the body:
 it is the strongest evidence the check was real.
+
+Say which screens you actually opened, at which widths, and which you did not.
+"Every route builds" and "every screen renders" are different claims, and only
+one of them comes from `npm run build`.
 
 ## Code
 
