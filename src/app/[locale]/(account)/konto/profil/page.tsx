@@ -76,7 +76,7 @@ export default function AccountProfilePage() {
         <Card>
           <CardHeader title={t('personalTitle')} />
           <CardBody>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="gap-app grid sm:grid-cols-2">
               <Field label={t('firstName')}>
                 {(props) => (
                   <Input

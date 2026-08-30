@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Images, Shield } from 'lucide-react';
 
@@ -10,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { PageHeader } from '@/components/ui/page-header';
+import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
@@ -29,8 +31,10 @@ import { useHydrated, useStore } from '@/mock/store';
  */
 export default function AccountPhotosPage() {
   const t = useTranslations('account.photos');
+  const appT = useTranslations('app');
   const format = useFormatter();
   const hydrated = useHydrated();
+  const [page, setPage] = useState(1);
 
   const { photos, bookings } = useAccount();
   const patchData = useStore((s) => s.patchData);
@@ -46,6 +50,8 @@ export default function AccountPhotosPage() {
     }))
     .filter((pair) => pair.before.length > 0 || pair.after.length > 0)
     .sort((a, b) => (a.booking.start < b.booking.start ? 1 : -1));
+
+  const view = paginate(pairs, page, 10);
 
   return (
     <div>
@@ -65,7 +71,7 @@ export default function AccountPhotosPage() {
           </Alert>
 
           <ul className="space-y-app-section">
-            {pairs.map(({ booking, before, after }) => {
+            {view.slice.map(({ booking, before, after }) => {
               const all = [...before, ...after];
               const consented = all.every((p) => p.publishConsent);
               return (
@@ -124,6 +130,27 @@ export default function AccountPhotosPage() {
               );
             })}
           </ul>
+
+          {/*
+            One card per visit, each carrying up to eight images — so a
+            subscription customer two years in was loading every photo ever
+            taken of their flat into one page. Ten visits a page, matching every
+            table in the product.
+          */}
+          <Pagination
+            page={view.page}
+            pageCount={view.pageCount}
+            onPageChange={setPage}
+            label={appT('pageLabel')}
+            previousLabel={appT('pagePrevious')}
+            nextLabel={appT('pageNext')}
+            summary={appT('pageSummary', {
+              from: view.from,
+              to: view.to,
+              total: view.total,
+            })}
+            note={appT('pagePerPage', { n: 10 })}
+          />
         </>
       )}
     </div>

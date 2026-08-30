@@ -219,7 +219,7 @@ export default function AccountPropertiesPage() {
                 router.push(`/konto/objekte/${id}`);
               }}
             >
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="gap-app grid sm:grid-cols-2">
                 <Field label={t('newLabel')} hint={t('newLabelHint')}>
                   {(props) => <Input {...props} name="label" required />}
                 </Field>

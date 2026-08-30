@@ -156,7 +156,7 @@ export default function AccountDashboardPage() {
                   </Button>
                 </>
               ) : (
-                <p className="text-ink-secondary">{t('nextNone')}</p>
+                <p className="text-sm text-ink-tertiary">{t('nextNone')}</p>
               )}
             </CardBody>
           </Card>
@@ -168,7 +168,7 @@ export default function AccountDashboardPage() {
           <Card pad="none">
             <CardHeader className="p-card" title={t('openTitle')} />
             {waiting === 0 ? (
-              <p className="px-card pb-card text-ink-secondary">{t('openNone')}</p>
+              <p className="px-card pb-card text-sm text-ink-tertiary">{t('openNone')}</p>
             ) : (
               <ul className="border-t border-line-subtle">
                 {openOffers.map((offer) => (

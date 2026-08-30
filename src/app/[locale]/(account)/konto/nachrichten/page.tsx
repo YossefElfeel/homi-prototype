@@ -13,6 +13,7 @@ import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
+import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { MessageAttachments } from '@/components/messages/message-attachments';
@@ -55,6 +56,8 @@ export default function AccountMessagesPage() {
    */
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [seenCount, setSeenCount] = useState(0);
 
   // Opening the screen is what marks them read — the badge in the sidebar
   // reads the same flag, so it clears here rather than needing its own action.
@@ -95,6 +98,16 @@ export default function AccountMessagesPage() {
         ),
       )
     : allSubjects;
+
+  /* The page follows the list back to the top whenever the search changes its
+     length — narrowing to four threads must not leave you on page two of them.
+     Adjusted during render rather than in an effect, which would paint the
+     stale page first and flash on every keystroke. Same rule `DataView` uses. */
+  if (seenCount !== subjects.length) {
+    setSeenCount(subjects.length);
+    setPage(1);
+  }
+  const view = paginate(subjects, page, 10);
 
   function send(subject: string) {
     const body = (drafts[subject] ?? '').trim();
@@ -158,7 +171,7 @@ export default function AccountMessagesPage() {
         )
       ) : (
         <div className="space-y-app-section">
-          {subjects.map((subject) => {
+          {view.slice.map((subject) => {
             const thread = messages
               .filter((m) => m.subject === subject)
               .sort((a, b) => (a.at < b.at ? -1 : 1));
@@ -229,6 +242,26 @@ export default function AccountMessagesPage() {
               </Card>
             );
           })}
+
+          {/*
+            One conversation per reference, and they accumulate for as long as
+            the account exists — the whole screen was one scroll with no floor.
+            Ten a page, the same ten the tables page at.
+          */}
+          <Pagination
+            page={view.page}
+            pageCount={view.pageCount}
+            onPageChange={setPage}
+            label={appT('pageLabel')}
+            previousLabel={appT('pagePrevious')}
+            nextLabel={appT('pageNext')}
+            summary={appT('pageSummary', {
+              from: view.from,
+              to: view.to,
+              total: view.total,
+            })}
+            note={appT('pagePerPage', { n: 10 })}
+          />
         </div>
       )}
 
