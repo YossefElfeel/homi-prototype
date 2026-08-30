@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Info, Send } from 'lucide-react';
+import { Info, Search, Send } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { Toolbar } from '@/components/ui/toolbar';
 import { MessageAttachments } from '@/components/messages/message-attachments';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -38,6 +39,7 @@ import { cn } from '@/lib/cn';
  */
 export default function AccountMessagesPage() {
   const t = useTranslations('account.messages');
+  const appT = useTranslations('app');
   const format = useFormatter();
   const hydrated = useHydrated();
   const now = useNow();
@@ -52,6 +54,7 @@ export default function AccountMessagesPage() {
    * characters into the other in real time, and sending cleared both.
    */
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState('');
 
   // Opening the screen is what marks them read — the badge in the sidebar
   // reads the same flag, so it clears here rather than needing its own action.
@@ -69,7 +72,29 @@ export default function AccountMessagesPage() {
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const subjects = [...new Set(messages.map((m) => m.subject))];
+  const allSubjects = [...new Set(messages.map((m) => m.subject))];
+
+  /*
+   * Threads are unbounded — one per reference, and they accumulate for as long
+   * as the account exists. There was no way to find one: «was hatten wir damals
+   * wegen der Fenster geschrieben» meant scrolling past every conversation
+   * since. The office has had search over the same threads on /admin/nachrichten
+   * since it was rebuilt.
+   *
+   * It searches the subject and the message bodies, because a subject is a
+   * reference number — nobody remembers which one carried the sentence they are
+   * looking for.
+   */
+  const q = query.trim().toLowerCase();
+  const subjects = q
+    ? allSubjects.filter((subject) =>
+        messages.some(
+          (m) =>
+            m.subject === subject &&
+            (m.subject.toLowerCase().includes(q) || m.body.toLowerCase().includes(q)),
+        ),
+      )
+    : allSubjects;
 
   function send(subject: string) {
     const body = (drafts[subject] ?? '').trim();
@@ -85,20 +110,52 @@ export default function AccountMessagesPage() {
     <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
-      {subjects.length === 0 ? (
-        <EmptyState
-          title={t('emptyTitle')}
-          body={t('emptyBody')}
-          /* There is no way to start a thread here — a message hangs off a
-             reference — so the escape is the screen where those references
-             live, rather than a compose box that would have nothing to attach
-             itself to. */
-          action={
-            <Button asChild variant="secondary">
-              <Link href="/konto/anfragen">{t('emptyAction')}</Link>
-            </Button>
+      {/* Search only. The bubbles stay bubbles: a conversation read in date
+          order is not a table, and the two menus the other lists carry would be
+          filtering a set with no states in it. */}
+      {allSubjects.length > 0 && (
+        <Toolbar
+          search={{
+            value: query,
+            onChange: setQuery,
+            label: t('search'),
+            clearLabel: appT('clearSearch'),
+          }}
+          count={
+            q
+              ? appT('results', { shown: subjects.length, total: allSubjects.length })
+              : appT('resultsAll', { total: allSubjects.length })
           }
         />
+      )}
+
+      {subjects.length === 0 ? (
+        q ? (
+          <EmptyState
+            icon={Search}
+            title={t('searchEmptyTitle')}
+            body={t('searchEmptyBody', { query })}
+            action={
+              <Button variant="secondary" onClick={() => setQuery('')}>
+                {t('filterReset')}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            title={t('emptyTitle')}
+            body={t('emptyBody')}
+            /* There is no way to start a thread here — a message hangs off a
+               reference — so the escape is the screen where those references
+               live, rather than a compose box that would have nothing to
+               attach itself to. */
+            action={
+              <Button asChild variant="secondary">
+                <Link href="/konto/anfragen">{t('emptyAction')}</Link>
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="space-y-app-section">
           {subjects.map((subject) => {

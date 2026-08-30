@@ -182,8 +182,18 @@ export const accountEn: typeof accountDe = {
     expiresSoon: 'Expires in {days} days',
     rowOpen: 'View details',
     rowRequest: 'Open the request',
+    search: 'Reference or service',
+    filterStatus: 'Status',
+    filterAll: 'All',
+    filterReset: 'Clear filters',
+    filterEmptyTitle: 'No quote in this selection',
+    filterEmptyBody:
+      'None of your quotes is in this selection right now. Clearing the filters shows them all again.',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody: 'No quote matches «{query}». Reference and service are searched.',
     emptyTitle: 'No quotes',
     emptyBody: 'As soon as we answer a request, the quote appears here.',
+    emptyAction: 'Request a quote',
   },
 
   invoices: {
@@ -206,11 +216,15 @@ export const accountEn: typeof accountDe = {
     filterReset: 'Clear filter',
     emptyTitle: 'No invoices',
     emptyBody: 'Invoices appear here once a job is finished.',
+    emptyAction: 'Request a quote',
     /* Having no overdue invoice is good news, not an empty account — hence
        its own wording rather than "No invoices". */
-    filterEmptyTitle: 'No invoice found',
+    filterEmptyTitle: 'No invoice in this selection',
     filterEmptyBody:
-      'The search and filter rule out every invoice you have. Clearing them brings them all back.',
+      'None of your invoices is in this selection right now. Clearing the filters brings them all back.',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody:
+      'No invoice matches «{query}». Number and QR reference are searched.',
   },
 
   invoice: {
@@ -243,6 +257,22 @@ export const accountEn: typeof accountDe = {
     rooms: '{n} rooms',
     bathrooms: '{n} bathrooms',
     area: '{n} m²',
+    colLabel: 'Name',
+    colAddress: 'Address',
+    colKind: 'Type',
+    colSize: 'Size',
+    colNextVisit: 'Next appointment',
+    nothingBooked: 'Nothing booked',
+    rowOpen: 'View details',
+    search: 'Name or address',
+    filterKind: 'Type',
+    filterAll: 'All',
+    filterReset: 'Clear filters',
+    filterEmptyTitle: 'No property in this selection',
+    filterEmptyBody:
+      'None of your properties is in this selection right now. Clearing the filters shows them all again.',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody: 'No property matches «{query}». Name and address are searched.',
     addAction: 'Add a property',
     addDone: 'Property saved.',
     newTitle: 'Add a property',
@@ -434,6 +464,10 @@ export const accountEn: typeof accountDe = {
     noteTitle: 'Not a live chat',
     noteBody:
       'We answer within one working day. For anything urgent, call — the owner answers the phone.',
+    search: 'Subject or text',
+    filterReset: 'Clear search',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody: 'No message matches «{query}». Subject and text are searched.',
     emptyTitle: 'No messages',
     emptyBody: 'As soon as something is written about a job, it appears here.',
     sent: 'Message sent.',

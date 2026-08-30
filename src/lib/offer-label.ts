@@ -1,5 +1,12 @@
 import type { Locale } from '@/i18n/routing';
-import type { AddOn, Offer, OfferLine, Service } from '@/mock/schema';
+import type {
+  AddOn,
+  Offer,
+  OfferLine,
+  RequestStatus,
+  Service,
+  ServiceRequest,
+} from '@/mock/schema';
 import { isExpired } from '@/mock/engines/offers';
 
 /**
@@ -54,4 +61,36 @@ export function offerBadgeState(offer: Offer, now: Date): string {
     return isExpired(offer, now) ? 'expired' : 'offerSent';
   }
   return offer.status;
+}
+
+/**
+ * Which state a *request* is in once its quote's date is taken into account.
+ *
+ * Nothing in the store ever writes `request.status = 'expired'` — expiry is a
+ * date, not a value somebody sets. Every screen therefore has to derive it, and
+ * the customer's half derived it in one place out of three: `/konto/offerten`
+ * called a lapsed quote «Abgelaufen» while `/konto/anfragen` and the request
+ * detail beside it still read «Offerte erhalten» off the stored status, and the
+ * detail went on offering a primary button onto a quote nobody could sign. The
+ * office's own list had already worked this out and reads it correctly, so the
+ * two sides of the same record disagreed.
+ *
+ * The seed has been carrying the rule by hand — `req_1` is written `expired`
+ * because `off_2` is, under a comment saying the request ends where its quote
+ * ended. That is a rule the code should hold, not the fixtures.
+ *
+ * Only `offerSent` moves. A `revisionRequested` request is one where the ball
+ * is with the office: badging it «Abgelaufen» because the superseded quote ran
+ * out would tell the customer their request died while it was being rewritten.
+ * Same reason `offerBadgeState` above moves only `sent`.
+ */
+export function requestBadgeState(
+  request: ServiceRequest,
+  offer: Offer | undefined,
+  now: Date,
+): RequestStatus {
+  if (request.status === 'offerSent' && offer && isExpired(offer, now)) {
+    return 'expired';
+  }
+  return request.status;
 }
