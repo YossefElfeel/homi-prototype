@@ -119,6 +119,9 @@ export const accountEn: typeof accountDe = {
 
   request: {
     back: 'All requests',
+    missingTitle: 'We cannot find this request',
+    missingBody:
+      'The link may be out of date. Your overview lists every request on your account.',
     sentOn: 'Sent on',
     serviceTitle: 'Service',
     propertyTitle: 'Property',
@@ -240,6 +243,9 @@ export const accountEn: typeof accountDe = {
 
   property: {
     back: 'All properties',
+    missingTitle: 'We cannot find this property',
+    missingBody:
+      'The link may be out of date. Your overview lists every property on your account.',
     factsTitle: 'The basics',
     kind: 'Type',
     area: 'Floor area',

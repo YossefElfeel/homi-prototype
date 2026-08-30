@@ -4,9 +4,13 @@ import { useTranslations } from 'next-intl';
 import { Images, Shield } from 'lucide-react';
 
 import { useFormatter } from '@/i18n/format';
+import { Alert } from '@/components/ui/alert';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
 
@@ -17,6 +21,11 @@ import { useHydrated, useStore } from '@/mock/store';
  * unless the customer turns it on. §20.6 makes internal the default; the
  * gallery on the public site reads the same flag, so a photo cannot reach the
  * website without the customer having seen this switch.
+ *
+ * Each visit is a card, and the consent switch is that card's footer rather
+ * than a checkbox floating under four loose images. The switch decides whether
+ * those photos go on a public website — it has to be unambiguous which ones it
+ * governs, and `space-y-10` between visits was the only thing saying so.
  */
 export default function AccountPhotosPage() {
   const t = useTranslations('account.photos');
@@ -27,7 +36,7 @@ export default function AccountPhotosPage() {
   const patchData = useStore((s) => s.patchData);
   const allPhotos = useStore((s) => s.data.photos);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const pairs = bookings
     .map((booking) => ({
@@ -40,73 +49,77 @@ export default function AccountPhotosPage() {
 
   return (
     <div>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+      <PageHeader title={t('title')} lead={t('lead')} />
 
       {pairs.length === 0 ? (
-        <EmptyState
-          className="mt-8"
-          icon={Images}
-          title={t('emptyTitle')}
-          body={t('emptyBody')}
-        />
+        <EmptyState icon={Images} title={t('emptyTitle')} body={t('emptyBody')} />
       ) : (
         <>
-          <div className="mt-8 flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
-            <Shield className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-            <div>
-              <h2 className="font-medium">{t('consentTitle')}</h2>
-              <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-                {t('consentBody')}
-              </p>
-            </div>
-          </div>
+          <Alert
+            tone="info"
+            icon={Shield}
+            className="mb-app-section"
+            title={t('consentTitle')}
+          >
+            {t('consentBody')}
+          </Alert>
 
-          <ul className="mt-8 space-y-10">
+          <ul className="space-y-app-section">
             {pairs.map(({ booking, before, after }) => {
               const all = [...before, ...after];
               const consented = all.every((p) => p.publishConsent);
               return (
                 <li key={booking.id}>
-                  <h2 data-numeric className="label-type text-ink-tertiary">
-                    {format.dateTime(new Date(booking.start), 'full')}
-                  </h2>
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    {[
-                      { label: t('before'), items: before },
-                      { label: t('after'), items: after },
-                    ].map((group) => (
-                      <div key={group.label}>
-                        <p className="mb-2 text-sm font-medium">{group.label}</p>
-                        {group.items.length === 0 ? (
-                          <ImagePlaceholder seed={`${booking.id}-${group.label}`} alt={group.label} className="aspect-[4/3]" />
-                        ) : (
-                          group.items.map((photo) => (
+                  <Card>
+                    <CardHeader
+                      title={
+                        <span data-numeric>
+                          {format.dateTime(new Date(booking.start), 'full')}
+                        </span>
+                      }
+                    />
+                    <CardBody className="gap-app grid sm:grid-cols-2">
+                      {[
+                        { label: t('before'), items: before },
+                        { label: t('after'), items: after },
+                      ].map((group) => (
+                        <div key={group.label}>
+                          <p className="mb-2 text-sm font-medium">{group.label}</p>
+                          {group.items.length === 0 ? (
                             <ImagePlaceholder
-                              key={photo.id}
-                              seed={photo.id}
-                              alt={photo.note ?? group.label}
+                              seed={`${booking.id}-${group.label}`}
+                              alt={group.label}
                               className="aspect-[4/3]"
                             />
-                          ))
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <Checkbox
-                    className="mt-4"
-                    label={t('consentLabel')}
-                    checked={consented}
-                    onChange={(e) =>
-                      patchData({
-                        photos: allPhotos.map((p) =>
-                          all.some((x) => x.id === p.id)
-                            ? { ...p, publishConsent: e.target.checked }
-                            : p,
-                        ),
-                      })
-                    }
-                  />
+                          ) : (
+                            group.items.map((photo) => (
+                              <ImagePlaceholder
+                                key={photo.id}
+                                seed={photo.id}
+                                alt={photo.note ?? group.label}
+                                className="aspect-[4/3]"
+                              />
+                            ))
+                          )}
+                        </div>
+                      ))}
+                    </CardBody>
+                    <CardFooter>
+                      <Checkbox
+                        label={t('consentLabel')}
+                        checked={consented}
+                        onChange={(e) =>
+                          patchData({
+                            photos: allPhotos.map((p) =>
+                              all.some((x) => x.id === p.id)
+                                ? { ...p, publishConsent: e.target.checked }
+                                : p,
+                            ),
+                          })
+                        }
+                      />
+                    </CardFooter>
+                  </Card>
                 </li>
               );
             })}

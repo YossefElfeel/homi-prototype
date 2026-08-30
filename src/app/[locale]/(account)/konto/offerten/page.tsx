@@ -9,9 +9,12 @@ import { DataView, type Column } from '@/components/ui/data-view';
 import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPage } from '@/components/ui/skeleton';
 import { Money } from '@/components/ui/money';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { isExpired, offerTotal } from '@/mock/engines/offers';
+import { offerBadgeState } from '@/lib/offer-label';
+import { offerTotal } from '@/mock/engines/offers';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Offer } from '@/mock/schema';
@@ -34,7 +37,7 @@ export default function AccountOffersPage() {
   const { offers, requests } = useAccount();
   const services = useStore((s) => s.services);
 
-  if (!hydrated) return <p className="text-ink-tertiary">…</p>;
+  if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const daysLeft = (iso?: string) =>
     iso ? Math.ceil((new Date(iso).getTime() - now.getTime()) / 86_400_000) : null;
@@ -86,25 +89,21 @@ export default function AccountOffersPage() {
       header: t('colStatus'),
       trailing: true,
       align: 'end',
+      // Offer states are a subset of the request vocabulary — all but one.
+      // A quote that has gone out is `sent`, and the request registry calls
+      // that `offerSent`, so this printed the literal «status.request.sent»
+      // in the pill on every open quote. The two other screens that badge a
+      // quote had each fixed it inline; the rule lives in `offer-label` now.
       cell: (o) => (
-        // Offer states are a subset of the request vocabulary, so they read
-        // from the same registry entry rather than a parallel one that could
-        // drift. An expired quote is shown as expired even while stored as
-        // sent — §9.3 makes the date, not a job, the thing that ends it.
-        <StatusBadge
-          entity="request"
-          state={isExpired(o, now) && o.status === 'sent' ? 'expired' : o.status}
-          size="sm"
-        />
+        <StatusBadge entity="request" state={offerBadgeState(o, now)} size="sm" />
       ),
     },
   ];
 
   return (
     <>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
+      <PageHeader title={t('title')} />
       <DataView
-        className="mt-8"
         items={offers.filter((o) => o.status !== 'draft')}
         columns={columns}
         getKey={(o) => o.id}

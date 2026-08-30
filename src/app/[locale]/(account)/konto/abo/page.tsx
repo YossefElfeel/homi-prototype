@@ -2,14 +2,17 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { AlertTriangle, Check, Pause, RefreshCw, SkipForward } from 'lucide-react';
+import { Check, Pause, RefreshCw, SkipForward } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
+import { PageHeader } from '@/components/ui/page-header';
 import { Progress } from '@/components/ui/progress';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -59,9 +62,8 @@ export default function AccountSubscriptionPage() {
   if (held.length === 0) {
     return (
       <>
-        <h1 className="display-type text-3xl">{t('title')}</h1>
+        <PageHeader title={t('title')} />
         <EmptyState
-          className="mt-8"
           title={t('emptyTitle')}
           body={t('emptyBody')}
           action={
@@ -76,12 +78,12 @@ export default function AccountSubscriptionPage() {
 
   return (
     <div>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
-        {held.length > 1 ? t('leadMany', { n: held.length }) : t('leadOne')}
-      </p>
+      <PageHeader
+        title={t('title')}
+        lead={held.length > 1 ? t('leadMany', { n: held.length }) : t('leadOne')}
+      />
 
-      <div className="mt-8 space-y-6">
+      <div className="space-y-app-section">
         {held.map((subscription) => (
           <PlanCard
             key={subscription.id}
@@ -139,7 +141,8 @@ function PlanCard({
   );
 
   return (
-    <section className="surface-card p-6 sm:p-7">
+    <Card asChild>
+      <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="display-type text-2xl">{plan.name[locale]}</h2>
@@ -167,23 +170,25 @@ function PlanCard({
       </div>
 
       {paused && (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
-          <div className="flex gap-3">
-            <Pause className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
-            <div>
-              <h3 className="font-medium">{t('pausedTitle')}</h3>
-              <p className="mt-1 text-sm text-ink-secondary">{t('pausedBody')}</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => {
-              resumeSubscription(subscription.id, now);
-              toast.success(t('resumed'));
-            }}
-          >
-            {t('resume')}
-          </Button>
-        </div>
+        <Alert
+          tone="info"
+          icon={Pause}
+          className="mt-5"
+          title={t('pausedTitle')}
+          action={
+            <Button
+              size="sm"
+              onClick={() => {
+                resumeSubscription(subscription.id, now);
+                toast.success(t('resumed'));
+              }}
+            >
+              {t('resume')}
+            </Button>
+          }
+        >
+          {t('pausedBody')}
+        </Alert>
       )}
 
       {/* Used and left, as a number and a bar. This is the question the screen
@@ -283,10 +288,9 @@ function PlanCard({
               })}
             </p>
             {skips <= 0 ? (
-              <p className="mt-4 flex gap-2 border-l-2 border-status-warning-line bg-status-warning p-4 text-sm text-status-warning-fg">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <Alert tone="warning" className="mt-4">
                 {t('skipBlocked')}
-              </p>
+              </Alert>
             ) : (
               <Button
                 className="mt-4"
@@ -358,7 +362,8 @@ function PlanCard({
           </div>
         </>
       )}
-    </section>
+      </section>
+    </Card>
   );
 }
 

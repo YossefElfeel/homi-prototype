@@ -7,9 +7,12 @@ import { Info, Send } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
+import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { MessageAttachments } from '@/components/messages/message-attachments';
 import { useAccount } from '@/lib/use-account';
@@ -26,6 +29,12 @@ import { cn } from '@/lib/cn';
  * "Not a live chat" is stated with the answer time next to it. §22 rules out
  * live chat; saying so — and giving the phone number for anything urgent —
  * costs less goodwill than silence does.
+ *
+ * A thread is a card, which is also what fixes the bubbles. They used to be
+ * `surface-card` against the page ground — a white block on grey — so on a
+ * card they would have been white on white. Ours is the sunken well, yours is
+ * the quiet accent tint, and the two sides are told apart by colour rather
+ * than by which edge they happen to hang off.
  */
 export default function AccountMessagesPage() {
   const t = useTranslations('account.messages');
@@ -74,12 +83,10 @@ export default function AccountMessagesPage() {
 
   return (
     <div>
-      <h1 className="display-type text-3xl">{t('title')}</h1>
-      <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">{t('lead')}</p>
+      <PageHeader title={t('title')} lead={t('lead')} />
 
       {subjects.length === 0 ? (
         <EmptyState
-          className="mt-8"
           title={t('emptyTitle')}
           body={t('emptyBody')}
           /* There is no way to start a thread here — a message hangs off a
@@ -93,82 +100,84 @@ export default function AccountMessagesPage() {
           }
         />
       ) : (
-        subjects.map((subject) => {
-          const thread = messages
-            .filter((m) => m.subject === subject)
-            .sort((a, b) => (a.at < b.at ? -1 : 1));
-          return (
-            <section key={subject} className="mt-10">
-              <h2 data-numeric className="label-type text-ink-tertiary">
-                {t('subject', { reference: subject })}
-              </h2>
-              <ul className="mt-4 space-y-4">
-                {thread.map((message) => (
-                  <li
-                    key={message.id}
-                    className={cn(
-                      'max-w-[85%] p-5',
-                      message.from === 'customer'
-                        ? 'ms-auto surface-card'
-                        : 'border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)]',
+        <div className="space-y-app-section">
+          {subjects.map((subject) => {
+            const thread = messages
+              .filter((m) => m.subject === subject)
+              .sort((a, b) => (a.at < b.at ? -1 : 1));
+            const draft = drafts[subject] ?? '';
+            return (
+              <Card key={subject}>
+                <CardHeader
+                  title={
+                    <span data-numeric>{t('subject', { reference: subject })}</span>
+                  }
+                />
+                <CardBody>
+                  <ul className="space-y-4">
+                    {thread.map((message) => (
+                      <li
+                        key={message.id}
+                        className={cn(
+                          'max-w-[85%] rounded-[var(--radius-lg)] p-5',
+                          message.from === 'customer'
+                            ? 'ms-auto bg-accent-quiet'
+                            : 'bg-sunken',
+                        )}
+                      >
+                        <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <span className="text-sm font-medium">
+                            {message.from === 'customer' ? t('fromYou') : t('fromUs')}
+                          </span>
+                          <span data-numeric className="text-xs text-ink-tertiary">
+                            {format.dateTime(new Date(message.at), 'short')}
+                          </span>
+                        </p>
+                        {message.body && (
+                          <p className="mt-2 text-ink-secondary">{message.body}</p>
+                        )}
+                        {/* Read-only here. The customer receiving a file is the
+                            whole reason the office can send one; letting them send
+                            one back is a separate decision with its own storage
+                            and virus-scanning questions, and §22 has not answered
+                            them. */}
+                        <MessageAttachments attachments={message.attachments} />
+                      </li>
+                    ))}
+                  </ul>
+                </CardBody>
+                <CardFooter className="block">
+                  <Field label={t('replyLabel')}>
+                    {(props) => (
+                      <Textarea
+                        {...props}
+                        rows={3}
+                        value={draft}
+                        onChange={(e) =>
+                          setDrafts((d) => ({ ...d, [subject]: e.target.value }))
+                        }
+                        placeholder={t('replyPlaceholder')}
+                      />
                     )}
+                  </Field>
+                  <Button
+                    className="mt-3"
+                    disabled={!draft.trim()}
+                    onClick={() => send(subject)}
                   >
-                    <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                      <span className="text-sm font-medium">
-                        {message.from === 'customer' ? t('fromYou') : t('fromUs')}
-                      </span>
-                      <span data-numeric className="text-xs text-ink-tertiary">
-                        {format.dateTime(new Date(message.at), 'short')}
-                      </span>
-                    </p>
-                    {message.body && (
-                      <p className="mt-2 text-ink-secondary">{message.body}</p>
-                    )}
-                    {/* Read-only here. The customer receiving a file is the
-                        whole reason the office can send one; letting them send
-                        one back is a separate decision with its own storage
-                        and virus-scanning questions, and §22 has not answered
-                        them. */}
-                    <MessageAttachments attachments={message.attachments} />
-                  </li>
-                ))}
-              </ul>
-
-              <Field label={t('replyLabel')} className="mt-5">
-                {(props) => (
-                  <Textarea
-                    rows={3}
-                    value={drafts[subject] ?? ''}
-                    onChange={(e) =>
-                      setDrafts((d) => ({ ...d, [subject]: e.target.value }))
-                    }
-                    placeholder={t('replyPlaceholder')}
-                    {...props}
-                  />
-                )}
-              </Field>
-              <Button
-                className="mt-3"
-                disabled={!(drafts[subject] ?? '').trim()}
-                onClick={() => send(subject)}
-              >
-                <Send className="size-4" aria-hidden />
-                {t('send')}
-              </Button>
-            </section>
-          );
-        })
+                    <Send className="size-4" aria-hidden />
+                    {t('send')}
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
-      <div className="mt-10 flex gap-3 border-t border-line-subtle pt-6">
-        <Info className="mt-0.5 size-4 shrink-0 text-ink-tertiary" aria-hidden />
-        <div>
-          <h2 className="font-medium">{t('noteTitle')}</h2>
-          <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
-            {t('noteBody')}
-          </p>
-        </div>
-      </div>
+      <Alert tone="neutral" icon={Info} className="mt-app-section" title={t('noteTitle')}>
+        {t('noteBody')}
+      </Alert>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { CreditCard, Info, Plus, Trash2 } from 'lucide-react';
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
@@ -61,22 +61,21 @@ export default function AccountPaymentPage() {
     <div>
       <PageHeader title={t('title')} lead={t('lead')} />
 
+      <div className="space-y-app-section">
       <Card pad="none">
-        <h2 className="label-type px-card pt-card text-ink-tertiary">
-          {t('savedTitle')}
-        </h2>
+        <CardHeader className="p-card" title={t('savedTitle')} />
         {methods.length === 0 ? (
-          <p className="px-card pt-2 pb-card text-sm text-ink-tertiary">
+          <p className="px-card pb-card text-sm text-ink-tertiary">
             {t('savedNone')}
           </p>
         ) : (
-          <ul className="mt-3">
+          <ul className="border-t border-line-subtle">
             {methods.map((method) => {
               const Icon = METHOD_ICONS[method.kind];
               return (
               <li
                 key={method.id}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-subtle px-card py-row"
+                className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-subtle last:border-0"
               >
                 <span className="flex items-center gap-3">
                   <Icon className="size-4 text-ink-tertiary" aria-hidden />
@@ -115,9 +114,9 @@ export default function AccountPaymentPage() {
         )}
       </Card>
 
-      <section className="mt-app-section">
-        <h2 className="label-type text-ink-tertiary">{t('addTitle')}</h2>
-        <div className="gap-app mt-3 grid sm:grid-cols-2">
+      <Card>
+        <CardHeader title={t('addTitle')} />
+        <CardBody className="gap-app grid sm:grid-cols-2">
           {SAVABLE_METHODS.map((kind) => {
             const Icon = METHOD_ICONS[kind];
             const key = LABEL_KEY[kind];
@@ -139,21 +138,24 @@ export default function AccountPaymentPage() {
               </button>
             );
           })}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="mt-app-section border-t border-line-subtle pt-8">
-        <h2 className="display-type text-xl">{t('recurringTitle')}</h2>
-        <p className="mt-3 flex items-center gap-3">
+      <Card>
+        <CardHeader title={t('recurringTitle')} />
+        <CardBody className="flex items-center gap-3">
           <CreditCard className="size-4 text-ink-tertiary" aria-hidden />
           <span data-numeric>{forPlan ? forPlan.label : '—'}</span>
-        </p>
-        <Alert tone="neutral" icon={Info} className="mt-5" title={t('twintBlockedTitle')}>
-          {t('twintBlockedBody')}
-        </Alert>
-      </section>
+        </CardBody>
+        <CardBody>
+          <Alert tone="neutral" icon={Info} title={t('twintBlockedTitle')}>
+            {t('twintBlockedBody')}
+          </Alert>
+        </CardBody>
+      </Card>
+      </div>
 
-      <p className="mt-8 text-sm text-ink-tertiary">{t('demoNote')}</p>
+      <p className="mt-app-section text-sm text-ink-tertiary">{t('demoNote')}</p>
     </div>
   );
 }

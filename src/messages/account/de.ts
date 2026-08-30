@@ -119,6 +119,12 @@ export const accountDe = {
 
   request: {
     back: 'Alle Anfragen',
+    /* Eine Anfrage, die es nicht mehr gibt, endete auf einem nackten
+       Gedankenstrich — dieselbe Sackgasse, die der Rechnungsbildschirm
+       längst gelöst hatte. */
+    missingTitle: 'Diese Anfrage finden wir nicht',
+    missingBody:
+      'Vielleicht ist der Link nicht mehr aktuell. In der Übersicht stehen alle Anfragen, die zu Ihrem Konto gehören.',
     sentOn: 'Gesendet am',
     serviceTitle: 'Leistung',
     propertyTitle: 'Objekt',
@@ -250,6 +256,9 @@ export const accountDe = {
 
   property: {
     back: 'Alle Objekte',
+    missingTitle: 'Dieses Objekt finden wir nicht',
+    missingBody:
+      'Vielleicht ist der Link nicht mehr aktuell. In der Übersicht stehen alle Objekte, die zu Ihrem Konto gehören.',
     factsTitle: 'Eckdaten',
     kind: 'Art',
     area: 'Fläche',
