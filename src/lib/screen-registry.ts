@@ -228,21 +228,21 @@ export const TRACKS: Track[] = [
       done('39', 'Meine Rechnungen', 'My invoices', '/konto/rechnungen', ['empty', 'searched', 'filtered', 'nothing found', 'sorted'], 'Five invoices — one page, so paging is the one list state this screen cannot show'),
       done('40', 'Rechnungs-Detail', 'Invoice detail', '/konto/rechnungen/inv_paid', ['overdue', 'paid']),
       done('41', 'Meine Objekte', 'My properties', '/konto/objekte', ['empty', 'searched', 'filtered', 'nothing found', 'sorted'], 'Two properties, a flat and an office, so the type menu has both of its live options'),
-      done('42', 'Objekt-Detail', 'Property detail', '/konto/objekte/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account'),
+      done('42', 'Objekt-Detail', 'Property detail', '/konto/objekte/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account. The visit history pages at ten; prp_2 carries four, so the line under it states the capacity and no scenario reaches a second page'),
       done('43', 'Meine Abos', 'My plans', '/konto/abo', [
         'no plan',
         'two plans, two properties',
         'paused',
         'skips used up',
         'expired with visits left',
-      ], 'One card per plan — the demo customer holds one on a flat and one on an office'),
+      ], 'One card per *section*, not one slab per plan — the plan, then a card each for skipping, changing and cancelling. The demo customer holds one plan on a flat and one on an office, and the cards of a plan sit closer to each other than two plans do'),
       done(
         '45',
         'Zahlungsmittel',
         'Payment methods',
         '/konto/zahlungsmittel',
         ['TWINT unavailable', 'card form', 'TWINT form', 'wallet form', 'nothing on file'],
-        'Each of the four kinds opens the form it needs. Saving used to be the click itself — every card came out labelled «Karte», so two of them were one row',
+        'Each of the four kinds opens the form it needs. Saving used to be the click itself — every card came out labelled «Karte», so two of them were one row. The four tiles that open those forms are real cards rather than buttons wearing a copy of the card treatment',
       ),
       done('46', 'Bewertung schreiben', 'Write a review', '/konto/bewertung', ['nothing to review', 'sent']),
       /* No longer a screen of its own. `empty` went with the tab: a card that
@@ -256,7 +256,7 @@ export const TRACKS: Track[] = [
          read «the threads stay bubbles, so there is no table state to show».
          They are a rail now, so there is: which thread is open, and which kind
          the strip is filtered to. */
-      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty', 'filtered by kind', 'searched', 'nothing found', 'single kind (no tabs)'], 'Four threads on the demo account, one of each kind — a request, a quote, a job and an invoice — so every tab in the strip has something under it'),
+      done('48', 'Nachrichten', 'Messages', '/konto/nachrichten', ['empty', 'filtered by kind', 'searched', 'nothing found', 'single kind (no tabs)'], 'Four threads on the demo account, one of each kind — a request, a quote, a job and an invoice — so every tab in the strip has something under it. The rail pages at ten, which four threads never reach: the line under it states the capacity and the pager stays out of sight'),
       done('49', 'Profil & Benachrichtigungen', 'Profile & notifications', '/konto/profil'),
     ],
   },

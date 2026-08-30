@@ -21,7 +21,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { PaymentMethodFields } from '@/components/payment/method-fields';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import { cn } from '@/lib/cn';
 import {
   METHOD_ICONS,
   SAVABLE_METHODS,
@@ -123,111 +122,122 @@ export default function AccountPaymentPage() {
       <PageHeader title={t('title')} lead={t('lead')} />
 
       <div className="space-y-app-section">
-      <Card pad="none">
-        <CardHeader className="p-card" title={t('savedTitle')} />
-        {methods.length === 0 ? (
-          <p className="px-card pb-card text-sm text-ink-tertiary">
-            {t('savedNone')}
-          </p>
-        ) : (
-          <ul className="border-t border-line-subtle">
-            {methods.map((method) => {
-              const Icon = METHOD_ICONS[method.kind];
-              return (
-              <li
-                key={method.id}
-                className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-subtle last:border-0"
-              >
-                {/* Wraps as whole parts, and the label never breaks inside
-                    itself. On a 375px screen the expiry took just enough room
-                    to split «Visa · 4242» across two lines — a card number cut
-                    in half reads as two numbers. */}
-                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-                  <span data-numeric className="whitespace-nowrap">
-                    {method.label}
-                  </span>
-                  {/* The expiry is collected now, so it is shown. A card whose
-                      date the customer cannot read here is one they find out
-                      about from a declined plan charge. */}
-                  {method.expiresAt && (
-                    <span data-numeric className="text-sm whitespace-nowrap text-ink-tertiary">
-                      {t('expires', { date: method.expiresAt })}
+        <Card pad="none">
+          <CardHeader className="p-card" title={t('savedTitle')} />
+          {methods.length === 0 ? (
+            <p className="px-card pb-card text-sm text-ink-tertiary">
+              {t('savedNone')}
+            </p>
+          ) : (
+            <ul className="border-t border-line-subtle">
+              {methods.map((method) => {
+                const Icon = METHOD_ICONS[method.kind];
+                return (
+                <li
+                  key={method.id}
+                  className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-subtle last:border-0"
+                >
+                  {/* Wraps as whole parts, and the label never breaks inside
+                      itself. On a 375px screen the expiry took just enough room
+                      to split «Visa · 4242» across two lines — a card number cut
+                      in half reads as two numbers. */}
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    <span data-numeric className="whitespace-nowrap">
+                      {method.label}
                     </span>
-                  )}
-                  {method.isDefault && <Chip>{t('defaultLabel')}</Chip>}
-                </span>
-                <span className="flex items-center gap-1">
-                  {!method.isDefault && (
+                    {/* The expiry is collected now, so it is shown. A card whose
+                        date the customer cannot read here is one they find out
+                        about from a declined plan charge. */}
+                    {method.expiresAt && (
+                      <span data-numeric className="text-sm whitespace-nowrap text-ink-tertiary">
+                        {t('expires', { date: method.expiresAt })}
+                      </span>
+                    )}
+                    {method.isDefault && <Chip>{t('defaultLabel')}</Chip>}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    {!method.isDefault && (
+                      <Button
+                        variant="quiet"
+                        size="sm"
+                        onClick={() => {
+                          setDefaultPaymentMethod(method.id);
+                          toast.success(t('defaultSet'));
+                        }}
+                      >
+                        {t('makeDefault')}
+                      </Button>
+                    )}
                     <Button
                       variant="quiet"
                       size="sm"
                       onClick={() => {
-                        setDefaultPaymentMethod(method.id);
-                        toast.success(t('defaultSet'));
+                        removePaymentMethod(method.id);
+                        toast.success(t('removed'));
                       }}
                     >
-                      {t('makeDefault')}
+                      <Trash2 className="size-4" aria-hidden />
+                      <span className="sr-only">{t('remove')}</span>
                     </Button>
-                  )}
-                  <Button
-                    variant="quiet"
-                    size="sm"
-                    onClick={() => {
-                      removePaymentMethod(method.id);
-                      toast.success(t('removed'));
-                    }}
+                  </span>
+                </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+  
+        <Card>
+          <CardHeader title={t('addTitle')} description={t('addLead')} />
+          <CardBody className="gap-app grid sm:grid-cols-2">
+            {SAVABLE_METHODS.map((kind) => {
+              const Icon = METHOD_ICONS[kind];
+              const key = LABEL_KEY[kind];
+              return (
+                /* Was a bare `<button>` carrying a hand-typed copy of the card's
+                   hover treatment — and it had already drifted: a border-colour
+                   change where every other clickable card in the product lifts.
+                   `asChild` is what makes `interactive` reachable from a control
+                   that has to *be* the button. */
+                <Card key={kind} asChild interactive pad="sm">
+                  <button
+                    type="button"
+                    onClick={() => open(kind)}
+                    className="flex min-h-11 items-center gap-3"
                   >
-                    <Trash2 className="size-4" aria-hidden />
-                    <span className="sr-only">{t('remove')}</span>
-                  </Button>
-                </span>
-              </li>
+                    <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                    <span className="flex-1">{t(key)}</span>
+                    <Plus className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                  </button>
+                </Card>
               );
             })}
-          </ul>
-        )}
-      </Card>
-
-      <Card>
-        <CardHeader title={t('addTitle')} description={t('addLead')} />
-        <CardBody className="gap-app grid sm:grid-cols-2">
-          {SAVABLE_METHODS.map((kind) => {
-            const Icon = METHOD_ICONS[kind];
-            const key = LABEL_KEY[kind];
-            return (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => open(kind)}
-                className={cn(
-                  'flex min-h-11 items-center gap-3 rounded-[var(--radius-sm)] border border-line bg-card px-4 py-3 text-start transition-[box-shadow,border-color] hover:border-line-focus hover:shadow-[var(--shadow-sm)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
-                )}
-              >
-                <Icon className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-                <span className="flex-1">{t(key)}</span>
-                <Plus className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-              </button>
-            );
-          })}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title={t('recurringTitle')} />
-        <CardBody className="flex items-center gap-3">
-          <CreditCard className="size-4 text-ink-tertiary" aria-hidden />
-          <span data-numeric>{forPlan ? forPlan.label : '—'}</span>
-        </CardBody>
-        <CardBody>
-          <Alert tone="neutral" icon={Info} title={t('twintBlockedTitle')}>
-            {t('twintBlockedBody')}
-          </Alert>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+  
+        <Card>
+          <CardHeader title={t('recurringTitle')} />
+          {/* Two sibling `CardBody`s each added their own top margin, so the
+              alert sat a notch lower here than the same alert does anywhere
+              else. One body, one rhythm. */}
+          <CardBody className="space-y-app">
+            <p className="flex items-center gap-3">
+              <CreditCard className="size-4 text-ink-tertiary" aria-hidden />
+              <span data-numeric>{forPlan ? forPlan.label : '—'}</span>
+            </p>
+            <Alert tone="neutral" icon={Info} title={t('twintBlockedTitle')}>
+              {t('twintBlockedBody')}
+            </Alert>
+          </CardBody>
+        </Card>
       </div>
 
-      <p className="mt-app-section text-sm text-ink-tertiary">{t('demoNote')}</p>
+      {/* See the note on the invoice screen: about the prototype, not about
+          the customer's cards, and it had no surface under it. */}
+      <Card className="mt-app-section">
+        <p className="text-sm text-ink-tertiary">{t('demoNote')}</p>
+      </Card>
 
       <Dialog open={adding !== null} onOpenChange={(o) => !o && setAdding(null)}>
         <DialogContent closeLabel={formT('cancel')}>

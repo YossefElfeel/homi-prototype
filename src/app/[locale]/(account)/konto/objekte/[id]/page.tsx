@@ -16,6 +16,7 @@ import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
+import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAccount } from '@/lib/use-account';
@@ -50,6 +51,7 @@ export default function AccountPropertyPage({
 }) {
   const { id } = use(params);
   const t = useTranslations('account.property');
+  const appT = useTranslations('app');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
@@ -60,6 +62,7 @@ export default function AccountPropertyPage({
   const allProperties = useStore((s) => s.data.properties);
 
   const [editingAccess, setEditingAccess] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
 
   if (!hydrated) return <SkeletonPage label={t('back')} />;
 
@@ -85,6 +88,7 @@ export default function AccountPropertyPage({
   const history = bookings
     .filter((b) => b.propertyId === property.id)
     .sort((a, b) => (a.start < b.start ? 1 : -1));
+  const historyView = paginate(history, historyPage, 10);
 
   const facts: [string, string][] = [
     [t('area'), `${property.area} m²`],
@@ -209,7 +213,7 @@ export default function AccountPropertyPage({
                     toast.success(t('accessSaved'));
                   }}
                 >
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="gap-app grid sm:grid-cols-2">
                     <Field label={t('accessMethodLabel')} className="sm:col-span-2">
                       {(props) => (
                         <Select
@@ -324,22 +328,47 @@ export default function AccountPropertyPage({
                 {t('historyEmpty')}
               </p>
             ) : (
-              <ul className="border-t border-line-subtle">
-                {history.map((booking) => (
-                  <li
-                    key={booking.id}
-                    className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line-subtle last:border-0"
-                  >
-                    <span data-numeric className="text-sm">
-                      {format.dateTime(new Date(booking.start), 'full')}
-                    </span>
-                    <span className="flex items-center gap-3 text-sm text-ink-secondary">
-                      {services.find((s) => s.slug === booking.serviceSlug)?.name[locale]}
-                      <StatusBadge entity="booking" state={booking.status} size="sm" />
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="border-t border-line-subtle">
+                  {historyView.slice.map((booking) => (
+                    <li
+                      key={booking.id}
+                      className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line-subtle last:border-0"
+                    >
+                      <span data-numeric className="text-sm">
+                        {format.dateTime(new Date(booking.start), 'full')}
+                      </span>
+                      <span className="flex items-center gap-3 text-sm text-ink-secondary">
+                        {services.find((s) => s.slug === booking.serviceSlug)?.name[locale]}
+                        <StatusBadge entity="booking" state={booking.status} size="sm" />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {/*
+                  A plan cleans this address every fortnight, so the history is
+                  the one list in the account with no ceiling on it: a customer
+                  three years in had every visit ever made stacked in the aside,
+                  and the card grew until the page did. Ten a page, the same ten
+                  every table in the product pages at, and the line stays under
+                  a short history to say where the ceiling is.
+                */}
+                <Pagination
+                  className="px-card pb-card"
+                  page={historyView.page}
+                  pageCount={historyView.pageCount}
+                  onPageChange={setHistoryPage}
+                  label={appT('pageLabel')}
+                  previousLabel={appT('pagePrevious')}
+                  nextLabel={appT('pageNext')}
+                  summary={appT('pageSummary', {
+                    from: historyView.from,
+                    to: historyView.to,
+                    total: historyView.total,
+                  })}
+                  note={appT('pagePerPage', { n: 10 })}
+                />
+              </>
             )}
           </Card>
         </aside>

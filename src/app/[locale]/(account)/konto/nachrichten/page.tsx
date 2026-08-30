@@ -14,6 +14,7 @@ import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
+import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toolbar } from '@/components/ui/toolbar';
@@ -94,6 +95,8 @@ export default function AccountMessagesPage() {
    * characters into the other in real time, and sending cleared both.
    */
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [seenCount, setSeenCount] = useState(0);
 
   const threads = useMemo(() => {
     const map = new Map<string, typeof messages>();
@@ -156,6 +159,17 @@ export default function AccountMessagesPage() {
   const tabTotal = kind === 'all' ? threads.length : countOf(kind);
 
   const draft = openKey ? (drafts[openKey] ?? '') : '';
+
+  /* The rail follows its list back to the top whenever a tab or the search
+     changes its length — narrowing to four threads must not leave you looking
+     at page two of them. Adjusted during render rather than in an effect: an
+     effect paints the stale page first, and that flash lands on every
+     keystroke. Same rule `DataView` uses on the tables. */
+  if (seenCount !== filtered.length) {
+    setSeenCount(filtered.length);
+    setPage(1);
+  }
+  const view = paginate(filtered, page, 10);
 
   function send() {
     if (!open) return;
@@ -258,7 +272,7 @@ export default function AccountMessagesPage() {
             ) : (
               <Card pad="none">
                 <ul>
-                  {filtered.map((thread) => {
+                  {view.slice.map((thread) => {
                     const last = thread.items.at(-1);
                     const active = openKey === thread.subject;
                     const unread = thread.items.some(
@@ -303,6 +317,28 @@ export default function AccountMessagesPage() {
                     );
                   })}
                 </ul>
+                {/*
+                  The rail carries one row per reference and nothing retires
+                  them, so a customer of two years' standing scrolls a column
+                  that only ever grows. Ten a page, the same ten every table in
+                  the product pages at, and the line stays under a short rail to
+                  say where the ceiling is.
+                */}
+                <Pagination
+                  className="px-card pb-card"
+                  page={view.page}
+                  pageCount={view.pageCount}
+                  onPageChange={setPage}
+                  label={appT('pageLabel')}
+                  previousLabel={appT('pagePrevious')}
+                  nextLabel={appT('pageNext')}
+                  summary={appT('pageSummary', {
+                    from: view.from,
+                    to: view.to,
+                    total: view.total,
+                  })}
+                  note={appT('pagePerPage', { n: 10 })}
+                />
               </Card>
             )}
           </Tabs>

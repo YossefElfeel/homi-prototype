@@ -206,9 +206,13 @@ export default function AccountInvoicePage({
         </aside>
       </div>
 
-      {/* Same footing as the payment screen's demo note: a statement about the
-          prototype, not about this invoice, so it sits outside the record. */}
-      <p className="mt-app-section text-sm text-ink-tertiary">{t('downloadNote')}</p>
+      {/* A statement about the prototype, not about this invoice. It was loose
+          text on the page ground — the one thing on the screen with no surface
+          under it, so it read as an orphan rather than as a footnote. It keeps
+          tertiary type, which is what says "this is not your data". */}
+      <Card className="mt-app-section">
+        <p className="text-sm text-ink-tertiary">{t('downloadNote')}</p>
+      </Card>
     </div>
   );
 }

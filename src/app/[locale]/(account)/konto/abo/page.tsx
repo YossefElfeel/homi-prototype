@@ -9,7 +9,8 @@ import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
@@ -140,20 +141,32 @@ function PlanCard({
       p.includedVisits > plan.includedVisits,
   );
 
+  /*
+   * One card per section, not one card per plan.
+   *
+   * This was a single slab with five blocks stacked inside it, separated by
+   * hairlines and headed by hand-set `h3`s — so «Besuch auslassen» and «Abo
+   * kündigen», two irreversible actions, read as paragraphs of the plan rather
+   * than as things you do. The plan's own name was set four steps larger than
+   * every other card title in the account, which made this the one screen whose
+   * heading scale nothing else shared.
+   *
+   * The cards belonging to one plan sit closer together than two plans do
+   * (`space-y-app` inside, `space-y-app-section` between), so a customer with a
+   * flat and an office can still see which actions belong to which address.
+   */
   return (
-    <Card asChild>
-      <section>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="display-type text-2xl">{plan.name[locale]}</h2>
-          {/*
-            The property, directly under the name.
-            A customer with two plans is looking at two nearly identical cards,
-            and the address is the only thing that tells them apart. It is the
-            first line, not a detail row further down.
-          */}
-          <p className="mt-1 text-ink-secondary">
-            {property ? (
+    <section className="space-y-app">
+      <Card>
+        <CardHeader
+          title={plan.name[locale]}
+          /*
+            The property, directly under the name. A customer with two plans is
+            looking at two nearly identical cards, and the address is the only
+            thing that tells them apart.
+          */
+          description={
+            property ? (
               <Link href={`/konto/objekte/${property.id}`} className="hover:underline">
                 {property.label}
                 <span className="text-ink-tertiary">
@@ -163,148 +176,169 @@ function PlanCard({
               </Link>
             ) : (
               t('propertyUnknown')
-            )}
-          </p>
-        </div>
-        <StatusBadge entity="subscription" state={state} />
-      </div>
-
-      {paused && (
-        <Alert
-          tone="info"
-          icon={Pause}
-          className="mt-5"
-          title={t('pausedTitle')}
-          action={
-            <Button
-              size="sm"
-              onClick={() => {
-                resumeSubscription(subscription.id, now);
-                toast.success(t('resumed'));
-              }}
-            >
-              {t('resume')}
-            </Button>
+            )
           }
-        >
-          {t('pausedBody')}
-        </Alert>
-      )}
-
-      {/* Used and left, as a number and a bar. This is the question the screen
-          exists to answer and it had no data behind it at all before. */}
-      <div className="mt-6 border-y border-line-subtle py-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-medium">{t('visitsTitle')}</p>
-          <p data-numeric className="text-sm text-ink-secondary">
-            {t('visitsOf', { used: subscription.visitsUsed, total: plan.includedVisits })}
-          </p>
-        </div>
-        <Progress
-          className="mt-3"
-          value={subscription.visitsUsed}
-          max={plan.includedVisits}
-          tone={left === 0 ? 'warning' : 'default'}
-          label={t('visitsOf', {
-            used: subscription.visitsUsed,
-            total: plan.includedVisits,
-          })}
+          actions={<StatusBadge entity="subscription" state={state} />}
         />
-        <p data-numeric className="mt-2 text-sm text-ink-secondary">
-          {left > 0 ? t('visitsLeft', { n: left }) : t('visitsNone')}
-        </p>
-      </div>
+        <CardBody className="space-y-app">
+          {paused && (
+            <Alert
+              tone="info"
+              icon={Pause}
+              title={t('pausedTitle')}
+              action={
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    resumeSubscription(subscription.id, now);
+                    toast.success(t('resumed'));
+                  }}
+                >
+                  {t('resume')}
+                </Button>
+              }
+            >
+              {t('pausedBody')}
+            </Alert>
+          )}
 
-      <dl className="mt-5 grid gap-x-8 sm:grid-cols-2">
-        <Row label={t('rhythm')}>{rhythmT(planRhythm(plan))}</Row>
-        <Row label={t('paid')}>
-          <Money amount={plan.price} />
-        </Row>
-        <Row label={t('validUntil')}>
-          <span data-numeric>{format.dateTime(new Date(subscription.endDate), 'short')}</span>
-        </Row>
-        <Row label={t('discount')}>
-          <span data-numeric>{plan.extraDiscountPercent}%</span>
-        </Row>
-        {subscription.renewalCount > 0 && (
-          <Row label={t('renewals')}>
-            <span data-numeric>{subscription.renewalCount}</span>
-          </Row>
-        )}
-      </dl>
+          {/* Used and left, as a number and a bar. This is the question the
+              screen exists to answer. It sat between two hairlines inside the
+              slab; it is the lead fact of the card now. */}
+          <div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-medium">{t('visitsTitle')}</p>
+              <p data-numeric className="text-sm text-ink-secondary">
+                {t('visitsOf', {
+                  used: subscription.visitsUsed,
+                  total: plan.includedVisits,
+                })}
+              </p>
+            </div>
+            <Progress
+              className="mt-3"
+              value={subscription.visitsUsed}
+              max={plan.includedVisits}
+              tone={left === 0 ? 'warning' : 'default'}
+              label={t('visitsOf', {
+                used: subscription.visitsUsed,
+                total: plan.includedVisits,
+              })}
+            />
+            <p data-numeric className="mt-2 text-sm text-ink-secondary">
+              {left > 0 ? t('visitsLeft', { n: left }) : t('visitsNone')}
+            </p>
+          </div>
 
-      {plan.features.length > 0 && (
-        <>
-          <h3 className="mt-6 font-medium">{t('benefitsTitle')}</h3>
-          <ul className="mt-3 space-y-2 text-sm">
-            {plan.features.map((feature, i) => (
-              <li key={i} className="flex gap-2.5">
-                <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
-                <span className="text-ink-secondary">{feature[locale] || feature.de}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+          {/* Was a local `Row` — the same flex and hairline as `DetailRow` at a
+              different padding, so the facts here lined up with nothing on the
+              request or invoice screens. */}
+          <DetailList columns={2}>
+            <DetailRow label={t('rhythm')}>{rhythmT(planRhythm(plan))}</DetailRow>
+            <DetailRow label={t('paid')}>
+              <Money amount={plan.price} />
+            </DetailRow>
+            <DetailRow label={t('validUntil')}>
+              <span data-numeric>
+                {format.dateTime(new Date(subscription.endDate), 'short')}
+              </span>
+            </DetailRow>
+            <DetailRow label={t('discount')}>
+              <span data-numeric>{plan.extraDiscountPercent}%</span>
+            </DetailRow>
+            {subscription.renewalCount > 0 && (
+              <DetailRow label={t('renewals')}>
+                <span data-numeric>{subscription.renewalCount}</span>
+              </DetailRow>
+            )}
+          </DetailList>
+
+          {plan.features.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium">{t('benefitsTitle')}</h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-eco" aria-hidden />
+                    <span className="text-ink-secondary">
+                      {feature[locale] || feature.de}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
       {expired ? (
-        <div className="mt-7 border-t border-line-subtle pt-6">
-          <h3 className="font-medium">{t('expiredTitle')}</h3>
-          <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-            {left > 0
-              ? t('expiredWithLeft', {
-                  n: left,
-                  date: format.dateTime(new Date(subscription.endDate), 'short'),
-                })
-              : t('expiredBody', {
-                  date: format.dateTime(new Date(subscription.endDate), 'short'),
-                })}
-          </p>
-          <Button
-            className="mt-4"
-            disabled={!plan.active}
-            onClick={() => {
-              const invoiceId = renewSubscription(subscription.id, now);
-              toast[invoiceId ? 'success' : 'error'](
-                invoiceId ? t('renewDone') : t('renewBlocked'),
-              );
-            }}
-          >
-            <RefreshCw className="size-4" aria-hidden />
-            {t('renew')}
-          </Button>
+        <Card>
+          <CardHeader
+            title={t('expiredTitle')}
+            description={
+              left > 0
+                ? t('expiredWithLeft', {
+                    n: left,
+                    date: format.dateTime(new Date(subscription.endDate), 'short'),
+                  })
+                : t('expiredBody', {
+                    date: format.dateTime(new Date(subscription.endDate), 'short'),
+                  })
+            }
+            actions={
+              <Button
+                disabled={!plan.active}
+                onClick={() => {
+                  const invoiceId = renewSubscription(subscription.id, now);
+                  toast[invoiceId ? 'success' : 'error'](
+                    invoiceId ? t('renewDone') : t('renewBlocked'),
+                  );
+                }}
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                {t('renew')}
+              </Button>
+            }
+          />
           {!plan.active && (
-            <p className="mt-2 text-sm text-ink-tertiary">{t('renewRetired')}</p>
+            <CardBody>
+              <p className="text-sm text-ink-tertiary">{t('renewRetired')}</p>
+            </CardBody>
           )}
-        </div>
+        </Card>
       ) : (
         <>
-          <div className="mt-7 border-t border-line-subtle pt-6">
-            <h3 className="font-medium">{t('skipTitle')}</h3>
-            <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-              {t('skipBody', {
+          <Card>
+            <CardHeader
+              title={t('skipTitle')}
+              description={t('skipBody', {
                 used: settings.monthlyFreeSkips - skips,
                 free: settings.monthlyFreeSkips,
               })}
-            </p>
-            {skips <= 0 ? (
-              <Alert tone="warning" className="mt-4">
-                {t('skipBlocked')}
-              </Alert>
-            ) : (
-              <Button
-                className="mt-4"
-                disabled={paused}
-                onClick={() => {
-                  skipNextVisit(subscription.id, now);
-                  toast.success(t('skipped'));
-                }}
-              >
-                <SkipForward className="size-4" aria-hidden />
-                {t('skipAction')}
-              </Button>
+              /* The button rides the header rather than sitting under it: title,
+                 consequence and control on one line is the shape every other
+                 action card in the account uses. */
+              actions={
+                skips > 0 ? (
+                  <Button
+                    disabled={paused}
+                    onClick={() => {
+                      skipNextVisit(subscription.id, now);
+                      toast.success(t('skipped'));
+                    }}
+                  >
+                    <SkipForward className="size-4" aria-hidden />
+                    {t('skipAction')}
+                  </Button>
+                ) : undefined
+              }
+            />
+            {skips <= 0 && (
+              <CardBody>
+                <Alert tone="warning">{t('skipBlocked')}</Alert>
+              </CardBody>
             )}
-          </div>
+          </Card>
 
           {/*
             Changing plan, which this screen never offered at all. /open-questions
@@ -313,12 +347,9 @@ function PlanCard({
             only existed on paper.
           */}
           {upgrades.length > 0 && (
-            <div className="mt-7 border-t border-line-subtle pt-6">
-              <h3 className="font-medium">{t('upgradeTitle')}</h3>
-              <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-                {t('upgradeBody')}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
+            <Card>
+              <CardHeader title={t('upgradeTitle')} description={t('upgradeBody')} />
+              <CardBody className="flex flex-wrap gap-3">
                 {upgrades.map((option) => (
                   <Button key={option.id} asChild variant="secondary">
                     <Link href={`/kontakt?abo=${option.id}`}>
@@ -326,52 +357,42 @@ function PlanCard({
                     </Link>
                   </Button>
                 ))}
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           )}
 
-          <div className="mt-7 border-t border-line-subtle pt-6">
-            <h3 className="font-medium">{t('cancelTitle')}</h3>
-            {block === null ? (
-              <>
-                <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-                  {t('cancelBody', {
-                    date: format.dateTime(cancelDeadline(subscription, settings), 'short'),
-                  })}
-                </p>
-                <Button
-                  variant="quiet"
-                  className="mt-4"
-                  onClick={() => {
-                    const refused = cancelSubscription(subscription.id, now);
-                    if (refused) toast.error(t(`cancelBlocked.${refused}`));
-                    else toast.success(t('cancelDone'));
-                  }}
-                >
-                  {t('cancelAction')}
-                </Button>
-              </>
-            ) : (
-              /* The rule, stated, rather than a button that is not there.
-                 "Why can I not cancel?" is the whole question at this point,
-                 and silence reads as the option having been taken away. */
-              <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
-                {t(`cancelBlocked.${block}`)}
-              </p>
-            )}
-          </div>
+          <Card>
+            <CardHeader
+              title={t('cancelTitle')}
+              description={
+                block === null
+                  ? t('cancelBody', {
+                      date: format.dateTime(cancelDeadline(subscription, settings), 'short'),
+                    })
+                  : /* The rule, stated, rather than a button that is not there.
+                       "Why can I not cancel?" is the whole question at this
+                       point, and silence reads as the option having been taken
+                       away. */
+                    t(`cancelBlocked.${block}`)
+              }
+              actions={
+                block === null ? (
+                  <Button
+                    variant="quiet"
+                    onClick={() => {
+                      const refused = cancelSubscription(subscription.id, now);
+                      if (refused) toast.error(t(`cancelBlocked.${refused}`));
+                      else toast.success(t('cancelDone'));
+                    }}
+                  >
+                    {t('cancelAction')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          </Card>
         </>
       )}
-      </section>
-    </Card>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex justify-between gap-4 border-b border-line-subtle py-2.5 text-sm">
-      <dt className="text-ink-secondary">{label}</dt>
-      <dd>{children}</dd>
-    </div>
+    </section>
   );
 }
