@@ -470,7 +470,10 @@ export const adminDe = {
     historyReplied: 'Beantwortet',
     /* Der Status stand als Etikett oben und sonst nirgends: woher die Anfrage
        kam und was als Nächstes ansteht, musste man aus dem Wort erraten. */
-    lifecycleTitle: 'Ablauf',
+    /* Hiess «Ablauf», während das Kundenkonto dieselbe Leiste «Verlauf»
+       nannte. Beide zeichnen `quoteStages` — ein Name, sonst liest sich eine
+       Ableitung wie zwei verschiedene Auskünfte. */
+    lifecycleTitle: 'Fortschritt der Anfrage',
     /* Die Detailseite war eine Rolle von fünf Blöcken — auf 1280px hiess das
        scrollen, um zu sehen, ob überhaupt Fotos dabei sind. Eingeklappt steht
        die Zusammenfassung in der Kopfzeile, und man öffnet nur das, was man

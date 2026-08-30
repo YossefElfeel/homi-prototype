@@ -112,6 +112,20 @@ export const accountDe = {
     colStatus: 'Status',
     rowOpen: 'Details ansehen',
     rowOffer: 'Offerte ansehen',
+    search: 'Referenz, Leistung oder Adresse',
+    filterStatus: 'Status',
+    filterService: 'Leistung',
+    filterAll: 'Alle',
+    filterReset: 'Filter zurücksetzen',
+    filterEmptyTitle: 'Keine Anfrage in dieser Auswahl',
+    /* Nennt bewusst weder Status noch Leistung: die beiden Menüs wirken
+       zusammen, und ein Text, der nur eines von beiden nennt, schickt beim
+       Suchen nach dem Fehler in die falsche Zeile. */
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade keine Ihrer Anfragen. Filter zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keine Anfrage. Gesucht wird in Referenz, Leistung und Adresse.',
     emptyTitle: 'Noch keine Anfrage',
     emptyBody: 'Ihre Anfragen und der jeweilige Stand erscheinen hier.',
     emptyAction: 'Offerte anfordern',
@@ -130,8 +144,13 @@ export const accountDe = {
     propertyTitle: 'Objekt',
     detailsTitle: 'Ihre Angaben',
     noteTitle: 'Ihre Nachricht',
-    timelineTitle: 'Verlauf',
-    /* `timelineTitle` war definiert und wurde von nichts gerendert — der Kunde
+    /* «Verlauf» hiess hier, was im Panel «Ablauf» hiess — ein und dieselbe
+       Leiste, aus derselben Ableitung, unter zwei Namen. Wer zwischen den
+       beiden Bildschirmen wechselt, musste raten, ob er dasselbe sieht. Ein
+       Name für beide, und er sagt, was die Leiste beantwortet: wie weit ist
+       die Anfrage. */
+    progressTitle: 'Fortschritt der Anfrage',
+    /* Die Leiste war definiert und wurde von nichts gerendert — der Kunde
        sah nur ein Etikett und «Wir sind dran». Dieselben Stufen wie im Panel,
        aus derselben Ableitung: zwei Antworten auf «wo steht das?» wären
        schlimmer als gar keine. */
@@ -152,6 +171,10 @@ export const accountDe = {
     stageExpired: 'Abgelaufen',
     offerTitle: 'Ihre Offerte',
     offerBody: 'Die Offerte zu dieser Anfrage liegt bereit.',
+    /* Angenommen, abgelehnt, abgelaufen — drei Ausgänge, und «liegt bereit»
+       stand über allen dreien. Nachlesen kann man sie weiter, annehmen nicht
+       mehr. */
+    offerClosedBody: 'Diese Offerte ist abgeschlossen. Nachlesen können Sie sie weiterhin.',
     offerAction: 'Offerte öffnen',
     waitingTitle: 'Wir sind dran',
     waitingBody: 'Sie erhalten die Offerte innerhalb von {hours} Stunden.',

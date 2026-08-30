@@ -1,26 +1,41 @@
 'use client';
 
+import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Filter, Search, X } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
+import { Select } from '@/components/ui/field';
 import { RowAction, RowActions } from '@/components/ui/row-actions';
 import { ActionIcon } from '@/lib/action-icons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Toolbar } from '@/components/ui/toolbar';
+import { statesOf } from '@/lib/status-registry';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
 import type { ServiceRequest } from '@/mock/schema';
 
-/** Screen 36 — the customer's own requests, newest first. */
+/**
+ * Screen 36 — the customer's own requests, newest first.
+ *
+ * The list is a list now rather than a handful of rows, so it carries the same
+ * toolbar the admin queue does: search, then the dropdowns. A customer of two
+ * years' standing arrives here with one of two questions — «wo ist die
+ * Offerte, auf die ich warte» and «was habe ich damals für die Fenster
+ * bezahlt» — and the second one is a search, not a filter. Paging back through
+ * twenty rows to find a reference is not an answer.
+ */
 export default function AccountRequestsPage() {
   const t = useTranslations('account.requests');
+  const appT = useTranslations('app');
+  const statusLabel = useTranslations('status.request');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -28,8 +43,58 @@ export default function AccountRequestsPage() {
 
   const { requests, properties, offers } = useAccount();
   const services = useStore((s) => s.services);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('all');
+  const [service, setService] = useState('all');
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
+
+  /*
+   * `draft` is left out on purpose. It is the office's half-taken phone call
+   * and `useAccount` filters it out of this list, so offering it here would be
+   * an option that can only ever return nothing — the exact shape of dead
+   * control the rest of the panel has been having removed. Every other state
+   * stays listed whether or not anything is in it: an option that vanished
+   * because nothing is expired today would make the menu change shape between
+   * visits, and «nichts gefunden» is the more honest answer.
+   */
+  const states = statesOf('request').filter((s) => s !== 'draft');
+
+  const serviceName = (slug: string) =>
+    services.find((s) => s.slug === slug)?.name[locale] ?? '';
+  const propertyOf = (id: string) => properties.find((p) => p.id === id);
+
+  const q = query.trim().toLowerCase();
+  const rows = [...requests]
+    .filter((r) => (status === 'all' ? true : r.status === status))
+    .filter((r) => (service === 'all' ? true : r.serviceSlug === service))
+    /*
+     * The three things actually printed on the row, and nothing behind it.
+     * Searching the customer's own note would find rows on words the list
+     * never shows, which reads as the filter having broken rather than as a
+     * hit — the reference, the service and the address are what somebody is
+     * looking at when they start typing.
+     */
+    .filter((r) => {
+      if (!q) return true;
+      const property = propertyOf(r.propertyId);
+      return (
+        r.reference.toLowerCase().includes(q) ||
+        serviceName(r.serviceSlug).toLowerCase().includes(q) ||
+        `${property?.street ?? ''} ${property?.postcode ?? ''} ${property?.city ?? ''}`
+          .toLowerCase()
+          .includes(q)
+      );
+    })
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  const filtering = Boolean(q) || status !== 'all' || service !== 'all';
+
+  function reset() {
+    setQuery('');
+    setStatus('all');
+    setService('all');
+  }
 
   const columns: Column<ServiceRequest>[] = [
     {
@@ -41,16 +106,14 @@ export default function AccountRequestsPage() {
     {
       key: 'service',
       header: t('colService'),
-      cell: (r) => services.find((s) => s.slug === r.serviceSlug)?.name[locale] ?? '—',
+      cell: (r) => serviceName(r.serviceSlug) || '—',
     },
     {
       key: 'property',
       header: t('colProperty'),
       tableOnly: true,
       cell: (r) => (
-        <span className="text-ink-secondary">
-          {properties.find((p) => p.id === r.propertyId)?.street ?? '—'}
-        </span>
+        <span className="text-ink-secondary">{propertyOf(r.propertyId)?.street ?? '—'}</span>
       ),
     },
     {
@@ -75,8 +138,85 @@ export default function AccountRequestsPage() {
   return (
     <>
       <PageHeader title={t('title')} />
+
+      {/* Only once there is something to narrow. One row under a search box
+          and two menus is three controls that cannot do anything, and the
+          empty account would open on a toolbar before it had a request. */}
+      {requests.length > 1 && (
+        <Toolbar
+          search={{
+            value: query,
+            onChange: setQuery,
+            label: t('search'),
+            clearLabel: appT('clearSearch'),
+          }}
+          /* Unfiltered the count would restate a number the rows already are;
+             under a filter it is the one thing on screen confirming the search
+             box did anything, which is why the admin queue shows it on the
+             same condition. */
+          count={
+            filtering
+              ? appT('results', { shown: rows.length, total: requests.length })
+              : null
+          }
+          filters={
+            <>
+              <label className="min-w-44">
+                <span className="sr-only">{t('filterStatus')}</span>
+                <Select
+                  dense
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="all">
+                    {t('filterStatus')}: {t('filterAll')}
+                  </option>
+                  {/* Labels out of the status registry, not the enum — the
+                      option and the badge it filters have to read identically
+                      or the customer is matching two vocabularies. */}
+                  {states.map((state) => (
+                    <option key={state} value={state}>
+                      {statusLabel(state)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+
+              {/* The whole catalogue, not only the services this customer has
+                  bought. A menu whose options changed with the account is one
+                  nobody can be told about — and «Möbelmontage» quietly missing
+                  reads as the company not offering it. */}
+              <label className="min-w-44">
+                <span className="sr-only">{t('filterService')}</span>
+                <Select
+                  dense
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                >
+                  <option value="all">
+                    {t('filterService')}: {t('filterAll')}
+                  </option>
+                  {services.map((s) => (
+                    <option key={s.slug} value={s.slug}>
+                      {s.name[locale]}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+
+              {filtering && (
+                <Button size="sm" variant="ghost" onClick={reset}>
+                  <X className="size-3.5" aria-hidden />
+                  {t('filterReset')}
+                </Button>
+              )}
+            </>
+          }
+        />
+      )}
+
       <DataView
-        items={[...requests].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))}
+        items={rows}
         columns={columns}
         getKey={(r) => r.id}
         onSelect={(r) => router.push(`/konto/anfragen/${r.id}`)}
@@ -106,18 +246,50 @@ export default function AccountRequestsPage() {
           );
         }}
         empty={
-          <EmptyState
-            title={t('emptyTitle')}
-            body={t('emptyBody')}
-            action={
-              <Button asChild>
-                <Link href="/anfrage">
-                  {t('emptyAction')}
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              </Button>
-            }
-          />
+          /* Three different nothings, and only one of them is an invitation.
+             "You have never sent us one" offers a new request; a search that
+             missed and a filter that matched nothing must not — offering to
+             start a request because somebody mistyped a reference would be
+             reading their narrowing as a need. The search miss is split off
+             from the filter miss because it can name the thing that failed,
+             and «nichts zu "A-2149"» is usually enough for the reader to spot
+             their own typo. */
+          q ? (
+            <EmptyState
+              icon={Search}
+              title={t('searchEmptyTitle')}
+              body={t('searchEmptyBody', { query })}
+              action={
+                <Button variant="secondary" onClick={reset}>
+                  {t('filterReset')}
+                </Button>
+              }
+            />
+          ) : filtering ? (
+            <EmptyState
+              icon={Filter}
+              title={t('filterEmptyTitle')}
+              body={t('filterEmptyBody')}
+              action={
+                <Button variant="secondary" onClick={reset}>
+                  {t('filterReset')}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              title={t('emptyTitle')}
+              body={t('emptyBody')}
+              action={
+                <Button asChild>
+                  <Link href="/anfrage">
+                    {t('emptyAction')}
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Link>
+                </Button>
+              }
+            />
+          )
         }
       />
     </>

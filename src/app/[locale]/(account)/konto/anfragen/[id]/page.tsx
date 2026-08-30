@@ -3,12 +3,11 @@
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ArrowRight, Clock, FileQuestion } from 'lucide-react';
+import { ArrowRight, CircleSlash, Clock, FileQuestion } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
-import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { ConfirmPanel } from '@/components/ui/confirm-panel';
@@ -39,6 +38,12 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
  * monitor the whole record ran the full width of the window in a single
  * column. It is the same cards the admin console uses now, in the same
  * main/aside split, so a customer and the office are looking at one layout.
+ *
+ * That likeness now goes as far as the rail: it reads left to right across the
+ * top of both screens, under one name in both dictionaries.
+ * Everything on the screen is a white card — the waiting notice and the
+ * withdrawn notice were tinted `Alert`s, which put a coloured box on a screen
+ * whose whole subject is a status the badge in the header already states.
  */
 export default function AccountRequestPage({
   params,
@@ -87,6 +92,10 @@ export default function AccountRequestPage({
   const property = properties.find((p) => p.id === request.propertyId);
   const service = services.find((s) => s.slug === request.serviceSlug);
   const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
+  /* Still something the customer can act on, as opposed to a quote that is now
+     only a record: accepted, declined and expired are all `offer` and none of
+     them is waiting for an answer. */
+  const offerOpen = offer?.status === 'sent' || offer?.status === 'revisionRequested';
 
   /*
    * Open means "still ours to call off". Once a quote has been signed the job
@@ -119,25 +128,94 @@ export default function AccountRequestPage({
       />
 
       {/*
+        Where the request has got to, read across the top the way the office's
+        own screen reads it — same derivation, same orientation, same name.
+        It used to be a vertical rail in the aside, which put "wo steht meine
+        Anfrage?" beside the record instead of above it, and on a phone below
+        the whole thing.
+      */}
+      <Card className="mb-app-section">
+        <CardHeader title={t('progressTitle')} />
+        <CardBody>
+          <Lifecycle
+            orientation="horizontal"
+            label={t('progressTitle')}
+            stages={quoteStages(
+              {
+                request,
+                offer,
+                hold: holds.find((h) => h.offerId === offer?.id),
+                payment: offer ? offerPayment(offer.id, payments) : undefined,
+                booking: offer ? offerBooking(offer.id, bookings) : undefined,
+              },
+              {
+                received: t('stageReceived'),
+                reviewed: t('stageReviewed'),
+                drafted: t('stageDrafted'),
+                sent: t('stageQuoted'),
+                revision: t('stageRevision'),
+                scheduled: t('stageScheduled'),
+                signed: t('stageSigned'),
+                paid: t('stagePaid'),
+                booked: t('stageBooked'),
+                declined: t('stageDeclined'),
+                cancelled: t('stageCancelled'),
+                expired: t('stageExpired'),
+              },
+              /* `full` while the rail was vertical, and it does not survive
+                 the turn: «Freitag, 28. August 2026» under a dot two words
+                 wide wrapped to three lines and pushed the stage labels apart.
+                 `dayDate` is the same date abbreviated — the preset that
+                 exists for exactly this, a whole date in the width of a
+                 heading. */
+              (iso) => format.dateTime(new Date(iso), 'dayDate'),
+            )}
+          />
+        </CardBody>
+      </Card>
+
+      {/*
         The one thing the customer came to find out, above the split rather
         than inside a column of it. In the aside it would sit below the whole
         record on a phone, which is where the quote they are waiting for is
         least use.
+
+        All three states are the same white card now. Two of them used to be
+        tinted `Alert`s and the third a card, so the slot that answers one
+        question — is my quote here? — changed shape depending on the answer,
+        and the two tinted ones read as warnings about something rather than as
+        the status of the thing.
       */}
       {cancelled ? (
-        <Alert tone="neutral" className="mb-app-section" title={t('cancelledTitle')}>
-          <p>{t('cancelledBody')}</p>
-          <Button asChild variant="secondary" size="sm" className="mt-3">
-            <Link href="/anfrage">{t('cancelledAction')}</Link>
-          </Button>
-        </Alert>
+        <Card className="mb-app-section">
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <CircleSlash className="size-4 text-ink-tertiary" aria-hidden />
+                {t('cancelledTitle')}
+              </span>
+            }
+            description={t('cancelledBody')}
+            actions={
+              <Button asChild variant="secondary">
+                <Link href="/anfrage">{t('cancelledAction')}</Link>
+              </Button>
+            }
+          />
+        </Card>
       ) : offer ? (
         <Card className="mb-app-section">
           <CardHeader
             title={t('offerTitle')}
-            description={t('offerBody')}
+            /* «Die Offerte liegt bereit» was printed over every quote this
+               request ever had, including the ones that had run out or been
+               turned down — so an expired quote invited the customer to go and
+               accept it. The quote is still worth opening, which is why the
+               button stays; what changes is the sentence that used to promise
+               it was live. */
+            description={offerOpen ? t('offerBody') : t('offerClosedBody')}
             actions={
-              <Button asChild>
+              <Button asChild variant={offerOpen ? 'primary' : 'secondary'}>
                 <Link href={`/offerte/${offer.id}`}>
                   {t('offerAction')}
                   <ArrowRight className="size-4" aria-hidden />
@@ -147,16 +225,23 @@ export default function AccountRequestPage({
           />
         </Card>
       ) : (
-        <Alert
-          tone="info"
-          icon={Clock}
-          className="mb-app-section"
-          title={t('waitingTitle')}
-        >
-          {t('waitingBody', { hours: settings.responseTimeHours })}
-        </Alert>
+        <Card className="mb-app-section">
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <Clock className="size-4 text-ink-tertiary" aria-hidden />
+                {t('waitingTitle')}
+              </span>
+            }
+            description={t('waitingBody', { hours: settings.responseTimeHours })}
+          />
+        </Card>
       )}
 
+      {/* The main column keeps its seven of twelve whether or not the aside
+          has anything in it: the withdraw card only exists while the request
+          is still open, and a record that reflowed to full width the moment it
+          was answered would read as a different screen. */}
       <div className="gap-app-section grid lg:grid-cols-12">
         <div className="space-y-app-section lg:col-span-7">
           <Card>
@@ -217,7 +302,15 @@ export default function AccountRequestPage({
             </Card>
           )}
 
-          {cancellable && (
+        </div>
+
+        {/* The rail used to hold this column and the withdraw card sat under
+            the record, which put the one irreversible thing on the screen at
+            the end of a scroll through addresses and floor areas. It is beside
+            the record now, the way the panel keeps its own actions beside the
+            request rather than after it. */}
+        {cancellable && (
+          <aside className="lg:col-span-5">
             <Card>
               <CardHeader
                 title={t('cancelAction')}
@@ -267,47 +360,8 @@ export default function AccountRequestPage({
                 )}
               </CardBody>
             </Card>
-          )}
-        </div>
-
-        {/* `timelineTitle` had been defined in all four locales since wave 8 and
-            rendered by nothing. Same stages as the panel, from the same
-            derivation — two answers to "where is this?" would be worse than the
-            none the customer had. */}
-        <aside className="lg:col-span-5">
-          <Card>
-            <CardHeader title={t('timelineTitle')} />
-            <CardBody>
-              <Lifecycle
-                label={t('timelineTitle')}
-                stages={quoteStages(
-                  {
-                    request,
-                    offer,
-                    hold: holds.find((h) => h.offerId === offer?.id),
-                    payment: offer ? offerPayment(offer.id, payments) : undefined,
-                    booking: offer ? offerBooking(offer.id, bookings) : undefined,
-                  },
-                  {
-                    received: t('stageReceived'),
-                    reviewed: t('stageReviewed'),
-                    drafted: t('stageDrafted'),
-                    sent: t('stageQuoted'),
-                    revision: t('stageRevision'),
-                    scheduled: t('stageScheduled'),
-                    signed: t('stageSigned'),
-                    paid: t('stagePaid'),
-                    booked: t('stageBooked'),
-                    declined: t('stageDeclined'),
-                    cancelled: t('stageCancelled'),
-                    expired: t('stageExpired'),
-                  },
-                  (iso) => format.dateTime(new Date(iso), 'full'),
-                )}
-              />
-            </CardBody>
-          </Card>
-        </aside>
+          </aside>
+        )}
       </div>
     </div>
   );

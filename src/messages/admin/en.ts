@@ -410,7 +410,7 @@ export const adminEn: typeof adminDe = {
     historyCreated: 'Received',
     historyOpened: 'Opened',
     historyReplied: 'Answered',
-    lifecycleTitle: 'Lifecycle',
+    lifecycleTitle: 'Request progress',
     expandAll: 'Open all',
     collapseAll: 'Close all',
     photosCount: '{n, plural, =0 {No photos} one {# photo} other {# photos}}',
