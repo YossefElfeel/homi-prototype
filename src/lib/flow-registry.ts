@@ -135,6 +135,16 @@ export const FLOWS: Flow[] = [
         '/admin/anfragen/req_1',
         'Received → In review → Quote sent → Answer, with timestamps. The same derivation on the customer side, so the two cannot answer differently',
       ),
+      added(
+        'The customer reads the same rail, under the same name',
+        '/konto/anfragen/req_3',
+        'It was a vertical list in the sidebar called «Verlauf» while the panel called it «Ablauf» — one derivation, two names and two shapes. Both screens now read it left to right across the top as «Fortschritt der Anfrage»',
+      ),
+      added(
+        'Search your own requests, and filter them by status and service',
+        '/konto/anfragen',
+        'The account had two requests and both said «Offerte versendet», so nine declared states were reachable from the office side and none from the customer’s. It carries twenty now — one in each state, plus two years of settled history — and the same toolbar the queue has: reference, service or address in the search box, then the two menus',
+      ),
     ],
     exits: [
       ok('Sent', '/anfrage/gesendet'),

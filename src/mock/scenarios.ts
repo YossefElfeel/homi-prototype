@@ -1679,13 +1679,188 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /*
+   * The demo account's own request history — one row per state it can be in.
+   *
+   * cus_2 had two requests, both `offerSent`, so screen 36 was a two-row list
+   * in which every badge said the same thing. The nine states a customer's
+   * request can reach were all declared, all coloured and all reachable from
+   * the *office* side — the queue above stages every one of them — and none of
+   * them was ever visible from the account the demo signs in as. A status
+   * filter over two identical rows filters nothing, and «Abgelaufen» was a
+   * colour in the design system rather than something a reviewer could open.
+   *
+   * `draft` is deliberately not here: it belongs to the office, and
+   * `useAccount` filters it out of the customer's own list for that reason.
+   * `offerSent` is not here either — A-2479 and A-2505 already carry it.
+   *
+   * Neither of the two services cus_2 has a plan for is used on the address
+   * that plan covers (unterhaltsreinigung on prp_2, bueroreinigung on prp_2b):
+   * a covered quote skips the gateway, and these exist to show the states, not
+   * to argue about coverage.
+   */
+  const accountRequests: ServiceRequest[] = [
+    {
+      id: 'req_acc_new',
+      reference: 'A-2510',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'einmalreinigung',
+      addOnIds: ['add_backofen'],
+      preferred: { date: iso(days(now, 7)), band: 'morning', flexible: false },
+      photoIds: [],
+      customerNote: 'After the party on Saturday — the kitchen and the bathroom are the problem.',
+      /* No `openedAt`: nobody has read it yet. That is the whole difference
+         between this row and the one under it, and the customer's rail draws
+         it as the second dot still unlit. */
+      status: 'new',
+      createdAt: iso(new Date(now.getTime() - 5 * 3_600_000)),
+    },
+    {
+      id: 'req_acc_review',
+      reference: 'A-2511',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      addOnIds: ['add_fenster'],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'A full clean through before the winter, please.',
+      status: 'inReview',
+      createdAt: iso(new Date(now.getTime() - 20 * 3_600_000)),
+      openedAt: iso(new Date(now.getTime() - 14 * 3_600_000)),
+    },
+    {
+      id: 'req_acc_revision',
+      reference: 'A-2512',
+      customerId: 'cus_2',
+      propertyId: 'prp_2b',
+      serviceSlug: 'fensterreinigung',
+      addOnIds: [],
+      windowCount: 12,
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Could you price the frames as a separate line?',
+      status: 'revisionRequested',
+      createdAt: iso(days(now, -6)),
+      openedAt: iso(days(now, -6)),
+      respondedAt: iso(days(now, -5)),
+    },
+    {
+      id: 'req_acc_accepted',
+      reference: 'A-2513',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'umzugsreinigung',
+      addOnIds: ['add_backofen', 'add_schraenke'],
+      preferred: { date: iso(days(now, 5)), band: 'morning', flexible: false },
+      photoIds: [],
+      customerNote: 'Handover is at the end of the month and the management is strict.',
+      status: 'accepted',
+      createdAt: iso(days(now, -20)),
+      openedAt: iso(days(now, -20)),
+      respondedAt: iso(days(now, -18)),
+    },
+    {
+      id: 'req_acc_declined',
+      reference: 'A-2514',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Before the new tenants move in.',
+      status: 'rejected',
+      createdAt: iso(days(now, -14)),
+      openedAt: iso(days(now, -14)),
+      respondedAt: iso(days(now, -11)),
+    },
+    {
+      id: 'req_acc_expired',
+      reference: 'A-2515',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'moebelmontage',
+      addOnIds: [],
+      furniturePieces: 4,
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'Two wardrobes plus a bed. The instructions are with them.',
+      status: 'expired',
+      createdAt: iso(days(now, -40)),
+      openedAt: iso(days(now, -40)),
+      respondedAt: iso(days(now, -39)),
+    },
+    {
+      id: 'req_acc_withdrawn',
+      reference: 'A-2516',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'einmalreinigung',
+      addOnIds: [],
+      preferred: { flexible: true },
+      photoIds: [],
+      customerNote: 'It would be for next week — is that possible at short notice?',
+      /* Withdrawn before a quote was ever written, which is the common case
+         and the one with no offer to open afterwards. */
+      status: 'cancelledByCustomer',
+      internalNote: 'Withdrawn: did it themselves in the end.',
+      createdAt: iso(days(now, -9)),
+      openedAt: iso(days(now, -9)),
+      respondedAt: iso(days(now, -8)),
+    },
+    {
+      id: 'req_acc_called_off',
+      reference: 'A-2517',
+      customerId: 'cus_2',
+      propertyId: 'prp_2b',
+      serviceSlug: 'grundreinigung',
+      addOnIds: [],
+      preferred: { date: iso(days(now, -1)), band: 'afternoon', flexible: false },
+      photoIds: [],
+      customerNote: 'The whole ground floor, before the new tenants arrive.',
+      status: 'cancelledByCompany',
+      internalNote: 'Called off by us: the only date that worked for them fell through.',
+      createdAt: iso(days(now, -11)),
+      openedAt: iso(days(now, -11)),
+      respondedAt: iso(days(now, -3)),
+    },
+    /*
+     * Two years of settled history underneath the nine live states above.
+     *
+     * The states matrix proved the badges; it did not make the list a list.
+     * Ten rows fit on one page, every one of them from the last six weeks and
+     * nine of them on the same address — so a search box would have had
+     * nothing to sift and the service menu would have been a filter over four
+     * services with one row each. cus_2 has held a plan for over a year, and a
+     * customer of that age has a back catalogue.
+     *
+     * All settled on purpose: `new` and `inReview` are the office's open work
+     * and every one of them lands in the queue on /admin/anfragen with a §4.1
+     * deadline attached. Ten more would have put ten fresh rows in front of
+     * the owner to stock a customer's search box, which is the tail wagging
+     * the dog.
+     */
+    accountHistory(now, { id: 'req_acc_h1', ref: 'A-2441', service: 'fensterreinigung', status: 'expired', agedDays: 430, note: 'The lake-side windows, inside and out.' }),
+    accountHistory(now, { id: 'req_acc_h2', ref: 'A-2442', service: 'grundreinigung', status: 'rejected', agedDays: 380, office: true, note: 'The whole first floor once, before the audit.' }),
+    accountHistory(now, { id: 'req_acc_h3', ref: 'A-2443', service: 'einmalreinigung', status: 'cancelledByCustomer', agedDays: 320, note: 'Guests over the weekend, ideally Friday.', internal: 'Withdrawn: visit postponed.' }),
+    accountHistory(now, { id: 'req_acc_h4', ref: 'A-2444', service: 'moebelmontage', status: 'accepted', agedDays: 260, note: 'A wardrobe and a desk, both flat-packed.' }),
+    accountHistory(now, { id: 'req_acc_h5', ref: 'A-2445', service: 'umzugsreinigung', status: 'expired', agedDays: 210, office: true, note: 'We are giving up the back office at the end of the quarter.' }),
+    accountHistory(now, { id: 'req_acc_h6', ref: 'A-2446', service: 'bueroreinigung', status: 'cancelledByCompany', agedDays: 160, office: true, note: 'An extra visit in the week of the trade fair.', internal: 'Called off by us: the fair week was already fully booked.' }),
+    accountHistory(now, { id: 'req_acc_h7', ref: 'A-2447', service: 'fensterreinigung', status: 'rejected', agedDays: 120, office: true, note: 'The glass front towards the street.' }),
+    accountHistory(now, { id: 'req_acc_h8', ref: 'A-2448', service: 'einmalreinigung', status: 'cancelledByCustomer', agedDays: 95, note: 'Once through after the painters.', internal: 'Withdrawn: the painters ran late.' }),
+    accountHistory(now, { id: 'req_acc_h9', ref: 'A-2449', service: 'grundreinigung', status: 'expired', agedDays: 70, note: 'Kitchen and both cellars.' }),
+    accountHistory(now, { id: 'req_acc_h10', ref: 'A-2450', service: 'moebelmontage', status: 'cancelledByCustomer', agedDays: 55, office: true, note: 'Six desks for the new room.', internal: 'Withdrawn: the furniture arrived pre-assembled.' }),
+  ];
+
   const allProperties = [...properties, ...extraProperties()];
   const quoteFor = (
     id: string,
     requestId: string,
     opts: Parameters<typeof makeOffer>[4],
   ) => {
-    const request = quoteRequests.concat(queue).find((r) => r.id === requestId)!;
+    const request = quoteRequests.concat(queue, accountRequests).find((r) => r.id === requestId)!;
     return makeOffer(id, request, allProperties.find((p) => p.id === request.propertyId)!, now, opts);
   };
 
@@ -1744,6 +1919,128 @@ function baseData(now: Date): DataSet {
     /* Covered by the plan rather than the balance: nothing to charge, and the
        detail says which plan and how many skips are left on it. */
     quoteFor('off_plan', 'req_q_plan', { issuedDaysAgo: 1, validDays: 14 }),
+  ];
+
+  /*
+   * The quotes behind the account history above.
+   *
+   * Four of the eight states are only true if a quote exists to be in them —
+   * a request cannot be `revisionRequested` with nothing to revise, and one
+   * marked `expired` with no offer draws a rail that stops at "wird geprüft"
+   * and then dies, which reads as the office having simply given up. The four
+   * that end without a quote (`new`, `inReview`, withdrawn, called off before
+   * one was written) deliberately have none.
+   */
+  const accountOffers: Offer[] = [
+    quoteFor('off_acc_revision', 'req_acc_revision', {
+      issuedDaysAgo: 5,
+      validDays: 14,
+      status: 'revisionRequested',
+    }),
+    {
+      ...quoteFor('off_acc_accepted', 'req_acc_accepted', {
+        issuedDaysAgo: 18,
+        validDays: 14,
+        status: 'accepted',
+      }),
+      /* No `proposedSlots`/`confirmedSlot`: cus_2 is a returning customer, so
+         they take a free slot at checkout rather than proposing three dates
+         and waiting for the office to pick one — that is the first-job path,
+         and A-2501/A-2502 already stage it. The rail reads the date off the
+         booking, which is where this one was actually decided. */
+      signedAt: iso(days(now, -17)),
+    },
+    /* The customer said no to the price. `declineOffer` writes exactly this
+       pair — offer `rejected`, request `rejected` — so the seed says what the
+       action would have said. */
+    quoteFor('off_acc_declined', 'req_acc_declined', {
+      issuedDaysAgo: 12,
+      validDays: 10,
+      status: 'rejected',
+    }),
+    /* Issued 39 days ago on a 14-day validity: the date did the work, nobody
+       had to. */
+    quoteFor('off_acc_expired', 'req_acc_expired', {
+      issuedDaysAgo: 39,
+      validDays: 14,
+      status: 'expired',
+    }),
+    /* Cancelling a request takes its live quote down with it — the store turns
+       a `sent` offer into `rejected` on the way out, and a seed that left this
+       one `sent` would put a signable quote on /konto/offerten for a job the
+       office had already called off. */
+    quoteFor('off_acc_called_off', 'req_acc_called_off', {
+      issuedDaysAgo: 8,
+      validDays: 14,
+      status: 'rejected',
+    }),
+    /*
+     * The back catalogue's quotes.
+     *
+     * Six of the ten settled rows carry one, and it is not decoration: with no
+     * offer, `quoteStages` lights "Offerte erhalten" — the status alone is
+     * enough for that — while leaving "Offerte wird erstellt" before it grey,
+     * so the rail draws a hole in the middle of itself. The four that carry
+     * none are the ones called off before anybody wrote a price, where the
+     * rail correctly stops at "wird geprüft".
+     */
+    quoteFor('off_acc_h1', 'req_acc_h1', { issuedDaysAgo: 429, validDays: 14, status: 'expired' }),
+    quoteFor('off_acc_h2', 'req_acc_h2', { issuedDaysAgo: 379, validDays: 14, status: 'rejected' }),
+    {
+      ...quoteFor('off_acc_h4', 'req_acc_h4', {
+        issuedDaysAgo: 259,
+        validDays: 14,
+        status: 'accepted',
+      }),
+      signedAt: iso(days(now, -258)),
+    },
+    quoteFor('off_acc_h5', 'req_acc_h5', { issuedDaysAgo: 209, validDays: 14, status: 'expired' }),
+    quoteFor('off_acc_h7', 'req_acc_h7', { issuedDaysAgo: 119, validDays: 14, status: 'rejected' }),
+    quoteFor('off_acc_h9', 'req_acc_h9', { issuedDaysAgo: 69, validDays: 14, status: 'expired' }),
+  ];
+
+  /* The jobs A-2513 and A-2444 became. Without them the accepted requests'
+     rails stop one dot short of the thing the customer actually wanted to know
+     — whether it is in the calendar. */
+  const accountBookings: Booking[] = [
+    {
+      id: 'bkg_acc_accepted',
+      reference: 'B-1056',
+      offerId: 'off_acc_accepted',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'umzugsreinigung',
+      start: iso(at(openDay(now, 5), 8)),
+      duration: 300,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -17)), kind: 'created', label: 'Booked and paid' }],
+    },
+    /* Eight months back and finished. `closed` rather than `completed`: the
+       job, its invoice and its money are all long settled, and a job still
+       sitting on `completed` after eight months would read as one nobody ever
+       got round to billing. */
+    {
+      id: 'bkg_acc_h4',
+      reference: 'B-1057',
+      offerId: 'off_acc_h4',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'moebelmontage',
+      start: iso(at(pastOpenDay(now, -252), 13)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'closed',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -258)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(days(now, -252)), kind: 'completed', label: 'Work finished' },
+        { at: iso(days(now, -245)), kind: 'closed', label: 'Closed' },
+      ],
+    },
   ];
 
   const quoteBookings: Booking[] = [
@@ -1878,6 +2175,28 @@ function baseData(now: Date): DataSet {
       at: iso(days(now, -4)),
       status: 'refunded',
       gatewayRef: 'mock_CD118R',
+    },
+    /* What A-2513 was settled with. Found by id rather than by index into
+       `accountOffers` — the neighbours above index into `quoteOffers`, and one
+       insertion in the middle of that array silently repoints every one of
+       them at somebody else's total. */
+    {
+      id: 'pay_acc_accepted',
+      offerId: 'off_acc_accepted',
+      amount: offerTotal(accountOffers.find((o) => o.id === 'off_acc_accepted')!),
+      method: 'card',
+      at: iso(days(now, -17)),
+      status: 'succeeded',
+      gatewayRef: 'mock_CD513',
+    },
+    {
+      id: 'pay_acc_h4',
+      offerId: 'off_acc_h4',
+      amount: offerTotal(accountOffers.find((o) => o.id === 'off_acc_h4')!),
+      method: 'twint',
+      at: iso(days(now, -258)),
+      status: 'succeeded',
+      gatewayRef: 'mock_TW444',
     },
     /*
      * The one payment in the seed that settles an *invoice* rather than a
@@ -2138,9 +2457,9 @@ function baseData(now: Date): DataSet {
     ...EMPTY,
     customers: [...customers, ...extraCustomers(now)],
     properties: [...properties, ...extraProperties()],
-    requests: [...queue, ...quoteRequests, ...requests],
-    offers: [...offers, ...quoteOffers],
-    bookings: [...bookings, ...quoteBookings],
+    requests: [...queue, ...quoteRequests, ...accountRequests, ...requests],
+    offers: [...offers, ...quoteOffers, ...accountOffers],
+    bookings: [...bookings, ...quoteBookings, ...accountBookings],
     events,
     payments,
     subscriptions,
@@ -3777,6 +4096,56 @@ function queueRequest(
     openedAt: read ? createdAt : undefined,
     respondedAt: read && input.agedDays != null ? iso(days(now, -Math.max(1, input.agedDays - 1))) : undefined,
     planIntent: input.intent,
+  };
+}
+
+/**
+ * A settled request in the demo account's back catalogue.
+ *
+ * `queueRequest` cannot do this one: it hangs every request off a `cus_m*`
+ * household, and these belong to cus_2 — the account the demo signs in as, and
+ * the only one whose list anybody looks at. The nine live states above stay
+ * written out in full, because each of them stages one state with its own
+ * timing and its own reason; these are the volume behind them, and ten more
+ * object literals would have buried the nine that matter.
+ *
+ * The answer always lands the day after the request, which is close enough:
+ * nothing in this range is old enough to be interesting and new enough to be
+ * measured, and §4.1's deadline only applies to requests still open.
+ */
+function accountHistory(
+  now: Date,
+  input: {
+    id: string;
+    ref: string;
+    service: ServiceSlug;
+    status: RequestStatus;
+    agedDays: number;
+    /** cus_2 holds a flat and an office. Office cleaning can only be the second. */
+    office?: boolean;
+    note?: string;
+    internal?: string;
+  },
+): ServiceRequest {
+  const createdAt = iso(days(now, -input.agedDays));
+
+  return {
+    id: input.id,
+    reference: input.ref,
+    customerId: 'cus_2',
+    propertyId: input.office ? 'prp_2b' : 'prp_2',
+    serviceSlug: input.service,
+    addOnIds: [],
+    windowCount: input.service === 'fensterreinigung' ? 10 : undefined,
+    furniturePieces: input.service === 'moebelmontage' ? 3 : undefined,
+    preferred: { flexible: true },
+    photoIds: [],
+    customerNote: input.note,
+    internalNote: input.internal,
+    status: input.status,
+    createdAt,
+    openedAt: createdAt,
+    respondedAt: iso(days(now, -(input.agedDays - 1))),
   };
 }
 
