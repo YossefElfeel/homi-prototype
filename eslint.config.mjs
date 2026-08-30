@@ -21,7 +21,16 @@ const config = [
     },
   },
   {
-    ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts'],
+    // Each agent worktree under .claude/ carries its own .next, and the
+    // '.next/**' pattern only reaches the one at the repo root. Without this
+    // entry `npm run lint` linted those generated chunks as source and
+    // reported 18k+ problems, burying every real finding in src.
+    ignores: [
+      '.next/**',
+      '.claude/worktrees/**',
+      'node_modules/**',
+      'next-env.d.ts',
+    ],
   },
 ];
 
