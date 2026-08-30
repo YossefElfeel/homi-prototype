@@ -372,6 +372,38 @@ function baseData(now: Date): DataSet {
       },
     },
     {
+      /*
+       * The address with no plan on it — and that is the whole point of it.
+       *
+       * Buying a plan from the account is one address short of impossible
+       * without this. The store allows one plan per property, cus_2 is the
+       * demo account, and both of its addresses already carry one — so the
+       * subscribe flow on screen 43 would have opened straight onto "every one
+       * of your addresses already has a plan" in the default scenario, and no
+       * scenario anywhere reaches it: `fresh` has no customers at all.
+       *
+       * A third address is also the honest case. Somebody who took a plan for
+       * the flat and one for the office is exactly who buys a third, and the
+       * picker has something to actually pick between: two rows blocked with
+       * the reason on them, one row free.
+       */
+      id: 'prp_2c',
+      customerId: 'cus_2',
+      label: 'Attika Stäfa',
+      street: 'Kirchgasse 3',
+      postcode: '8712',
+      city: 'Stäfa',
+      kind: 'apartment',
+      area: 118,
+      rooms: 4.5,
+      bathrooms: 2,
+      floor: 4,
+      hasElevator: true,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: { method: 'customer-present', contactPhone: '+41 79 000 00 02' },
+    },
+    {
       id: 'prp_3',
       customerId: 'cus_3',
       label: 'Old flat',
@@ -573,6 +605,36 @@ function baseData(now: Date): DataSet {
       status: 'scheduled',
       photoIds: [],
       history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Plan visit scheduled' }],
+    },
+
+    /*
+     * The demo account's next plan visit — the one "skip a visit" acts on.
+     *
+     * cus_2 holds two plans and had no scheduled visit against either of them.
+     * Every plan booking in the seed belonged to sub_1, which is cus_1, a
+     * customer nobody can log in as. So the skip control on screen 43 had
+     * nothing to cancel in the scenario a reviewer opens on: pressing it spent
+     * one of the month's free skips, cancelled nothing, and reported success.
+     *
+     * The screen refuses to offer the button with no visit scheduled now, which
+     * fixes the false success and would have left the control permanently
+     * unreachable instead. Hence this: a plan visit, this week, on the address
+     * whose plan the account screen shows first.
+     */
+    {
+      id: 'bkg_plan_2',
+      reference: 'B-1058',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'unterhaltsreinigung',
+      subscriptionId: 'sub_2',
+      start: iso(at(days(now, 4), 9, 30)),
+      duration: 180,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'scheduled',
+      photoIds: [],
+      history: [{ at: iso(days(now, -10)), kind: 'created', label: 'Plan visit scheduled' }],
     },
 
     /*

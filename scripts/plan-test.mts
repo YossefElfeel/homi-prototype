@@ -34,7 +34,14 @@ const memory = new Map<string, string>();
 const { useStore } = await import('../src/mock/store.ts');
 import { SEED_PLANS } from '../src/mock/seed.ts';
 import { buildScenario } from '../src/mock/scenarios.ts';
-import { cancelBlock, skipsUsedThisMonth, subscriptionState, visitsLeft } from '../src/lib/plan-facts.ts';
+import {
+  cancelBlock,
+  nextPlanVisit,
+  skipsUsedThisMonth,
+  subscriptionState,
+  upgradeQuote,
+  visitsLeft,
+} from '../src/lib/plan-facts.ts';
 import { requestCoverage } from '../src/lib/offer-facts.ts';
 
 let passed = 0;
@@ -283,6 +290,139 @@ function reset() {
     requestCoverage(request, [ended], [plan], NOW).kind === 'payable',
   );
   check('and it reads as expired', subscriptionState(ended, NOW) === 'expired');
+}
+
+/* ---------------------------------------- buying one from the account itself */
+{
+  reset();
+  /* The demo account's third address, which exists so this is reachable at
+     all: cus_2's other two both carry a plan, and the store allows one per
+     property. Without a free address the account's buy flow could only ever
+     render its refusal. */
+  const free = useStore
+    .getState()
+    .data.properties.filter(
+      (p) =>
+        p.customerId === 'cus_2' &&
+        !useStore
+          .getState()
+          .data.subscriptions.some(
+            (s) => s.propertyId === p.id && s.status !== 'cancelled' && new Date(s.endDate) > NOW,
+          ),
+    );
+  check('the demo customer has an address with no plan on it', free.length > 0, `${free.length}`);
+
+  const id = useStore.getState().openSubscription(
+    { customerId: 'cus_2', propertyId: free[0]!.id, planId: 'pln_premium', method: 'card' },
+    NOW,
+  );
+  check('and can buy a plan for it without leaving the account', id !== null);
+  check(
+    'the customer then holds three',
+    useStore.getState().data.subscriptions.filter((s) => s.customerId === 'cus_2').length === 3,
+  );
+}
+
+/* ------------------------------------------------- what a skip actually does */
+{
+  reset();
+  const s = useStore.getState();
+  const sub = s.data.subscriptions.find((x) => x.id === 'sub_2')!;
+  const plan = s.plans.find((p) => p.id === sub.planId)!;
+  const target = nextPlanVisit(sub.id, s.data.bookings, NOW);
+
+  const usedBefore = sub.visitsUsed;
+  useStore.getState().skipNextVisit(sub.id, NOW);
+  const after = useStore.getState().data.subscriptions.find((x) => x.id === sub.id)!;
+
+  /* The claim the screen now makes in as many words, checked rather than
+     believed: the visit is not deducted, so a skipped visit is still owed. */
+  check('a skip does not spend a visit', after.visitsUsed === usedBefore);
+  check('the package still owes the same number', visitsLeft(after, plan) === visitsLeft(sub, plan));
+  check('it counts against this month allowance', skipsUsedThisMonth(after, NOW) === 1);
+
+  if (target) {
+    const booking = useStore.getState().data.bookings.find((b) => b.id === target.id);
+    check('and it cancels the visit the screen named', booking?.status === 'cancelled');
+  } else {
+    check('there was a scheduled visit to skip', false, 'seed has none for sub_2');
+  }
+}
+
+/* ------------------------------------------------------------ moving up a plan */
+{
+  reset();
+  const before = useStore.getState().data.subscriptions.find((x) => x.id === 'sub_2')!;
+  const from = useStore.getState().plans.find((p) => p.id === before.planId)!;
+  const to = useStore.getState().plans.find((p) => p.id === 'pln_premium')!;
+  const quote = upgradeQuote(before, from, to);
+
+  const result = useStore
+    .getState()
+    .upgradeSubscription({ id: 'sub_2', toPlanId: 'pln_premium', method: 'card' }, NOW);
+  check('a running plan can move up', !('blocked' in result));
+
+  const after = useStore.getState().data.subscriptions.find((x) => x.id === 'sub_2')!;
+  check('it is the same subscription, not a second one', after.reference === before.reference);
+  check('on the same address', after.propertyId === before.propertyId);
+  check('carrying the new plan', after.planId === 'pln_premium');
+  check('with the visits reset, because a whole package was bought', after.visitsUsed === 0);
+  check('and a fresh term', after.endDate.startsWith('2027-08-17'), after.endDate);
+  check(
+    'the move is on the record',
+    after.history.some((e) => e.kind === 'upgraded'),
+  );
+
+  const invoice = useStore.getState().data.invoices.find((i) => i.id === after.invoiceId);
+  check('it raises an invoice', Boolean(invoice));
+  check('the invoice points back at the plan', invoice?.subscriptionId === 'sub_2');
+  check('it charges the new package', invoice?.lines[0]?.unitPrice === to.price);
+  /* The credit is a line of its own, so the customer can see why the amount is
+     not the price on the card they clicked. */
+  check('and credits the unused visits', invoice?.lines[1]?.unitPrice === -quote.credit);
+  check(
+    'the total is the difference',
+    invoice?.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0) === quote.due,
+  );
+  check(
+    'the payment is for that difference',
+    useStore.getState().data.payments.some((p) => p.invoiceId === invoice?.id && p.amount === quote.due),
+  );
+  /* Not invented: the credit is the customer's own receipt divided by what it
+     bought, times what they have not used. */
+  check(
+    'the credit is the unused visits at what they paid per visit',
+    quote.credit === Math.round(visitsLeft(before, from) * (from.price / from.includedVisits) * 20) / 20,
+    String(quote.credit),
+  );
+}
+
+/* ---------------------------------------------------- what may not move up */
+{
+  reset();
+  const sideways = useStore
+    .getState()
+    .upgradeSubscription({ id: 'sub_2', toPlanId: 'pln_buero_standard', method: 'card' }, NOW);
+  check(
+    'another service is not an upgrade',
+    'blocked' in sideways && sideways.blocked === 'notAnUpgrade',
+  );
+
+  const down = useStore
+    .getState()
+    .upgradeSubscription({ id: 'sub_1', toPlanId: 'pln_basic', method: 'card' }, NOW);
+  check('nor is a smaller package', 'blocked' in down && down.blocked === 'notAnUpgrade');
+
+  const retired = useStore
+    .getState()
+    .upgradeSubscription({ id: 'sub_2', toPlanId: 'pln_buero', method: 'card' }, NOW);
+  check('a retired package cannot be bought', 'blocked' in retired && retired.blocked === 'retired');
+
+  useStore.getState().pauseSubscription('sub_2', NOW);
+  const paused = useStore
+    .getState()
+    .upgradeSubscription({ id: 'sub_2', toPlanId: 'pln_premium', method: 'card' }, NOW);
+  check('a paused plan is resumed first', 'blocked' in paused && paused.blocked === 'notActive');
 }
 
 /* ------------------------------------------------------------ plan CRUD */

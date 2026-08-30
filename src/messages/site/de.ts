@@ -193,6 +193,7 @@ export const siteDe = {
     title: 'Regelmässig reinigen lassen, ohne jedes Mal neu zu planen',
     lead: 'Ein Paket Einsätze, einmal bezahlt, ein Jahr gültig. Den Termin schlagen wir vor, verschieben können Sie ihn jederzeit.',
     recommended: 'Unsere Empfehlung',
+    yourPlan: 'Ihr Abo',
     wasPrice: 'Einzeln gebucht:',
     saveBadge: '{percent}% sparen',
     priceNote: '{visits} Einsätze · {months} Monate gültig · einmalig zahlbar',

@@ -595,6 +595,11 @@ export const FLOWS: Flow[] = [
       added('Edit a plan', '/admin/abos/pln_basic/bearbeiten'),
       ok('The plans page on the website', '/abos'),
       added(
+        'Bought from the account itself',
+        '/konto/abo',
+        'Every route to a plan led out of the account: the empty state to the marketing page, the marketing page into the six-step request wizard — for somebody whose address and card are both already on file. The catalogue is on the plan screen now and the purchase is three answers: which address, which saved method, confirm',
+      ),
+      added(
         'A plan out of a paid quote',
         '/admin/abos/pln_basic',
         'The real break: a visitor picks a plan, the wish lands on the request, the discount on the quote — and then nobody created a plan. Anyone who took one out on the website had none afterwards',
@@ -616,7 +621,16 @@ export const FLOWS: Flow[] = [
         '/admin/abos/pln_basic/sub_2',
         'A plan used to cover everything it touched for a year. A visit is counted on approval, and after that it is gone',
       ),
-      ok('Skip a visit', '/konto/abo'),
+      added(
+        'Skip a visit',
+        '/konto/abo',
+        'It worked and said nothing about what it does. The section carried only the allowance, so nothing told the customer that the visit is not deducted, that a booking gets cancelled, or which one — and this is the only control in the account that calls off a job. It also offered itself with nothing scheduled, which spent a free skip on a visit that did not exist',
+      ),
+      added(
+        'Compare every plan without leaving the account',
+        '/konto/abo',
+        'The screen was a receipt: what was bought, nothing about what else is sold. The catalogue below it is the marketing page comparison, same rows, with the reader own column marked — and the cards read stacked or side by side',
+      ),
       added('Pause and resume', '/admin/abos/pln_basic/sub_2'),
     ],
     exits: [
@@ -635,9 +649,18 @@ export const FLOWS: Flow[] = [
         '/admin/abos/pln_basic/sub_2',
         'Only while no visit has taken place and the withdrawal period is still running. The rule lives in the store, not just in the disabled button — otherwise a URL gets round it',
       ),
+      added(
+        'Moved up a plan',
+        '/konto/abo',
+        'The old exit was a row of links to /kontakt?abo=<id> — a contact form that never read the parameter, so the plan the customer picked was lost on arrival. It is the same subscription now: new package, term restarted, visits reset, and an invoice carrying the credit as its own line. The credit is the unused visits at what they paid per visit on the old plan — arithmetic off their own receipt, not a rate we chose, but §21.7 is still open on whether the business credits them at all',
+      ),
       open(
-        'Switch plan',
-        'The customer sees the larger plan and writes to us; it is billed by hand. §21.7 says "upgrade at once, downgrade at the next term" — which, for a package paid up front, means offsetting the visits already paid for, and the formula for that is not decided. Inventing it would mean calculating money nobody has confirmed',
+        'Move down a plan',
+        '§21.7 puts a downgrade at the next term, and nothing here schedules a change for a future date — the store applies what it is told immediately. Building it would mean a pending change on the subscription, which is a second thing that has to be true at midnight and the prototype has no nightly run. The screen says so and names the office',
+      ),
+      open(
+        'Skip beyond the free allowance',
+        'The plans FAQ says a further cancellation counts as a delivered visit, and no code path spends a visit that way. So the button is simply absent once the month allowance is gone and the copy sends the customer to the office. Building it means deciding whether a customer may spend a package visit on a cancellation without anybody being there — a business decision, not a screen',
       ),
     ],
   },

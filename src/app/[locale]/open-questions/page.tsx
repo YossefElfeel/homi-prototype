@@ -146,7 +146,7 @@ const ENTRIES: Entry[] = [
     ref: '§21.7',
     question: 'Changing plan mid-commitment?',
     decision:
-      'PARTLY OPEN. The rule stands — upgrade immediately, downgrade from the next term — and the customer can now see the larger plans and ask for one, which they previously could not do at all. What is not built is the money: on a package bought up front, an upgrade has to credit the visits already paid for, and nobody has said how that is calculated. So the request reaches the office and the adjustment is made by hand. Building the formula would mean inventing a number the business has not confirmed.',
+      'PARTLY OPEN, and the half that was missing is now built. The rule stands — upgrade immediately, downgrade from the next term. Moving up happens in the account: the customer picks the larger package, sees what changes against the one they hold, and confirms with a method already on file. It is the same subscription on the same address, with a new package, a restarted term and an invoice that carries the credit as its own line. What is still the business decision is the credit itself. The arithmetic used is the only one the model supports without inventing a rate — the unused visits at what the customer paid per visit on the old plan, so on Basic at CHF 3440 for 26 visits, 23 unused visits credit CHF 3043.10 — but whether unused visits are credited at all, in full, or at some other figure is theirs to confirm. The number is printed on the confirmation rather than applied silently, so a customer can check it. Moving down is not built: nothing here schedules a change for a future date, and the screen names the office for it.',
     screens: '43, 70a',
     state: 'open',
   },
