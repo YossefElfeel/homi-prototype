@@ -88,6 +88,14 @@ export interface EstimateInput {
   planDiscountPercent?: number;
   couponPercent?: number;
   couponAmount?: number;
+  /**
+   * The ceiling a percentage code carries, in francs (`Coupon.maxDiscount`).
+   *
+   * Arrives as a number for the same reason `planDiscountPercent` does:
+   * pricing resolves no records. Ignored on `couponAmount`, where a fixed sum
+   * is already its own ceiling.
+   */
+  couponMaxDiscount?: number;
 }
 
 export interface DurationBreakdownRow {
@@ -300,9 +308,19 @@ export function priceEstimate(input: EstimateInput, settings: Settings): Estimat
   // §20.2 — a plan discount and a coupon never stack; the larger one wins.
   const planPercent = input.planDiscountPercent ?? 0;
   const planDiscount = round((subtotal * planPercent) / 100);
-  const couponDiscount = input.couponPercent
-    ? round((subtotal * input.couponPercent) / 100)
-    : (input.couponAmount ?? 0);
+  /* §9.4 — a percentage code may carry a ceiling, and without it the same
+     10% takes CHF 25 off a small flat and CHF 180 off a move-out clean. The
+     cap is applied before the rounding so the figure the customer sees is the
+     ceiling to the rappen, not the ceiling plus a rounding step. */
+  const rawCoupon = input.couponPercent ? (subtotal * input.couponPercent) / 100 : undefined;
+  const couponDiscount =
+    rawCoupon === undefined
+      ? (input.couponAmount ?? 0)
+      : round(
+          input.couponMaxDiscount !== undefined
+            ? Math.min(rawCoupon, input.couponMaxDiscount)
+            : rawCoupon,
+        );
   const discount = Math.max(planDiscount, couponDiscount);
 
   if (discount > 0) {

@@ -43,7 +43,7 @@ type NavKey =
   | 'properties'
   | 'keys'
   | 'subscriptions'
-  | 'invoices'
+  | 'finance'
   | 'catalogue'
   | 'addons'
   | 'coupons'
@@ -67,7 +67,14 @@ type NavKey =
 const NAV: {
   group: 'operations' | 'customers' | 'content' | 'hiring' | 'system';
   collapsed?: boolean;
-  items: { href: string; key: NavKey; icon: typeof LayoutDashboard; exact?: boolean }[];
+  items: {
+    href: string;
+    key: NavKey;
+    icon: typeof LayoutDashboard;
+    exact?: boolean;
+    /** Sibling screens the same entry is the door to — see `AppNavItem.owns`. */
+    owns?: string[];
+  }[];
 }[] = [
   {
     group: 'operations',
@@ -89,7 +96,23 @@ const NAV: {
       { href: '/admin/objekte', key: 'properties', icon: Home },
       { href: '/admin/schluessel', key: 'keys', icon: KeyRound },
       { href: '/admin/abos', key: 'subscriptions', icon: RefreshCw },
-      { href: '/admin/rechnungen', key: 'invoices', icon: Receipt },
+      /*
+       * One entry, three screens — and it used to say «Rechnungen», which was
+       * the name of the only one there was.
+       *
+       * Invoices are half of the money: costs and the profit line under them
+       * are the other half, and the owner reads the three together. Naming the
+       * row after the first screen would have left the other two findable only
+       * by knowing they were there. The strip inside says which of the three
+       * you are on; `owns` is what keeps this row lit while you move between
+       * them.
+       */
+      {
+        href: '/admin/rechnungen',
+        key: 'finance',
+        icon: Receipt,
+        owns: ['/admin/ausgaben', '/admin/finanzen'],
+      },
     ],
   },
   {
@@ -250,6 +273,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       label: t(`nav.${item.key}`),
       icon: item.icon,
       exact: item.exact,
+      owns: item.owns,
       badge: item.key === 'requests' ? waitingRequests.length : undefined,
     })),
   }));

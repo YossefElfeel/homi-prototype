@@ -21,7 +21,8 @@ export const adminDe = {
       properties: 'Objekte',
       keys: 'Schlüssel',
       subscriptions: 'Abos',
-      invoices: 'Rechnungen',
+      /* War «Rechnungen» — der Name eines der drei Screens dahinter. */
+      finance: 'Finanzen',
       catalogue: 'Leistungen',
       addons: 'Zusatzleistungen',
       coupons: 'Gutscheine',

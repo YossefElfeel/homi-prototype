@@ -64,6 +64,18 @@ export function cardLastFour(number: string): string {
 export const INVOICE_METHODS: readonly PaymentMethod[] = ['qr-bill', 'twint', 'card', 'cash'];
 
 /**
+ * How a supplier's bill gets settled — and it is the same four, deliberately
+ * aliased rather than retyped.
+ *
+ * A wholesaler's invoice arrives with an Einzahlungsschein, the van is paid at
+ * the pump with the business card, and the Landi run is cash. Apple Pay and
+ * Google Pay are out for exactly the reason they are out above: they are
+ * checkout rails, not ways a bill is paid after the fact. If the four ever
+ * diverge this becomes its own list, and the point is that today they have not.
+ */
+export const EXPENSE_METHODS = INVOICE_METHODS;
+
+/**
  * The payment that settled this invoice.
  *
  * Latest wins, for the same reason `offerPayment` does it: a retry after a

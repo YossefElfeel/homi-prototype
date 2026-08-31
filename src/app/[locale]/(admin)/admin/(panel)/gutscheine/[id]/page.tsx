@@ -11,11 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, NumberField, Select, Checkbox } from '@/components/ui/field';
+import { formatChf } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/cn';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
-import { couponRemaining, couponState } from '@/lib/coupon-facts';
+import { couponCapThreshold, couponRemaining, couponState } from '@/lib/coupon-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Coupon } from '@/mock/schema';
 
@@ -32,6 +34,7 @@ function draftOf(coupon: Coupon): Draft {
     code: coupon.code,
     kind: coupon.kind,
     value: coupon.value,
+    maxDiscount: coupon.maxDiscount,
     minOrder: coupon.minOrder,
     services: [...coupon.services],
     validFrom: coupon.validFrom,
@@ -151,6 +154,7 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
     form.code !== stored.code ||
     form.kind !== stored.kind ||
     form.value !== stored.value ||
+    form.maxDiscount !== stored.maxDiscount ||
     form.minOrder !== stored.minOrder ||
     form.maxUses !== stored.maxUses ||
     form.validFrom !== stored.validFrom ||
@@ -173,9 +177,27 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
     coupons.some((c) => c.id !== coupon.id && c.code.toUpperCase() === code.toUpperCase());
   const backwards = form.validTo < form.validFrom;
 
+  /*
+   * A ceiling of zero is a code that takes nothing off.
+   *
+   * `undefined` means "no ceiling" and `0` means "the discount is always
+   * nothing" — two answers one empty-ish box has to keep apart, and the second
+   * is never what anybody meant. Clearing the field gives `undefined`, so this
+   * only fires on a typed zero or a negative.
+   */
+  const maxDiscountError =
+    form.kind === 'percent' && form.maxDiscount !== undefined && form.maxDiscount <= 0
+      ? t('maxDiscountZero')
+      : undefined;
+
+  /* Where the ceiling starts biting, in francs of order value — see
+     `couponCapThreshold`. Read from the draft rather than the record, because
+     it is the number being typed that the reader is checking. */
+  const threshold = couponCapThreshold({ ...coupon, ...form });
+
   const codeError = duplicate ? t('codeTaken') : undefined;
   const dateError = backwards ? t('datesBackwards') : undefined;
-  const valid = code !== '' && !duplicate && !backwards;
+  const valid = code !== '' && !duplicate && !backwards && !maxDiscountError;
 
   function patch(next: Partial<Draft>) {
     setForm({ ...form, ...next });
@@ -245,12 +267,44 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
               )}
             </Field>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            {/*
+              Two fields, or three — and the third is the ceiling.
+
+              It appears only on a percentage, because a franc amount is
+              already its own ceiling: «CHF 50 off, at most CHF 50 off» is one
+              number written twice, and a box that can only be filled in with
+              the answer above it is a box that teaches the reader to ignore
+              the form. On a percentage it is the missing half of a rule whose
+              other half — the minimum order — has been on this screen since
+              the beginning: the floor says the job must be worth doing, the
+              ceiling says a big job does not hand back CHF 180 on a code that
+              goes out with every first quote.
+
+              Three columns rather than two rows, so «10» and «max. 80» are
+              read as one sentence.
+            */}
+            <div
+              className={cn(
+                'grid gap-5',
+                form.kind === 'percent' ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+              )}
+            >
               <Field label={t('kindLabel')}>
                 {(props) => (
                   <Select
                     value={form.kind}
-                    onChange={(e) => patch({ kind: e.target.value as Coupon['kind'] })}
+                    onChange={(e) =>
+                      patch({
+                        kind: e.target.value as Coupon['kind'],
+                        /* Switching to francs drops the ceiling rather than
+                           parking it. Kept, it would be an invisible number on
+                           the record that comes back the day somebody switches
+                           the code to a percentage again — and by then nobody
+                           remembers typing it. */
+                        maxDiscount:
+                          e.target.value === 'percent' ? form.maxDiscount : undefined,
+                      })
+                    }
                     {...props}
                   >
                     <option value="percent">{t('kindPercent')}</option>
@@ -273,6 +327,38 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
                   />
                 )}
               </Field>
+              {form.kind === 'percent' && (
+                <Field
+                  label={t('maxDiscountLabel')}
+                  /* The hint does the division so the reader does not have to.
+                     A ceiling is only meaningful against the order value it
+                     starts biting at, and «CHF 80 bei 10%» is CHF 800 — a
+                     number the office knows in its own terms and cannot get
+                     from the two boxes beside it at a glance. */
+                  hint={
+                    threshold === undefined
+                      ? t('maxDiscountHint')
+                      : t('maxDiscountFrom', { amount: formatChf(threshold, locale) })
+                  }
+                  error={maxDiscountError}
+                  optional
+                >
+                  {(props) => (
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      value={form.maxDiscount ?? ''}
+                      onChange={(e) =>
+                        patch({
+                          maxDiscount: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
+                      {...props}
+                    />
+                  )}
+                </Field>
+              )}
             </div>
           </CardBody>
         </Card>

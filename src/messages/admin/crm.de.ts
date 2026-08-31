@@ -241,6 +241,25 @@ export const adminCrmDe = {
     notFound: 'Diesen Kunden gibt es nicht.',
   },
 
+  /* Die Adresse, einmal — von /admin/objekte und vom Bearbeiten-Screen
+     gemeinsam gelesen. Vorher zwei Kopien derselben vier Felder, die schon
+     auseinandergelaufen waren. */
+  address: {
+    street: 'Strasse und Nummer',
+    detail: 'Adresszusatz',
+    detailHint:
+      'Stockwerk, Eingang, Klingelschild — was jemanden vor die richtige Tür bringt. Steht auf dem Auftragsblatt.',
+    detailPlaceholder: 'z. B. 3. OG links, Klingel Meier',
+    areaLegend: 'Gebiet',
+    areaCode: 'PLZ',
+    areaName: 'Ort',
+    areaMatched: 'Gehört zu {region}.',
+    /* Kein Fehler: Ein Objekt ausserhalb der acht Gemeinden darf erfasst
+       werden — es taucht dann nur unter keinem Gebiet auf. */
+    areaUnknown:
+      'PLZ {postcode} gehört zu keiner der acht Gemeinden (§6). Erfassen geht — das Objekt läuft dann unter keinem Gebiet.',
+  },
+
   properties: {
     title: 'Objekte',
     lead: 'Die Adressen, an denen gearbeitet wird. Fläche, Zimmer und Zutritt gehören zum Objekt, nicht zur einzelnen Buchung.',
@@ -286,6 +305,8 @@ export const adminCrmDe = {
     emptyBody:
       'Objekte entstehen aus Anfragen und erscheinen dann hier. Ein bekanntes Objekt lässt sich auch direkt erfassen.',
     addAction: 'Objekt erfassen',
+    errorRequired: 'Pflichtfeld.',
+    errorPostcode: 'Vier Ziffern.',
     newTitle: 'Neues Objekt',
     newCustomer: 'Kunde',
     newCustomerPlaceholder: 'Kunde wählen …',
@@ -653,6 +674,9 @@ export const adminCrmDe = {
       '{reference} war bei niemandem und bleibt nirgends stehen. Rückgängig geht das nicht.',
     deleteBlocked: 'Nicht mehr löschbar — die Rechnung ist inzwischen versendet.',
     deleteDone: 'Entwurf {reference} gelöscht.',
+    downloadAction: 'Rechnungen herunterladen',
+    downloadEmpty: 'Nichts zum Herunterladen — die Liste ist leer.',
+    downloadDone: '{n} Rechnungen heruntergeladen.',
     emptyTitle: 'Noch keine Rechnungen',
     emptyBody:
       'Eine Rechnung entsteht aus einem abgeschlossenen Einsatz oder wird hier von Hand erstellt — und wartet dann auf Ihre Freigabe.',

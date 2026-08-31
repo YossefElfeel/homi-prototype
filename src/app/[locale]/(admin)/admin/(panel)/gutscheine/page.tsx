@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Select } from '@/components/ui/field';
-import { Money } from '@/components/ui/money';
+import { Money, formatChf } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -134,7 +134,19 @@ export default function AdminCouponsPage() {
       sortBy: (c) => `${c.kind}:${String(c.value).padStart(6, '0')}`,
       cell: (c) =>
         c.kind === 'percent' ? (
-          <span data-numeric>{c.value}%</span>
+          <span className="inline-flex flex-col items-end">
+            <span data-numeric>{c.value}%</span>
+            {/* The ceiling, on the row rather than only inside the record.
+                «25%» and «25%, höchstens CHF 80» are different offers, and the
+                column headed «Rabatt» was printing the first for both — so the
+                one figure that decides what a big job actually costs was
+                visible only to somebody who opened the coupon. */}
+            {c.maxDiscount !== undefined && (
+              <span className="text-2xs text-ink-tertiary">
+                {t('maxDiscountShort', { amount: formatChf(c.maxDiscount, locale) })}
+              </span>
+            )}
+          </span>
         ) : (
           <Money amount={c.value} />
         ),

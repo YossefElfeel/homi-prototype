@@ -12,6 +12,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { SwitchField } from '@/components/ui/switch';
+import { AddressFields } from '@/components/admin/address-fields';
 import { PROPERTY_KINDS } from '@/lib/property-facts';
 import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useStore } from '@/mock/store';
@@ -49,6 +50,7 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
   const [draft, setDraft] = useState(() => ({
     label: property?.label ?? '',
     street: property?.street ?? '',
+    addressDetail: property?.addressDetail ?? '',
     postcode: property?.postcode ?? '',
     city: property?.city ?? '',
     kind: (property?.kind ?? 'apartment') as PropertyKind,
@@ -105,6 +107,10 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
     updateProperty(id, {
       label,
       street: draft.street.trim(),
+      /* Cleared means "there is nothing more to say", not an empty string —
+         the detail screen and the job sheet both test the field before they
+         render the line. Same treatment `permanentNotes` gets below. */
+      addressDetail: draft.addressDetail.trim() || undefined,
       postcode: draft.postcode.trim(),
       city: draft.city.trim(),
       kind: draft.kind,
@@ -153,63 +159,53 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
       >
         <Card>
           <CardHeader title={t('addressTitle')} description={t('addressHint')} />
-          <CardBody className="grid gap-5 sm:grid-cols-2">
-            <Field label={lt('newLabel')} hint={lt('newLabelHint')} optional>
-              {(props) => (
-                <Input
-                  {...props}
-                  value={draft.label}
-                  onChange={(e) => set({ label: e.target.value })}
-                />
-              )}
-            </Field>
-            <Field label={lt('newKind')}>
-              {(props) => (
-                <Select
-                  {...props}
-                  value={draft.kind}
-                  onChange={(e) => set({ kind: e.target.value as PropertyKind })}
-                >
-                  {PROPERTY_KINDS.map((kind) => (
-                    <option key={kind} value={kind}>
-                      {lt(`kinds.${kind}`)}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-            <Field label={lt('newStreet')} error={show('street')} className="sm:col-span-2">
-              {(props) => (
-                <Input
-                  {...props}
-                  value={draft.street}
-                  autoComplete="street-address"
-                  onChange={(e) => set({ street: e.target.value })}
-                />
-              )}
-            </Field>
-            <Field label={lt('newPostcode')} error={show('postcode')}>
-              {(props) => (
-                <Input
-                  {...props}
-                  value={draft.postcode}
-                  inputMode="numeric"
-                  maxLength={4}
-                  autoComplete="postal-code"
-                  onChange={(e) => set({ postcode: e.target.value })}
-                />
-              )}
-            </Field>
-            <Field label={lt('newCity')} error={show('city')}>
-              {(props) => (
-                <Input
-                  {...props}
-                  value={draft.city}
-                  autoComplete="address-level2"
-                  onChange={(e) => set({ city: e.target.value })}
-                />
-              )}
-            </Field>
+          <CardBody className="space-y-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label={lt('newLabel')} hint={lt('newLabelHint')} optional>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={draft.label}
+                    onChange={(e) => set({ label: e.target.value })}
+                  />
+                )}
+              </Field>
+              <Field label={lt('newKind')}>
+                {(props) => (
+                  <Select
+                    {...props}
+                    value={draft.kind}
+                    onChange={(e) => set({ kind: e.target.value as PropertyKind })}
+                  >
+                    {PROPERTY_KINDS.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {lt(`kinds.${kind}`)}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            </div>
+
+            {/* The same four fields the create form renders, out of the same
+                component — they were two copies that had already drifted, and
+                the copy without the coverage check was the one that could put
+                «8790 Zürich» into a zone filter derived from the postcode. */}
+            <AddressFields
+              value={{
+                street: draft.street,
+                addressDetail: draft.addressDetail,
+                postcode: draft.postcode,
+                city: draft.city,
+              }}
+              onChange={(next) => set(next)}
+              served={settings.servedPostcodes}
+              errors={{
+                street: show('street'),
+                postcode: show('postcode'),
+                city: show('city'),
+              }}
+            />
           </CardBody>
         </Card>
 

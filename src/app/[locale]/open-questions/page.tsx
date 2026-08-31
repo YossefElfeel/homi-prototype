@@ -302,6 +302,38 @@ const ENTRIES: Entry[] = [
     screens: '37, 43, 47, 5',
     state: 'open',
   },
+  {
+    ref: '§10.3a',
+    question: 'Which costs is the office willing to type in, and how do the standing ones arrive?',
+    decision:
+      'OPEN, and the whole cost side rests on the answer. Every expense in this build is entered by hand — that is fine for the garage bill that arrives once a quarter and it is not fine for the rent, the insurance and the three subscriptions, which are the same six figures every month for ever. They carry a `recurring` flag today and the analytics read it, so «was läuft weiter, auch wenn der Monat leer ist» is answerable; what nothing does is write next month’s copy. A `RecurringExpense` with no engine behind it would be a record promising an automation the app does not have, so the decision comes first and it is a product decision, not a schema one: does the office want next month raised automatically the day it falls due, or a reminder on the dashboard that it is due and nobody has entered it. The second is less code and more honest — an expense that appears without anybody looking at it is one nobody checks against the bank. Wages are the other half of the same question. They are the largest cost in a cleaning company and they are on the category list, so the profit figure is not a fiction; but nothing here is a payroll, and a business with three contractors will not want to type three lines a month into this screen.',
+    screens: '71b, 71c, 71d',
+    state: 'open',
+  },
+  {
+    ref: '§10.3b',
+    question: 'Does the profit line mean what the owner will read into it?',
+    decision:
+      'OPEN, and stated on the screen rather than left to be assumed. Revenue and costs are both counted by the month the work happened in — an invoice by the month it was issued, a cost by the day it arose — because counting one on the payment date and the other on the invoice date puts the income and the cost of a single job in different months and makes every monthly figure wrong in a way that averages out to right. The consequence is that revenue includes bills nobody has paid, which is why «offen» is a tile of its own beside it. The bigger assumption is what is *not* in the costs: the owner’s own pay. A sole proprietor draws from the profit, so putting a salary in beside the rent would count the same money twice — but it means the figure headed «Gewinn» is what is left before the owner is paid and before tax, and a 40% margin read without that sentence is a number somebody will quote at a bank. It says so under the tiles. Two things the business has to settle: whether that is the figure they want headed «Gewinn» at all, and whether a second line showing what the owner actually drew belongs beside it.',
+    screens: '71b',
+    state: 'open',
+  },
+  {
+    ref: '§6a',
+    question: 'Is the town on an address the office’s word, or the postcode’s?',
+    decision:
+      'OPEN, and the form now takes a position that is easy to reverse. The eight municipalities are a fixed table keyed by postcode (`SERVED_REGIONS`), and the properties list derives the zone a row is filed under from the postcode alone — so «8706 / Zürich» filed itself under Meilen and printed Zürich on every quote at that address, and both screens that could produce it were free-text boxes. Typing a served postcode now fills the town, and stops doing so the moment somebody edits the town themselves. That is a convenience, not a constraint: the town stays typeable, an address outside the eight is still enterable and still saveable, and nothing refuses. Whether it should refuse is the question. Making the town a `<Select>` of the eight would make the two impossible to disagree — and would also make an address in Rapperswil unenterable, which the office does take work in occasionally. Not decided here because it also decides what happens to the four seeded properties that sit outside the area today.',
+    screens: '66, 67, 67a',
+    state: 'open',
+  },
+  {
+    ref: '§9.4c',
+    question: 'Should a percentage code without a ceiling be allowed at all?',
+    decision:
+      'OPEN. The ceiling exists now and is optional, which keeps every seeded code valid and matches how the office already thinks — SPRING25 ran at 25% uncapped on deep cleans and nobody minded, because a deep clean has a natural size. WELCOME10 is the one that needed it: it goes out with every first quote, and 10% of a move-out clean with the windows is CHF 180 handed back to somebody who has never bought anything. So the field is optional and the seed uses it on exactly the code that needs it. The alternative is to require a ceiling on every percentage, on the argument that an uncapped percentage on an open-ended price list is a liability nobody has bounded — the office would have to think about the number once per campaign rather than never. That is a policy the business owns, not a default worth inventing; and it interacts with §9.4a, because until a code can actually be redeemed neither version has ever cost anything.',
+    screens: '76, 77',
+    state: 'open',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

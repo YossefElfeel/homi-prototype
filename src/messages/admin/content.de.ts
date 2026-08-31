@@ -296,6 +296,7 @@ export const adminContentDe = {
     colServices: 'Gilt für',
     colActive: 'Eingeschaltet',
     servicesAll: 'Alle Leistungen',
+    maxDiscountShort: 'max. {amount}',
     newAction: 'Gutschein anlegen',
     rowOpen: 'Gutschein öffnen',
     search: 'Gutscheine durchsuchen',
@@ -345,6 +346,13 @@ export const adminContentDe = {
     kindAmount: 'Fixbetrag',
     valueLabel: 'Wert',
     minOrderLabel: 'Mindestbestellwert',
+    /* «Maximaler Rabatt», nicht «Obergrenze» — das Wort steht schon auf der
+       Einlösungsgrenze darunter, und zwei Felder mit demselben Namen auf einem
+       Bildschirm sind zwei Felder, die verwechselt werden. */
+    maxDiscountLabel: 'Maximaler Rabatt CHF',
+    maxDiscountHint: 'Leer lassen für unbegrenzt.',
+    maxDiscountFrom: 'Greift ab einem Auftragswert von {amount}.',
+    maxDiscountZero: 'Ein Maximum von 0 wäre ein Code, der nichts abzieht. Feld leeren für unbegrenzt.',
     servicesLabel: 'Gilt für',
     servicesAll: 'Alle Leistungen',
     validFrom: 'Erstellt am',

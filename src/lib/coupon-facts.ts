@@ -45,6 +45,45 @@ export function couponRemaining(coupon: Coupon) {
 }
 
 /**
+ * What this code actually takes off a given subtotal.
+ *
+ * Written once, here, because three places need the same answer and two of
+ * them did not exist before: the pricing engine applies it, the coupon form
+ * shows the worked example under the ceiling, and the list prints the cap
+ * beside the percentage. A percentage on its own is not the discount — the
+ * floor and the ceiling are both part of it, and a rule copied into three
+ * components is a rule with three chances to be typed differently.
+ *
+ * Below `minOrder` the answer is zero rather than a smaller discount: the
+ * floor is a threshold, not a taper.
+ */
+export function couponDiscount(coupon: Coupon, subtotal: number): number {
+  if (coupon.minOrder !== undefined && subtotal < coupon.minOrder) return 0;
+  if (coupon.kind === 'amount') return Math.min(coupon.value, subtotal);
+
+  const raw = (subtotal * coupon.value) / 100;
+  const capped = coupon.maxDiscount !== undefined ? Math.min(raw, coupon.maxDiscount) : raw;
+  return Math.min(capped, subtotal);
+}
+
+/**
+ * The order value at which the ceiling starts biting.
+ *
+ * The number the office is really asking for when it types a cap: «ab wann
+ * greift das?». CHF 80 on 10% means every job over CHF 800 pays the same
+ * discount — which is either the point or a surprise, and the form should not
+ * make the reader do the division to find out which.
+ *
+ * `undefined` when there is no cap, or when the percentage is zero and the
+ * ceiling can therefore never be reached at any price.
+ */
+export function couponCapThreshold(coupon: Coupon): number | undefined {
+  if (coupon.kind !== 'percent' || coupon.maxDiscount === undefined) return undefined;
+  if (coupon.value <= 0) return undefined;
+  return (coupon.maxDiscount * 100) / coupon.value;
+}
+
+/**
  * The services a coupon applies to, by name.
  *
  * An empty `services` array means all of them — a convention the edit screen

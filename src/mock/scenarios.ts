@@ -12,6 +12,8 @@ import type {
   JobPosting,
   KeyLogEntry,
   CustomerMessage,
+  Expense,
+  ExpenseCategory,
   ID,
   Offer,
   Payment,
@@ -71,6 +73,8 @@ export interface DataSet {
   bookings: Booking[];
   subscriptions: Subscription[];
   invoices: Invoice[];
+  /** What the company paid out — the other half of what screen 71b adds up. */
+  expenses: Expense[];
   payments: Payment[];
   paymentMethods: SavedPaymentMethod[];
   keyLog: KeyLogEntry[];
@@ -96,6 +100,7 @@ const EMPTY: DataSet = {
   bookings: [],
   subscriptions: [],
   invoices: [],
+  expenses: [],
   payments: [],
   paymentMethods: [],
   keyLog: [],
@@ -328,6 +333,11 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       label: 'Flat',
       street: 'Dorfstrasse 12',
+      /* The line that gets somebody to the door rather than to the building.
+         Before it had a field it was typed into the standing notes, beside
+         «dog in the living room» — where the job sheet prints it at the
+         bottom, after the point the cleaner needed it. */
+      addressDetail: 'Floor 2, on the left — bell «Widmer»',
       postcode: '8706',
       city: 'Meilen',
       kind: 'apartment',
@@ -354,6 +364,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       label: 'Seestrasse office',
       street: 'Seestrasse 104',
+      addressDetail: 'Rear entrance through the courtyard, 1st floor',
       postcode: '8706',
       city: 'Meilen',
       kind: 'office',
@@ -391,6 +402,7 @@ function baseData(now: Date): DataSet {
       customerId: 'cus_2',
       label: 'Attika Stäfa',
       street: 'Kirchgasse 3',
+      addressDetail: 'Top floor, lift to 4 and then the stairs',
       postcode: '8712',
       city: 'Stäfa',
       kind: 'apartment',
@@ -1276,6 +1288,12 @@ function baseData(now: Date): DataSet {
          goes out with every first quote, which is why it is the one with a
          floor under it — 10% of a two-hour job is not worth the paperwork. */
       minOrder: 150,
+      /* And a ceiling, which is the other end of the same argument and had no
+         field until this wave. Unbounded, this code takes CHF 25 off a small
+         flat and CHF 180 off a move-out clean with the windows — on a
+         welcome discount that goes out to everybody. CHF 80 bites at CHF 800,
+         which is where a first job stops being a first job. */
+      maxDiscount: 80,
       services: [],
       validFrom: iso(days(now, -60)),
       validTo: iso(days(now, 120)),
@@ -2586,6 +2604,11 @@ function baseData(now: Date): DataSet {
     },
   ];
 
+  /* The year behind the year the jobs cover. See `financeHistory` for why the
+     office contract is invoices without bookings rather than a fabricated
+     calendar. */
+  const books = financeHistory(now);
+
   return {
     ...EMPTY,
     customers: [...customers, ...extraCustomers(now)],
@@ -2594,9 +2617,10 @@ function baseData(now: Date): DataSet {
     offers: [...offers, ...quoteOffers, ...accountOffers],
     bookings: [...bookings, ...quoteBookings, ...accountBookings],
     events,
-    payments,
+    payments: [...payments, ...books.payments],
     subscriptions,
-    invoices,
+    invoices: [...invoices, ...books.invoices],
+    expenses: books.expenses,
     reviews,
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for
@@ -4147,6 +4171,12 @@ const extraProperties = (): Property[] =>
     customerId: `cus_m${p.n}`,
     label: p.kind === 'office' ? 'Office' : p.kind === 'house' ? 'House' : 'Flat',
     street: p.street,
+    /* Only where there is genuinely something to add. A detached house at
+       street level has nothing past its number, and filling the field on every
+       row would make «leer» impossible to see on the two screens that render
+       it — which is the state most addresses are actually in. */
+    addressDetail:
+      p.floor > 0 ? `Floor ${p.floor} — bell «${p.last}»` : undefined,
     postcode: p.postcode,
     city: p.city,
     kind: p.kind,
@@ -4183,6 +4213,342 @@ const extraProperties = (): Property[] =>
                 alarmCode: `${1200 + p.n * 3}`,
               },
   }));
+
+/* ------------------------------------------------------------------ the books */
+
+/**
+ * Twelve months of costs, and the recurring revenue they have to be read
+ * against.
+ *
+ * Screen 71b adds up two columns. One of them did not exist in the data at all
+ * before this wave, and the other only went back as far as the jobs do — nine
+ * invoices, seven of them from the last five weeks. An analytics screen seeded
+ * with that draws eleven empty months and one bar, and every reader's first
+ * conclusion is that the chart is broken rather than that the year was.
+ *
+ * So both sides go back twelve months.
+ *
+ * **The invoices here carry no `bookingId`, and that is not an omission.** They
+ * are a monthly office contract — Zuberbühler on the Bahnhofstrasse, 165 m²,
+ * cleaned three times a week and billed at month end, which is how commercial
+ * cleaning is actually sold here and the reason that customer is in the seed at
+ * all. The visits behind them are older than the booking history this seed
+ * carries, and inventing a year of them would put finished work into a calendar
+ * that never held it.
+ *
+ * **The owner's own pay is not in the costs**, which is what makes the profit
+ * line read the way it does. A sole proprietor draws from the profit; putting a
+ * salary in beside the rent would count the same money twice. `wages` is the
+ * part-time contractor, and the months without it are the months nobody was
+ * called in. The finance screen says this in a line under the number rather
+ * than leaving a reader to work out why the margin looks generous.
+ *
+ * Written out month by month rather than generated. A cleaning company's year
+ * is not a straight line — the move-out season either side of the new year is
+ * the busy one and the lake empties in July — and a seed built from `i % 3`
+ * draws a sawtooth nobody recognises as a business.
+ */
+const FINANCE_YEAR: {
+  /** Contract hours billed that month, at the office rate. */
+  hours: number;
+  supplies: number;
+  vehicle: number;
+  wages?: number;
+  marketing?: number;
+  /** The one-off that does not fit a heading — kept rare, like the real thing. */
+  extra?: { label: string; amount: number; category: ExpenseCategory };
+}[] = [
+  /* One month back … twelve. */
+  { hours: 34, supplies: 310, vehicle: 395, wages: 520 },
+  { hours: 32, supplies: 245, vehicle: 360, marketing: 180 },
+  { hours: 32, supplies: 280, vehicle: 410, wages: 440 },
+  { hours: 28, supplies: 190, vehicle: 340 },
+  {
+    hours: 32,
+    supplies: 265,
+    vehicle: 375,
+    wages: 480,
+    /* The one month in the year that closes at a loss, and it closes at a loss
+       for a reason somebody chose. A screen that never shows a red month has
+       not been looked at against a red month. */
+    extra: { label: 'Hygiene course — two days', amount: 350, category: 'other' },
+  },
+  { hours: 36, supplies: 330, vehicle: 430, marketing: 260 },
+  /* July and August. Half the right shore is away and the contract runs at a
+     holiday rhythm — the dip is the shape of the business, not a gap. */
+  { hours: 24, supplies: 175, vehicle: 300 },
+  { hours: 22, supplies: 160, vehicle: 285 },
+  { hours: 32, supplies: 255, vehicle: 365, wages: 460 },
+  { hours: 36, supplies: 345, vehicle: 420 },
+  /* Move-out season, and the year's marketing push with it. */
+  { hours: 40, supplies: 390, vehicle: 455, wages: 620, marketing: 320 },
+  { hours: 34, supplies: 300, vehicle: 405, wages: 500 },
+];
+
+/** §17 — the office rate, and the same 55 the seeded office invoice uses. */
+const OFFICE_RATE = 55;
+
+/** What runs every month whether the phone rings or not. */
+const FIXED_MONTHLY: {
+  label: string;
+  amount: number;
+  category: ExpenseCategory;
+  /** Arrives as a bill with a term; the subscriptions just leave the card. */
+  termDays?: number;
+}[] = [
+  { label: 'Storage unit, Meilen', amount: 260, category: 'rent', termDays: 30 },
+  { label: 'Business liability insurance', amount: 165, category: 'insurance', termDays: 30 },
+  { label: 'Accounting and calendar subscriptions', amount: 89, category: 'software' },
+];
+
+function financeHistory(now: Date): {
+  invoices: Invoice[];
+  expenses: Expense[];
+  /* A settled invoice with no `Payment` behind it is the shape `crm-test`
+     refuses, and rightly: the customer record prints *how* a bill was paid out
+     of `payments`, so eleven paid office invoices with nothing behind them
+     would have put eleven blank «Zahlweg» cells on one household's history. */
+  payments: Payment[];
+} {
+  const here = zonedParts(now);
+  /* Real month arithmetic, not `days(now, -30 * n)`: thirty-day steps drift a
+     whole month over a year, and the chart buckets by calendar month. */
+  const dayIn = (back: number, day: number, hour = 10) =>
+    fromZoned(here.year, here.month - back, day, hour);
+
+  /**
+   * A cost cannot have been incurred tomorrow.
+   *
+   * The current month's entries sit on fixed days — the rent on the 3rd, the
+   * wholesaler on the 12th — and `now` is whatever the demo clock says, which
+   * on the 2nd of a month would date three of them in the future. A record
+   * ahead of the clock is not a small blemish here: it lands in the month
+   * bucket, shows in a list sorted newest-first above everything real, and the
+   * «überfällig» derivation compares it against a date that has not happened.
+   * Clamped back a day instead, which may put it in the previous month — the
+   * truthful answer when the current one is two days old.
+   */
+  const notAhead = (at: Date) => (at.getTime() <= now.getTime() ? at : days(now, -1));
+
+  const invoices: Invoice[] = [];
+  const expenses: Expense[] = [];
+  const payments: Payment[] = [];
+  let expenseSeq = 0;
+
+  const cost = (
+    at: Date,
+    input: {
+      label: string;
+      amount: number;
+      category: ExpenseCategory;
+      supplier: string;
+      recurring?: boolean;
+      /**
+       * A supplier's payment term, in days.
+       *
+       * Set on the bills that arrive as bills — the wholesaler, the garage,
+       * the printer. Left off the ones that leave the account on their own:
+       * a standing order for the storage unit, a monthly insurance premium, a
+       * software subscription and a wage payout are all made on the day and
+       * were never owed on a date.
+       *
+       * Not decoration. Without it every settled row read «ohne Frist» in the
+       * «Fällig» column — 74 of 76 in the seed — and the branch that prints
+       * the date a *paid* bill was due had nothing that could reach it.
+       */
+      termDays?: number;
+      /** Left open on purpose — see the current-month block below. */
+      unpaid?: 'due' | 'late';
+      method?: Expense['method'];
+    },
+  ) => {
+    expenseSeq += 1;
+    const year = zonedParts(at).year;
+    const day = 86_400_000;
+    const dueAt = input.unpaid
+      ? iso(new Date(at.getTime() + (input.unpaid === 'late' ? 12 : 26) * day))
+      : input.termDays !== undefined
+        ? iso(new Date(at.getTime() + input.termDays * day))
+        : undefined;
+    /* Settled inside the term rather than on the day it arrived — nine days is
+       what "the office pays it in the next batch" looks like, and it keeps
+       `paidAt` before `dueAt` so no historic row derives as overdue. */
+    const paidAt = input.termDays !== undefined ? new Date(at.getTime() + 9 * day) : at;
+
+    expenses.push({
+      id: `exp_${expenseSeq}`,
+      reference: `AUS-${year}-${String(expenseSeq).padStart(4, '0')}`,
+      category: input.category,
+      supplier: input.supplier,
+      note: input.label,
+      amount: input.amount,
+      incurredAt: iso(at),
+      dueAt,
+      paidAt: input.unpaid ? undefined : iso(paidAt),
+      method: input.unpaid ? undefined : (input.method ?? 'qr-bill'),
+      status: input.unpaid ? 'open' : 'paid',
+      recurring: input.recurring,
+    });
+  };
+
+  /* Oldest first, so the reference numbers run the way a ledger's do. */
+  for (let back = FINANCE_YEAR.length; back >= 1; back -= 1) {
+    const month = FINANCE_YEAR[back - 1]!;
+    const issued = dayIn(back, 28, 9);
+    const year = zonedParts(issued).year;
+    const amount = month.hours * OFFICE_RATE;
+    const paidAt = iso(dayIn(back - 1, 12, 14));
+    /*
+     * 0018–0029, and the range is not arbitrary.
+     *
+     * The rest of the seed numbers into 0041–0062, and `nextInvoiceSeq` hands
+     * out the highest ever seen plus one — so these have to sit *below* the
+     * whole of that range or the next invoice raised in the app would wear a
+     * number a customer is already holding. 0041 was the first thing tried and
+     * `states` already had it on `inv_s_paid_cash`; `crm-test` caught the
+     * collision, which is the check that exists for exactly this.
+     */
+    const reference = `RE-${year}-${String(30 - back).padStart(4, '0')}`;
+    const settled = back > 1;
+
+    invoices.push({
+      id: `inv_office_${back}`,
+      reference,
+      customerId: 'cus_m4',
+      lines: [
+        {
+          label: 'Office cleaning — monthly contract',
+          quantity: month.hours,
+          unitPrice: OFFICE_RATE,
+        },
+      ],
+      /* The most recent month is still out with the customer. Everything older
+         is settled — an office contract that goes unpaid for a year is a
+         different story, and not one this seed is telling. */
+      status: settled ? 'paid' : 'sent',
+      createdAt: iso(dayIn(back, 28, 8)),
+      issuedAt: iso(issued),
+      dueAt: iso(dayIn(back - 1, 27, 9)),
+      paidAt: settled ? paidAt : undefined,
+      qrReference: `21 00000 00003 13947 14300 ${String(9200 + back).padStart(5, '0')}`,
+    });
+
+    if (settled) {
+      /* By QR-bill, every month. A commercial client on a monthly contract
+         pays off the Einzahlungsschein — a card or TWINT on a four-figure
+         office invoice would be the unusual case, and seeding the unusual one
+         twelve times over would teach the «Zahlweg» column the wrong default. */
+      payments.push({
+        id: `pay_office_${back}`,
+        invoiceId: `inv_office_${back}`,
+        amount,
+        method: 'qr-bill',
+        at: paidAt,
+        status: 'succeeded',
+        gatewayRef: `mock_QR${reference.slice(-4)}`,
+      });
+    }
+
+    for (const fixed of FIXED_MONTHLY) {
+      cost(dayIn(back, 3), {
+        ...fixed,
+        supplier:
+          fixed.category === 'rent'
+            ? 'Lagerhaus Meilen AG'
+            : fixed.category === 'insurance'
+              ? 'Zurich Versicherung'
+              : 'Bexio / Google Workspace',
+        recurring: true,
+      });
+    }
+
+    cost(dayIn(back, 9), {
+      label: 'Cleaning agents and consumables',
+      amount: month.supplies,
+      category: 'supplies',
+      supplier: 'Hygiene Center Zürich',
+      termDays: 30,
+      method: 'card',
+    });
+    cost(dayIn(back, 15), {
+      label: 'Fuel and van leasing',
+      amount: month.vehicle,
+      category: 'vehicle',
+      supplier: 'Garage Rüegg AG',
+      termDays: 30,
+    });
+    if (month.wages !== undefined) {
+      cost(dayIn(back, 25), {
+        label: 'Part-time hours, paid out',
+        amount: month.wages,
+        category: 'wages',
+        supplier: 'Elira Krasniqi',
+      });
+    }
+    if (month.marketing !== undefined) {
+      cost(dayIn(back, 11), {
+        label: 'Flyers and search ads',
+        amount: month.marketing,
+        category: 'marketing',
+        supplier: 'Druckerei Stäfa / Google Ads',
+        termDays: 20,
+        method: 'card',
+      });
+    }
+    if (month.extra) {
+      cost(dayIn(back, 18), { ...month.extra, supplier: 'Allpura Weiterbildung', termDays: 30 });
+    }
+  }
+
+  /*
+   * This month, and it is the only month with anything unsettled in it.
+   *
+   * All three of the states a cost can be in have to stand on the same screen
+   * or two of the three badges are colours nobody has seen: the insurance is
+   * settled, the wholesaler's bill is due in a fortnight, and the garage's is a
+   * fortnight past its date. The last one is the whole reason the list defaults
+   * to «offen» — a supplier chasing an invoice is the one thing on this screen
+   * that costs money to ignore.
+   */
+  for (const fixed of FIXED_MONTHLY) {
+    cost(notAhead(dayIn(0, 3)), {
+      ...fixed,
+      supplier:
+        fixed.category === 'rent'
+          ? 'Lagerhaus Meilen AG'
+          : fixed.category === 'insurance'
+            ? 'Zurich Versicherung'
+            : 'Bexio / Google Workspace',
+      recurring: true,
+    });
+  }
+  /* Dated back from the clock rather than onto a day of the month, because
+     «überfällig» has to be true on the day a reviewer opens this and not only
+     between the 18th and the end. */
+  cost(days(now, -24), {
+    label: 'Van service and two new tyres',
+    amount: 640,
+    category: 'vehicle',
+    supplier: 'Garage Rüegg AG',
+    unpaid: 'late',
+  });
+  cost(days(now, -4), {
+    label: 'Cleaning agents and consumables',
+    amount: 295,
+    category: 'supplies',
+    supplier: 'Hygiene Center Zürich',
+    unpaid: 'due',
+  });
+  cost(days(now, -9), {
+    label: 'Cloths and refuse sacks, cash at the till',
+    amount: 64,
+    category: 'supplies',
+    supplier: 'Landi Männedorf',
+    method: 'cash',
+  });
+
+  return { invoices, expenses, payments };
+}
 
 /* Offices only for office cleaning, homes for everything else — routing a
    Umzugsreinigung to a reception desk would price and schedule fine and read

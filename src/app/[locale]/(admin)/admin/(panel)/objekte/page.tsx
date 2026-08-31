@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/row-actions';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Toolbar } from '@/components/ui/toolbar';
+import { AddressFields, type AddressValue } from '@/components/admin/address-fields';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { AccessMethod, Booking, Property, PropertyKind } from '@/mock/schema';
 
@@ -38,6 +39,8 @@ const ACCESS_ICONS: Record<AccessMethod, typeof DoorOpen> = {
   'key-box': Lock,
   'other-person': UserCheck,
 };
+
+const EMPTY_ADDRESS: AddressValue = { street: '', addressDetail: '', postcode: '', city: '' };
 
 const ACCESS_SHORT: Record<AccessMethod, string> = {
   'customer-present': 'Kunde da',
@@ -72,6 +75,7 @@ export default function PropertiesPage() {
   const bookings = useStore((s) => s.data.bookings);
   const services = useStore((s) => s.services);
   const data = useStore((s) => s.data);
+  const settings = useStore((s) => s.settings);
   const createProperty = useStore((s) => s.createProperty);
   const deleteProperty = useStore((s) => s.deleteProperty);
   const now = useNow();
@@ -79,6 +83,8 @@ export default function PropertiesPage() {
   const dismissLabel = useDismissLabel();
   const deleting = useConfirmTarget<Property>();
   const [adding, setAdding] = useState(false);
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS);
+  const [addressTouched, setAddressTouched] = useState(false);
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | PropertyKind>('all');
   const [zone, setZone] = useState('all');
@@ -242,11 +248,27 @@ export default function PropertiesPage() {
      request, a plan or an invoice. So the button is honest about being unusable
      until there is somebody to attach one to. */
   const addButton = (
-    <Button disabled={adding || customers.length === 0} onClick={() => setAdding(true)}>
+    <Button
+      disabled={adding || customers.length === 0}
+      onClick={() => {
+        /* Opened blank, not on whatever the last abandoned attempt held. The
+           address block lives in page state rather than inside the unmounted
+           form, so it does not clear itself. */
+        setAddress(EMPTY_ADDRESS);
+        setAddressTouched(false);
+        setAdding(true);
+      }}
+    >
       <Plus className="size-4" aria-hidden />
       {t('addAction')}
     </Button>
   );
+
+  function closeAddForm() {
+    setAdding(false);
+    setAddress(EMPTY_ADDRESS);
+    setAddressTouched(false);
+  }
 
   function confirmDelete() {
     const property = deleting.target;
@@ -273,16 +295,27 @@ export default function PropertiesPage() {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
             const customerId = String(form.get('customerId') ?? '');
-            const street = String(form.get('street') ?? '');
-            if (!customerId || !street) return;
+            const street = address.street.trim();
+            /* The address block is controlled, so its three required values are
+               checked here rather than by the browser: `required` on an input
+               inside a component the parent does not own is a rule that stops
+               working the day the component stops rendering it. */
+            if (!customerId || !street || !address.postcode.trim() || !address.city.trim()) {
+              setAddressTouched(true);
+              return;
+            }
 
             const id = createProperty(
               {
                 customerId,
                 label: String(form.get('label') ?? '').trim() || street,
                 street,
-                postcode: String(form.get('postcode') ?? ''),
-                city: String(form.get('city') ?? ''),
+                /* Empty means "there is nothing more to say", not an empty
+                   string — the property record and the job sheet both test the
+                   field for truthiness before they render the line. */
+                addressDetail: address.addressDetail.trim() || undefined,
+                postcode: address.postcode.trim(),
+                city: address.city.trim(),
                 kind: String(form.get('kind') ?? 'apartment') as PropertyKind,
                 area: Number(form.get('area')) || 0,
                 rooms: Number(form.get('rooms')) || 0,
@@ -294,7 +327,7 @@ export default function PropertiesPage() {
               },
               now,
             );
-            setAdding(false);
+            closeAddForm();
             toast.success(t('newDone'));
             /* Straight to the detail screen, which is where access details,
                keys and permanent notes live — the things a property is
@@ -324,19 +357,32 @@ export default function PropertiesPage() {
             </Field>
           </div>
 
-          <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_8rem_1fr]">
-            <Field label={t('newStreet')}>
-              {(props) => <Input {...props} name="street" required />}
-            </Field>
-            <Field label={t('newPostcode')}>
-              {(props) => (
-                <Input {...props} name="postcode" inputMode="numeric" maxLength={4} required />
-              )}
-            </Field>
-            <Field label={t('newCity')}>
-              {(props) => <Input {...props} name="city" required />}
-            </Field>
-          </div>
+          {/* The address is a controlled block now — see `AddressFields`. It
+              is the one part of this form the edit screen also renders, and it
+              was the part that had already drifted: the postcode here accepted
+              anything and said nothing about which of the eight municipalities
+              it meant. The rest of the form stays uncontrolled and is still
+              read out of `FormData` on submit. */}
+          <AddressFields
+            className="mt-5"
+            value={address}
+            onChange={setAddress}
+            served={settings.servedPostcodes}
+            /* Only after a submit that went nowhere. Marking three fields red
+               the moment the form opens tells somebody they got something
+               wrong before they have typed anything. */
+            errors={
+              addressTouched
+                ? {
+                    street: address.street.trim() ? undefined : t('errorRequired'),
+                    postcode: /^\d{4}$/.test(address.postcode.trim())
+                      ? undefined
+                      : t('errorPostcode'),
+                    city: address.city.trim() ? undefined : t('errorRequired'),
+                  }
+                : undefined
+            }
+          />
 
           <div className="mt-5 grid gap-5 sm:grid-cols-5">
             <Field label={t('newKind')}>
@@ -370,7 +416,7 @@ export default function PropertiesPage() {
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Button type="submit">{t('newSave')}</Button>
-            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
+            <Button type="button" variant="ghost" onClick={closeAddForm}>
               {t('dismiss')}
             </Button>
           </div>

@@ -131,6 +131,13 @@ export const de = {
       overdue: 'Überfällig',
       cancelled: 'Storniert',
     },
+    /* Dieselben Wörter wie bei der Rechnung, weil es dieselben Zustände sind —
+       nur in die andere Richtung. «Offen» heisst hier: wir schulden das noch. */
+    expense: {
+      open: 'Offen',
+      overdue: 'Überfällig',
+      paid: 'Bezahlt',
+    },
     review: {
       pending: 'Zur Prüfung',
       published: 'Veröffentlicht',

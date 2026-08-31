@@ -295,6 +295,7 @@ export const adminContentEn: typeof adminContentDe = {
     colServices: 'Applies to',
     colActive: 'Switched on',
     servicesAll: 'All services',
+    maxDiscountShort: 'max. {amount}',
     newAction: 'Create a coupon',
     rowOpen: 'Open coupon',
     search: 'Search coupons',
@@ -343,6 +344,13 @@ export const adminContentEn: typeof adminContentDe = {
     kindAmount: 'Fixed',
     valueLabel: 'Value',
     minOrderLabel: 'Minimum order value',
+    /* «Maximum discount», not «cap» — that word is already on the redemption
+       ceiling below it, and two fields sharing a name on one screen are two
+       fields that get confused. */
+    maxDiscountLabel: 'Maximum discount CHF',
+    maxDiscountHint: 'Leave empty for no ceiling.',
+    maxDiscountFrom: 'Bites from an order value of {amount}.',
+    maxDiscountZero: 'A maximum of 0 is a code that takes nothing off. Clear the field for no ceiling.',
     servicesLabel: 'Applies to',
     servicesAll: 'All services',
     validFrom: 'Created at',

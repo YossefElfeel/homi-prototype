@@ -16,7 +16,8 @@ export const adminEn: typeof adminDe = {
       properties: 'Properties',
       keys: 'Keys',
       subscriptions: 'Plans',
-      invoices: 'Invoices',
+      /* Was «Invoices» — the name of one of the three screens behind it. */
+      finance: 'Finance',
       catalogue: 'Services',
       addons: 'Add-ons',
       coupons: 'Coupons',

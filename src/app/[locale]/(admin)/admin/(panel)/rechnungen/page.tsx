@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
-import { Plus, Receipt, Send } from 'lucide-react';
+import { Download, Plus, Receipt, Send } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,10 @@ import {
 } from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
+import { FinanceTabs } from '@/components/admin/finance-tabs';
 import { ActionIcon } from '@/lib/action-icons';
+import { buildCsv, exportFilename } from '@/lib/csv';
+import { downloadBlob } from '@/lib/pdf';
 import { invoiceTotal } from '@/lib/customer-history';
 import {
   effectiveInvoiceStatus,
@@ -282,6 +285,59 @@ export default function InvoicesPage() {
   ) : undefined;
 
   /**
+   * The rows on screen, as a file.
+   *
+   * The whole invoice list has always been readable and never portable: the
+   * quarterly hand-off to the bookkeeper was «ich lese sie dir vor» or a
+   * screenshot. It exports what the filters left, not everything in the store —
+   * a download that ignores the toolbar above it is the export version of a
+   * search box that does nothing, and the office only finds out by opening the
+   * file.
+   *
+   * CSV rather than the PDF writer `lib/pdf.ts` provides, and that file says
+   * why: it is one page and does not paginate, so a list of thirty would lose
+   * the rows that fall off the bottom silently. This is also what the file is
+   * *for* — it gets opened next to a bank statement, not read.
+   */
+  function download() {
+    if (visible.length === 0) {
+      toast.error(t('downloadEmpty'));
+      return;
+    }
+
+    const csv = buildCsv(
+      [
+        t('colReference'),
+        invoiceT('qrReference'),
+        t('colCreated'),
+        t('colCustomer'),
+        t('colAmount'),
+        t('colDue'),
+        t('colStatus'),
+        t('colMethod'),
+      ],
+      visible.map((invoice) => [
+        invoice.reference,
+        invoice.qrReference,
+        invoice.createdAt.slice(0, 10),
+        nameOf(invoice.customerId),
+        /* The figure plainly, not through `formatChf`: a spreadsheet reads
+           «1'240.50» as text and then refuses to sum the column. The currency
+           rides in the header instead. */
+        invoiceTotal(invoice).toFixed(2),
+        invoice.dueAt.slice(0, 10),
+        statusT(effectiveInvoiceStatus(invoice, now)),
+        invoicePayment(invoice.id, payments)?.method
+          ? methodT(invoicePayment(invoice.id, payments)!.method)
+          : '',
+      ]),
+    );
+
+    downloadBlob(exportFilename('rechnungen', now), csv);
+    toast.success(t('downloadDone', { n: visible.length }));
+  }
+
+  /**
    * One row's menu.
    *
    * Every item is gated on `invoice-permissions` rather than on a status test
@@ -372,7 +428,25 @@ export default function InvoicesPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} lead={t('lead')} actions={createButton} />
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        actions={
+          <>
+            <Button variant="secondary" onClick={download}>
+              <Download className="size-4" aria-hidden />
+              {t('downloadAction')}
+            </Button>
+            {createButton}
+          </>
+        }
+      />
+
+      {/* The section this list is the first screen of. Costs and the profit
+          line beside it are the two things this table could never say, and the
+          sidebar entry above now names the section rather than one of its
+          three screens. */}
+      <FinanceTabs />
 
       <Toolbar
         search={{

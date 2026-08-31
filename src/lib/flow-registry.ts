@@ -538,6 +538,11 @@ export const FLOWS: Flow[] = [
         '/admin/rechnungen/neu',
         'The job was the only way in, so everything else this firm bills for — travel, materials, a correction after a complaint — had no path into the app at all. That got written in the accounting system, and so a customer ends up holding an invoice the app has never heard of. The job is a field on the form now, rather than the door',
       ),
+      added(
+        'Record a cost',
+        '/admin/ausgaben/neu',
+        'Half of the money had no entity at all. `invoices` said what came in and nothing said what went out, so the question this section is opened to ask — what is left at the end of the month — was answered in a banking app from memory. A supplier bill is open when it is entered and settled in its own step, so the payment route can never be skipped on the way in',
+      ),
     ],
     actions: [
       ok('Change the lines in a draft', '/admin/rechnungen/inv_draft'),
@@ -572,6 +577,21 @@ export const FLOWS: Flow[] = [
         '/admin/rechnungen/inv_sent',
         'Was stated nowhere. The draft editor did lock itself, but did not say what to do instead — now there is "cancel and re-create": the old invoice is cancelled, a draft opens with the same lines, and both documents point at each other',
       ),
+      added(
+        'Read the two sides together',
+        '/admin/finanzen',
+        'Revenue and costs are counted by the month the work happened in, not the month the money moved — one rule applied to both, because counting revenue on the payment date and costs on the invoice date puts the income and the cost of one job in different months and makes every monthly figure wrong in a way that averages out to right. The consequence is on the screen rather than hidden: revenue includes bills nobody has paid, so "outstanding" is its own tile beside it',
+      ),
+      added(
+        'Take the list away with you',
+        '/admin/rechnungen',
+        'The lists were readable and never portable, so the hand-off to the bookkeeper was a screenshot or a phone call. Both download what the filters left, not everything in the store — an export that ignores the toolbar above it is only discovered to be wrong after the file is opened. CSV rather than the app’s own PDF writer, which is one page and does not paginate: the rows that fell off the bottom would go silently',
+      ),
+      added(
+        'Settle a cost, and say how',
+        '/admin/ausgaben',
+        'The same dialog an invoice is settled with, in the other direction. The route is required for the same reason: "paid" with nothing saying how is the half of the fact nobody can look up afterwards',
+      ),
     ],
     exits: [
       ok('Paid', '/konto/rechnungen/inv_paid'),
@@ -589,6 +609,24 @@ export const FLOWS: Flow[] = [
         'Draft deleted',
         '/admin/rechnungen',
         '§15 keeps everything that has been with a customer — a draft has been with nobody. Carrying it forever as "cancelled" buries the real cancellations under paperwork. Drafts only, and the store checks that again itself',
+      ),
+      added(
+        'A cost settled',
+        '/admin/ausgaben',
+        'Open → paid, with the route recorded. The third state — overdue — is derived from the due date rather than stored, for the reason the invoice side gives: writing it down would need a nightly sweep to stay true',
+      ),
+      added(
+        'A cost deleted',
+        '/admin/ausgaben',
+        'At any status, which is where it parts company with an invoice. §15 keeps a released invoice because somebody outside the company is holding a copy; nobody has ever been handed one of these — it is the office’s own note of a bill it received, and one entered twice is clerical noise rather than a document. The change-log entry outlives the record, so a cost vanishing out of a month somebody has read the profit for can still be accounted for',
+      ),
+      open(
+        'A cost that recurs on its own',
+        'The rent, the insurance and the subscriptions carry a `recurring` flag, and the analytics read it — «was läuft weiter, auch wenn der Monat leer ist». Nothing writes next month’s copy. A `RecurringExpense` with no engine behind it would be a record promising an automation the app does not have, and the honest version needs a decision first: does the office want next month raised automatically, or a reminder that it is due. On /open-questions',
+      ),
+      open(
+        'VAT',
+        'Every expense is stored gross, and the analytics add gross figures. The company is under the CHF 100 000 threshold and its own invoices carry «Keine MwSt.», so there is nothing to reclaim and a net/VAT split would model a deduction that cannot be made. It becomes wrong the day the threshold is crossed, which is a business event rather than a missing screen',
       ),
       added(
         'Cancelled and replaced',
@@ -980,6 +1018,11 @@ export const FLOWS: Flow[] = [
         '/admin/gutscheine/cpn_1',
         'Produced a coupon that is never valid and stood in the list as "valid" regardless',
       ),
+      added(
+        'Cap what a percentage may take off',
+        '/admin/gutscheine/cpn_1',
+        'The floor — a minimum order — has been on this screen since the beginning; the ceiling had no field at all, so 10% took CHF 25 off a small flat and CHF 180 off a move-out clean with the windows, on a code that goes out with every first quote. The third box appears only on a percentage: a fixed amount is already its own ceiling, and a box that can only be filled with the answer above it teaches the reader to skip the form. The list prints the cap under the figure, so it is not a fact you have to open a record to learn',
+      ),
       ok(
         'Restrict it to individual services',
         '/admin/gutscheine/cpn_1',
@@ -1020,7 +1063,7 @@ export const FLOWS: Flow[] = [
       ),
       open(
         'Redeem a coupon',
-        '`pricing.ts` has been able to do both since §20.2 — percent and amount, and it never stacks with the plan discount. Only, no screen ever hands it one: the request flow has no code field, so `usedCount` moves nowhere and the redemption figures in the seed are history rather than bookkeeping. Deliberately open — whether the code is entered in the wizard, on the quote or only at payment decides where the discount goes on record; see §9.4a on /open-questions',
+        '`pricing.ts` has been able to do both since §20.2 — percent and amount, and it never stacks with the plan discount. It respects the new ceiling as of this wave, and `couponDiscount` in `lib/coupon-facts.ts` applies floor, percentage and ceiling in one place so the engine and the form cannot disagree. Only, no screen ever hands it one: the request flow has no code field, so `usedCount` moves nowhere and the redemption figures in the seed are history rather than bookkeeping. Deliberately open — whether the code is entered in the wizard, on the quote or only at payment decides where the discount goes on record; see §9.4a on /open-questions',
       ),
       open(
         'Delete a coupon',
