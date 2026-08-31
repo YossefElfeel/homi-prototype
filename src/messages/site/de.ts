@@ -332,6 +332,7 @@ export const siteDe = {
 
   legal: {
     updated: 'Zuletzt aktualisiert',
+    cta: 'Offerte anfordern',
     tocTitle: 'Inhalt',
     contactTitle: 'Rechtliche Anfragen',
     contactBody: 'Fragen zu diesen Dokumenten richten Sie bitte an {email}.',
@@ -409,6 +410,15 @@ export const siteDe = {
       lines: [{ lead: 'Leute, denen man' }, { accent: 'den Schlüssel gibt.' }] as HeadlineLine[],
       howLines: [{ lead: 'So läuft die' }, { accent: 'Bewerbung.' }] as HeadlineLine[],
       openLines: [{ lead: 'Offene' }, { accent: 'Stellen.' }] as HeadlineLine[],
+    },
+    /* Keyed by the document's own slug. «Der Datenschutz.» rather than the
+       document title split in half: «Datenschutz | erklärung.» would break a
+       compound across two lines of caps, which is the one thing the headline
+       copy exists to decide. */
+    legal: {
+      datenschutz: [{ lead: 'Der' }, { accent: 'Datenschutz.' }] as HeadlineLine[],
+      agb: [{ lead: 'Allgemeine' }, { accent: 'Geschäftsbedingungen.' }] as HeadlineLine[],
+      impressum: [{ lead: 'Das' }, { accent: 'Impressum.' }] as HeadlineLine[],
     },
     regionsIndex: {
       lines: [{ accent: 'Acht Gemeinden' }, { lead: 'am rechten Ufer.' }] as HeadlineLine[],
