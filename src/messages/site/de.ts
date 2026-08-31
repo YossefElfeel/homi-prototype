@@ -145,9 +145,11 @@ export const siteDe = {
     tableMethod: 'Abrechnung',
     tableFrom: 'Ab',
     tableFloor:
-      'Jeder Betrag ist die Untergrenze: die zwei Stunden Minimum zum Stundensatz oder das höhere Minimum der Leistung. Bezahlt werden die tatsächlich geleisteten Stunden — offeriert, bevor jemand kommt.',
+      'Jeder Betrag ist die Untergrenze: die zwei Stunden Minimum zum Stundensatz oder das höhere Minimum der Leistung. Bezahlt werden die tatsächlich geleisteten Stunden — offeriert, bevor jemand kommt. Bau & Ausbau ist die Ausnahme: dafür gibt es keinen Stundenansatz, offeriert wird pro Projekt nach einem Augenschein.',
     methodHourly: 'Nach Stunden',
     methodPerUnit: 'Nach Anzahl',
+    methodFlat: 'Pro Projekt',
+    onRequest: 'Auf Anfrage',
     durationTitle: 'Woraus wir die Dauer schätzen',
     durationLead:
       'Diese Tabelle nutzt das System, um die Stunden vorzuschlagen. Der Inhaber kann sie in jeder Offerte anpassen.',
@@ -330,6 +332,44 @@ export const siteDe = {
     cta: 'Offerte für {region} anfordern',
   },
 
+  bau: {
+    meta: {
+      title: 'Bau & Ausbau',
+      description:
+        'Abgehängte Decken, Trockenbau, Spanndecken, Akustik- und Rasterdecken, Fassade und Umgebungsarbeiten. Jedes Projekt wird nach einem Augenschein einzeln offeriert.',
+    },
+    eyebrow: 'Bau & Ausbau',
+    title: 'Bau & Ausbau',
+    lead: 'Das zweite Handwerk im Haus. Decken, Trockenbau und Umgebungsarbeiten — pro Projekt offeriert, nicht pro Stunde.',
+    cta: 'Projekt besprechen',
+    groups: {
+      trockenbau: {
+        title: 'Decken & Trockenbau',
+        body: 'Abgehängte Decken, Lichtvouten und Wandelemente in Gipskarton — gestellt, verspachtelt, geschliffen und malerfertig übergeben. Das Licht wird in die Konstruktion hineingeplant und nicht nachträglich daraufgesetzt.',
+      },
+      spanndecken: {
+        title: 'Spanndecken',
+        body: 'Bedruckte Folie, in eine umlaufende Schiene gespannt und hinterleuchtet. Sie geht an einem Tag in einen fertigen Raum — und ist die einzige Decke, die sich wieder abnehmen lässt, ohne das anzurühren, was darüber liegt.',
+      },
+      gewerbe: {
+        title: 'Gewerbe & Akustik',
+        body: 'Rasterdecken, Akustiksegel und Ringleuchten für Säle, Büros und Praxen — dort, wo die Decke Technik tragen und den Raum gleichzeitig ruhig machen muss.',
+      },
+      umgebung: {
+        title: 'Rohbau & Umgebung',
+        body: 'Metallständerwerk, Fassadenzugang, Aushub, Plattenbeläge und Bepflanzung. Die letzten beiden Aufnahmen zeigen denselben Garten, vorher und nachher.',
+      },
+    },
+    quoteTitle: 'Jedes Projekt wird einzeln offeriert',
+    quoteBody:
+      'Für diese Arbeiten gibt es keinen Stundenansatz — derselbe Raum sind drei Tage oder drei Wochen, je nachdem, was über dem Verputz liegt. Sagen Sie uns, was Sie vorhaben; wir schauen es an und halten den Festpreis schriftlich fest.',
+    quoteCta: 'Projekt schildern',
+    close: 'Schliessen',
+    previous: 'Vorheriges Bild',
+    next: 'Nächstes Bild',
+    counter: '{n} von {total}',
+  },
+
   legal: {
     updated: 'Zuletzt aktualisiert',
     cta: 'Offerte anfordern',
@@ -415,6 +455,17 @@ export const siteDe = {
        document title split in half: «Datenschutz | erklärung.» would break a
        compound across two lines of caps, which is the one thing the headline
        copy exists to decide. */
+    bau: {
+      lines: [{ lead: 'Wir bauen' }, { accent: 'Decken.' }] as HeadlineLine[],
+      groupLines: {
+        trockenbau: [{ lead: 'Decken &' }, { accent: 'Trockenbau.' }] as HeadlineLine[],
+        /* Not «Spann | decken.» — the same compound break the headline copy
+           exists to prevent, and in caps it reads as two words. */
+        spanndecken: [{ lead: 'Bedruckte' }, { accent: 'Spanndecken.' }] as HeadlineLine[],
+        gewerbe: [{ lead: 'Gewerbe &' }, { accent: 'Akustik.' }] as HeadlineLine[],
+        umgebung: [{ lead: 'Rohbau &' }, { accent: 'Umgebung.' }] as HeadlineLine[],
+      },
+    },
     legal: {
       datenschutz: [{ lead: 'Der' }, { accent: 'Datenschutz.' }] as HeadlineLine[],
       agb: [{ lead: 'Allgemeine' }, { accent: 'Geschäftsbedingungen.' }] as HeadlineLine[],

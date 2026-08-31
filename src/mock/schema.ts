@@ -76,6 +76,17 @@ export interface Service {
   basePrice: number;
   /** Hours. The global floor is 2h (§5.1); a service may set a higher one. */
   minDuration: number;
+  /**
+   * No price until somebody has looked at the job.
+   *
+   * `basePrice` is required and every public surface prints it, which was
+   * sound while the catalogue was nine cleaning services resting on one hourly
+   * rate. Construction does not: the same room is three days or three weeks
+   * depending on what is above the plaster. A number here would be an invented
+   * one, and `basePrice: 0` printing «CHF 0.–» is worse than inventing it — so
+   * the fact that there is no price is stated rather than encoded in a zero.
+   */
+  quotedIndividually?: boolean;
   /** Move-out cleaning carries the handover guarantee (§12). */
   handoverGuarantee: boolean;
   status: ServiceStatus;

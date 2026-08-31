@@ -5,7 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
 import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { SEED_SERVICES } from '@/mock/seed';
-import { isOffered } from '@/lib/service-catalogue';
+import { billingLabelKey, isOffered, publicHref } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
 
 /**
@@ -46,12 +46,16 @@ export async function PriceList({
 
   return (
     <ul className="surface-card divide-y divide-line overflow-hidden">
-      {services.map((service) => (
-          <li key={service.slug}>
-            <Link
-              href={`/leistungen/${service.slug}`}
-              className="hv-row-inverse group flex items-start gap-5 p-5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:items-center sm:gap-6 sm:p-6"
-            >
+      {services.map((service) => {
+        const href = publicHref(service);
+        /* A row with nowhere to go is still a row. It used to be a link to
+           /leistungen/<slug> regardless, which for a service the owner added
+           is a 404 — so the row now renders as plain markup rather than
+           promising a page that is not there. */
+        const rowClass =
+          'hv-row-inverse group flex items-start gap-5 p-5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-line-focus sm:items-center sm:gap-6 sm:p-6';
+        const inner = (
+          <>
               <span className="bg-accent-subtle text-ink-accent grid size-11 shrink-0 place-items-center rounded-full">
                 <ServiceIcon slug={service.slug} className="size-5" />
               </span>
@@ -77,7 +81,7 @@ export async function PriceList({
                 </span>
 
                 <span className="hidden shrink-0 text-sm text-ink-tertiary sm:block">
-                  {service.calc === 'perUnit' ? t('methodPerUnit') : t('methodHourly')}
+                  {t(billingLabelKey(service.calc))}
                 </span>
 
                 <span
@@ -91,12 +95,33 @@ export async function PriceList({
                       : 'text-xl',
                   )}
                 >
-                  <Money amount={serviceFromPrice(service.minDuration)} from />
+                  {/* No figure where there is no figure. `<Money>` refuses a
+                      bare number for the same reason this refuses a made-up
+                      one: a franc amount on a row that is quoted after a site
+                      visit is read as the price. */}
+                  {service.quotedIndividually ? (
+                    <span className="text-base text-ink-secondary sm:text-lg">
+                      {t('onRequest')}
+                    </span>
+                  ) : (
+                    <Money amount={serviceFromPrice(service.minDuration)} from />
+                  )}
                 </span>
               </span>
-            </Link>
+          </>
+        );
+        return (
+          <li key={service.slug}>
+            {href ? (
+              <Link href={href} className={rowClass}>
+                {inner}
+              </Link>
+            ) : (
+              <div className={rowClass}>{inner}</div>
+            )}
           </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }

@@ -107,6 +107,16 @@ export default function ServiceStep({
         <ul className="grid gap-3 sm:grid-cols-2">
           {services
             .filter(isOffered)
+            /*
+             * Offered on the site, not bookable here. This wizard is shaped
+             * around a cleaning job — rooms, bathrooms, key handover — and it
+             * ends on a price computed from an hourly rate. A service quoted
+             * after a site visit has none of those answers, so putting it in
+             * this list would ask a visitor how many bathrooms their new
+             * ceiling has and then quote them for it. /bau closes on /kontakt
+             * instead.
+             */
+            .filter((s) => !s.quotedIndividually)
             .sort((a, b) => a.order - b.order)
             .map((service) => {
               const range = durationRange(service.durationProfile);

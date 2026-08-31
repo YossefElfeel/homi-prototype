@@ -182,6 +182,36 @@ export const SEED_SERVICES: Service[] = [
    * still there if it ever comes back. Deleting it would have been the other
    * option, and it is the one the confirm dialog argues against.
    */
+  /*
+   * The tenth is the first row in this file that is not cleaning.
+   *
+   * It is `flat` and `quotedIndividually`, which together say the only honest
+   * thing about it: the price exists, it is fixed, and it is not knowable
+   * until somebody has stood in the room. `basePrice` stays 0 because nothing
+   * reads it — `quotedIndividually` short-circuits every surface that prints a
+   * price — and a plausible-looking number sitting there unused is how it ends
+   * up printed by the next screen that forgets to ask.
+   *
+   * Its marketing page is /bau, not /leistungen/bau: the portfolio *is* the
+   * page for this trade, and `publicHref` sends the catalogue row there.
+   */
+  {
+    id: 'svc_bau',
+    slug: 'bau',
+    name: l('Bau & Ausbau', 'Construction & fit-out'),
+    short: l(
+      'Decken, Trockenbau und Umgebungsarbeiten — pro Projekt offeriert.',
+      'Ceilings, drywall and outdoor works — quoted per project.',
+    ),
+    calc: 'flat',
+    durationProfile: 'none',
+    basePrice: 0,
+    quotedIndividually: true,
+    minDuration: 0,
+    handoverGuarantee: false,
+    status: 'active',
+    order: 10,
+  },
   {
     id: 'svc_fassade',
     slug: 'fassadenreinigung',
