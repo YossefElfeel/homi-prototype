@@ -61,6 +61,7 @@ export const offerEn: typeof offerDe = {
     declinedBody:
       'This quote is closed. If anything changes, you can send a new request at any time.',
     declinedAction: 'New request',
+    declinedOn: 'Declined on',
     downloadNote: 'Prototype: the PDF is not generated.',
     guaranteeTitle: 'Handover guarantee included',
     guaranteeBody:
@@ -76,8 +77,52 @@ export const offerEn: typeof offerDe = {
     body: 'It was valid until {date}. Prices may have moved since, so we would rather write you a fresh one — it takes under a minute.',
     action: 'Request a new quote',
     reissued: 'A new version has been created. You can carry on.',
+    reissueRefused:
+      'A new version cannot be created for this quote. Get in touch and we will sort it out.',
+    lapsedOn: 'Expired on',
     keptPrices:
       'A quote keeps its price until its expiry date. After that we recalculate.',
+  },
+
+  accepted: {
+    badge: 'Accepted',
+    title: 'Quote accepted',
+    body: 'You signed this quote on {date}. It is binding — here is what was agreed and where the job stands.',
+    bodyUnsigned:
+      'This quote is accepted and binding — here is what was agreed and where the job stands.',
+    signedOn: 'Signed on',
+    bookingTitle: 'Appointment',
+    bookingOpen: 'Booking confirmation',
+    bookingCancelled: 'This appointment was cancelled.',
+    bookingNone: 'The date is not set yet. We will be in touch.',
+    paymentTitle: 'Payment',
+    paymentNone: 'No payment is recorded against this quote.',
+    paymentRefunded: 'The amount was refunded in full.',
+    toOffers: 'My quotes',
+  },
+
+  record: {
+    title: 'What this quote contained',
+    reference: 'Reference',
+    version: 'Version {n}',
+    service: 'Service',
+    address: 'Address',
+    issued: 'Sent on',
+    duration: 'Planned duration',
+    durationValue: '{hours} hrs',
+    message: 'Covering note',
+    linesTitle: 'Line items',
+    colDescription: 'Item',
+    colQuantity: 'Qty',
+    colUnit: 'Unit price',
+    colTotal: 'Amount',
+    hours: '{n} hrs',
+    optionalOn: 'Optional · included',
+    optionalOff: 'Optional · not included',
+    subtotal: 'Subtotal',
+    discount: 'Discount',
+    total: 'Total',
+    noVat: 'No VAT — this was the amount.',
   },
 
   slot: {

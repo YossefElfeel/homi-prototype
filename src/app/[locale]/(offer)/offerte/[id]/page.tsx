@@ -13,8 +13,12 @@ import { ConfirmPanel } from '@/components/ui/confirm-panel';
 import { Field, Textarea } from '@/components/ui/field';
 import { Money } from '@/components/ui/money';
 import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { SignatureSlot } from '@/components/offer/contract';
 import { OfferShell } from '@/components/offer/offer-shell';
+import { QuoteRecord } from '@/components/offer/quote-record';
 import { useOffer } from '@/components/offer/use-offer';
+import { addMinutes } from '@/mock/engines/availability';
 import {
   activeLines,
   isExpired,
@@ -24,6 +28,7 @@ import {
   offerTotal,
 } from '@/mock/engines/offers';
 import { arrivalWindowMinutes } from '@/mock/engines/pricing';
+import { offerPayment } from '@/lib/offer-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { OfferLine } from '@/mock/schema';
 import { offerLineLabel } from '@/lib/offer-label';
@@ -41,6 +46,9 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
   const t = useTranslations('offer.detail');
   const brand = useTranslations('brand');
   const e = useTranslations('offer.expired');
+  const a = useTranslations('offer.accepted');
+  const signT = useTranslations('offer.sign');
+  const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -53,6 +61,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
   const declineOffer = useStore((s) => s.declineOffer);
   const services = useStore((s) => s.services);
   const addOns = useStore((s) => s.addOns);
+  const payments = useStore((s) => s.data.payments);
 
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
@@ -86,8 +95,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
-  const { offer, property, customer, service } = data;
-  const expired = isExpired(offer, now) || offer.status === 'expired';
+  const { offer, request, property, customer, service, booking } = data;
 
   const optional = offer.lines.filter((line) => line.optional);
   const fixed = offer.lines.filter((line) => !line.optional);
@@ -98,13 +106,179 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
      honours. Shared with the builder so both ends read the same text. */
   const labelFor = (line: OfferLine) => offerLineLabel(line, services, addOns, locale);
 
+  /*
+   * An accepted quote, and this branch comes first for a reason.
+   *
+   * There was none at all. `accepted` fell through to the live quote below —
+   * so O-2496, signed, paid CHF 147.– and standing in the calendar as B-1046,
+   * offered «Offerte annehmen» under a header badged «Angenommen», next to a
+   * decline button and the panel «Noch ist nichts gebucht». On O-2513 it went
+   * further: two optional lines still rendered as live checkboxes, so clearing
+   * one would have printed CHF 220.50 on a contract the customer had already
+   * been charged CHF 308.50 for.
+   *
+   * And when its date had passed — which is every accepted quote in the
+   * account, because acceptance does not stop the clock — the expiry check
+   * below caught it first and told the customer their signed job had lapsed
+   * and would they like a new price. The button under that offer was dead:
+   * `reissueOffer` refuses an accepted quote (see `canReissue`) and the
+   * screen ignored the `false` it returns, so the one action on the page did
+   * nothing at all.
+   *
+   * Expiry is about a decision that can still be made. This one has been.
+   */
+  if (offer.status === 'accepted') {
+    const payment = offerPayment(offer.id, payments);
+    const start = booking ? new Date(booking.start) : null;
+
+    return (
+      <OfferShell offer={offer}>
+        <div className="max-w-3xl">
+          <span className="inline-flex items-center gap-2 rounded-sm border border-status-success-line bg-status-success px-2 py-1 text-xs font-medium text-status-success-fg">
+            <Check className="size-3.5" aria-hidden />
+            {a('badge')}
+          </span>
+
+          <h1 className="display-type mt-5 text-[clamp(2.25rem,4vw,3rem)]">
+            {a('title')}
+          </h1>
+          <p className="mt-5 text-lg text-ink-secondary">
+            {offer.signedAt
+              ? a('body', { date: format.dateTime(new Date(offer.signedAt), 'full') })
+              : a('bodyUnsigned')}
+          </p>
+
+          {/* Where it went. Two questions and the old screen answered neither:
+              is it in the calendar, and did the money go through. */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <section className="surface-card p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-medium">{a('bookingTitle')}</h2>
+                {booking && (
+                  <StatusBadge entity="booking" state={booking.status} size="sm" />
+                )}
+              </div>
+              {booking && start ? (
+                <>
+                  <p data-numeric className="mt-2 text-ink-secondary">
+                    {booking.reference}
+                  </p>
+                  <p data-numeric className="mt-1 text-ink-secondary">
+                    {format.dateTime(start, 'full')}
+                    {', '}
+                    {format.dateTime(start, 'time')}–
+                    {format.dateTime(addMinutes(start, booking.arrivalWindow), 'time')}
+                  </p>
+                  {/* §20.2 — a cancelled job is still an accepted quote. Saying
+                      only «angenommen» over a job that is off would be the same
+                      class of lie this branch exists to remove. */}
+                  {booking.status === 'cancelled' && (
+                    <p className="mt-2 text-sm text-status-danger-fg">
+                      {a('bookingCancelled')}
+                    </p>
+                  )}
+                  <Button asChild variant="secondary" size="sm" className="mt-4">
+                    <Link href={`/offerte/${offer.id}/bestaetigt`}>
+                      {a('bookingOpen')}
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-ink-secondary">{a('bookingNone')}</p>
+              )}
+            </section>
+
+            <section className="surface-card p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-medium">{a('paymentTitle')}</h2>
+                {payment && (
+                  <StatusBadge entity="payment" state={payment.status} size="sm" />
+                )}
+              </div>
+              {payment ? (
+                <>
+                  <p className="mt-2 text-ink-secondary">
+                    <Money amount={payment.amount} /> · {methodLabel(payment.method)}
+                  </p>
+                  <p data-numeric className="mt-1 text-ink-secondary">
+                    {format.dateTime(new Date(payment.at), 'full')}
+                  </p>
+                  {payment.status === 'refunded' && (
+                    <p className="mt-2 text-sm text-ink-secondary">
+                      {a('paymentRefunded')}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-ink-secondary">{a('paymentNone')}</p>
+              )}
+            </section>
+          </div>
+
+          <QuoteRecord
+            offer={offer}
+            service={service}
+            property={property}
+            facts={
+              offer.signedAt
+                ? [
+                    {
+                      label: a('signedOn'),
+                      value: (
+                        <span data-numeric>
+                          {format.dateTime(new Date(offer.signedAt), 'full')}
+                        </span>
+                      ),
+                    },
+                  ]
+                : undefined
+            }
+          />
+
+          {/* §9.2 — who signed it. The full document is on the confirmation the
+              booking card links to; two names and two dates are what somebody
+              checks here. */}
+          <section className="mt-10">
+            <h2 className="subhead-type text-xl">{signT('signaturesTitle')}</h2>
+            <div className="surface-card mt-4 grid gap-6 p-5 sm:grid-cols-2">
+              <SignatureSlot
+                caption={signT('companyCaption')}
+                signature={offer.ownerSignature}
+                pending={signT('companyPending')}
+              />
+              <SignatureSlot
+                caption={signT('customerCaption')}
+                signature={offer.customerSignature}
+                pending={signT('customerPending')}
+              />
+            </div>
+          </section>
+
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href="/konto/offerten">{a('toOffers')}</Link>
+            </Button>
+            <Button
+              variant="secondary"
+              title={t('downloadNote')}
+              onClick={() => toast.info(t('downloadNote'))}
+            >
+              <Download className="size-4" aria-hidden />
+              {t('downloadPdf')}
+            </Button>
+          </div>
+        </div>
+      </OfferShell>
+    );
+  }
+
   /* A declined quote is not an expired one and must not read as a mistake —
      the customer chose this, so the screen confirms the choice rather than
      offering to renew what they just turned down. */
   if (offer.status === 'rejected') {
     return (
       <OfferShell offer={offer}>
-        <div className="max-w-2xl">
+        <div className="max-w-3xl">
           <h1 className="display-type text-[clamp(2.25rem,4vw,3rem)]">
             {t('declinedTitle')}
           </h1>
@@ -112,15 +286,39 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           <Button asChild size="lg" variant="secondary" className="mt-8">
             <Link href="/anfrage">{t('declinedAction')}</Link>
           </Button>
+
+          {/* `request.respondedAt`, not a field on the offer: `declineOffer`
+              stamps the request on the way out and the offer carries no date of
+              its own. The reason the customer typed goes to `internalNote` and
+              stays there — see the open question in the PR. */}
+          <QuoteRecord
+            offer={offer}
+            service={service}
+            property={property}
+            facts={
+              request.respondedAt
+                ? [
+                    {
+                      label: t('declinedOn'),
+                      value: (
+                        <span data-numeric>
+                          {format.dateTime(new Date(request.respondedAt), 'full')}
+                        </span>
+                      ),
+                    },
+                  ]
+                : undefined
+            }
+          />
         </div>
       </OfferShell>
     );
   }
 
-  if (expired) {
+  if (isExpired(offer, now) || offer.status === 'expired') {
     return (
       <OfferShell offer={offer}>
-        <div className="max-w-2xl">
+        <div className="max-w-3xl">
           <h1 className="display-type text-[clamp(2.25rem,4vw,3rem)]">{e('title')}</h1>
           <p className="mt-5 text-lg text-ink-secondary">
             {e('body', {
@@ -136,11 +334,37 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           <Button
             size="lg"
             className="mt-8"
-            onClick={() => reissueOffer(offer.id, now)}
+            /* The return value decides what is said. `reissueOffer` refuses
+               anything `canReissue` excludes, and a primary button that silently
+               does nothing is the failure this screen was already shipping. */
+            onClick={() => {
+              if (reissueOffer(offer.id, now)) toast.success(e('reissued'));
+              else toast.error(e('reissueRefused'));
+            }}
           >
             {e('action')}
             <ArrowRight className="size-4" aria-hidden />
           </Button>
+
+          <QuoteRecord
+            offer={offer}
+            service={service}
+            property={property}
+            facts={
+              offer.expiresAt
+                ? [
+                    {
+                      label: e('lapsedOn'),
+                      value: (
+                        <span data-numeric>
+                          {format.dateTime(new Date(offer.expiresAt), 'full')}
+                        </span>
+                      ),
+                    },
+                  ]
+                : undefined
+            }
+          />
         </div>
       </OfferShell>
     );
