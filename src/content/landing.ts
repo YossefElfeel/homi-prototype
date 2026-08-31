@@ -181,6 +181,11 @@ const en: Content = {
     { label: "Services", href: "/leistungen" },
     { label: "Pricing", href: "/preise" },
     { label: "Plans", href: "/abos" },
+    /* Its own item rather than a row inside Services: the catalogue behind
+       /leistungen is seven cleaning services priced at one hourly rate, and
+       construction is neither. Filing it there would have put a trade with no
+       hourly rate under a heading whose whole promise is one. */
+    { label: "Construction", href: "/bau" },
     { label: "Our work", href: "/referenzen" },
     { label: "About us", href: "/ueber-uns" },
     { label: "Contact", href: "/kontakt" },
@@ -408,6 +413,7 @@ const de: Content = {
     { label: "Leistungen", href: "/leistungen" },
     { label: "Preise", href: "/preise" },
     { label: "Abos", href: "/abos" },
+    { label: "Bau & Ausbau", href: "/bau" },
     { label: "Referenzen", href: "/referenzen" },
     { label: "Über uns", href: "/ueber-uns" },
     { label: "Kontakt", href: "/kontakt" },

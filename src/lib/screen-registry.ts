@@ -78,6 +78,14 @@ export const TRACKS: Track[] = [
       ]),
       done('11', '404', '404', '/diese-seite-gibt-es-nicht'),
       done('12', 'Danke', 'Thank you', '/danke'),
+      done(
+        '13',
+        'Bau & Ausbau',
+        'Construction & fit-out',
+        '/bau',
+        ['Decken & Trockenbau', 'Spanndecken', 'Gewerbe & Akustik', 'Rohbau & Umgebung', 'Lightbox'],
+        'The first page here that sells no cleaning service, and the only one that quotes no price: the site rests on CHF 49/h and a ceiling does not. Twenty-two of the owner\'s own photographs, grouped by trade because none of them arrived attached to a job. The close goes to /kontakt, not the request wizard — that wizard asks how many bathrooms a flat has. Whether the trade also belongs in the service catalogue, and what a catalogue row prints when there is no hourly rate to print, is open',
+      ),
     ],
   },
   {

@@ -69,6 +69,40 @@ export function hasPublicPage(service: Service) {
  * window cleaning's per-window rate and a flat call-out fee both printed as an
  * hourly rate. The unit is a property of the billing method, not of the screen.
  */
+/**
+ * Where a catalogue row points on the public site, or `null` for nowhere.
+ *
+ * `/preise` linked every offered service to `/leistungen/<slug>` without
+ * asking whether that page exists — safe only while every offered service was
+ * one of the seven with copy behind it. It is not any more: construction has
+ * its own page in the nav, and a service the owner adds has no page at all.
+ * The first would have got a second page about one trade, the second a 404.
+ */
+export function publicHref(service: Service): string | null {
+  if (service.slug === 'bau') return '/bau';
+  return hasPublicPage(service) ? `/leistungen/${service.slug}` : null;
+}
+
+/**
+ * The message key for how a service bills.
+ *
+ * `/preise` decided this with `calc === 'perUnit' ? perUnit : hourly` — a
+ * two-way ternary over a three-way union, so the one `flat` service in the
+ * catalogue read «Nach Stunden». It was invisible while that service was a
+ * draft and no draft reaches the website; the first active `flat` row is what
+ * would have shipped the lie.
+ */
+export function billingLabelKey(calc: CalcMethod): string {
+  switch (calc) {
+    case 'perUnit':
+      return 'methodPerUnit';
+    case 'flat':
+      return 'methodFlat';
+    case 'hourly':
+      return 'methodHourly';
+  }
+}
+
 export function calcUnit(calc: CalcMethod): MoneyUnit {
   switch (calc) {
     case 'hourly':

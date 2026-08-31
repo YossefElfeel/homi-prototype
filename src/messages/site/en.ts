@@ -128,9 +128,11 @@ export const siteEn: typeof siteDe = {
     tableMethod: 'Billing',
     tableFrom: 'From',
     tableFloor:
-      'Each figure is the floor: the two-hour minimum at the hourly rate, or the service’s own higher minimum. What you pay is the hours actually worked, quoted before anyone comes.',
+      'Each figure is the floor: the two-hour minimum at the hourly rate, or the service’s own higher minimum. What you pay is the hours actually worked, quoted before anyone comes. Construction and fit-out is the exception — it carries no hourly rate and is quoted per project after a site visit.',
     methodHourly: 'By the hour',
     methodPerUnit: 'By count',
+    methodFlat: 'Per project',
+    onRequest: 'On request',
     durationTitle: 'How we estimate the hours',
     durationLead:
       'The system uses this table to propose the hours. The owner can adjust them on any quote.',
@@ -308,6 +310,44 @@ export const siteEn: typeof siteDe = {
     cta: 'Request a quote for {region}',
   },
 
+  bau: {
+    meta: {
+      title: 'Construction & fit-out',
+      description:
+        'Suspended ceilings, drywall, stretch ceilings, commercial and acoustic ceilings, facades and outdoor works. Every project quoted individually after a site visit.',
+    },
+    eyebrow: 'Construction & fit-out',
+    title: 'Construction & fit-out',
+    lead: 'The second trade in the house. Ceilings, drywall and outdoor works — quoted per project, not by the hour.',
+    cta: 'Discuss your project',
+    groups: {
+      trockenbau: {
+        title: 'Ceilings & drywall',
+        body: 'Suspended ceilings, light coves and wall units in plasterboard — built, filled, sanded and handed over ready to paint. The lighting is planned into the construction rather than fixed to it afterwards.',
+      },
+      spanndecken: {
+        title: 'Stretch ceilings',
+        body: 'Printed film tensioned into a perimeter track and lit from behind. It goes up in a day over a finished room, and it is the one ceiling that can be taken down again without touching what is above it.',
+      },
+      gewerbe: {
+        title: 'Commercial & acoustic',
+        body: 'Grid ceilings, acoustic baffles and ring luminaires for halls, offices and practices — where the ceiling has to carry services and bring the room quiet at the same time.',
+      },
+      umgebung: {
+        title: 'Shell & grounds',
+        body: 'Metal stud framing, facade access, excavation, paving and planting. The last two photographs are the same garden, before and after.',
+      },
+    },
+    quoteTitle: 'Every project is quoted on its own',
+    quoteBody:
+      'There is no hourly rate for this work — the same room is three days or three weeks depending on what is above the plaster. Tell us what you have in mind and we will come and look at it, then put a fixed price in writing.',
+    quoteCta: 'Tell us about the project',
+    close: 'Close',
+    previous: 'Previous photo',
+    next: 'Next photo',
+    counter: '{n} of {total}',
+  },
+
   legal: {
     updated: 'Last updated',
     cta: 'Request a quote',
@@ -381,6 +421,15 @@ export const siteEn: typeof siteDe = {
        up directly. The slugs stay German — they are the route — while the
        heading is the site's own voice, which the footer already writes in the
        reader's language ("Privacy Policy", not "Datenschutzerklärung"). */
+    bau: {
+      lines: [{ lead: 'We build' }, { accent: 'ceilings.' }],
+      groupLines: {
+        trockenbau: [{ lead: 'Ceilings &' }, { accent: 'drywall.' }],
+        spanndecken: [{ lead: 'Stretch' }, { accent: 'ceilings.' }],
+        gewerbe: [{ lead: 'Commercial &' }, { accent: 'acoustic.' }],
+        umgebung: [{ lead: 'Shell &' }, { accent: 'grounds.' }],
+      },
+    },
     legal: {
       datenschutz: [{ lead: 'Privacy' }, { accent: 'policy.' }],
       agb: [{ lead: 'Terms and' }, { accent: 'conditions.' }],
