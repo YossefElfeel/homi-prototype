@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  BarChart3,
   Briefcase,
   CalendarCheck,
   CalendarDays,
@@ -23,6 +24,7 @@ import {
   Tags,
   UserPlus,
   Users,
+  Wallet,
 } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
@@ -43,7 +45,9 @@ type NavKey =
   | 'properties'
   | 'keys'
   | 'subscriptions'
-  | 'finance'
+  | 'invoices'
+  | 'expenses'
+  | 'analytics'
   | 'catalogue'
   | 'addons'
   | 'coupons'
@@ -65,16 +69,9 @@ type NavKey =
  * groups an owner opens least start folded.
  */
 const NAV: {
-  group: 'operations' | 'customers' | 'content' | 'hiring' | 'system';
+  group: 'operations' | 'customers' | 'finance' | 'content' | 'hiring' | 'system';
   collapsed?: boolean;
-  items: {
-    href: string;
-    key: NavKey;
-    icon: typeof LayoutDashboard;
-    exact?: boolean;
-    /** Sibling screens the same entry is the door to — see `AppNavItem.owns`. */
-    owns?: string[];
-  }[];
+  items: { href: string; key: NavKey; icon: typeof LayoutDashboard; exact?: boolean }[];
 }[] = [
   {
     group: 'operations',
@@ -96,23 +93,31 @@ const NAV: {
       { href: '/admin/objekte', key: 'properties', icon: Home },
       { href: '/admin/schluessel', key: 'keys', icon: KeyRound },
       { href: '/admin/abos', key: 'subscriptions', icon: RefreshCw },
-      /*
-       * One entry, three screens — and it used to say «Rechnungen», which was
-       * the name of the only one there was.
-       *
-       * Invoices are half of the money: costs and the profit line under them
-       * are the other half, and the owner reads the three together. Naming the
-       * row after the first screen would have left the other two findable only
-       * by knowing they were there. The strip inside says which of the three
-       * you are on; `owns` is what keeps this row lit while you move between
-       * them.
-       */
-      {
-        href: '/admin/rechnungen',
-        key: 'finance',
-        icon: Receipt,
-        owns: ['/admin/ausgaben', '/admin/finanzen'],
-      },
+    ],
+  },
+  {
+    /*
+     * The money, as its own group.
+     *
+     * It was one row — «Rechnungen» — inside «Kunden & Geld», and that held
+     * while invoices were the only money screen there was. With costs and the
+     * profit line beside them, one row could only name one of the three, and
+     * the other two were findable by knowing they existed.
+     *
+     * Three rows rather than one row and a tab strip inside it. Every other
+     * screen in this panel is one row in this list, and a section that
+     * navigated differently from the rest would be a second thing to learn for
+     * no gain — the group heading already says these three belong together.
+     * The strip that used to do that job is gone with this.
+     *
+     * «Kunden & Geld» lost its second half in the same move and is «Kunden»
+     * now: the money left it.
+     */
+    group: 'finance',
+    items: [
+      { href: '/admin/rechnungen', key: 'invoices', icon: Receipt },
+      { href: '/admin/ausgaben', key: 'expenses', icon: Wallet },
+      { href: '/admin/finanzen', key: 'analytics', icon: BarChart3 },
     ],
   },
   {
@@ -273,7 +278,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       label: t(`nav.${item.key}`),
       icon: item.icon,
       exact: item.exact,
-      owns: item.owns,
       badge: item.key === 'requests' ? waitingRequests.length : undefined,
     })),
   }));

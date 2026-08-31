@@ -456,7 +456,7 @@ export const TRACKS: Track[] = [
         'empty',
         'nothing matches the filter',
         'overdue',
-      ], 'Search takes the QR reference as well as the number, because that is what a bank statement shows. Every row carries its own menu, gated on status and role. It is the first of three screens under one sidebar entry now — the tab strip above the toolbar leads to the costs and to the profit line, and «Rechnungen herunterladen» exports what the filters left rather than everything in the store'),
+      ], 'Search takes the QR reference as well as the number, because that is what a bank statement shows. Every row carries its own menu, gated on status and role. It is the first of three rows in the «Finanzen» group now — the costs and the profit line are the two beside it — and «Rechnungen herunterladen» exports what the filters left rather than everything in the store'),
       done(
         '71a',
         'Rechnung erstellen',

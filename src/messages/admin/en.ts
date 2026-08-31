@@ -16,8 +16,9 @@ export const adminEn: typeof adminDe = {
       properties: 'Properties',
       keys: 'Keys',
       subscriptions: 'Plans',
-      /* Was «Invoices» — the name of one of the three screens behind it. */
-      finance: 'Finance',
+      invoices: 'Invoices',
+      expenses: 'Expenses',
+      analytics: 'Analytics',
       catalogue: 'Services',
       addons: 'Add-ons',
       coupons: 'Coupons',
@@ -31,7 +32,10 @@ export const adminEn: typeof adminDe = {
     },
     groups: {
       operations: 'Operations',
-      customers: 'Customers & money',
+      /* Was «Customers & money». The money moved out — it has a group of its
+         own now, with three rows in it. */
+      customers: 'Customers',
+      finance: 'Finance',
       content: 'Content',
       hiring: 'People',
       system: 'System',

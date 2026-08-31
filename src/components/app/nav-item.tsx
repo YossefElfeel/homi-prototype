@@ -12,22 +12,6 @@ export interface AppNavItem {
   icon: LucideIcon;
   /** Only the area root needs an exact match; every other item owns a subtree. */
   exact?: boolean;
-  /**
-   * Further route prefixes this item is the door to.
-   *
-   * One sidebar entry per subtree held until a section grew a second and a
-   * third screen alongside its first — «Finanzen» lands on /admin/rechnungen
-   * and the tab strip there leads to /admin/ausgaben and /admin/finanzen. With
-   * only the href to go on, walking to either of those deselected the sidebar
-   * entirely: nothing highlighted, on a nav of nineteen items, which reads as
-   * having left the panel rather than as having changed tab.
-   *
-   * Deliberately not solved by giving each screen its own nav row. The strip is
-   * the navigation *inside* a section; duplicating it in the sidebar would put
-   * the same three destinations in two places and make the section look like
-   * three unrelated screens that happen to sort together.
-   */
-  owns?: string[];
   badge?: number;
 }
 

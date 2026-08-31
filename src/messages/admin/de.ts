@@ -21,8 +21,9 @@ export const adminDe = {
       properties: 'Objekte',
       keys: 'Schlüssel',
       subscriptions: 'Abos',
-      /* War «Rechnungen» — der Name eines der drei Screens dahinter. */
-      finance: 'Finanzen',
+      invoices: 'Rechnungen',
+      expenses: 'Ausgaben',
+      analytics: 'Auswertung',
       catalogue: 'Leistungen',
       addons: 'Zusatzleistungen',
       coupons: 'Gutscheine',
@@ -36,7 +37,10 @@ export const adminDe = {
     },
     groups: {
       operations: 'Betrieb',
-      customers: 'Kunden & Geld',
+      /* War «Kunden & Geld». Das Geld ist ausgezogen — es hat jetzt eine
+         eigene Gruppe mit drei Zeilen darin. */
+      customers: 'Kunden',
+      finance: 'Finanzen',
       content: 'Inhalt',
       hiring: 'Personal',
       system: 'System',

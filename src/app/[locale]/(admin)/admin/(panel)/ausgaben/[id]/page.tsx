@@ -15,7 +15,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
-import { FinanceTabs } from '@/components/admin/finance-tabs';
 import { EXPENSE_CATEGORIES, effectiveExpenseStatus } from '@/lib/expense-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Expense, ExpenseCategory } from '@/mock/schema';
@@ -229,8 +228,6 @@ function ExpenseEditor({ expense, isNew = false }: { expense: Expense; isNew?: b
                 : t('statusOpen')
         }
       />
-
-      <FinanceTabs />
 
       <div className="space-y-app-section">
         <Card>
