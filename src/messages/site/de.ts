@@ -310,9 +310,6 @@ export const siteDe = {
     consentLink: 'Datenschutzerklärung',
     submit: 'Nachricht senden',
     sending: 'Wird gesendet …',
-    successTitle: 'Nachricht ist angekommen',
-    successBody: 'Wir melden uns innert 24 Stunden — an Werktagen meist deutlich schneller.',
-    successAgain: 'Weitere Nachricht senden',
     areasTitle: 'Einsatzgebiet',
   },
 

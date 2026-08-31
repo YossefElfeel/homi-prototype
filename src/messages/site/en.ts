@@ -288,9 +288,6 @@ export const siteEn: typeof siteDe = {
     consentLink: 'Privacy policy',
     submit: 'Send message',
     sending: 'Sending …',
-    successTitle: 'Your message arrived',
-    successBody: 'We will reply within 24 hours — on working days, usually a good deal sooner.',
-    successAgain: 'Send another message',
     areasTitle: 'Service area',
   },
 

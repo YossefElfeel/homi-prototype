@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Palette,
   Ruler,
+  Waypoints,
   X,
 } from 'lucide-react';
 
@@ -298,6 +299,13 @@ export function DemoBar({
         <div className="grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
           <ToolLink href="/screens" icon={<LayoutList className="size-3.5" aria-hidden />}>
             {t('screens')}
+          </ToolLink>
+          {/* The board that tracks whether a flow has an entry had no entry of
+              its own: this bar linked the other four and skipped it, so the one
+              page that answers "can you get in, act and get out" was reachable
+              only by typing the URL. */}
+          <ToolLink href="/flows" icon={<Waypoints className="size-3.5" aria-hidden />}>
+            {t('flows')}
           </ToolLink>
           <ToolLink
             href="/open-questions"

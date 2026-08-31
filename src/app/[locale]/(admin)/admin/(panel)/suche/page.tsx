@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -31,7 +32,13 @@ export default function AdminSearchPage() {
   const hydrated = useHydrated();
 
   const data = useStore((s) => s.data);
-  const [query, setQuery] = useState('');
+
+  /* Seeded from ?q so the palette's «see all results» row lands on the search
+     it was showing, not on an empty field the owner has to retype. Initial
+     state only — after that the box owns the query, or every keystroke would
+     fight the URL. */
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
 
   const hits = useMemo<Hit[]>(() => {
     const q = query.trim().toLowerCase();
