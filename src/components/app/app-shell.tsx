@@ -113,7 +113,10 @@ export function AppShell({
   }
 
   const isActive = (item: AppNavItem) =>
-    item.exact ? pathname === item.href : pathname.startsWith(item.href);
+    (item.exact ? pathname === item.href : pathname.startsWith(item.href)) ||
+    /* A section whose screens do not all sit under one prefix — see `owns` on
+       AppNavItem. Checked after the href so the ordinary case is unchanged. */
+    (item.owns?.some((prefix) => pathname.startsWith(prefix)) ?? false);
 
   const flatNav = useMemo(() => nav.flatMap((group) => group.items), [nav]);
 

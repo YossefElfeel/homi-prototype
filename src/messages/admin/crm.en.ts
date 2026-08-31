@@ -221,6 +221,28 @@ export const adminCrmEn: typeof adminCrmDe = {
     notFound: 'No such customer.',
   },
 
+  /* One address, read by /admin/objekte and by the edit screen. It was two
+     copies of the same four fields, and they had already drifted. */
+  address: {
+    street: 'Street and number',
+    detail: 'Detailed address',
+    detailHint:
+      'Floor, entrance, bell — what gets somebody to the right door. Prints on the job sheet.',
+    detailPlaceholder: 'e.g. 3rd floor left, bell «Meier»',
+    /* Not «Area». The key-facts card below carries «Area m²», and one word
+       for the floor area and for the municipality on one form is a word the
+       reader has to disambiguate twice. German has no clash — «Gebiet» and
+       «Fläche m²» — so only this half moves. */
+    areaLegend: 'Service area',
+    areaCode: 'Postcode',
+    areaName: 'Town',
+    areaMatched: 'Belongs to {region}.',
+    /* Not an error: a property outside the eight municipalities may be
+       recorded — it simply appears under no area. */
+    areaUnknown:
+      'Postcode {postcode} is not one of the eight municipalities (§6). It can still be recorded — it will appear under no area.',
+  },
+
   properties: {
     title: 'Properties',
     lead: 'The addresses the work happens at. Size, rooms and access belong to the property, not to one booking.',
@@ -265,6 +287,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     emptyBody:
       'Properties come out of requests and appear here afterwards. A known property can also be entered directly.',
     addAction: 'Add property',
+    errorRequired: 'Required.',
+    errorPostcode: 'Four digits.',
     newTitle: 'New property',
     newCustomer: 'Customer',
     newCustomerPlaceholder: 'Choose a customer …',
@@ -629,6 +653,9 @@ export const adminCrmEn: typeof adminCrmDe = {
       '{reference} has been in front of nobody and leaves no trace. This cannot be undone.',
     deleteBlocked: 'No longer deletable — the invoice has been sent in the meantime.',
     deleteDone: 'Draft {reference} deleted.',
+    downloadAction: 'Download invoices',
+    downloadEmpty: 'Nothing to download — the list is empty.',
+    downloadDone: '{n} invoices downloaded.',
     emptyTitle: 'No invoices yet',
     emptyBody:
       'An invoice comes out of a completed job, or is raised here by hand — and then waits for your approval.',

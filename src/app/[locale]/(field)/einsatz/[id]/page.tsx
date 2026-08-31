@@ -121,6 +121,19 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
       </Button>
 
       <h1 className="display-type text-2xl">{property?.street ?? '—'}</h1>
+      {/*
+        Directly under the street, above the town — the order somebody standing
+        on the pavement reads it in.
+
+        This is the screen the field belongs to. «3. OG links, Klingel Meier»
+        used to be typed into the standing notes, which this page prints in a
+        block much further down beside "dog in the living room" — so the one
+        line that gets a cleaner through the front door arrived after the tasks
+        and the access instructions, if it had been written at all.
+      */}
+      {property?.addressDetail && (
+        <p className="mt-1 font-medium text-ink">{property.addressDetail}</p>
+      )}
       <p className="mt-1 text-ink-secondary">
         {property && (
           <>

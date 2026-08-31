@@ -19,6 +19,7 @@ export type StatusEntity =
   | 'calendarEvent'
   | 'subscription'
   | 'invoice'
+  | 'expense'
   | 'review'
   | 'application'
   | 'payment'
@@ -95,6 +96,29 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     paid: 'success',
     overdue: 'danger',
     cancelled: 'neutral',
+  },
+  /*
+   * A cost, and it borrows the invoice's colours on purpose — «offen» and
+   * «überfällig» mean the same thing to the person reading them whichever
+   * direction the money is going, and giving the outgoing side its own palette
+   * would make two lists that are read one after the other disagree about what
+   * red means.
+   *
+   * `paid` is green even though money leaving is not good news, for the same
+   * reason: green here is "this one is settled and needs nothing from you",
+   * which is exactly what it means on an invoice. Colouring a paid bill grey
+   * would leave the whole list one shade and hide the only rows that still
+   * want an action.
+   *
+   * Three states to the invoice's five: there is no `draft` and no
+   * `cancelled`. A supplier's bill arrives finished, and one raised wrongly is
+   * deleted rather than carried — nobody outside the company has ever seen it,
+   * which is precisely the §15 test that makes a customer invoice permanent.
+   */
+  expense: {
+    open: 'info',
+    overdue: 'danger',
+    paid: 'success',
   },
   /* §16.
      `hidden` is a warning and `rejected` is not, which is the whole difference

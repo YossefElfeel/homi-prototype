@@ -166,6 +166,20 @@ export interface Property {
   customerId: ID;
   label: string;
   street: string;
+  /**
+   * The half of an address that gets somebody to the door.
+   *
+   * A street and a number reach the building; «3. OG links, Klingel Meier,
+   * Hintereingang über den Hof» is what reaches the flat. It was being typed
+   * into `permanentNotes` — the standing-note field that also carries "dog in
+   * the living room" — so the one line a cleaner needs *before* they arrive
+   * sat in a block the job sheet prints at the bottom, if at all.
+   *
+   * Optional, because a detached house genuinely has nothing to add. Empty is
+   * "there is nothing more to say", never an unfinished record — which is why
+   * nothing validates it.
+   */
+  addressDetail?: string;
   postcode: string;
   city: string;
   kind: PropertyKind;
@@ -855,6 +869,21 @@ export interface Coupon {
   code: string;
   kind: 'percent' | 'amount';
   value: number;
+  /**
+   * The ceiling on what a percentage may ever take off, in francs.
+   *
+   * A percentage has no upper bound of its own, and that is only harmless
+   * while every job costs about the same. 10% off a two-hour flat is CHF 25;
+   * 10% off a move-out clean with windows and a balcony is CHF 180, on a code
+   * that goes out with every first quote. The floor — `minOrder` — was already
+   * here and stops the code being used on work too small to bother with. This
+   * is the other end, and it was missing.
+   *
+   * Percentage codes only. A franc amount is already its own ceiling, so a cap
+   * on one would be a second number saying the same thing as the first, and
+   * the form does not offer it.
+   */
+  maxDiscount?: number;
   minOrder?: number;
   services: string[];
   validFrom: ISODate;
@@ -862,6 +891,93 @@ export interface Coupon {
   maxUses?: number;
   usedCount: number;
   active: boolean;
+}
+
+/* ------------------------------------------------------------- what goes out */
+
+/**
+ * Where the money went.
+ *
+ * The eight are the ones this business actually books against, in the order
+ * the office thinks of them — supplies and vehicle are weekly, the rest are
+ * monthly or rarer. `other` is last and is deliberately vague: a category set
+ * with no escape hatch gets used wrongly, and a cost filed under the wrong
+ * heading is worse than one filed under none.
+ *
+ * Wages are on the list because they are the largest line in a cleaning
+ * company by a distance, and a profit figure that leaves them out is not a
+ * profit figure. This prototype has no payroll — the entry is typed by hand
+ * like every other cost, which /open-questions says out loud.
+ */
+export type ExpenseCategory =
+  | 'supplies'
+  | 'vehicle'
+  | 'wages'
+  | 'insurance'
+  | 'marketing'
+  | 'software'
+  | 'rent'
+  | 'other';
+
+/**
+ * Two stored states, and the third is derived — exactly like an invoice.
+ *
+ * `overdue` is not in the union for the same reason it is not stored on an
+ * `Invoice`: it is a date passing, and writing it down would need a nightly
+ * sweep to stay true. `effectiveExpenseStatus` derives it.
+ *
+ * There is no `draft`. An invoice has one because the amount is argued about
+ * inside the company before it goes to a customer; a supplier's bill arrives
+ * finished, and a cost the office has not decided about yet is a cost it has
+ * not entered.
+ */
+export type ExpenseStatus = 'open' | 'paid';
+
+/**
+ * A cost the company carries — the other half of the finance picture.
+ *
+ * Nothing modelled it. `Invoice` said what came in, and «was bleibt am
+ * Monatsende» was therefore a question the app could not answer at all: the
+ * owner read the revenue here and the costs out of a shoebox and a banking
+ * app. That is the gap the finance section closes.
+ *
+ * Gross, in francs, VAT included. The company is under the CHF 100'000
+ * threshold and its own invoices carry «Keine MwSt.» — so splitting an
+ * expense into net and VAT would model a reclaim that cannot be made.
+ */
+export interface Expense {
+  id: ID;
+  /** «AUS-2026-0007». The office's own number, not the supplier's. */
+  reference: string;
+  category: ExpenseCategory;
+  /** Who was paid. Free text: a supplier is not a record in this app. */
+  supplier: string;
+  note?: string;
+  amount: number;
+  /** The day the cost arose — what the month is counted by. */
+  incurredAt: ISODate;
+  dueAt?: ISODate;
+  paidAt?: ISODate;
+  /** How it was settled. Only present once it is paid. */
+  method?: PaymentMethod;
+  status: ExpenseStatus;
+  /**
+   * The job this cost belongs to, when one does.
+   *
+   * A tank of fuel belongs to the month; the special detergent bought for one
+   * move-out clean belongs to that job. Optional, because most costs are the
+   * first kind and forcing a job onto them would produce made-up attribution.
+   */
+  bookingId?: ID;
+  /**
+   * Recurs every month — rent, insurance, the software subscriptions.
+   *
+   * A flag rather than a schedule: nothing in this prototype writes next
+   * month's copy, and a `RecurringExpense` with no engine behind it would be a
+   * record that promises an automation the app does not have. What it is for
+   * is reading — «welche Kosten laufen weiter, auch wenn wir nichts tun».
+   */
+  recurring?: boolean;
 }
 
 /* ------------------------------------------------------- proof and content */

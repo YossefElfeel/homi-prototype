@@ -33,7 +33,14 @@ const memory = new Map<string, string>();
 
 const { useStore } = await import('../src/mock/store.ts');
 import { buildScenario, SCENARIOS } from '../src/mock/scenarios.ts';
-import { couponRemaining, couponServiceNames, couponState } from '../src/lib/coupon-facts.ts';
+import {
+  couponCapThreshold,
+  couponDiscount,
+  couponRemaining,
+  couponServiceNames,
+  couponState,
+} from '../src/lib/coupon-facts.ts';
+import { priceEstimate } from '../src/mock/engines/pricing.ts';
 import { statesOf, statusTone } from '../src/lib/status-registry.ts';
 import { de, en } from '../src/messages/index.ts';
 import type { Coupon } from '../src/mock/schema.ts';
@@ -108,6 +115,155 @@ const byId = (id: string) => seeded.find((c) => c.id === id)!;
     'a minimum order is seeded, and so is its absence',
     seeded.some((c) => c.minOrder !== undefined) && seeded.some((c) => c.minOrder === undefined),
   );
+
+  /* Both branches of the new field, for the same reason: one capped code only,
+     and the uncapped rendering of the value column is unreviewed — one
+     uncapped only, and the cap never appears on screen at all. */
+  check(
+    'a percentage ceiling is seeded, and so is its absence',
+    seeded.some((c) => c.maxDiscount !== undefined) &&
+      seeded.some((c) => c.kind === 'percent' && c.maxDiscount === undefined),
+  );
+  /* A fixed amount is already its own ceiling. A seeded one carrying a second
+     number would put the field on a form that does not render it — and the
+     `kind` select clears it, so the only way in is the seed. */
+  check(
+    'no fixed-amount coupon carries one',
+    seeded.every((c) => c.kind === 'percent' || c.maxDiscount === undefined),
+  );
+  check(
+    'no ceiling is zero or negative',
+    seeded.every((c) => c.maxDiscount === undefined || c.maxDiscount > 0),
+  );
+}
+
+/* ------------------------------------------------------------- the ceiling
+ *
+ * `couponDiscount` is the one place floor, percentage and ceiling are applied
+ * together, because three callers need the same answer: the pricing engine,
+ * the form's worked example, and the list's value column. A rule copied into
+ * three components is a rule with three chances to be typed differently — the
+ * exact failure `status-registry.ts` exists to prevent for colour.
+ */
+{
+  const welcome = byId('cpn_1'); // 10%, min 150, max 80
+  const spring = byId('cpn_3'); // 25%, no ceiling
+  const moveout = byId('cpn_2'); // CHF 50 flat
+
+  check('below the floor the discount is nothing at all', couponDiscount(welcome, 100) === 0);
+  check(
+    'the floor is a threshold, not a taper — at the floor it applies in full',
+    couponDiscount(welcome, 150) === 15,
+  );
+  check('under the ceiling the percentage is the answer', couponDiscount(welcome, 400) === 40);
+  check('at the ceiling exactly, the two agree', couponDiscount(welcome, 800) === 80);
+  check('over it the ceiling wins', couponDiscount(welcome, 2000) === 80);
+  check(
+    'and this is the case that had no field — 10% of a move-out clean',
+    couponDiscount({ ...welcome, maxDiscount: undefined }, 2000) === 200,
+  );
+
+  check('an uncapped percentage keeps scaling', couponDiscount(spring, 2000) === 500);
+  check('a fixed amount is unaffected', couponDiscount(moveout, 2000) === 50);
+  check(
+    'a fixed amount never exceeds the order — no negative total',
+    couponDiscount({ ...moveout, minOrder: undefined }, 20) === 20,
+  );
+  check(
+    'and neither does a percentage with a ceiling above the order value',
+    couponDiscount({ ...welcome, minOrder: undefined, value: 100, maxDiscount: 5000 }, 200) === 200,
+  );
+
+  /* The threshold the form prints under the field. It is the division the
+     office would otherwise do in its head, and it is the number that says
+     whether a ceiling is doing anything at all. */
+  check('the ceiling bites from CHF 800 on WELCOME10', couponCapThreshold(welcome) === 800);
+  check('an uncapped code has no threshold', couponCapThreshold(spring) === undefined);
+  check('a fixed amount has none either', couponCapThreshold(moveout) === undefined);
+  check(
+    'and neither does a 0% code — the ceiling could never be reached at any price',
+    couponCapThreshold({ ...welcome, value: 0 }) === undefined,
+  );
+}
+
+/* ------------------------------------------ the engine applies the same rule
+ *
+ * `priceEstimate` computes the coupon discount itself rather than calling
+ * `couponDiscount` — it takes numbers, not records, because pricing resolves
+ * no records. So the two have to be checked against each other: a ceiling the
+ * form promises and the engine ignores is worse than no ceiling.
+ */
+{
+  const settings = useStore.getState().settings;
+  const service = useStore.getState().services.find((s) => s.slug === 'umzugsreinigung')!;
+  const base = {
+    service,
+    addOns: [],
+    area: 120,
+    bathrooms: 2,
+    hasPets: false,
+    needsExtraEffort: false,
+  };
+
+  const plain = priceEstimate(base, settings);
+  /* 40% rather than 10%, because the ceiling has to actually bite on the job
+     the engine prices: a 120 m² move-out clean comes to CHF 318.50, so a
+     ten-percent code would never reach CHF 80 and the check would pass on a
+     branch it never entered. */
+  const capped = priceEstimate({ ...base, couponPercent: 40, couponMaxDiscount: 80 }, settings);
+  const uncapped = priceEstimate({ ...base, couponPercent: 40 }, settings);
+
+  check(
+    'the job is big enough that 40% clears the ceiling',
+    (plain.subtotal * 40) / 100 > 80,
+    `subtotal ${plain.subtotal}`,
+  );
+  check('the engine stops at the ceiling', capped.discount === 80, `${capped.discount}`);
+  check('and without one it does not', uncapped.discount > 80, `${uncapped.discount}`);
+  check(
+    'the engine and `couponDiscount` agree once the ceiling is reached',
+    capped.discount === couponDiscount({ ...welcomeShell(80), value: 40 }, plain.subtotal),
+  );
+  /*
+   * Below the ceiling the two differ by the rounding, and only by it.
+   *
+   * `priceEstimate` emits payable figures, so every line goes through Swiss
+   * five-rappen rounding: 5% of CHF 318.50 is 15.925, and the engine says
+   * 15.95. `couponDiscount` is the rule, not a price — it does not round,
+   * because the form uses it to show what the ceiling means and the list uses
+   * it for nothing that gets paid. Pinned rather than papered over: if the two
+   * ever drift by more than one rounding step, that is a real disagreement.
+   */
+  const fiveRappen = (v: number) => Math.round(v * 20) / 20;
+  check(
+    'and below the ceiling they agree to the rappen the engine rounds to',
+    priceEstimate({ ...base, couponPercent: 5, couponMaxDiscount: 80 }, settings).discount ===
+      fiveRappen(couponDiscount({ ...welcomeShell(80), value: 5 }, plain.subtotal)),
+  );
+  /* A ceiling on a fixed amount is ignored rather than obeyed, because the
+     engine's `couponAmount` branch never sees it — worth pinning, since the
+     form clears the field on that branch and only the seed could reintroduce
+     one. */
+  check(
+    'a ceiling does nothing to a fixed amount',
+    priceEstimate({ ...base, couponAmount: 120, couponMaxDiscount: 80 }, settings).discount === 120,
+  );
+}
+
+/** A bare percentage coupon with the given ceiling and no floor. */
+function welcomeShell(maxDiscount?: number): Coupon {
+  return {
+    id: 'cpn_shell',
+    code: 'SHELL',
+    kind: 'percent',
+    value: 10,
+    maxDiscount,
+    services: [],
+    validFrom: '2026-01-01',
+    validTo: '2026-12-31',
+    usedCount: 0,
+    active: true,
+  };
 }
 
 /* ------------------------------------------------------- the derived state */

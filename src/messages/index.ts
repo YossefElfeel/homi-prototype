@@ -12,6 +12,8 @@ import { adminDe } from './admin/de';
 import { adminEn } from './admin/en';
 import { adminCrmDe } from './admin/crm.de';
 import { adminCrmEn } from './admin/crm.en';
+import { adminFinanceDe } from './admin/finance.de';
+import { adminFinanceEn } from './admin/finance.en';
 import { adminContentDe } from './admin/content.de';
 import { adminContentEn } from './admin/content.en';
 import { adminHiringDe } from './admin/hiring.de';
@@ -34,7 +36,7 @@ export const de = {
   account: accountDe,
   careers: careersDe,
   field: fieldDe,
-  admin: { ...adminDe, ...adminCrmDe, ...adminContentDe, ...adminHiringDe },
+  admin: { ...adminDe, ...adminCrmDe, ...adminFinanceDe, ...adminContentDe, ...adminHiringDe },
 };
 export const en = {
   ...enCore,
@@ -44,7 +46,7 @@ export const en = {
   account: accountEn,
   careers: careersEn,
   field: fieldEn,
-  admin: { ...adminEn, ...adminCrmEn, ...adminContentEn, ...adminHiringEn },
+  admin: { ...adminEn, ...adminCrmEn, ...adminFinanceEn, ...adminContentEn, ...adminHiringEn },
 };
 
 export type Messages = typeof de;

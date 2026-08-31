@@ -130,6 +130,13 @@ export const en: Messages = {
       overdue: 'Overdue',
       cancelled: 'Cancelled',
     },
+    /* The same words as an invoice, because they are the same states running
+       the other way. "Open" here means: we still owe this. */
+    expense: {
+      open: 'Open',
+      overdue: 'Overdue',
+      paid: 'Paid',
+    },
     review: {
       pending: 'Awaiting review',
       published: 'Published',

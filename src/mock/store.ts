@@ -16,6 +16,8 @@ import type {
   CalendarEventStatus,
   Customer,
   CustomerMessage,
+  Expense,
+  ExpenseCategory,
   ID,
   Invoice,
   InvoiceLine,
@@ -256,8 +258,28 @@ Marco Brunner`;
    the jobs list past its ten-row page, `createPosting`'s own untouched output,
    an accepted application with no account behind it yet, a record three days
    from erasure. Every one of them would have been invisible to exactly the
-   person most likely to be checking for them. */
-const SCHEMA_VERSION = 28;
+   person most likely to be checking for them.
+
+   29: Both kinds again, and this time the shape half is a whole entity.
+   `DataSet` gained `expenses`, and `invoices` gained the twelve months of the
+   office contract that the finance screen reads them against. `Coupon` gained
+   `maxDiscount` and `Property` gained `addressDetail`.
+
+   `merge` covers exactly one of those four. It fills in collections that are
+   *missing*, so `expenses` would arrive from the defaults — the new screens
+   would not crash on a stale blob. The other three are the case this list
+   keeps re-learning: `invoices` and `coupons` are present in any blob from 28,
+   so they are kept whole and neither the year of revenue nor the ceiling on
+   WELCOME10 ever lands.
+
+   What that reads as is the worst version of this wave. /admin/finanzen would
+   draw eleven empty months and one bar — the exact "the chart is broken" first
+   impression the revenue history was seeded to prevent — while /admin/ausgaben
+   beside it showed a full year of costs, so the profit line would be a loss in
+   every month. And the coupon form's third field would render for a reader who
+   had opened the app before with nothing in it, on the one screen this wave
+   added it to. */
+const SCHEMA_VERSION = 29;
 
 /**
  * §10 — the default payment term.
@@ -315,6 +337,24 @@ function nextInvoiceSeq(invoices: Invoice[]) {
       const tail = Number(invoice.reference.slice(invoice.reference.lastIndexOf('-') + 1));
       return Number.isFinite(tail) ? Math.max(highest, tail) : highest;
     }, 51) + 1
+  );
+}
+
+/**
+ * The same counter for costs, and it starts at zero rather than at 51.
+ *
+ * `nextInvoiceSeq` opens at 51 because the seeded invoices are numbered from
+ * RE-2026-0047 and a company that has been trading has a number behind it.
+ * The expense ledger begins where this seed begins — AUS-0001 is the first
+ * cost, and pretending to fifty earlier ones would be a claim the data does
+ * not carry.
+ */
+function nextExpenseSeq(expenses: Expense[]) {
+  return (
+    expenses.reduce((highest, expense) => {
+      const tail = Number(expense.reference.slice(expense.reference.lastIndexOf('-') + 1));
+      return Number.isFinite(tail) ? Math.max(highest, tail) : highest;
+    }, 0) + 1
   );
 }
 
@@ -707,6 +747,46 @@ interface StoreState {
    * ordinary thing to do next.
    */
   cancelInvoice: (id: ID, reason: string) => void;
+
+  /* ---- costs (screens 71b, 71c) ----
+     `invoices` said what came in and nothing said what went out, so the one
+     question an owner opens the money section to ask — «was bleibt am
+     Monatsende» — had no answer anywhere in the app. These four are the
+     smallest set that makes a cost a record rather than a note: raise it,
+     correct it, settle it, and remove one that should never have been typed. */
+  /**
+   * The reference is minted here, not by the form.
+   *
+   * Same rule as `createInvoice`: highest number ever seen plus one, so a
+   * scenario seeded in the 0040s cannot hand out an 0004 next and two costs
+   * cannot share a number the bookkeeper is meant to look them up by.
+   */
+  createExpense: (
+    input: {
+      category: ExpenseCategory;
+      supplier: string;
+      note?: string;
+      amount: number;
+      incurredAt: ISODate;
+      dueAt?: ISODate;
+      bookingId?: ID;
+      recurring?: boolean;
+    },
+    now: Date,
+  ) => ID | null;
+  updateExpense: (id: ID, patch: Partial<Expense>) => void;
+  /** `method` is required for the reason it is on an invoice: "paid" with no
+      route is a fact with the useful half missing. */
+  markExpensePaid: (id: ID, now: Date, method: PaymentMethod) => void;
+  /**
+   * Gone, at any status — and that is the difference from an invoice.
+   *
+   * §15 keeps an invoice past draft because somebody outside the company is
+   * holding a copy of it. Nobody has ever been handed one of these: it is the
+   * office's own note of a bill it received, and one entered twice is clerical
+   * noise, not a document. Returns false only for an id that is not there.
+   */
+  deleteExpense: (id: ID) => boolean;
 
   /* ---- field check in / out (screen 87) ----
      The screen enforced a three-photo minimum and then threw the photos away,
@@ -2664,6 +2744,107 @@ export const useStore = create<StoreState>()(
           entityId: id,
           summary: `Invoice ${invoice.reference} cancelled — ${cancelReason}`,
         });
+      },
+
+      createExpense: (input, now) => {
+        const s = get();
+        /* A cost of nothing is a row that adds nothing to a total and hides in
+           every list sorted by amount. Refused rather than saved as zero — the
+           form blocks it too, and this is the half a second tab cannot talk
+           its way past. */
+        if (!(input.amount > 0) || input.supplier.trim() === '') return null;
+
+        const seq = nextExpenseSeq(s.data.expenses);
+        const expense: Expense = {
+          /* The sequence in front of the clock, for the reason `createInvoice`
+             gives: two costs entered in the same millisecond used to be
+             possible only in a test, and then `reissueInvoice` proved
+             otherwise. Unique by construction beats unlikely. */
+          id: `exp_${seq}${now.getTime().toString(36).toUpperCase().slice(-4)}`,
+          reference: `AUS-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
+          category: input.category,
+          supplier: input.supplier.trim(),
+          note: input.note?.trim() || undefined,
+          amount: input.amount,
+          incurredAt: input.incurredAt,
+          dueAt: input.dueAt,
+          bookingId: input.bookingId,
+          recurring: input.recurring,
+          /* Open, always. A cost that was settled at the till is marked paid in
+             the next move — one path to `paid`, so the payment method can never
+             be skipped on the way in. */
+          status: 'open',
+        };
+
+        set({ data: { ...s.data, expenses: [expense, ...s.data.expenses] } });
+        get().logChange({
+          entity: 'expense',
+          entityId: expense.id,
+          summary: `Expense ${expense.reference} recorded — ${expense.supplier}`,
+        });
+        return expense.id;
+      },
+
+      updateExpense: (id, patch) => {
+        const s = get();
+        const before = s.data.expenses.find((e) => e.id === id);
+        if (!before) return;
+
+        set({
+          data: {
+            ...s.data,
+            expenses: s.data.expenses.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+          },
+        });
+        get().logChange({
+          entity: 'expense',
+          entityId: id,
+          summary: `Expense ${before.reference} edited`,
+          coalesce: true,
+        });
+      },
+
+      markExpensePaid: (id, now, method) => {
+        const s = get();
+        const expense = s.data.expenses.find((e) => e.id === id);
+        /* Already settled is not an error and not a second entry either — the
+           row's menu stops offering it, and a second tab that still shows the
+           item finds nothing left to do. */
+        if (!expense || expense.status === 'paid') return;
+
+        set({
+          data: {
+            ...s.data,
+            expenses: s.data.expenses.map((e) =>
+              e.id !== id
+                ? e
+                : { ...e, status: 'paid' as const, paidAt: now.toISOString(), method },
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'expense',
+          entityId: id,
+          summary: `Expense ${expense.reference} marked as paid (${method})`,
+        });
+      },
+
+      deleteExpense: (id) => {
+        const s = get();
+        const expense = s.data.expenses.find((e) => e.id === id);
+        if (!expense) return false;
+
+        set({ data: { ...s.data, expenses: s.data.expenses.filter((e) => e.id !== id) } });
+        /* The entry outlives the record, the same way a deleted invoice draft's
+           does: a cost that quietly vanishes out of a month somebody has
+           already read the profit for is the one deletion nobody can account
+           for afterwards. */
+        get().logChange({
+          entity: 'expense',
+          entityId: id,
+          summary: `Expense ${expense.reference} deleted — ${expense.supplier}, CHF ${expense.amount}`,
+        });
+        return true;
       },
 
       /**

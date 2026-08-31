@@ -119,6 +119,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </>
         )}
       </p>
+      {/* The line that gets somebody to the door, directly under the one that
+          gets them to the building. Absent when there is nothing to add: most
+          addresses have nothing, and an empty row here would be a gap the
+          reader has to interpret rather than a fact. */}
+      {property.addressDetail && (
+        <p className="mt-1 text-sm text-ink-tertiary">{property.addressDetail}</p>
+      )}
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12">
         <div className="space-y-10 lg:col-span-7">
