@@ -168,7 +168,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const search = useCallback(
     (query: string): CommandGroup[] => {
       const hits = searchAll(data, query);
-      return SEARCH_GROUPS.map((group) => ({
+      const groups: CommandGroup[] = SEARCH_GROUPS.map((group) => ({
         key: group,
         label: appT(GROUP_LABEL_KEY[group]),
         items: hits
@@ -182,6 +182,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             onSelect: () => router.push(hit.href),
           })),
       })).filter((group) => group.items.length > 0);
+
+      /*
+       * The palette keeps five rows per group, so a street name shared by nine
+       * customers silently loses four of them — and screen 84, the full search,
+       * had no inbound link anywhere to go and find them on. This row appears
+       * only when something was actually cut, and carries the query across, so
+       * the wider list opens on the same search rather than an empty field.
+       */
+      const shown = groups.reduce((n, group) => n + group.items.length, 0);
+      if (hits.length > shown) {
+        const href = `/admin/suche?q=${encodeURIComponent(query)}`;
+        groups.push({
+          key: 'all',
+          label: appT('searchGroupAll'),
+          items: [
+            {
+              id: 'search-all',
+              label: appT('searchAllResults', { total: hits.length }),
+              href,
+              onSelect: () => router.push(href),
+            },
+          ],
+        });
+      }
+
+      return groups;
     },
     [data, appT, router],
   );

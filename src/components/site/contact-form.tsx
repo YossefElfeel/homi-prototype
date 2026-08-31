@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea, Checkbox } from '@/components/ui/field';
 
-type State = 'idle' | 'sending' | 'success';
+type State = 'idle' | 'sending';
 type Errors = Partial<Record<'name' | 'email' | 'message' | 'consent', string>>;
 
 /**
@@ -23,6 +23,7 @@ type Errors = Partial<Record<'name' | 'email' | 'message' | 'consent', string>>;
 export function ContactForm() {
   const t = useTranslations('site.contact');
   const form = useTranslations('form');
+  const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
@@ -55,7 +56,7 @@ export function ContactForm() {
 
     setState('sending');
     // Mock only — no request leaves the browser.
-    window.setTimeout(() => setState('success'), 900);
+    window.setTimeout(() => router.push('/danke'), 900);
   }
 
   function revalidate(event: React.FormEvent<HTMLFormElement>) {
@@ -63,21 +64,17 @@ export function ContactForm() {
     setErrors(validate(new FormData(event.currentTarget)));
   }
 
-  if (state === 'success') {
-    return (
-      <div className="surface-card p-8">
-        <span className="inline-flex size-11 items-center justify-center rounded-full bg-status-success text-status-success-fg">
-          <Check className="size-5" aria-hidden />
-        </span>
-        <h2 className="subhead-type mt-5 text-2xl">{t('successTitle')}</h2>
-        <p className="mt-3 text-ink-secondary">{t('successBody')}</p>
-        <Button variant="secondary" className="mt-7" onClick={() => setState('idle')}>
-          {t('successAgain')}
-        </Button>
-      </div>
-    );
-  }
-
+  /*
+   * Success is /danke, not a panel drawn in place.
+   *
+   * Screen 12 exists for exactly this moment and nothing reached it: the form
+   * confirmed inline, so the one place that tells a visitor what happens next
+   * — the three numbered steps, and when to expect an answer — was a URL you
+   * had to know. Two designs for one moment, and the shorter one won by
+   * default. The «send another» button goes with the panel; /kontakt is one
+   * click away, and a second message is the rarer case than wanting to know
+   * whether anyone will call back.
+   */
   return (
     <form onSubmit={onSubmit} onInput={revalidate} noValidate className="surface-card p-6 sm:p-8">
       <h2 className="subhead-type text-2xl">{t('formTitle')}</h2>

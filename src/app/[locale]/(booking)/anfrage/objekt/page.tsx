@@ -306,8 +306,11 @@ export default function PropertyStep() {
             <p className="mt-1.5 text-sm text-ink-secondary">
               {t('coverageOutsideBody', { postcode: coverage.postcode })}
             </p>
+            {/* The index, not Küsnacht. The label promises the areas we serve,
+                and someone whose postcode we just refused needs the list that
+                answers "then where do you go" — not one town's sales page. */}
             <Button asChild variant="link" className="mt-2.5">
-              <Link href="/gebiete/kuesnacht">{t('coverageShowAreas')}</Link>
+              <Link href="/gebiete">{t('coverageShowAreas')}</Link>
             </Button>
           </div>
         </div>

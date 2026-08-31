@@ -28,7 +28,19 @@ const SERVICE_SLUGS = SEED_SERVICES.filter(isOffered)
   .sort((a, b) => a.order - b.order)
   .map((s) => s.slug);
 
-const COMPANY_ROUTES = ["/ueber-uns", "/referenzen", "/preise", "/abos", "/jobs", "/kontakt"];
+/* Index-matched against `t.footer.company`. `/gebiete` sits here because the
+   eight region pages and their index had no way in from this footer at all —
+   only the classic footer carried the area row, so on the shipping theme the
+   entire local-SEO surface was reachable by typing a URL. */
+const COMPANY_ROUTES = [
+  "/ueber-uns",
+  "/referenzen",
+  "/preise",
+  "/abos",
+  "/gebiete",
+  "/jobs",
+  "/kontakt",
+];
 const LEGAL_ROUTES = ["/rechtliches/datenschutz", "/rechtliches/agb", "/rechtliches/impressum"];
 
 /**
