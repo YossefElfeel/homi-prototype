@@ -32,6 +32,8 @@ export const careersDe = {
   },
 
   posting: {
+    eyebrow: 'Offene Stelle',
+    loading: 'Stelle wird geladen',
     back: 'Alle Stellen',
     workload: 'Pensum',
     regions: 'Einsatzgebiet',
@@ -53,6 +55,10 @@ export const careersDe = {
     step2Title: 'Erfahrung und Verfügbarkeit',
     spontaneousTitle: 'Spontanbewerbung',
     forPosting: 'Bewerbung für: {title}',
+    eyebrow: 'Bewerbung',
+    title: 'Bewerben',
+    spontaneousLead:
+      'Keine Stelle angegeben — das ist in Ordnung. Schreiben Sie uns, was Sie können und wo Sie arbeiten möchten; wir melden uns, sobald etwas passt.',
 
     firstName: 'Vorname',
     lastName: 'Nachname',

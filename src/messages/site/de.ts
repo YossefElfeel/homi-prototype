@@ -450,6 +450,7 @@ export const siteDe = {
       lines: [{ lead: 'Leute, denen man' }, { accent: 'den Schlüssel gibt.' }] as HeadlineLine[],
       howLines: [{ lead: 'So läuft die' }, { accent: 'Bewerbung.' }] as HeadlineLine[],
       openLines: [{ lead: 'Offene' }, { accent: 'Stellen.' }] as HeadlineLine[],
+      applyLines: [{ lead: 'Erzählen Sie' }, { accent: 'von sich.' }] as HeadlineLine[],
     },
     /* Keyed by the document's own slug. «Der Datenschutz.» rather than the
        document title split in half: «Datenschutz | erklärung.» would break a

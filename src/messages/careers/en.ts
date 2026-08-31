@@ -29,6 +29,8 @@ export const careersEn: typeof careersDe = {
   },
 
   posting: {
+    eyebrow: 'Open role',
+    loading: 'Loading the role',
     back: 'All roles',
     workload: 'Workload',
     regions: 'Area',
@@ -49,6 +51,10 @@ export const careersEn: typeof careersDe = {
     step2Title: 'Experience and availability',
     spontaneousTitle: 'Speculative application',
     forPosting: 'Applying for: {title}',
+    eyebrow: 'Application',
+    title: 'Apply',
+    spontaneousLead:
+      'No role named, which is fine — tell us what you can do and where you can work, and we will come back to you when something fits.',
 
     firstName: 'First name',
     lastName: 'Last name',

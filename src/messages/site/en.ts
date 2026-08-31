@@ -416,6 +416,7 @@ export const siteEn: typeof siteDe = {
       lines: [{ lead: 'People you would' }, { accent: 'hand a key to.' }],
       howLines: [{ lead: 'How applying' }, { accent: 'works.' }],
       openLines: [{ lead: 'Open' }, { accent: 'roles.' }],
+      applyLines: [{ lead: 'Tell us' }, { accent: 'about you.' }],
     },
     /* Keyed by the document's own slug, so the template can look the heading
        up directly. The slugs stay German — they are the route — while the
