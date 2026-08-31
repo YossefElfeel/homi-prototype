@@ -74,6 +74,7 @@ export const offerDe = {
     declinedBody:
       'Diese Offerte ist geschlossen. Wenn sich etwas ändert, stellen Sie jederzeit eine neue Anfrage.',
     declinedAction: 'Neue Anfrage',
+    declinedOn: 'Abgelehnt am',
     downloadNote: 'Prototyp: das PDF wird nicht erzeugt.',
     guaranteeTitle: 'Abnahmegarantie inbegriffen',
     guaranteeBody:
@@ -89,8 +90,80 @@ export const offerDe = {
     body: 'Sie war bis zum {date} gültig. Preise können sich seither geändert haben, deshalb erstellen wir Ihnen lieber eine neue — das dauert keine Minute.',
     action: 'Neue Offerte anfragen',
     reissued: 'Neue Version erstellt. Sie können jetzt fortfahren.',
+    /* Der Knopf hat den Rückgabewert von `reissueOffer` ignoriert. Bei einer
+       Offerte, für die keine neue Version gilt, passierte schlicht nichts —
+       kein Hinweis, keine Meldung. Ein Hauptknopf, der stillschweigend nichts
+       tut, ist schlimmer als gar keiner. */
+    reissueRefused:
+      'Für diese Offerte lässt sich keine neue Version erstellen. Melden Sie sich kurz bei uns.',
+    lapsedOn: 'Abgelaufen am',
     keptPrices:
       'Versendete Offerten behalten ihren Preis bis zum Ablaufdatum. Danach rechnen wir neu.',
+  },
+
+  /**
+   * Die angenommene Offerte — vorher gab es diesen Zustand auf dem Kundenbild
+   * gar nicht.
+   *
+   * Sie fiel auf die lebende Offerte durch: «Offerte annehmen» auf einem
+   * unterschriebenen, bezahlten und terminierten Auftrag, daneben «Noch ist
+   * nichts gebucht». Und sobald das Ablaufdatum vorbei war — was bei jeder
+   * angenommenen Offerte irgendwann eintritt —, meldete der Bildschirm
+   * «abgelaufen» und bot eine neue Offerte an.
+   */
+  accepted: {
+    badge: 'Angenommen',
+    title: 'Offerte angenommen',
+    body: 'Sie haben diese Offerte am {date} unterschrieben. Damit ist sie verbindlich — hier steht, was vereinbart wurde und wo der Auftrag steht.',
+    /* Angenommen, aber ohne Unterschrift im Datensatz: möglich, wenn die
+       Annahme am Telefon erfolgt ist. Ein Datum zu erfinden wäre schlimmer,
+       als keines zu nennen. */
+    bodyUnsigned:
+      'Diese Offerte ist angenommen und verbindlich — hier steht, was vereinbart wurde und wo der Auftrag steht.',
+    signedOn: 'Unterschrieben am',
+    bookingTitle: 'Termin',
+    bookingOpen: 'Buchungsbestätigung',
+    bookingNone: 'Der Termin ist noch nicht gesetzt. Wir melden uns bei Ihnen.',
+    bookingCancelled: 'Dieser Termin wurde storniert.',
+    paymentTitle: 'Zahlung',
+    paymentNone: 'Für diese Offerte ist keine Zahlung erfasst.',
+    paymentRefunded: 'Der Betrag wurde vollständig zurückerstattet.',
+    toOffers: 'Zu meinen Offerten',
+  },
+
+  /**
+   * Die Offerte als Beleg — für die drei Zustände, in denen man nichts mehr
+   * tun kann: abgelehnt, abgelaufen, angenommen.
+   *
+   * Eine geschlossene Offerte war eine Überschrift und ein Satz. Keine
+   * Leistung, keine Adresse, keine Position, kein Franken — wer acht Wochen
+   * später nachschauen wollte, *was* er abgelehnt hat, fand eine Seite, die es
+   * ihm nicht sagen konnte.
+   */
+  record: {
+    title: 'Was in dieser Offerte stand',
+    reference: 'Referenz',
+    version: 'Version {n}',
+    service: 'Leistung',
+    address: 'Adresse',
+    issued: 'Erstellt am',
+    duration: 'Geplante Dauer',
+    durationValue: '{hours} Std.',
+    message: 'Begleittext',
+    linesTitle: 'Positionen',
+    colDescription: 'Position',
+    colQuantity: 'Menge',
+    colUnit: 'Einzelpreis',
+    colTotal: 'Betrag',
+    hours: '{n} Std.',
+    /* Auf einer geschlossenen Offerte ist eine wählbare Position keine Wahl
+       mehr, sondern eine Tatsache: sie war drin oder sie war draussen. */
+    optionalOn: 'Wählbar · enthalten',
+    optionalOff: 'Wählbar · nicht enthalten',
+    subtotal: 'Zwischensumme',
+    discount: 'Rabatt',
+    total: 'Gesamtbetrag',
+    noVat: 'Keine MwSt. — das war der Endbetrag.',
   },
 
   slot: {

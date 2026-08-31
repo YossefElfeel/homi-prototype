@@ -63,23 +63,31 @@ export function OfferShell({
             </div>
           </div>
 
-          {offer.expiresAt && offer.status !== 'accepted' && (
-            <p
-              className={cn(
-                'mt-2 flex items-center gap-2 text-sm',
-                expiringSoon ? 'text-status-warning-fg' : 'text-ink-tertiary',
-              )}
-            >
-              {expiringSoon && <AlertTriangle className="size-3.5 shrink-0" aria-hidden />}
-              {t('validUntil')}{' '}
-              <time data-numeric dateTime={offer.expiresAt}>
-                {format.dateTime(new Date(offer.expiresAt), 'full')}
-              </time>
-              {remaining !== null && remaining > 0 && (
-                <span data-numeric>· {t('daysLeft', { days: remaining })}</span>
-              )}
-            </p>
-          )}
+          {/* A validity date belongs to a quote somebody can still act on.
+              `accepted` was already excluded; `rejected` was not, so a declined
+              quote carried «Gültig bis 29. August» across the top — a live
+              deadline on a decision the customer had already made. */}
+          {offer.expiresAt &&
+            offer.status !== 'accepted' &&
+            offer.status !== 'rejected' && (
+              <p
+                className={cn(
+                  'mt-2 flex items-center gap-2 text-sm',
+                  expiringSoon ? 'text-status-warning-fg' : 'text-ink-tertiary',
+                )}
+              >
+                {expiringSoon && (
+                  <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+                )}
+                {t('validUntil')}{' '}
+                <time data-numeric dateTime={offer.expiresAt}>
+                  {format.dateTime(new Date(offer.expiresAt), 'full')}
+                </time>
+                {remaining !== null && remaining > 0 && (
+                  <span data-numeric>· {t('daysLeft', { days: remaining })}</span>
+                )}
+              </p>
+            )}
 
           {index >= 0 && (
             <StepRail
