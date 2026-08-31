@@ -310,6 +310,7 @@ export const siteEn: typeof siteDe = {
 
   legal: {
     updated: 'Last updated',
+    cta: 'Request a quote',
     tocTitle: 'Contents',
     contactTitle: 'Legal enquiries',
     contactBody: 'Questions about these documents go to {email}.',
@@ -375,6 +376,15 @@ export const siteEn: typeof siteDe = {
       lines: [{ lead: 'People you would' }, { accent: 'hand a key to.' }],
       howLines: [{ lead: 'How applying' }, { accent: 'works.' }],
       openLines: [{ lead: 'Open' }, { accent: 'roles.' }],
+    },
+    /* Keyed by the document's own slug, so the template can look the heading
+       up directly. The slugs stay German — they are the route — while the
+       heading is the site's own voice, which the footer already writes in the
+       reader's language ("Privacy Policy", not "Datenschutzerklärung"). */
+    legal: {
+      datenschutz: [{ lead: 'Privacy' }, { accent: 'policy.' }],
+      agb: [{ lead: 'Terms and' }, { accent: 'conditions.' }],
+      impressum: [{ lead: 'Legal' }, { accent: 'notice.' }],
     },
     regionsIndex: {
       lines: [{ accent: 'Eight municipalities' }, { lead: 'on the right shore.' }],
