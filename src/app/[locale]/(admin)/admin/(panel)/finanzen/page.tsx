@@ -14,7 +14,6 @@ import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatGrid, StatTile } from '@/components/ui/stat';
-import { FinanceTabs } from '@/components/admin/finance-tabs';
 import { buildCsv, exportFilename } from '@/lib/csv';
 import { costsByCategory, monthlyCommitment } from '@/lib/expense-facts';
 import { billedInvoices, financeMonths, monthKey, outstandingSum } from '@/lib/finance-facts';
@@ -147,8 +146,6 @@ export default function FinanceAnalyticsPage() {
         }
       />
 
-      <FinanceTabs />
-
       <StatGrid className="mb-app-section">
         <StatTile
           label={t('statRevenue')}
@@ -156,7 +153,7 @@ export default function FinanceAnalyticsPage() {
           hint={t('statRevenueHint', { n: inWindow.invoices.length })}
           icon={Receipt}
           href="/admin/rechnungen"
-          linkLabel={t('tabs.invoices')}
+          linkLabel={t('linkInvoices')}
         />
         <StatTile
           label={t('statCosts')}
@@ -164,7 +161,7 @@ export default function FinanceAnalyticsPage() {
           hint={t('statCostsHint', { n: inWindow.expenses.length })}
           icon={Wallet}
           href="/admin/ausgaben"
-          linkLabel={t('tabs.expenses')}
+          linkLabel={t('linkExpenses')}
         />
         <StatTile
           /* The label changes with the sign rather than the number wearing a
@@ -187,7 +184,7 @@ export default function FinanceAnalyticsPage() {
           icon={Receipt}
           tone={outstanding > 0 ? 'warning' : 'default'}
           href="/admin/rechnungen"
-          linkLabel={t('tabs.invoices')}
+          linkLabel={t('linkInvoices')}
         />
       </StatGrid>
 

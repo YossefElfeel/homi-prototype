@@ -8,12 +8,11 @@
  */
 export const adminFinanceEn = {
   finance: {
-    tabs: {
-      label: 'Finance section',
-      invoices: 'Invoices',
-      expenses: 'Expenses',
-      analytics: 'Analytics',
-    },
+    /* The two link labels on the tiles at the top. They used to live in the tab
+       strip above the page; that is gone now that each of the three screens has
+       a row of its own in the sidebar. */
+    linkInvoices: 'Invoices',
+    linkExpenses: 'Expenses',
 
     title: 'Analytics',
     lead: 'What came in, what went out, and what is left.',

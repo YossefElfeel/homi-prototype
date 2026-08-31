@@ -22,7 +22,6 @@ import { RowAction, RowActionButton, RowActions, RowActionsDivider } from '@/com
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Toolbar } from '@/components/ui/toolbar';
-import { FinanceTabs } from '@/components/admin/finance-tabs';
 import { ActionIcon } from '@/lib/action-icons';
 import { buildCsv, exportFilename } from '@/lib/csv';
 import {
@@ -354,8 +353,6 @@ export default function ExpensesPage() {
           </>
         }
       />
-
-      <FinanceTabs />
 
       <Toolbar
         search={{

@@ -9,12 +9,11 @@
  */
 export const adminFinanceDe = {
   finance: {
-    tabs: {
-      label: 'Bereich Finanzen',
-      invoices: 'Rechnungen',
-      expenses: 'Ausgaben',
-      analytics: 'Auswertung',
-    },
+    /* Die Beschriftung der zwei Links auf den Kacheln oben. Standen mal im
+       Tab-Streifen über der Seite; der ist weg, seit die drei Screens je eine
+       eigene Zeile in der Seitenleiste haben. */
+    linkInvoices: 'Rechnungen',
+    linkExpenses: 'Ausgaben',
 
     title: 'Auswertung',
     lead: 'Was reingekommen ist, was rausgegangen ist, und was übrig bleibt.',

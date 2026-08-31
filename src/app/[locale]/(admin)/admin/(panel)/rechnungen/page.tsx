@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
-import { FinanceTabs } from '@/components/admin/finance-tabs';
 import { ActionIcon } from '@/lib/action-icons';
 import { buildCsv, exportFilename } from '@/lib/csv';
 import { downloadBlob } from '@/lib/pdf';
@@ -441,12 +440,6 @@ export default function InvoicesPage() {
           </>
         }
       />
-
-      {/* The section this list is the first screen of. Costs and the profit
-          line beside it are the two things this table could never say, and the
-          sidebar entry above now names the section rather than one of its
-          three screens. */}
-      <FinanceTabs />
 
       <Toolbar
         search={{
