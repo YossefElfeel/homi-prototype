@@ -2773,7 +2773,20 @@ function lt(de: string, en: string): Record<Locale, string> {
  * Bezeichnung» fallback for an unnamed job — and an eleventh row, because the
  * list paginates at ten and six postings left the pager unreachable.
  */
-function hiringPostings(now: Date): JobPosting[] {
+/**
+ * Exported so the *server* can see the roles.
+ *
+ * The posting screens were client-only, which meant a job advert shipped as
+ * `…` with the site's generic title on it — no heading, no summary, nothing
+ * for a search engine or a pasted link to show, on the two pages whose whole
+ * job is to be found and forwarded. The page reads title and summary from here
+ * at build time and still reads the live store for everything the office can
+ * edit.
+ *
+ * `now` only sets `createdAt`, so a caller that wants nothing but the copy may
+ * pass any date — see the posting route, which does.
+ */
+export function hiringPostings(now: Date): JobPosting[] {
   return [
     {
       id: 'job_1',

@@ -1,160 +1,117 @@
-'use client';
+import type { Metadata } from 'next';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { use } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, ArrowRight, Check, MapPin, Phone } from 'lucide-react';
+import { routing, type Locale } from '@/i18n/routing';
+import { getTheme } from '@/lib/theme-server';
+import { hiringPostings } from '@/mock/scenarios';
+import { JobPostingDetail } from '@/components/careers/job-posting-detail';
+import { Masthead } from '@/components/landing/Masthead';
+import { PageSection } from '@/components/landing/PageSection';
+import { Section, SectionHeading } from '@/components/signature/section-heading';
 
-import { Link } from '@/i18n/navigation';
-import type { Locale } from '@/i18n/routing';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { KIND_KEY } from '@/components/careers/job-list';
-import { regionByPostcode } from '@/mock/engines/coverage';
-import { useHydrated, useStore } from '@/mock/store';
+/**
+ * `createdAt` is the only field `hiringPostings` derives from the date it is
+ * given, and nothing on the server reads it — the published date is rendered
+ * client-side from the live store, where it belongs. So the epoch is not a
+ * stand-in for "now": it is the argument this call has no use for.
+ */
+const PUBLISHED = hiringPostings(new Date(0));
+
+export function generateStaticParams() {
+  return routing.locales.flatMap((locale) =>
+    PUBLISHED.map((posting) => ({ locale, slug: posting.slug })),
+  );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const posting = PUBLISHED.find((p) => p.slug === slug);
+  if (!posting) return {};
+  return {
+    title: posting.title[locale as Locale],
+    description: posting.summary[locale as Locale],
+  };
+}
 
 /**
  * Screen C2 — one role.
  *
- * "What you bring" comes before "what we offer" deliberately. In this market
- * the filter that matters most is the work permit, and burying requirements
- * under benefits produces applications that have to be turned down on the
- * first line — wasted time on both sides.
+ * **It used to be `'use client'` in its entirety**, and that cost it two
+ * things a job advert cannot do without. A client page cannot export
+ * `generateMetadata`, so every posting shipped under the site's generic title
+ * — a pasted link to a vacancy said "Homivaro — Clean. Reliable. Swiss
+ * quality." and nothing about the job. And nothing was server-rendered, so the
+ * document was one ellipsis: a crawler, a link preview and a visitor on a slow
+ * connection all got an empty page on the one route whose entire purpose is to
+ * be found and forwarded.
+ *
+ * The split follows what actually changes. Title and summary come from the
+ * published set at build time, which is what the metadata and the masthead
+ * need. Everything the office edits — the lists, the workload, the published
+ * date — stays in `JobPostingDetail` against the live store, so an edit on
+ * /admin/stellen still shows here without a rebuild.
  */
-export default function JobPostingPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const t = useTranslations('careers.posting');
-  const index = useTranslations('careers.index');
-  const brand = useTranslations('brand');
-  const locale = useLocale() as Locale;
-  const format = useFormatter();
-  const hydrated = useHydrated();
+export default async function JobPostingPage({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}) {
+  const { locale, slug } = await params;
+  setRequestLocale(locale);
 
-  const posting = useStore((s) => s.data.postings).find((p) => p.slug === slug);
+  const theme = await getTheme();
+  const t = await getTranslations('careers.posting');
+  const d = await getTranslations('site.display.careers');
 
-  if (!hydrated) return <div className="py-section text-ink-tertiary">…</div>;
+  /*
+   * Deliberately not `notFound()` on a slug this set does not know.
+   *
+   * `PUBLISHED` is the build-time catalogue, and the office can add a role on
+   * /admin/stellen after the build — that posting lives only in the store. A
+   * 404 here would make every role the owner creates unreachable on the site
+   * that advertises it. So an unknown slug still renders, under the careers
+   * heading rather than a role name, and `JobPostingDetail` decides against
+   * the live store: the real posting if it is there, the empty state if it is
+   * not. What is lost is only the tailored heading and metadata, which is the
+   * honest trade — we genuinely do not know the title until the client does.
+   */
+  const posting = PUBLISHED.find((p) => p.slug === slug);
+  const title = posting?.title[locale as Locale];
+  const lead = posting?.summary[locale as Locale];
 
-  if (!posting) {
+  if (theme === 'homivaro') {
     return (
-      <div className="py-section">
-        <EmptyState
-          title={index('emptyTitle')}
-          body={index('emptyBody')}
-          action={
-            <Button asChild>
-              <Link href="/jobs/bewerbung">{index('spontaneousAction')}</Link>
-            </Button>
-          }
-        />
-      </div>
+      <>
+        {/* One line, and it is the role — not a display headline split into a
+            navy half and a red one. Which words carry the feeling is a writing
+            decision the copy makes, and nobody writes it per vacancy. */}
+        <Masthead lines={title ? [{ accent: title }] : d.raw('openLines')} lead={lead} />
+        <PageSection>
+          <JobPostingDetail slug={slug} />
+        </PageSection>
+      </>
     );
   }
 
-  const lists = [
-    { key: 'responsibilities', items: posting.responsibilities[locale] },
-    { key: 'requirements', items: posting.requirements[locale] },
-    { key: 'offer', items: posting.offer[locale] },
-  ] as const;
-
   return (
-    <div className="py-section">
-      <Button asChild variant="link" className="mb-8">
-        <Link href="/jobs">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
-
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-        <div className="min-w-0">
-          <h1 className="display-type text-display-4">
-            {posting.title[locale]}
-          </h1>
-          <p className="mt-5 max-w-[var(--measure)] text-lg text-ink-secondary">
-            {posting.summary[locale]}
-          </p>
-
-          {lists.map(
-            ({ key, items }) =>
-              items.length > 0 && (
-                <section key={key} className="mt-12">
-                  <h2 className="subhead-type text-xl">{t(key)}</h2>
-                  <ul className="mt-5 space-y-3">
-                    {items.map((item) => (
-                      <li key={item} className="flex gap-3">
-                        <Check
-                          className="mt-1 size-4 shrink-0 text-ink-tertiary"
-                          aria-hidden
-                        />
-                        <span className="max-w-[var(--measure)] text-ink-secondary">
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ),
-          )}
-        </div>
-
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="surface-card p-6">
-            <dl className="space-y-4 text-sm">
-              <div>
-                <dt className="label-type text-ink-tertiary">{t('kind')}</dt>
-                <dd className="mt-1">{index(KIND_KEY[posting.kind])}</dd>
-              </div>
-              <div>
-                <dt className="label-type text-ink-tertiary">{t('workload')}</dt>
-                <dd data-numeric className="mt-1">
-                  {posting.workload[0]}–{posting.workload[1]}%
-                </dd>
-              </div>
-              <div>
-                <dt className="label-type text-ink-tertiary">{t('regions')}</dt>
-                <dd className="mt-1 flex items-start gap-1.5">
-                  <MapPin className="mt-0.5 size-3.5 shrink-0 text-ink-tertiary" aria-hidden />
-                  <span>
-                    {posting.regions
-                      .map((code) => regionByPostcode(code)?.name ?? code)
-                      .join(', ')}
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt className="label-type text-ink-tertiary">{t('published')}</dt>
-                <dd data-numeric className="mt-1">
-                  {format.dateTime(new Date(posting.createdAt), {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </dd>
-              </div>
-            </dl>
-
-            <Button asChild className="mt-6 w-full">
-              <Link href={`/jobs/bewerbung?stelle=${posting.slug}`}>
-                {t('apply')}
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </Button>
-            <p className="mt-3 text-sm text-ink-tertiary">{t('applyNote')}</p>
-          </div>
-
-          <div className="mt-6 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-5">
-            <h2 className="font-medium">{t('contactTitle')}</h2>
-            <p className="mt-2 text-sm text-ink-secondary">{t('contactBody')}</p>
-            <a
-              href={`tel:${brand('phone').replace(/\s/g, '')}`}
-              className="mt-3 inline-flex min-h-11 items-center gap-2 font-medium underline-offset-4 hover:underline"
-            >
-              <Phone className="size-4" aria-hidden />
-              <span data-numeric>{brand('phone')}</span>
-            </a>
-          </div>
-        </aside>
-      </div>
-    </div>
+    <>
+      <Section>
+        <SectionHeading
+          theme={theme}
+          eyebrow={t('eyebrow')}
+          title={title ?? t('back')}
+          lead={lead}
+          align="start"
+          level={1}
+        />
+      </Section>
+      <Section>
+        <JobPostingDetail slug={slug} />
+      </Section>
+    </>
   );
 }
