@@ -670,6 +670,29 @@ export const adminDe = {
     emptyBody: 'Sobald Sie auf eine Anfrage mit einer Offerte antworten, steht sie hier.',
   },
 
+  /*
+   * Vorher / Nachher auf der Offerte — steht erst da, wenn der Einsatz fertig
+   * ist. Vorher gibt es nichts zu zeigen, und eine leere Karte auf jeder
+   * offenen Offerte wäre Lärm auf genau den Bildschirmen, wo noch gewartet
+   * wird.
+   */
+  jobPhotos: {
+    title: 'Vorher / Nachher',
+    lead: 'Wie der Einsatz ausgegangen ist. Ziehen Sie den Trenner oder nehmen Sie die Pfeiltasten.',
+    before: 'Vorher',
+    after: 'Nachher',
+    compare: 'Zum Vergleichen ziehen',
+    /* Sagt, wer sie freigibt — nicht bloss, dass sie nicht freigegeben sind.
+       Die Zustimmung gehört der Kundschaft (§20.6), und der Schalter dafür
+       steht in ihrem Konto, nicht hier. */
+    consentReleased: 'Für die Website freigegeben',
+    consentInternal: 'Nur intern',
+    unpaired: '{side} — ohne Gegenstück aufgenommen',
+    emptyTitle: 'Keine Bilder zu diesem Einsatz',
+    emptyBody:
+      'Der Einsatz ist abgeschlossen, aber es wurde nichts fotografiert. Bilder entstehen auf dem Einsatz-Bildschirm beim Ein- und Auschecken.',
+  },
+
   /**
    * §11 — der Plan *ist* der Rhythmus. Ein zweites Intervallfeld neben dem Abo
    * hätte irgendwann etwas anderes behauptet als die Rechnung.

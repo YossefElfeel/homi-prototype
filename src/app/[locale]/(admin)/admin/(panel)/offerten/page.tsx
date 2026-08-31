@@ -19,10 +19,11 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { Chip } from '@/components/ui/chip';
-import { daysLeft, isExpired, offerTotal } from '@/mock/engines/offers';
+import { daysLeft, offerTotal } from '@/mock/engines/offers';
 import {
   customerName,
   offerBooking,
+  offerState,
   requestCoverage,
   offerPayment,
   offerRhythm,
@@ -38,11 +39,16 @@ import { cn } from '@/lib/cn';
  * colour, but a quote is never `new`, `inReview` or `cancelledByCustomer`, and
  * a filter offering those is a filter with dead options in it. `draft` is out
  * too — the list itself excludes drafts.
+ *
+ * `completed` sits between `accepted` and the two ways a quote dies, which is
+ * where it belongs in the lifecycle and, more usefully, where the eye expects
+ * it: the menu now reads down from «still ours to do» to «done» to «gone».
  */
 const OFFER_STATES = [
   'sent',
   'revisionRequested',
   'accepted',
+  'completed',
   'rejected',
   'expired',
 ] as const;
@@ -52,6 +58,7 @@ const STATE_LABEL_KEY: Record<(typeof OFFER_STATES)[number], string> = {
   sent: 'offerSent',
   revisionRequested: 'revisionRequested',
   accepted: 'accepted',
+  completed: 'completed',
   rejected: 'rejected',
   expired: 'expired',
 };
@@ -110,10 +117,11 @@ export default function OffersPage() {
   const nameOf = (offer: Offer) => customerName(customerOf(offer));
 
   /* Derived, like every other column here — the stored `status` still says
-     `sent` on a quote whose date has passed, and a filter that disagreed with
-     the badge next to it would be worse than no filter. */
-  const stateOf = (o: Offer) =>
-    isExpired(o, now) && o.status === 'sent' ? 'expired' : o.status;
+     `sent` on a quote whose date has passed and `accepted` on one whose job
+     finished last winter, and a filter that disagreed with the badge next to
+     it would be worse than no filter. The rule lives in `offer-facts` so the
+     detail view under this list cannot drift off it. */
+  const stateOf = (o: Offer) => offerState(o, bookings, now);
 
   const paymentStateOf = (o: Offer) => {
     const record = offerPayment(o.id, payments);
@@ -158,6 +166,10 @@ export default function OffersPage() {
     customers,
     payments,
     subscriptions,
+    /* The status filter reads the job now, not just the quote — without this
+       marking a booking complete leaves the row it belongs to sitting under
+       «Angenommen» until something else re-renders the list. */
+    bookings,
     status,
     payment,
     service,

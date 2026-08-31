@@ -17,6 +17,7 @@
     "test:invoices": "npx --yes tsx@4 scripts/invoice-test.mts",
     "test:expenses": "npx --yes tsx@4 scripts/expense-test.mts",
     "test:expiry": "npx --yes tsx@4 scripts/quote-expiry-test.mts",
+    "test:offer-state": "npx --yes tsx@4 scripts/offer-state-test.mts",
     "test:coupons": "npx --yes tsx@4 scripts/coupon-test.mts",
     "test:lang": "npx --yes tsx@4 scripts/lang-check.mts",
     "test:type-floor": "npx --yes tsx@4 scripts/type-floor-check.mts"

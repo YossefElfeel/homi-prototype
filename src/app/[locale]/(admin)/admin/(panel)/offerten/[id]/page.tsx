@@ -18,6 +18,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { ContractDocument, SignatureSlot } from '@/components/offer/contract';
+import { JobPhotos } from '@/components/admin/job-photos';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
@@ -27,7 +28,6 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import {
   canReissue,
   daysLeft,
-  isExpired,
   offerDiscount,
   offerHours,
   offerSubtotal,
@@ -35,6 +35,7 @@ import {
 } from '@/mock/engines/offers';
 import {
   offerBooking,
+  offerState,
   requestCoverage,
   offerPayment,
   offerRhythm,
@@ -79,6 +80,7 @@ export default function AdminOfferDetailPage({
   const settings = useStore((s) => s.settings);
   const payments = useStore((s) => s.data.payments);
   const bookings = useStore((s) => s.data.bookings);
+  const photos = useStore((s) => s.data.photos);
   const services = useStore((s) => s.services);
   const plans = useStore((s) => s.plans);
   const addOns = useStore((s) => s.addOns);
@@ -111,7 +113,6 @@ export default function AdminOfferDetailPage({
   const customer = customers.find((c) => c.id === request?.customerId);
   const property = properties.find((p) => p.id === request?.propertyId);
   const service = services.find((s) => s.slug === request?.serviceSlug);
-  const expired = isExpired(offer, now);
   const left = daysLeft(offer, now);
   const discount = offerDiscount(offer);
 
@@ -119,12 +120,27 @@ export default function AdminOfferDetailPage({
   const payment = offerPayment(offer.id, payments);
   const booking = offerBooking(offer.id, bookings);
   const rhythm = offerRhythm(request, plans);
+  /* Only the job's own pair. A photograph attached to the *request* — the one
+     the customer sent in to explain what they wanted — is a picture of the
+     problem, not of the work, and pairing it with an "after" would put the
+     customer's phone snap on one side of a before-and-after we are claiming
+     credit for. The account screen accepts both because it answers a wider
+     question; this card answers "how did the job go". */
+  const jobPhotos = booking
+    ? photos.filter(
+        (p) =>
+          p.bookingId === booking.id && (p.kind === 'before' || p.kind === 'after'),
+      )
+    : [];
   /* Three dates in, none chosen — see `Offer.proposedSlots`. This is the only
      state on the whole screen that is waiting on the *owner* rather than on
      the customer, so it is the one thing that gets a panel rather than a row. */
   const awaitingSlot = Boolean(offer.proposedSlots?.length && !offer.slotConfirmedAt);
 
-  const state = expired && offer.status === 'sent' ? 'expired' : offer.status;
+  /* The same rule the list one level up reads. Opening a row and finding a
+     different badge on it than the row carried is the drift this file's own
+     helper exists to stop. */
+  const state = offerState(offer, bookings, now);
   /* Not every quote is one a new version applies to — see `canReissue`. The
      button is hidden rather than disabled: on the quotes this excludes, the
      reason is already on screen next to it (a succeeded payment, a booking),
@@ -189,7 +205,18 @@ export default function AdminOfferDetailPage({
         }
       />
 
-      {expired && (
+      {/*
+        The badge decides, not the date on its own.
+
+        This read `isExpired(offer, now)` — true of *any* quote whose validity
+        window has closed, including every one that was signed inside it. So a
+        contract that was accepted, paid and worked opened under «Diese Offerte
+        ist abgelaufen», which is simply false: the window closed because the
+        quote had already been answered. Adding a completed badge put the two
+        statements side by side on the same header and made a lie that had been
+        sitting here quietly impossible to miss.
+      */}
+      {state === 'expired' && (
         <Alert tone="warning" className="mb-app">
           {t('expiredNote')}
         </Alert>
@@ -197,6 +224,17 @@ export default function AdminOfferDetailPage({
 
       <div className="gap-app grid lg:grid-cols-12">
         <div className="lg:col-span-8">
+          {/*
+            First on a finished quote, because it is the first thing anybody
+            opening one wants: not what we charged, but how it went. On every
+            other state it is absent — an open quote has no "before", and a
+            card saying so would sit on the screens where the office is still
+            waiting for an answer.
+          */}
+          {state === 'completed' && (
+            <JobPhotos photos={jobPhotos} className="mb-app" />
+          )}
+
           {/*
             The one action on this screen that belongs to the owner.
             A first-time customer sends three dates and then waits — with no

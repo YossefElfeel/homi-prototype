@@ -578,6 +578,20 @@ export const adminEn: typeof adminDe = {
     emptyBody: 'Once you answer a request with a quote, it lives here.',
   },
 
+  jobPhotos: {
+    title: 'Before / after',
+    lead: 'How the job turned out. Drag the divider, or use the arrow keys.',
+    before: 'Before',
+    after: 'After',
+    compare: 'Drag to compare',
+    consentReleased: 'Released for the website',
+    consentInternal: 'Internal only',
+    unpaired: '{side} — taken without its counterpart',
+    emptyTitle: 'No photos of this job',
+    emptyBody:
+      'The job is finished, but nothing was photographed. Photos are taken on the job screen at check-in and check-out.',
+  },
+
   rhythm: {
     oneTime: 'One-off',
     monthly: 'Monthly',
