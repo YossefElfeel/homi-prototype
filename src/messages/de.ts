@@ -93,6 +93,10 @@ export const de = {
       offerSent: 'Offerte versendet',
       revisionRequested: 'Änderung angefragt',
       accepted: 'Angenommen',
+      /* Dasselbe Wort wie beim Einsatz — es ist derselbe Vorgang, einmal von
+         der Offerte und einmal vom Einsatz aus gesehen. Ein zweites Wort für
+         «fertig» hätte den Leser fragen lassen, worin der Unterschied liegt. */
+      completed: 'Abgeschlossen',
       rejected: 'Abgelehnt',
       expired: 'Abgelaufen',
       cancelledByCustomer: 'Vom Kunden storniert',

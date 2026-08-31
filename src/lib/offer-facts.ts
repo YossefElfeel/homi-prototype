@@ -26,7 +26,7 @@ import type {
   ServiceRequest,
   Subscription,
 } from '@/mock/schema';
-import { offerTotal, roundChf } from '@/mock/engines/offers';
+import { isExpired, offerTotal, roundChf } from '@/mock/engines/offers';
 /* The one implementation of "add up an invoice". A second one here would be
    two answers to the same sum the first time a line grows a field. */
 import { invoiceTotal } from '@/lib/customer-history';
@@ -146,6 +146,63 @@ export function offerPayment(offerId: ID, payments: Payment[]): Payment | undefi
 /** The job a paid quote turned into. */
 export function offerBooking(offerId: ID, bookings: Booking[]): Booking | undefined {
   return bookings.find((b) => b.offerId === offerId);
+}
+
+/**
+ * The three booking states that mean the work actually happened.
+ *
+ * `closed` and `invoiced` are as finished as `completed` is — they are what
+ * `completed` becomes once the office bills and files it, so a quote that
+ * dropped back to «Angenommen» the moment its job was invoiced would be the
+ * one row that moved backwards.
+ *
+ * `cancelled` and `noAccess` are deliberately not here. Both are jobs that did
+ * not happen, and both leave the quote where it was: still accepted, still
+ * owed a visit. `off_refund` is exactly that shape — signed, paid, called off,
+ * refunded — and calling it completed would put the best badge on the list on
+ * the one quote that produced nothing.
+ */
+function isDelivered(booking: Booking | undefined): boolean {
+  return (
+    booking?.status === 'completed' ||
+    booking?.status === 'invoiced' ||
+    booking?.status === 'closed'
+  );
+}
+
+/**
+ * Where a quote stands, once the calendar and the clock have their say.
+ *
+ * Two of the states a quote is read in are not on the quote. `expired` is the
+ * date — §9.3 makes it, not a person, the thing that ends a quote — and the
+ * office's list has derived that since it was rebuilt. `completed` is the job:
+ * `Offer.status` stops at `accepted` and stays there for good, so a quote
+ * signed nine months ago whose work is long finished, billed and paid carried
+ * the same badge as one signed this morning.
+ *
+ * That is the whole cost. «Was steht noch aus» is the question this list is
+ * opened with, and filtering «Angenommen» answered it with every job the
+ * company has ever delivered. Splitting the two means the green badge is once
+ * again a short list of work owed, and the finished business goes grey.
+ *
+ * Derived rather than stored, like every other column on that screen: a
+ * `completed` written onto the offer when the job closed would be a second
+ * record of the same fact, free to disagree with the booking the day somebody
+ * reopens one.
+ *
+ * Returns the *quote's* vocabulary, not the badge's — `sent` here is the
+ * registry's `offerSent`, and the caller maps it as it always has.
+ */
+export function offerState(offer: Offer, bookings: Booking[], now: Date): string {
+  if (offer.status === 'sent' && isExpired(offer, now)) return 'expired';
+  /* Only an accepted quote can be delivered. The guard is not decoration: a
+     reissued quote drops back to `sent` while the booking it already produced
+     stays in the calendar, and without this the new version would open badged
+     as finished. */
+  if (offer.status === 'accepted' && isDelivered(offerBooking(offer.id, bookings))) {
+    return 'completed';
+  }
+  return offer.status;
 }
 
 export type BookingPaymentState = 'paid' | 'pending' | 'unpaid' | 'covered';

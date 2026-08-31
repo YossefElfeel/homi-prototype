@@ -92,6 +92,9 @@ export const en: Messages = {
       offerSent: 'Quote sent',
       revisionRequested: 'Change requested',
       accepted: 'Accepted',
+      /* The same word the booking uses — it is the same event seen from the
+         quote's end rather than the job's. */
+      completed: 'Completed',
       rejected: 'Declined',
       expired: 'Expired',
       cancelledByCustomer: 'Cancelled by customer',

@@ -29,7 +29,26 @@ export type StatusEntity =
   | 'coupon';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
-  // §4.1
+  /*
+   * §4.1 — and the vocabulary a quote is badged in too, which is why
+   * `offerSent` sits here rather than in a second map.
+   *
+   * `completed` is the second state in this list that nothing ever writes.
+   * `expired` was the first: a date ends a quote, and a date cannot set a
+   * field, so every screen derives it. This one is derived from the job —
+   * `accepted` is where a quote stopped for good, however long ago the work
+   * was finished, invoiced and paid. Nine months on, the office's own quote
+   * list still filed A-2444 under the same badge as a quote signed this
+   * morning, so «what is still on my plate» had no answer on the screen that
+   * exists to give it. See `offerState` in `lib/offer-facts.ts`.
+   *
+   * Neutral, not success, for the reason `key.returned` is neutral: this is
+   * the record closing, not something going well. `accepted` keeps the green
+   * because it is the one that still wants an action — schedule it, do it,
+   * bill it. If both were green the badge would have added a word and no
+   * information, and the whole point is that finished business stops catching
+   * the eye.
+   */
   request: {
     draft: 'neutral',
     new: 'info',
@@ -37,6 +56,7 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     offerSent: 'progress',
     revisionRequested: 'warning',
     accepted: 'success',
+    completed: 'neutral',
     rejected: 'danger',
     expired: 'neutral',
     cancelledByCustomer: 'danger',

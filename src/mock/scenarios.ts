@@ -5276,9 +5276,21 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         },
       ],
     },
+    /*
+     * The job A-2608 became — and it always was, it just was not written down.
+     * Same customer, same address, same service, quoted on the day this was
+     * booked and worked on the day the request asked for.
+     *
+     * The link is what makes `completed` reachable on the quotes list: with no
+     * `offerId`, `off_s_accepted` sat on «Angenommen» for ever while the job it
+     * paid for stood finished two rows away on /admin/buchungen, and the
+     * scenario whose whole purpose is one record per state had no record for
+     * this one.
+     */
     {
       id: 'bkg_s_completed',
       reference: 'B-1105',
+      offerId: 'off_s_accepted',
       customerId: 'cus_1',
       propertyId: 'prp_1',
       serviceSlug: 'einmalreinigung',
