@@ -4,10 +4,11 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
-import { Download, Plus, RefreshCw, Wallet } from 'lucide-react';
+import { Clock, Download, Plus, RefreshCw, Users, Wallet } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import {
   ConfirmDialog,
   useConfirmTarget,
@@ -15,13 +16,15 @@ import {
 } from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Select } from '@/components/ui/field';
+import { Select } from '@/components/ui/field';
 import { Money, formatChf } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
+import { RecordLink } from '@/components/ui/record-link';
 import { RowAction, RowActionButton, RowActions, RowActionsDivider } from '@/components/ui/row-actions';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Toolbar } from '@/components/ui/toolbar';
+import { ExpensePaidDialog, useExpensePayment } from '@/components/admin/expense-paid-dialog';
 import { ActionIcon } from '@/lib/action-icons';
 import { buildCsv, exportFilename } from '@/lib/csv';
 import {
@@ -30,7 +33,8 @@ import {
   isExpenseOutstanding,
   type ExpenseState,
 } from '@/lib/expense-facts';
-import { EXPENSE_METHODS, METHOD_ICONS } from '@/lib/payment-methods';
+import { labourExpenses, memberName } from '@/lib/labour-facts';
+import { METHOD_ICONS } from '@/lib/payment-methods';
 import { downloadBlob } from '@/lib/pdf';
 import { statesOf } from '@/lib/status-registry';
 import { cn } from '@/lib/cn';
@@ -61,6 +65,12 @@ type StatusFilter = 'all' | 'outstanding' | ExpenseState;
  * the amount is argued about internally before it goes to a customer; a
  * supplier's bill arrives finished. So a cost is open or paid, and «überfällig»
  * is derived from the date the way it is on an invoice.
+ *
+ * The people half is new and stays deliberately thin here. A labour row wears
+ * its hours on the row and its job in a column, and the third filter narrows to
+ * one person — enough to find a receipt. Reading the hours *as hours* is a
+ * different table with different columns, and it is one row down in the
+ * sidebar rather than a second mode of this one.
  */
 export default function ExpensesPage() {
   const t = useTranslations('admin.expenses');
@@ -75,25 +85,50 @@ export default function ExpensesPage() {
   const hydrated = useHydrated();
 
   const expenses = useStore((s) => s.data.expenses);
+  const bookings = useStore((s) => s.data.bookings);
+  const team = useStore((s) => s.data.team);
   const markExpensePaid = useStore((s) => s.markExpensePaid);
   const deleteExpense = useStore((s) => s.deleteExpense);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState<'all' | ExpenseCategory>('all');
+  const [worker, setWorker] = useState<'all' | string>('all');
 
   /* Two dialogs, two held rows — `useConfirmTarget` rather than `useState` for
      the reason the invoice list gives: Radix keeps the box mounted through its
      exit, and clearing the row on the dismissing click blanks the sentence
      naming the receipt while it fades. */
-  const paying = useConfirmTarget<Expense>();
+  const paying = useExpensePayment();
   const deleting = useConfirmTarget<Expense>();
-  const [method, setMethod] = useState<PaymentMethod>('qr-bill');
+
+  const jobReference = (expense: Expense) =>
+    expense.bookingId
+      ? (bookings.find((b) => b.id === expense.bookingId)?.reference ?? '')
+      : '';
+
+  /**
+   * The people the filter offers, and only the ones with a row behind them.
+   *
+   * The whole roster would put two names in the list that empty the table
+   * whichever way they are picked — the rule `costsByCategory` follows, and the
+   * reason the analytics screen leaves out a category nobody spent under.
+   */
+  const workers = useMemo(() => {
+    const seen = new Set(labourExpenses(expenses).map((e) => e.labour.workerId));
+    return team
+      .filter((m) => seen.has(m.id))
+      .sort((a, b) => memberName(a).localeCompare(memberName(b)));
+  }, [expenses, team]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return expenses
       .filter((e) => (category === 'all' ? true : e.category === category))
+      /* A person is a labour fact, so this filter drops everything else by
+         construction — which is the honest answer to «was hat Marta gekostet»
+         rather than a list that also carries the month's diesel. */
+      .filter((e) => (worker === 'all' ? true : e.labour?.workerId === worker))
       .filter((e) => {
         const state = effectiveExpenseStatus(e, now);
         if (status === 'all') return true;
@@ -104,22 +139,33 @@ export default function ExpensesPage() {
         q
           ? /* The supplier first, because that is what somebody is holding: a
                reminder from the garage with a name on it. The number is what
-               the bookkeeper reads out, and the note is what the office wrote
-               when the receipt was still in a pocket. */
-            [e.supplier, e.reference, e.note ?? ''].join(' ').toLowerCase().includes(q)
+               the bookkeeper reads out, the note is what the office wrote when
+               the receipt was still in a pocket — and the job reference is how
+               «was hat dieser Einsatz gekostet» is asked out loud, which until
+               now the box could not answer at all. */
+            [e.supplier, e.reference, e.note ?? '', jobReference(e)]
+              .join(' ')
+              .toLowerCase()
+              .includes(q)
           : true,
       )
       .sort((a, b) => b.incurredAt.localeCompare(a.incurredAt));
-  }, [expenses, category, status, query, now]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses, bookings, category, worker, status, query, now]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const filtering = status !== 'all' || category !== 'all' || query.trim() !== '';
+  const filtering =
+    status !== 'all' || category !== 'all' || worker !== 'all' || query.trim() !== '';
 
-  function confirmPaid() {
-    const expense = paying.target;
-    if (!expense) return;
-    paying.dismiss();
+  function resetFilters() {
+    setQuery('');
+    setStatus('all');
+    setCategory('all');
+    setWorker('all');
+  }
+
+  function confirmPaid(expense: Expense, method: PaymentMethod) {
     markExpensePaid(expense.id, now, method);
     toast.success(t('paidDone', { reference: expense.reference }));
   }
@@ -140,6 +186,10 @@ export default function ExpensesPage() {
    * presses the button and gets the whole year — and only finds out by opening
    * the file. What is on screen is what comes out, and the count in the toast
    * says how many so the two can be compared without opening anything.
+   *
+   * The five people-and-hours columns are written for *every* row, blank on the
+   * ones that are not labour. A column that only exists on some rows is a
+   * column that shifts the whole table halfway down a spreadsheet.
    */
   function download() {
     if (visible.length === 0) {
@@ -158,6 +208,11 @@ export default function ExpensesPage() {
         t('colDue'),
         t('colStatus'),
         t('colMethod'),
+        t('colJob'),
+        t('colHours'),
+        t('colWorker'),
+        t('colPaidBy'),
+        t('colResponsible'),
       ],
       visible.map((e) => [
         e.reference,
@@ -172,6 +227,13 @@ export default function ExpensesPage() {
         e.dueAt?.slice(0, 10) ?? '',
         statusT(effectiveExpenseStatus(e, now)),
         e.method ? methodT(e.method) : '',
+        jobReference(e),
+        /* Same rule as the amount: a decimal a spreadsheet can add up, not
+           «4.5 Std.» */
+        e.labour ? String(e.labour.hours) : '',
+        e.labour ? memberName(team.find((m) => m.id === e.labour!.workerId)) : '',
+        e.labour ? memberName(team.find((m) => m.id === e.labour!.paidById)) : '',
+        e.labour ? memberName(team.find((m) => m.id === e.labour!.responsibleId)) : '',
       ]),
     );
 
@@ -195,7 +257,7 @@ export default function ExpensesPage() {
       primary: true,
       sortBy: (e) => e.supplier,
       cell: (e) => (
-        <span className="flex flex-wrap items-center gap-x-2">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {e.supplier}
           {/* A standing cost, marked on the row rather than only inside the
               record. «Was läuft weiter, wenn wir nichts tun» is a question this
@@ -207,6 +269,15 @@ export default function ExpensesPage() {
               <RefreshCw className="size-3" aria-hidden />
               {t('recurring')}
             </span>
+          )}
+          {/* The hours ride on the name rather than taking a column, so they
+              survive the card rendering below lg — where a labour row is
+              otherwise a person's name and an amount, which is the one shape
+              this category exists to stop. */}
+          {e.labour && (
+            <Chip tone="accent" icon={Clock}>
+              {t('hours', { hours: e.labour.hours })}
+            </Chip>
           )}
         </span>
       ),
@@ -227,6 +298,30 @@ export default function ExpensesPage() {
       header: t('colCategory'),
       sortBy: (e) => e.category,
       cell: (e) => <span className="text-sm text-ink-secondary">{t(`categories.${e.category}`)}</span>,
+    },
+    {
+      /*
+       * The job, and it is not only a labour column.
+       *
+       * `bookingId` has been on this record since the day it was written and
+       * appeared on no list — so a cost attributed to a job was attributed
+       * where nobody could see it, and the attribution may as well not have
+       * been made. Labour rows always carry one; the detergent bought for one
+       * move-out clean may.
+       */
+      key: 'job',
+      header: t('colJob'),
+      tableOnly: true,
+      sortBy: (e) => jobReference(e),
+      cell: (e) => {
+        const reference = jobReference(e);
+        if (!reference) return <span className="text-ink-tertiary">—</span>;
+        return (
+          <RecordLink href={`/admin/buchungen/${e.bookingId}`} numeric>
+            {reference}
+          </RecordLink>
+        );
+      },
     },
     {
       key: 'amount',
@@ -320,13 +415,7 @@ export default function ExpensesPage() {
           <ActionIcon.edit aria-hidden />
         </RowAction>
         {!settled && (
-          <RowActionButton
-            label={t('rowMarkPaid')}
-            onClick={() => {
-              setMethod('qr-bill');
-              paying.ask(expense);
-            }}
-          >
+          <RowActionButton label={t('rowMarkPaid')} onClick={() => paying.ask(expense)}>
             <ActionIcon.invoice aria-hidden />
           </RowActionButton>
         )}
@@ -345,6 +434,15 @@ export default function ExpensesPage() {
         lead={t('lead')}
         actions={
           <>
+            {/* The way to the people side. It is a sidebar row too — this is
+                the link for somebody who is already standing on the list and
+                has just found out that half of it is hours. */}
+            <Button asChild variant="secondary">
+              <Link href="/admin/ausgaben/arbeitszeit">
+                <Users className="size-4" aria-hidden />
+                {t('workforceAction')}
+              </Link>
+            </Button>
             <Button variant="secondary" onClick={download}>
               <Download className="size-4" aria-hidden />
               {t('downloadAction')}
@@ -386,6 +484,25 @@ export default function ExpensesPage() {
                 ))}
               </Select>
             </label>
+            {/* Only once somebody has hours against their name. On a company
+                that has never booked labour this is a select with one option
+                in it, which is a control that cannot do anything — so it is
+                not drawn at all. */}
+            {workers.length > 0 && (
+              <label className="min-w-40">
+                <span className="sr-only">{t('filterWorker')}</span>
+                <Select dense value={worker} onChange={(e) => setWorker(e.target.value)}>
+                  <option value="all">
+                    {t('filterWorker')}: {t('filterAll')}
+                  </option>
+                  {workers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {t('filterWorker')}: {memberName(m)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            )}
             <label className="min-w-40">
               <span className="sr-only">{t('filterStatus')}</span>
               {/*
@@ -435,14 +552,7 @@ export default function ExpensesPage() {
               title={t('filterEmptyTitle')}
               body={t('filterEmptyBody')}
               action={
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setQuery('');
-                    setStatus('all');
-                    setCategory('all');
-                  }}
-                >
+                <Button variant="secondary" onClick={resetFilters}>
                   {t('filterReset')}
                 </Button>
               }
@@ -462,41 +572,9 @@ export default function ExpensesPage() {
           shape the invoice detail uses to ask the same question. It is a
           confirm rather than a straight click because «bezahlt» writes a fact
           about money that has left the account, and the method is the half of
-          that fact a click alone would drop. */}
-      <ConfirmDialog
-        open={paying.open}
-        onOpenChange={(open) => !open && paying.dismiss()}
-        tone="default"
-        title={t('paidTitle')}
-        body={
-          paying.target
-            ? t('paidBody', {
-                reference: paying.target.reference,
-                supplier: paying.target.supplier,
-                amount: formatChf(paying.target.amount, locale),
-              })
-            : ''
-        }
-        action={t('paidAction')}
-        dismiss={dismissLabel}
-        onConfirm={confirmPaid}
-      >
-        <Field label={t('paidMethod')}>
-          {(props) => (
-            <Select
-              {...props}
-              value={method}
-              onChange={(e) => setMethod(e.target.value as PaymentMethod)}
-            >
-              {EXPENSE_METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {methodT(m)}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      </ConfirmDialog>
+          that fact a click alone would drop. Shared with the workforce board,
+          which settles the same records. */}
+      <ExpensePaidDialog payment={paying} onConfirm={confirmPaid} />
 
       <ConfirmDialog
         open={deleting.open}

@@ -12,7 +12,14 @@
  * same sentence and a greyed button says neither.
  */
 
-import type { Booking, CalendarEvent, ChangeLogEntry, TeamMember } from '@/mock/schema';
+import { labourExpenses } from '@/lib/labour-facts';
+import type {
+  Booking,
+  CalendarEvent,
+  ChangeLogEntry,
+  Expense,
+  TeamMember,
+} from '@/mock/schema';
 
 export type UserAction = 'edit' | 'permissions' | 'deactivate' | 'reactivate' | 'delete' | 'reset';
 
@@ -46,23 +53,47 @@ const no = (because: UserDenial): UserPermission => ({ allowed: false, because }
 export interface UserHistory {
   bookings: number;
   events: number;
+  /**
+   * Hours booked against this person, as rows rather than as a sum.
+   *
+   * This is the money half, and it is the one that makes the promise concrete:
+   * a labour row says who worked, for how long, and whether they have been paid
+   * — so deleting the account behind it would orphan an amount somebody is
+   * still owed. Counted here so `delete` refuses on it, and shown on the record
+   * as hours and francs by the block further down the page.
+   */
+  labour: number;
   logEntries: number;
   total: number;
 }
 
 export function userHistory(
   member: TeamMember,
-  data: { bookings: Booking[]; events: CalendarEvent[]; changeLog: ChangeLogEntry[] },
+  data: {
+    bookings: Booking[];
+    events: CalendarEvent[];
+    expenses: Expense[];
+    changeLog: ChangeLogEntry[];
+  },
 ): UserHistory {
   const bookings = data.bookings.filter((b) => b.assigneeId === member.id).length;
   const events = data.events.filter((e) => e.assigneeId === member.id).length;
+  const labour = labourExpenses(data.expenses).filter(
+    (e) => e.labour.workerId === member.id,
+  ).length;
   /* The log names its actor rather than pointing at an id — see `logChange`.
      Matching on the name is the only join there is, and it is the right one:
      the entry says who did it, and that stays true after the account goes. */
   const name = fullName(member);
   const logEntries = data.changeLog.filter((e) => e.actor === name).length;
 
-  return { bookings, events, logEntries, total: bookings + events + logEntries };
+  return {
+    bookings,
+    events,
+    labour,
+    logEntries,
+    total: bookings + events + labour + logEntries,
+  };
 }
 
 /**

@@ -23,6 +23,10 @@ export const adminDe = {
       subscriptions: 'Abos',
       invoices: 'Rechnungen',
       expenses: 'Ausgaben',
+      /* Eigene Zeile statt eines Tabs in «Ausgaben»: jeder Screen im Panel ist
+         eine Zeile in dieser Liste, und eine Gruppe, die anders navigiert,
+         wäre eine zweite Sache zum Lernen ohne Gegenwert. */
+      workforce: 'Arbeitszeit',
       analytics: 'Auswertung',
       catalogue: 'Leistungen',
       addons: 'Zusatzleistungen',
@@ -1008,6 +1012,16 @@ export const adminDe = {
     propertyArea: 'Fläche',
     serviceTitle: 'Leistung',
     moneyTitle: 'Betrag & Belege',
+    /* Was der Einsatz an Leuten gekostet hat — die andere Hälfte der
+       Geldkarte, die bis jetzt nur sagen konnte, was er einbringt. */
+    labourTitle: 'Arbeitszeit',
+    labourTotal: '{hours} Std. von {n} Personen',
+    labourTotalOne: '{hours} Std. von einer Person',
+    labourOpen: 'Davon noch nicht ausbezahlt: {amount}.',
+    labourEmpty: 'Für diesen Einsatz sind noch keine Stunden erfasst.',
+    labourAdd: 'Arbeitszeit erfassen',
+    labourAll: 'Alle Einträge',
+    labourHours: '{hours} Std.',
     /* Hiess `amountOnPlan` und wurde immer dann gezeigt, wenn keine Offerte
        da war — also auch für den telefonisch gebuchten Einsatz, der weder
        Offerte noch Abo hat. B-1044 behauptete, eine Monatsgebühr decke ihn,

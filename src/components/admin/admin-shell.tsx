@@ -8,6 +8,7 @@ import {
   Briefcase,
   CalendarCheck,
   CalendarDays,
+  Clock,
   FileText,
   History,
   Home,
@@ -73,6 +74,10 @@ const ICONS: Record<AdminPermission, LucideIcon> = {
   subscriptions: RefreshCw,
   invoices: Receipt,
   expenses: Wallet,
+  /* Hours, not receipts — the same records read the other way round, so it is a
+     clock rather than a second wallet. Two wallets in one group would say the
+     two rows were the same kind of thing seen twice. */
+  workforce: Clock,
   analytics: BarChart3,
   catalogue: Tags,
   addons: Sparkles,

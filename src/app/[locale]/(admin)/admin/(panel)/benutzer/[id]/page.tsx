@@ -26,10 +26,13 @@ import {
   useDismissLabel,
 } from '@/components/ui/confirm-dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
+import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { AREAS, grantedPermissions } from '@/lib/admin-permissions';
+import { labourAmount, labourExpenses, labourHours, unpaidLabour } from '@/lib/labour-facts';
+import { cn } from '@/lib/cn';
 import {
   RESET_LINK_HOURS,
   fullName,
@@ -106,6 +109,9 @@ export default function AdminUserPage({ params }: { params: Promise<{ id: string
   const application = data.applications.find((a) => a.id === member.fromApplicationId);
   const history = userHistory(member, data);
   const jobs = upcomingJobs(member, data.bookings, now).slice(0, 5);
+  const labour = labourExpenses(data.expenses).filter((e) => e.labour.workerId === member.id);
+  const labourJobs = new Set(labour.map((e) => e.bookingId)).size;
+  const labourOpen = unpaidLabour(labour, now);
   const granted = grantedPermissions(member);
   const isOwner = member.role === 'owner';
 
@@ -348,6 +354,13 @@ export default function AdminUserPage({ params }: { params: Promise<{ id: string
                 <DetailRow label={t('historyEvents')}>
                   <span data-numeric>{history.events}</span>
                 </DetailRow>
+                {/* The money half. A labour row is somebody's hours and, often,
+                    an amount still owed — the one entry on this list where
+                    deleting the account would orphan a payment rather than a
+                    memory. */}
+                <DetailRow label={t('labourTitle')}>
+                  <span data-numeric>{history.labour}</span>
+                </DetailRow>
                 <DetailRow label={t('historyLog')}>
                   <span data-numeric>{history.logEntries}</span>
                 </DetailRow>
@@ -461,6 +474,54 @@ export default function AdminUserPage({ params }: { params: Promise<{ id: string
                 <p className="mt-3 text-sm text-ink-tertiary">—</p>
               )}
             </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/*
+        What this person actually worked, as opposed to what they are booked
+        for. The card below is the diary and it looks forward; this looks back.
+
+        It came over from the team record when that screen became this one, and
+        it belongs on an office account too — «Arbeitszeit» is hours somebody was
+        paid for, not proof they drive a van, and a temp doing three Saturdays
+        from the office has exactly the same question to answer. Rendered only
+        when there are rows, so nobody who has never had hours booked gets a
+        block of three zeroes.
+
+        Every figure is over all time on purpose: the person is the subject, not
+        the quarter, and the board one link away is where a period is chosen.
+      */}
+      {labour.length > 0 && (
+        <Card className="mt-app-section">
+          <CardHeader title={t('labourTitle')} />
+          <CardBody>
+            <DetailList columns={2}>
+              <DetailRow label={t('labourHours')}>
+                <span data-numeric>
+                  {t('labourHoursValue', { hours: labourHours(labour) })}
+                  <span className="block text-sm text-ink-tertiary">
+                    {labourJobs === 1
+                      ? t('labourJobsOne')
+                      : t('labourJobs', { n: labourJobs })}
+                  </span>
+                </span>
+              </DetailRow>
+              <DetailRow label={t('labourAmount')}>
+                <Money amount={labourAmount(labour)} />
+              </DetailRow>
+              <DetailRow label={t('labourOutstanding')}>
+                {/* Warning-coloured only when there is something to chase — a
+                    zero in orange is a problem the reader goes looking for and
+                    does not find. */}
+                <span className={cn(labourOpen > 0 && 'text-status-warning-fg')}>
+                  <Money amount={labourOpen} />
+                </span>
+              </DetailRow>
+            </DetailList>
+            <Button asChild variant="secondary" className="mt-5">
+              <Link href="/admin/ausgaben/arbeitszeit">{t('labourLink')}</Link>
+            </Button>
           </CardBody>
         </Card>
       )}

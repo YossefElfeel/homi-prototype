@@ -32,6 +32,10 @@ export const adminUsersDe = {
       subscriptions: 'Abos, Laufzeiten und Verlängerungen.',
       invoices: 'Rechnungen erstellen, freigeben und als bezahlt markieren.',
       expenses: 'Ausgaben erfassen und Belege ablegen.',
+      /* Steht unter /admin/ausgaben, ist aber ein Recht für sich: das Board
+         sagt wer wie lange wo gearbeitet hat und was ihm noch zusteht — das
+         ist eine Personalakte, keine Belegsammlung. */
+      workforce: 'Wer wie lange gearbeitet hat, und was noch offen ist.',
       analytics: 'Umsatz, Kosten und Marge über alle Monate.',
       catalogue: 'Leistungen und Preise ändern.',
       addons: 'Zusatzleistungen und deren Preise.',
@@ -172,6 +176,20 @@ export const adminUsersDe = {
       regionsTitle: 'Einsatzgebiet',
       skillsTitle: 'Freigegebene Leistungen',
       skillsHint: 'Nur freigegebene Leistungen lassen sich zuteilen.',
+      /* Die zweite Hälfte der Personenseite: was diese Person gearbeitet hat.
+         Der Block drüber ist der Kalender und guckt nach vorne; der hier guckt
+         zurück. Stand vorher nirgends — die Stunden lagen in den Ausgaben und
+         waren von hier aus nur über die Suche zu finden. */
+      labourTitle: 'Arbeitszeit',
+      labourHours: 'Stunden erfasst',
+      labourAmount: 'Lohnkosten',
+      labourOutstanding: 'Noch nicht ausbezahlt',
+      labourJobs: 'Auf {n} Einsätzen',
+      labourJobsOne: 'Auf einem Einsatz',
+      labourEmpty: 'Für diese Person sind noch keine Stunden erfasst.',
+      labourLink: 'In der Arbeitszeit ansehen',
+      labourHoursValue: '{hours} Std.',
+
       jobsTitle: 'Kommende Einsätze',
       jobsEmpty: 'Zurzeit keine Einsätze zugeteilt.',
       officeNoteTitle: 'Keine Einsätze',

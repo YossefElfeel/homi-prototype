@@ -20,6 +20,11 @@
  *  · **A store action that lies.** `createExpense` mints the reference, and a
  *    counter that hands out a number twice is a receipt the bookkeeper cannot
  *    look up. Same failure `nextInvoiceSeq` was written for.
+ *
+ *  · **A labour row that points at nobody.** The workforce board is a set of
+ *    totals with names on them, and an id that resolves to nothing prints an
+ *    em dash and still counts the hours underneath it — a number with no
+ *    answer behind it, which is worse than a missing row.
  */
 
 /* First, and before the store: see the file's own note. */
@@ -44,9 +49,24 @@ import {
   revenueSum,
 } from '../src/lib/finance-facts.ts';
 import { invoiceTotal } from '../src/lib/customer-history.ts';
+import {
+  averageRate,
+  byJob,
+  byWorker,
+  hoursOnSite,
+  isCompleteLabour,
+  isLabourExpense,
+  labourAmount,
+  labourExpenses,
+  labourHours,
+  labourTotals,
+  memberName,
+  rateOf,
+  unpaidLabour,
+} from '../src/lib/labour-facts.ts';
 import { statesOf } from '../src/lib/status-registry.ts';
 import { de, en } from '../src/messages/index.ts';
-import type { Expense } from '../src/mock/schema.ts';
+import type { Booking, Expense } from '../src/mock/schema.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -399,6 +419,224 @@ const seeded = buildScenario('demo', NOW).expenses;
     logCount() === deletedLog + 1,
   );
   check('deleting something that is not there is refused quietly', useStore.getState().deleteExpense('exp_nobody') === false);
+}
+
+/* --------------------------------------------- what the store does with a crew */
+{
+  const data = buildScenario('demo', NOW);
+  useStore.setState({ data });
+
+  const worker = data.team.find((m) => m.role !== 'owner')!;
+  const owner = data.team.find((m) => m.role === 'owner')!;
+  const booking = data.bookings.find((b) => b.status === 'completed')!;
+  const crew = {
+    workerId: worker.id,
+    paidById: owner.id,
+    responsibleId: owner.id,
+    hours: 4.5,
+  };
+  const base = {
+    category: 'labour' as const,
+    supplier: 'ignored',
+    amount: 144,
+    incurredAt: NOW.toISOString(),
+    bookingId: booking.id,
+  };
+
+  const id = useStore.getState().createExpense({ ...base, labour: crew }, NOW)!;
+  const created = useStore.getState().data.expenses.find((e) => e.id === id)!;
+  check('hours can be booked against a job', typeof id === 'string');
+  check('the crew is stored whole', JSON.stringify(created.labour) === JSON.stringify(crew));
+  check(
+    'and the supplier is the worker, not what the caller typed — that is what the list prints',
+    created.supplier === memberName(worker),
+  );
+  check(
+    'the log entry says how many hours and on which job, so a month can be reconciled',
+    useStore.getState().data.changeLog[0]!.summary.includes('4.5 h') &&
+      useStore.getState().data.changeLog[0]!.summary.includes(booking.reference),
+  );
+
+  /* Five ways to be incomplete, and every one of them produces a total the
+     board could print and could not attribute. */
+  check('labour with no worker is refused', useStore.getState().createExpense({ ...base, labour: { ...crew, workerId: '' } }, NOW) === null);
+  check('labour with no hours is refused', useStore.getState().createExpense({ ...base, labour: { ...crew, hours: 0 } }, NOW) === null);
+  check('labour with no job is refused', useStore.getState().createExpense({ ...base, bookingId: undefined, labour: crew }, NOW) === null);
+  check('labour with no crew at all is refused', useStore.getState().createExpense({ ...base }, NOW) === null);
+  check('a worker who is not on the team is refused', useStore.getState().createExpense({ ...base, labour: { ...crew, workerId: 'tm_nobody' } }, NOW) === null);
+  check('a payer who is not on the team is refused', useStore.getState().createExpense({ ...base, labour: { ...crew, paidById: 'tm_nobody' } }, NOW) === null);
+  check('a responsible who is not on the team is refused', useStore.getState().createExpense({ ...base, labour: { ...crew, responsibleId: 'tm_nobody' } }, NOW) === null);
+  check('a job that does not exist is refused', useStore.getState().createExpense({ ...base, bookingId: 'bkg_nobody', labour: crew }, NOW) === null);
+
+  /* The other direction: a crew handed to a category that cannot hold one. */
+  const strayId = useStore.getState().createExpense(
+    { category: 'supplies', supplier: 'Hygiene Center Zürich', amount: 60, incurredAt: NOW.toISOString(), bookingId: booking.id, labour: crew },
+    NOW,
+  )!;
+  check(
+    'a crew handed to a supplies receipt is dropped rather than stored out of sight',
+    useStore.getState().data.expenses.find((e) => e.id === strayId)!.labour === undefined,
+  );
+
+  useStore.getState().updateExpense(id, { amount: 180 });
+  check('a labour cost can be corrected', useStore.getState().data.expenses.find((e) => e.id === id)!.amount === 180);
+  check('and keeps its crew', useStore.getState().data.expenses.find((e) => e.id === id)!.labour !== undefined);
+
+  const second = data.team.find((m) => m.id !== worker.id && m.role !== 'owner') ?? owner;
+  useStore.getState().updateExpense(id, { labour: { ...crew, workerId: second.id } });
+  check(
+    'changing the worker moves the name in the list with it',
+    useStore.getState().data.expenses.find((e) => e.id === id)!.supplier === memberName(second),
+  );
+
+  useStore.getState().updateExpense(id, { labour: { ...crew, workerId: '' } });
+  check(
+    'a patch that would leave the crew incomplete is refused, not half-written',
+    useStore.getState().data.expenses.find((e) => e.id === id)!.labour?.workerId === second.id,
+  );
+
+  useStore.getState().updateExpense(id, { category: 'supplies', supplier: 'Landi Männedorf' });
+  const converted = useStore.getState().data.expenses.find((e) => e.id === id)!;
+  check('a cost that stops being labour loses the crew with the category', converted.labour === undefined);
+  check('and takes the supplier it was given', converted.supplier === 'Landi Männedorf');
+  check(
+    'so it is no longer counted on the workforce board',
+    !labourExpenses(useStore.getState().data.expenses).some((e) => e.id === id),
+  );
+
+  useStore.getState().updateExpense(id, { supplier: '   ' });
+  check(
+    'and it cannot be left nameless — a blank first column is unfindable in a list sorted by it',
+    useStore.getState().data.expenses.find((e) => e.id === id)!.supplier === 'Landi Männedorf',
+  );
+}
+
+/* ------------------------------------------------------- the labour rows */
+{
+  const data = buildScenario('demo', NOW);
+  const rows = labourExpenses(data.expenses);
+  const member = (id: string) => data.team.find((m) => m.id === id);
+  const job = (id: string) => data.bookings.find((b) => b.id === id);
+
+  check('the seed books hours against jobs', rows.length > 0, `got ${rows.length}`);
+  check(
+    'every scenario but fresh carries them, so the board is never empty by accident',
+    SCENARIOS.filter((s) => s !== 'fresh').every(
+      (s) => labourExpenses(buildScenario(s, NOW).expenses).length > 0,
+    ),
+  );
+  check(
+    'and fresh carries none — the empty board is a real state, not a bug',
+    labourExpenses(buildScenario('fresh', NOW).expenses).length === 0,
+  );
+
+  /* The four that make a labour row a record. Any one of them missing is a
+     total the screen can print and cannot explain. */
+  check('every labour row names a job', rows.every((e) => Boolean(job(e.bookingId))));
+  check('every labour row names a worker who exists', rows.every((e) => Boolean(member(e.labour.workerId))));
+  check('a payer who exists', rows.every((e) => Boolean(member(e.labour.paidById))));
+  check('a responsible who exists', rows.every((e) => Boolean(member(e.labour.responsibleId))));
+  check('and hours above zero', rows.every((e) => e.labour.hours > 0));
+
+  /* The derivation the list, the search and the export all lean on. */
+  check(
+    'the supplier on a labour row is the worker’s name — that is what the list prints',
+    rows.every((e) => e.supplier === memberName(member(e.labour.workerId))),
+    rows.filter((e) => e.supplier !== memberName(member(e.labour.workerId))).map((e) => e.reference).join(', '),
+  );
+
+  /* Nothing else may carry a crew. A receipt from the wholesaler with three
+     people attached is invisible on screen and still inside every total. */
+  check(
+    'no cost outside the labour category carries a crew',
+    data.expenses.filter((e) => e.category !== 'labour').every((e) => e.labour === undefined),
+  );
+  check(
+    'and no labour row claims to run every month — hours on one job do not recur',
+    rows.every((e) => !e.recurring),
+  );
+
+  /* Every rendering on the board needs a row behind it, or half the screen
+     ships unreviewed — the rule the coupon and the «Fällig» column follow. */
+  const labourStates = new Set(rows.map((e) => effectiveExpenseStatus(e, NOW)));
+  check(
+    'all three states are reachable on the workforce board',
+    statesOf('expense').every((s) => labourStates.has(s as never)),
+    `missing ${statesOf('expense').filter((s) => !labourStates.has(s as never)).join(', ')}`,
+  );
+  check(
+    'a job with two people on it is seeded — one `assigneeId` cannot hold a crew',
+    byJob(rows).some((j) => j.workerIds.length > 1),
+  );
+  check(
+    'somebody paid for hours they did not work, so «Bezahlt von» is not a copy of the name',
+    rows.some((e) => e.labour.paidById !== e.labour.workerId),
+  );
+  check(
+    'and somebody other than the owner carries a cost, so «Verantwortlich» is not either',
+    new Set(rows.map((e) => e.labour.responsibleId)).size > 1,
+  );
+
+  check(
+    'the guard rejects a row that says labour and carries nothing',
+    !isLabourExpense({ ...rows[0]!, labour: undefined } as Expense),
+  );
+  check(
+    'and one with a crew but no job',
+    !isLabourExpense({ ...rows[0]!, bookingId: undefined } as Expense),
+  );
+  check('a complete crew passes', isCompleteLabour(rows[0]!.labour, rows[0]!.bookingId));
+  check('zero hours do not', !isCompleteLabour({ ...rows[0]!.labour, hours: 0 }, rows[0]!.bookingId));
+  check('and neither does a missing job', !isCompleteLabour(rows[0]!.labour, undefined));
+}
+
+/* ------------------------------------------------------ the labour totals */
+{
+  const data = buildScenario('demo', NOW);
+  const rows = labourExpenses(data.expenses);
+
+  const people = byWorker(rows, NOW);
+  check('the per-person breakdown accounts for every hour', Math.abs(people.reduce((n, r) => n + r.hours, 0) - labourHours(rows)) < 0.0001);
+  check('and for every franc', Math.abs(people.reduce((n, r) => n + r.amount, 0) - labourAmount(rows)) < 0.005);
+  check('most hours first', people.every((r, i) => i === 0 || people[i - 1]!.hours >= r.hours));
+  check(
+    'two entries on one job count as one job, not two',
+    people.every((r) => r.jobs <= r.entries),
+  );
+
+  const jobs = byJob(rows);
+  check('the per-job breakdown accounts for every franc too', Math.abs(jobs.reduce((n, r) => n + r.amount, 0) - labourAmount(rows)) < 0.005);
+  check('newest job first', jobs.every((r, i) => i === 0 || jobs[i - 1]!.latestAt >= r.latestAt));
+  check('an empty set produces no rows and no division by zero', byWorker([], NOW).length === 0 && byJob([]).length === 0);
+
+  const totals = labourTotals(rows, NOW);
+  check('the tiles read the same rows the tables do', totals.hours === labourHours(rows) && totals.amount === labourAmount(rows));
+  check('the average rate is the total divided once, not a mean of means', totals.rate !== null && Math.abs(totals.rate - labourAmount(rows) / labourHours(rows)) < 0.0001);
+  check('no hours means no rate rather than an infinity', averageRate([]) === null);
+  check(
+    'the outstanding tile counts only what is still owed',
+    Math.abs(unpaidLabour(rows, NOW) - rows.filter((e) => isExpenseOutstanding(effectiveExpenseStatus(e, NOW))).reduce((n, e) => n + e.amount, 0)) < 0.005,
+  );
+  check('something is still owed in the seed, so the warning tone has a row', unpaidLabour(rows, NOW) > 0);
+
+  const first = rows[0]!;
+  check('the rate on a row is the amount over the hours', Math.abs((rateOf(first) ?? 0) - first.amount / first.labour.hours) < 0.0001);
+  check('and a row with no hours has no rate', rateOf({ ...first, labour: { ...first.labour, hours: 0 } }) === null);
+
+  /* The hours a job already knows. Offered to the form rather than written —
+     but the arithmetic still has to be right, and quarters are what a
+     timesheet is written in. */
+  const shell = (over: Partial<Booking>) => ({ ...data.bookings[0]!, ...over });
+  check(
+    'check-in to check-out rounds to the nearest quarter',
+    hoursOnSite(shell({ checkInAt: '2026-08-20T07:00:00.000Z', checkOutAt: '2026-08-20T10:22:00.000Z' })) === 3.25,
+  );
+  check('a job with no check-out suggests nothing', hoursOnSite(shell({ checkInAt: '2026-08-20T07:00:00.000Z', checkOutAt: undefined })) === null);
+  check('and neither does one with no stamps at all', hoursOnSite(shell({ checkInAt: undefined, checkOutAt: undefined })) === null);
+  check(
+    'a check-out before the check-in is refused rather than returned negative',
+    hoursOnSite(shell({ checkInAt: '2026-08-20T10:00:00.000Z', checkOutAt: '2026-08-20T07:00:00.000Z' })) === null,
+  );
 }
 
 if (failures.length > 0) {

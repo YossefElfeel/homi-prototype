@@ -82,6 +82,11 @@ export const AREAS: PanelArea[] = [
 
   { permission: 'invoices', group: 'finance', href: '/admin/rechnungen' },
   { permission: 'expenses', group: 'finance', href: '/admin/ausgaben' },
+  /* The one entry that nests inside another. `/admin/ausgaben/arbeitszeit` is a
+     longer prefix than `/admin/ausgaben`, and `permissionForPath` takes the
+     longest match — so granting «Ausgaben» does not hand over the hours board,
+     and granting the hours board does not hand over the receipts. */
+  { permission: 'workforce', group: 'finance', href: '/admin/ausgaben/arbeitszeit' },
   { permission: 'analytics', group: 'finance', href: '/admin/finanzen' },
 
   { permission: 'catalogue', group: 'content', href: '/admin/leistungen' },
@@ -245,7 +250,7 @@ export const PRESETS: Record<PresetKey, AdminPermission[]> = {
     'properties',
     'keys',
   ],
-  finance: ['invoices', 'expenses', 'analytics', 'customers'],
+  finance: ['invoices', 'expenses', 'workforce', 'analytics', 'customers'],
   content: ['catalogue', 'addons', 'coupons', 'reviews', 'templates', 'postings'],
   /* Somebody who works from the field screens and needs to read their own week
      without being able to price it. */

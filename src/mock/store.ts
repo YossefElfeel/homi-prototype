@@ -23,6 +23,7 @@ import type {
   ID,
   Invoice,
   InvoiceLine,
+  LabourEntry,
   MessageAttachment,
   MessageTemplate,
   JobPosting,
@@ -57,6 +58,7 @@ import {
   type UpgradeBlock,
 } from '@/lib/plan-facts';
 import { normaliseAddress } from '@/lib/contact-address';
+import { isCompleteLabour, memberName } from '@/lib/labour-facts';
 import { propertyUsage } from '@/lib/property-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
@@ -284,13 +286,25 @@ Marco Brunner`;
    every month. And the coupon form's third field would render for a reader who
    had opened the app before with nothing in it, on the one screen this wave
    added it to. */
-/* 30: every `TeamMember` grew a `permissions` array, and the panel now reads it
-   to decide what a signed-in account may open. A blob saved before this wave
-   carries four members with no such field — `merge` fills in a missing
-   *collection* but keeps a stale array whole, so those members would reach
-   `grantedPermissions` and every screen would be a locked door. `roles` gained
-   a third value in the same change. */
-const SCHEMA_VERSION = 30;
+/* 31: two shape changes landed in the same version number on two branches, so
+   this is 31 rather than either of their 30s — and both reasons still apply,
+   because a blob from 29 is missing both.
+
+   `Expense` gained `labour`, `ExpenseCategory` gained the heading that carries
+   it, and `baseData` gained the labour rows on the seeded jobs. `merge` fills in
+   collections that are *missing*; `expenses` is present in any blob from 29, so
+   it would be kept whole and not one of those rows would ever land — and
+   /admin/ausgaben/arbeitszeit, the screen that wave is about, would open on its
+   empty state for a reviewer who had used the app before and on a full board for
+   one who had not. The empty state argues its own case well («noch keine
+   Arbeitszeit erfasst»), so nothing on screen would say the data was stale.
+
+   And every `TeamMember` grew a `permissions` array that the panel now reads to
+   decide what a signed-in account may open. `team` is present in a stale blob
+   too, so its four members would arrive without the field, reach
+   `grantedPermissions`, and turn every screen in the console into a locked door.
+   `TeamRole` gained a third value in the same change. */
+const SCHEMA_VERSION = 31;
 
 /**
  * §10 — the default payment term.
@@ -828,6 +842,7 @@ interface StoreState {
   createExpense: (
     input: {
       category: ExpenseCategory;
+      /** Ignored on a labour cost — the worker's name is written instead. */
       supplier: string;
       note?: string;
       amount: number;
@@ -835,9 +850,27 @@ interface StoreState {
       dueAt?: ISODate;
       bookingId?: ID;
       recurring?: boolean;
+      /**
+       * Required when the category is `labour`, and refused on anything else.
+       *
+       * The type cannot express that — see `Expense.labour` — so this is the
+       * place it is actually true. A labour cost with nobody on it, no job or
+       * no hours is not a half-record to be tidied up later: it is a row the
+       * workforce board would count in a total and be unable to attribute.
+       */
+      labour?: LabourEntry;
     },
     now: Date,
   ) => ID | null;
+  /**
+   * Corrections, and the two the merge is not allowed to produce.
+   *
+   * A patch that would leave a labour row without a complete crew is refused
+   * rather than written, and a row that stops being labour loses the crew with
+   * the category — otherwise «Arbeitszeit» changed to «Material» would keep
+   * three people and a job attached to a receipt from the wholesaler, invisible
+   * on screen and still summed by the workforce board.
+   */
   updateExpense: (id: ID, patch: Partial<Expense>) => void;
   /** `method` is required for the reason it is on an invoice: "paid" with no
       route is a fact with the useful half missing. */
@@ -2993,7 +3026,39 @@ export const useStore = create<StoreState>()(
            every list sorted by amount. Refused rather than saved as zero — the
            form blocks it too, and this is the half a second tab cannot talk
            its way past. */
-        if (!(input.amount > 0) || input.supplier.trim() === '') return null;
+        if (!(input.amount > 0)) return null;
+
+        /*
+         * The labour half, and it is all-or-nothing on purpose.
+         *
+         * Three people and a job have to resolve against the data we hold, not
+         * merely be non-empty strings. An id that points at nobody is worse
+         * than a blank: the workforce board would print an em dash where a
+         * name goes and still count the hours under it, so «wer hat diese 40
+         * Stunden gemacht» would have a number and no answer.
+         */
+        const labour = input.category === 'labour' ? input.labour : undefined;
+        const worker = labour && s.data.team.find((m) => m.id === labour.workerId);
+        if (input.category === 'labour') {
+          if (!isCompleteLabour(labour, input.bookingId)) return null;
+          if (!worker) return null;
+          if (!s.data.team.some((m) => m.id === labour!.paidById)) return null;
+          if (!s.data.team.some((m) => m.id === labour!.responsibleId)) return null;
+          if (!s.data.bookings.some((b) => b.id === input.bookingId)) return null;
+        }
+
+        /*
+         * On a labour row the supplier *is* the worker, so it is written from
+         * the id rather than typed.
+         *
+         * That keeps every existing reader working with no special case — the
+         * list's first column, the search box, the CSV and the delete confirm
+         * all print `supplier` and none of them has to learn what a category
+         * is. The cost of a copied name is a rename going stale, and nothing
+         * in this app renames a team member.
+         */
+        const supplier = worker ? memberName(worker) : input.supplier.trim();
+        if (supplier === '') return null;
 
         const seq = nextExpenseSeq(s.data.expenses);
         const expense: Expense = {
@@ -3004,12 +3069,13 @@ export const useStore = create<StoreState>()(
           id: `exp_${seq}${now.getTime().toString(36).toUpperCase().slice(-4)}`,
           reference: `AUS-${now.getFullYear()}-${String(seq).padStart(4, '0')}`,
           category: input.category,
-          supplier: input.supplier.trim(),
+          supplier,
           note: input.note?.trim() || undefined,
           amount: input.amount,
           incurredAt: input.incurredAt,
           dueAt: input.dueAt,
           bookingId: input.bookingId,
+          labour,
           recurring: input.recurring,
           /* Open, always. A cost that was settled at the till is marked paid in
              the next move — one path to `paid`, so the payment method can never
@@ -3021,7 +3087,15 @@ export const useStore = create<StoreState>()(
         get().logChange({
           entity: 'expense',
           entityId: expense.id,
-          summary: `Expense ${expense.reference} recorded — ${expense.supplier}`,
+          /* The hours and the job on the entry, not only the name. The log is
+             read when a month's costs are being reconciled against a bank
+             statement, and «Marta Nowak» three times over says nothing about
+             which three of them this was. */
+          summary: labour
+            ? `Expense ${expense.reference} recorded — ${labour.hours} h by ${expense.supplier} on ${
+                s.data.bookings.find((b) => b.id === expense.bookingId)?.reference ?? expense.bookingId
+              }`
+            : `Expense ${expense.reference} recorded — ${expense.supplier}`,
         });
         return expense.id;
       },
@@ -3031,10 +3105,36 @@ export const useStore = create<StoreState>()(
         const before = s.data.expenses.find((e) => e.id === id);
         if (!before) return;
 
+        const next: Expense = { ...before, ...patch };
+
+        if (next.category === 'labour') {
+          /* Refused rather than half-written, for the reason `createExpense`
+             gives: a labour row nobody can attribute is counted in a total the
+             board cannot explain. The form cannot get here — this is the path
+             a second tab or a stale draft takes. */
+          if (!isCompleteLabour(next.labour, next.bookingId)) return;
+          const worker = s.data.team.find((m) => m.id === next.labour!.workerId);
+          if (!worker) return;
+          if (!s.data.team.some((m) => m.id === next.labour!.paidById)) return;
+          if (!s.data.team.some((m) => m.id === next.labour!.responsibleId)) return;
+          next.supplier = memberName(worker);
+        } else {
+          /* The crew leaves with the category. Kept, it would be three people
+             attached to a receipt from the wholesaler — off the screen, and
+             still inside `labourExpenses`. */
+          next.labour = undefined;
+        }
+
+        next.supplier = next.supplier.trim();
+        /* `createExpense` refuses a nameless cost and so does this: a row whose
+           first column is blank is unfindable in a list that is searched by
+           supplier and sorted by it. */
+        if (next.supplier === '') return;
+
         set({
           data: {
             ...s.data,
-            expenses: s.data.expenses.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+            expenses: s.data.expenses.map((e) => (e.id === id ? next : e)),
           },
         });
         get().logChange({
