@@ -199,10 +199,25 @@ const NOW = new Date('2026-08-25T10:00:00Z');
   const marta = data.team.find((m) => m.id === 'tm_marta')!;
   const owner = data.team.find((m) => m.role === 'owner')!;
 
-  check('the roster is everybody who is active', assignableTeam(data.team).length === data.team.length);
   check(
-    'and drops somebody parked — the switch on the team screen says «kann Einsätze zugewiesen bekommen» and one select ignored it',
-    assignableTeam([...data.team.slice(1), { ...marta, active: false }]).every((m) => m.active),
+    'the roster is everybody who can actually go somewhere',
+    assignableTeam(data.team).every((m) => m.active && m.role !== 'office'),
+  );
+  check(
+    'and it is not empty, or nothing could ever be assigned',
+    assignableTeam(data.team).length > 0,
+  );
+  check(
+    'somebody parked is dropped — a deactivated account cannot sign in to read the address',
+    !assignableTeam([...data.team.slice(1), { ...marta, active: false }]).some((m) => !m.active),
+  );
+  /* Wave 85's half of the same rule: an office account books work, it does not
+     drive to it. The seed grew one, so this is a row the filter really removes
+     rather than a branch nothing reaches. */
+  check('the seed has an office account to exclude', data.team.some((m) => m.role === 'office'));
+  check(
+    'and it is not offered a job',
+    !assignableTeam(data.team).some((m) => m.role === 'office'),
   );
   check('the owner stays assignable — most jobs are still his', assignableTeam(data.team).some((m) => m.role === 'owner'));
 

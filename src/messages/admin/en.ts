@@ -30,7 +30,10 @@ export const adminEn: typeof adminDe = {
       templates: 'Templates',
       applications: 'Applications',
       postings: 'Jobs',
-      teamMembers: 'Team',
+      /* Was «Team». The entry is named after what is decided on the page — who
+         may sign in and what they see afterwards — rather than after the group
+         of people who happen to be listed on it. */
+      users: 'Users',
       settings: 'Settings',
       changelog: 'Change log',
     },
@@ -48,12 +51,46 @@ export const adminEn: typeof adminDe = {
     notifications: 'Notifications',
     signOut: 'Sign out',
     menu: 'Menu',
-    gateTitle: 'Owner only',
+
+    /* The role as it reads in the sidebar footer. The same words the user list
+       uses — two names for one role would be two roles to anybody who reads
+       both screens. */
+    roles: {
+      owner: 'Management',
+      contractor: 'Team member',
+      office: 'Office',
+    },
+
+    /*
+     * Four locks, four sentences.
+     *
+     * There used to be one: «Owner only». True while exactly one person could
+     * get in. There are four different reasons now, and only somebody who
+     * knows which one applies can do anything about it.
+     */
+    gateTitle: 'Sign in first',
     gateBody:
-      'This view is restricted to the owner role. Switch role in the demo controls at the bottom right to see it.',
+      'The console is for staff. Switch role in the demo controls at the bottom right to see it.',
     gateCurrent: 'Current role: {role}',
-    gateSignIn: 'Sign in as the owner',
+    gateSignIn: 'Sign in',
     gateHome: 'Back to the site',
+
+    gateDeactivatedTitle: 'This account is deactivated',
+    gateDeactivatedBody:
+      'Signing in has been switched off. Everything recorded is kept — talk to management if this is a mistake.',
+
+    gateNoAccessTitle: 'Nothing here is open to you yet',
+    gateNoAccessBody:
+      'Your account has no area of the console switched on. Management grants that under «Users».',
+    gateFieldView: 'Go to my jobs',
+
+    /* The fifth case, and the only one *inside* the console: somebody who
+       belongs here, just not in this room. The area is named, or the lock reads
+       like a fault rather than a decision. */
+    areaLockedTitle: '“{area}” is not open to you',
+    areaLockedBody:
+      'Your account has no access to this area. Management can grant it under «Users».',
+    areaLockedAction: 'Back to the console home',
   },
 
   login: {
@@ -92,6 +129,13 @@ export const adminEn: typeof adminDe = {
     addRequest: 'Record a request',
     renewalsEmptyTitle: 'No plan visits',
     renewalsEmptyBody: 'No plan term ends in the next 30 days.',
+
+    /* The case that did not exist before rights: somebody is signed in and
+       may see none of the four blocks on this page. Without this the start
+       screen would be a greeting and then nothing. */
+    quietTitle: 'Nothing here for you today',
+    quietBody:
+      'This overview shows requests, jobs and expiring plans — none of which your account is cleared for. Your areas are in the sidebar on the left.',
     termEnds: 'Ends {date}',
     viewAll: 'View all',
     statWaitingHintOk: 'All inside the window',

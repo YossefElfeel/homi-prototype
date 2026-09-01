@@ -447,7 +447,7 @@ export default function BookingDetailPage({
                 <Row label={t('assigneeLabel')}>
                   {assignee ? (
                     <Link
-                      href={`/admin/team/${assignee.id}`}
+                      href={`/admin/benutzer/${assignee.id}`}
                       className="font-medium text-ink-accent hover:underline"
                     >
                       {memberName(assignee)}

@@ -184,6 +184,13 @@ export const en: Messages = {
       expired: 'Expired',
       inactive: 'Disabled',
     },
+    /* "Deactivated", not "inactive" — somebody decided this, the account did
+       not fall asleep on its own. And not "blocked": that word belongs to the
+       customer who may no longer order. */
+    user: {
+      active: 'Active',
+      deactivated: 'Deactivated',
+    },
     /* Not the state of a payment but its route. Here because it used to live in
        three places: the customer's account, the quote's payment step, and
        `admin.offers.method` — inside a single screen's namespace. */
@@ -340,7 +347,8 @@ export const en: Messages = {
     locale: 'Language',
     role: 'Role',
     customer: 'Customer account',
-    member: 'Team member account',
+    member: 'Signed in as',
+    memberInactive: 'deactivated',
     scenario: 'Scenario',
     today: 'Today is',
     todayReset: 'Today',

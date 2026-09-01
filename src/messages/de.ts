@@ -187,6 +187,14 @@ export const de = {
       expired: 'Abgelaufen',
       inactive: 'Deaktiviert',
     },
+    /* «Deaktiviert», nicht «Inaktiv» — aus demselben Grund wie bei der
+       Leistung: jemand hat das entschieden, das Konto ist nicht von selbst
+       eingeschlafen. Und «Gesperrt» wäre das falsche Wort, das gehört dem
+       Kunden, der nichts mehr bestellen darf. */
+    user: {
+      active: 'Aktiv',
+      deactivated: 'Deaktiviert',
+    },
     /* Nicht der Zustand einer Zahlung, sondern ihr Weg — steht hier, weil es
        vorher an drei Stellen stand: einmal im Kundenkonto, einmal im
        Zahlschritt der Offerte und einmal als `admin.offers.method`, also
@@ -360,7 +368,11 @@ export const de = {
     locale: 'Sprache',
     role: 'Rolle',
     customer: 'Kundenkonto',
-    member: 'Mitarbeitendenkonto',
+    /* «Konto», nicht «Mitarbeitende:r»: die Liste enthält auch die
+       Geschäftsleitung und die Bürokonten, und was hier gewählt wird, ist
+       nicht die Person, sondern als wer die Verwaltung geöffnet wird. */
+    member: 'Angemeldet als',
+    memberInactive: 'deaktiviert',
     scenario: 'Szenario',
     today: 'Heute ist',
     todayReset: 'Heute',

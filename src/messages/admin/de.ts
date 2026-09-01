@@ -35,7 +35,10 @@ export const adminDe = {
       templates: 'Vorlagen',
       applications: 'Bewerbungen',
       postings: 'Stellen',
-      teamMembers: 'Team',
+      /* War «Team». Der Eintrag heisst jetzt nach dem, was auf der Seite
+         entschieden wird — wer sich anmelden darf und was er danach sieht —
+         und nicht mehr nach der Personengruppe, die zufällig darauf steht. */
+      users: 'Benutzer',
       settings: 'Einstellungen',
       changelog: 'Protokoll',
     },
@@ -53,12 +56,46 @@ export const adminDe = {
     notifications: 'Benachrichtigungen',
     signOut: 'Abmelden',
     menu: 'Menü',
-    gateTitle: 'Nur für den Inhaber',
+
+    /* Die Rolle, wie sie in der Fusszeile der Seitenleiste steht. Dieselben
+       Wörter wie auf der Benutzerliste — zwei Bezeichnungen für dieselbe
+       Rolle wären zwei Rollen für jeden, der beides liest. */
+    roles: {
+      owner: 'Geschäftsleitung',
+      contractor: 'Mitarbeitende:r',
+      office: 'Büro',
+    },
+
+    /*
+     * Vier Sperren, vier Sätze.
+     *
+     * Vorher gab es einen: «Nur für den Inhaber». Der stimmte, solange genau
+     * eine Person hineindurfte. Jetzt sind es vier verschiedene Gründe, und
+     * nur wer weiss, welcher davon zutrifft, kann etwas dagegen tun.
+     */
+    gateTitle: 'Anmeldung nötig',
     gateBody:
-      'Diese Ansicht ist der Rolle «Inhaber» vorbehalten. Wechseln Sie die Rolle in der Demo-Steuerung unten rechts, um sie zu sehen.',
+      'Die Verwaltung ist Mitarbeitenden vorbehalten. Wechseln Sie die Rolle in der Demo-Steuerung unten rechts, um sie zu sehen.',
     gateCurrent: 'Aktuelle Rolle: {role}',
-    gateSignIn: 'Als Inhaber anmelden',
+    gateSignIn: 'Anmelden',
     gateHome: 'Zur Startseite',
+
+    gateDeactivatedTitle: 'Dieses Konto ist deaktiviert',
+    gateDeactivatedBody:
+      'Die Anmeldung wurde deaktiviert. Erfasste Daten bleiben erhalten — wenden Sie sich an die Geschäftsleitung, wenn das ein Versehen ist.',
+
+    gateNoAccessTitle: 'Für Sie ist hier nichts freigegeben',
+    gateNoAccessBody:
+      'Ihr Konto hat noch keinen Bereich der Verwaltung freigeschaltet. Die Geschäftsleitung vergibt das unter «Benutzer».',
+    gateFieldView: 'Zu meinen Einsätzen',
+
+    /* Der fünfte Fall, und der einzige *innerhalb* der Verwaltung: jemand darf
+       herein, nur nicht in dieses Zimmer. Der Bereichsname steht drin, sonst
+       liest sich die Sperre wie ein Fehler statt wie eine Entscheidung. */
+    areaLockedTitle: '«{area}» ist für Sie nicht freigegeben',
+    areaLockedBody:
+      'Ihr Konto hat für diesen Bereich keine Freigabe. Die Geschäftsleitung kann sie unter «Benutzer» erteilen.',
+    areaLockedAction: 'Zur Startseite der Verwaltung',
   },
 
   login: {
@@ -100,6 +137,13 @@ export const adminDe = {
     addRequest: 'Anfrage erfassen',
     renewalsEmptyTitle: 'Keine Abo-Termine',
     renewalsEmptyBody: 'In den nächsten 30 Tagen läuft kein Abo aus.',
+
+    /* Der Fall, den es vor der Rechtevergabe nicht gab: jemand ist
+       angemeldet, darf aber keinen der vier Blöcke auf dieser Seite sehen.
+       Ohne diesen Text wäre die Startseite eine Begrüssung und dann nichts. */
+    quietTitle: 'Hier steht heute nichts für Sie',
+    quietBody:
+      'Diese Übersicht zeigt Anfragen, Einsätze und auslaufende Abos — nichts davon ist für Ihr Konto freigegeben. Ihre Bereiche stehen links in der Seitenleiste.',
     termEnds: 'Läuft ab am {date}',
     viewAll: 'Alle ansehen',
     /* Each number now says what it means and where it is acted on. A bare

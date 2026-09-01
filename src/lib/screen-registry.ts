@@ -1,10 +1,14 @@
 /**
- * The 101 screens, as data.
+ * The screens, as data.
  *
- * This is the delivery contract: the 88 from the specification plus the 13 of
- * the hiring track. `status` is honest — `done` only once a screen and its
- * required states are actually built, so /screens is a progress board rather
- * than a wish list.
+ * This is the delivery contract: the specification's screens, the hiring
+ * track, the users-and-access track, and every template variant and sub-screen
+ * the waves have added. Nothing here asserts a total — /screens derives it, and
+ * the headline that used to assert one said 101 for as long as the board was
+ * counting 121.
+ *
+ * `status` is honest — `done` only once a screen and its required states are
+ * actually built, so /screens is a progress board rather than a wish list.
  */
 
 export type ScreenStatus = 'done' | 'wip' | 'todo';
@@ -17,6 +21,7 @@ export type TrackId =
   | 'account'
   | 'admin'
   | 'hiring'
+  | 'users'
   | 'field';
 
 export interface ScreenEntry {
@@ -644,9 +649,9 @@ export const TRACKS: Track[] = [
   },
   {
     id: 'hiring',
-    de: 'Bewerbungen & Team',
-    en: 'Applications & team',
-    note: 'Wave 7 · applicant data is owner-only (revDSG) — contractors never reach these screens',
+    de: 'Bewerbungen',
+    en: 'Applications',
+    note: 'Wave 7 · applicant data is owner-only (revDSG) — no other account can be granted it',
     screens: [
       done('H1', 'Bewerbungen', 'Applications', '/admin/bewerbungen', [
         'empty',
@@ -672,23 +677,69 @@ export const TRACKS: Track[] = [
         'Convert to team account',
         '/admin/bewerbungen/app_1/konto',
         [],
-        'The permission summary is the screen — four plain sentences before the button',
+        'The permission summary is the screen — four plain sentences before the button. It grants no console rights on purpose, so those four sentences stay true; the account picks them up afterwards on U5',
+      ),
+    ],
+  },
+  {
+    /*
+     * H6 and H7 used to sit in the track above, called «Team», and the name was
+     * the problem. They were filed under hiring because that is where the two
+     * people on them came from — which meant the screen answering "who can sign
+     * in" lived next to the job adverts, and the office had to think about
+     * recruitment to find it.
+     *
+     * The subject is access, so the track is access, and it grew the three
+     * screens that were missing: a way in for somebody who never applied for a
+     * job, a way to correct a record, and a place to say what each account may
+     * open.
+     */
+    id: 'users',
+    de: 'Benutzer & Rechte',
+    en: 'Users & access',
+    note: 'Wave 84 · the panel is gated per account — nav, URL and search all read the same matrix',
+    screens: [
+      done(
+        'U1',
+        'Benutzer',
+        'Users',
+        '/admin/benutzer',
+        ['active', 'deactivated (tm_pia)', 'no rights (tm_yusuf)', 'search empty'],
+        'Was H6 «Team». Two tabs, because a switched-off account is a different list rather than a variant of a live row',
       ),
       done(
-        'H6',
-        'Team',
-        'Team',
-        '/admin/team',
-        ['owner only'],
-        'No longer in the sidebar — reached from the «Im Team» banner on an accepted application, which is also the only way somebody gets onto it',
+        'U2',
+        'Benutzer — Konto',
+        'User account',
+        '/admin/benutzer/tm_marta',
+        [
+          'jobs assigned (hiring)',
+          'no jobs yet (default)',
+          'hours worked',
+          'office account (tm_sandra)',
+          'deactivated (tm_pia)',
+        ],
+        'Was H7, and carries its «Arbeitszeit» block across. Counts what a deactivation would leave alone — hours included, which is also what makes delete refuse',
       ),
       done(
-        'H7',
-        'Teammitglied',
-        'Team member',
-        '/admin/team/tm_marta',
-        ['jobs assigned', 'hours recorded', 'nothing recorded yet (tm_yusuf)'],
-        'Hours are a total and a list of jobs, deliberately not a payroll run — §22a on /open-questions says what a real one would still have to settle',
+        'U3',
+        'Benutzer anlegen',
+        'Add user',
+        '/admin/benutzer/neu',
+        ['duplicate email blocked'],
+        'The path /flows carried as deliberately open for nine waves: until now the only way into the team was an accepted application',
+      ),
+      done('U4', 'Benutzer bearbeiten', 'Edit user', '/admin/benutzer/tm_sandra/bearbeiten', [
+        'owner role locked',
+        'role change warning',
+      ]),
+      done(
+        'U5',
+        'Rechte',
+        'Access rights',
+        '/admin/benutzer/tm_marta/rechte',
+        ['preset applied', 'no rights left', 'owner (tm_owner)', 'own account'],
+        'The matrix is generated from the same list the sidebar is built from, so a tab cannot exist without a right to grant it',
       ),
     ],
   },

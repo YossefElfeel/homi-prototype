@@ -20,31 +20,48 @@
 
 import type { Booking, ID, TeamMember, WorkEntry } from '@/mock/schema';
 import { overlaps } from '@/mock/engines/availability';
+import { doesFieldWork, fullName } from '@/lib/user-facts';
 
 /* ------------------------------------------------------------ the roster */
 
 /**
  * Who a job may be handed to.
  *
- * `active` is not decoration: the team screen labels the switch «can be
- * assigned jobs», and until now the one select that assigned anything listed
- * everybody regardless. A person parked over the winter stayed in the dropdown
- * with nothing to say they were parked.
+ * Two conditions and they close different doors. `active` is not decoration:
+ * a deactivated account cannot sign in to read the address, so a job on it is
+ * a van that does not arrive — and until this rule existed, the one select
+ * that assigned anything listed everybody, so a person parked over the winter
+ * stayed in the dropdown with nothing to say so. `doesFieldWork` is wave 85's:
+ * an office account never goes anywhere, and offering one here would put a
+ * Tuesday morning on somebody who books rather than cleans.
  *
- * The owner stays in the list. Marco does the work as well as sells it, and a
- * roster that excluded him would make the common case — a job that is his —
+ * The owner stays in the list. Marco does the work as well as selling it, and
+ * a roster that excluded him would make the common case — a job that is his —
  * unassignable.
+ *
+ * The same pair `/admin/kalender/neu` filters its own select on. It is spelled
+ * out there rather than calling this, which is one duplication too many the
+ * day a third condition appears; see the note at the call site.
  */
 export function assignableTeam(team: TeamMember[]): TeamMember[] {
-  return team.filter((m) => m.active);
+  return team.filter((m) => m.active && doesFieldWork(m));
 }
 
 export function memberById(team: TeamMember[], id?: ID): TeamMember | undefined {
   return id ? team.find((m) => m.id === id) : undefined;
 }
 
+/**
+ * «Marta Nowak», and an empty string for somebody who is not there.
+ *
+ * The spelling is `user-facts.fullName` — one format for a person's name
+ * across the whole panel, because three of them had appeared by wave 85 and
+ * the day somebody adds a middle initial only one should have to change.
+ * The empty fallback is this module's: its callers substitute «Nicht
+ * zugewiesen», which is a fact rather than a dash.
+ */
 export function memberName(member: TeamMember | undefined): string {
-  return member ? `${member.firstName} ${member.lastName}` : '';
+  return member ? fullName(member) : '';
 }
 
 /* ------------------------------------------------------- what may go wrong */

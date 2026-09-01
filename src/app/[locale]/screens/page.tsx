@@ -35,10 +35,20 @@ export default async function ScreensPage({
       <header className="border-b border-line-subtle pb-block">
         <p className="label-type text-ink-tertiary">Delivery</p>
         <h1 className="display-type rule-accent mt-3 text-4xl sm:text-5xl">Screen index</h1>
+        {/*
+          The sentence used to open «The 88 screens from the specification plus
+          the 13 of the hiring track» — a total of 101, on a board that was
+          counting 121 by the time anybody checked. Every template variant, every
+          sub-screen and every wave since had landed in the list without the
+          headline noticing, so the one number on the page a reader would quote
+          was the one nobody maintained. The count below is derived and always
+          was; the prose no longer competes with it.
+        */}
         <p className="mt-6 max-w-[var(--measure)] text-ink-secondary">
-          The 88 screens from the specification plus the 13 of the hiring track. States
-          listed under a screen are the ones that must exist beyond the default — empty,
-          error, and the variants the spec calls for.
+          Every screen in the build, by track — the specification&rsquo;s, plus the
+          hiring and access tracks that came later. States listed under a screen are
+          the ones that must exist beyond the default: empty, error, and the variants
+          the spec calls for.
         </p>
         <p data-numeric className="mt-6 text-3xl">
           <span className="font-semibold">{counts.done}</span>

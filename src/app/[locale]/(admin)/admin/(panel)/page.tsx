@@ -28,8 +28,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { addDays, addMinutes, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
 import { elapsed, hoursSince } from '@/lib/elapsed';
+import { AREAS, grantedPermissions } from '@/lib/admin-permissions';
 import { memberById, memberName } from '@/lib/workforce';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { AdminPermission } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
 const ACCESS_SHORT: Record<string, string> = {
@@ -56,6 +58,7 @@ const ACCESS_SHORT: Record<string, string> = {
  */
 export default function AdminDashboard() {
   const t = useTranslations('admin.dashboard');
+  const navT = useTranslations('admin.shell.nav');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const now = useNow();
@@ -71,6 +74,22 @@ export default function AdminDashboard() {
   const memberId = useStore((s) => s.demo.currentMemberId);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
+
+  /*
+   * The start screen is the one panel route that is not a right.
+   *
+   * Everybody who can sign in lands here, so withholding it would produce an
+   * account that signs in to a locked door. What it withholds instead is its
+   * own blocks — and it has to, because this screen is where four other lists
+   * would otherwise reach past their own gate: a bookkeeper with «Rechnungen
+   * + Ausgaben» has no business reading a customer's name and street off a
+   * waiting request, and every tile here links somewhere the shell would then
+   * refuse them.
+   */
+  /* Was the literal string "Marco". The scenario owns who the owner is. */
+  const member = team.find((m) => m.id === memberId);
+  const granted = grantedPermissions(member);
+  const may = (permission: AdminPermission) => granted.includes(permission);
 
   if (!hydrated) return <SkeletonPage label={t('title', { name: '' })} />;
 
@@ -110,13 +129,81 @@ export default function AdminDashboard() {
   const serviceName = (slug: string) =>
     services.find((s) => s.slug === slug)?.name[locale] ?? slug;
 
-  /* Was the literal string "Marco". The scenario owns who the owner is. */
-  const member = team.find((m) => m.id === memberId);
   const firstStart = (jobs: typeof bookings) =>
     jobs.length > 0 ? format.dateTime(new Date(jobs[0]!.start), 'time') : null;
 
   const todayStart = firstStart(today);
   const tomorrowStart = firstStart(tomorrow);
+
+  /*
+   * Four tiles, and each one belongs to the screen it links to.
+   *
+   * Built as an array rather than four conditionals inside `StatGrid`, because
+   * the grid is `grid-cols-2 lg:grid-cols-4` — with three tiles it still reads
+   * as a row, with one it reads as a row of one, and with none the heading
+   * above an empty grid is the thing that has to not render. A list answers
+   * all three cases at once.
+   */
+  const tiles = [
+    may('requests') && (
+      <StatTile
+        key="waiting"
+        label={t('statWaiting')}
+        value={waiting.length}
+        icon={Inbox}
+        tone={late.length > 0 ? 'danger' : 'default'}
+        hint={
+          late.length > 0
+            ? t('statWaitingHintLate', { n: late.length })
+            : t('statWaitingHintOk')
+        }
+        href="/admin/anfragen"
+        linkLabel={t('statWaitingLink')}
+      />
+    ),
+    may('calendar') && (
+      <StatTile
+        key="today"
+        label={t('statToday')}
+        value={today.length}
+        icon={Sun}
+        hint={todayStart ? t('statTodayHint', { time: todayStart }) : t('statTodayHintEmpty')}
+        href="/admin/kalender"
+        linkLabel={t('statTodayLink')}
+      />
+    ),
+    may('calendar') && (
+      <StatTile
+        key="tomorrow"
+        label={t('statTomorrow')}
+        value={tomorrow.length}
+        icon={CalendarDays}
+        hint={
+          tomorrowStart
+            ? t('statTomorrowHint', { time: tomorrowStart })
+            : t('statTodayHintEmpty')
+        }
+        href="/admin/kalender"
+        linkLabel={t('statTomorrowLink')}
+      />
+    ),
+    may('subscriptions') && (
+      <StatTile
+        key="renewals"
+        label={t('statRenewals')}
+        value={renewals.length}
+        icon={RefreshCw}
+        hint={t('statRenewalsHint')}
+        href="/admin/abos"
+        linkLabel={t('statRenewalsLink')}
+      />
+    ),
+  ].filter(Boolean);
+
+  /* Where to send somebody this screen has nothing for: the first area they do
+     hold, in sidebar order, so the button lands on the row their eye is
+     already on. */
+  const firstArea = AREAS.find((area) => granted.includes(area.permission));
 
   return (
     <div>
@@ -129,65 +216,49 @@ export default function AdminDashboard() {
           day — and taking that down meant going to /admin/anfragen and finding
           the button there. The screen listed five ways to *read* a request and
           no way to make one.
+
+          Only for somebody who could open the request afterwards, though: a
+          button that creates a record its author is then refused is worse
+          than no button.
         */
         actions={
-          <Button asChild>
-            <Link href="/admin/anfragen/neu">
-              <Plus className="size-4" aria-hidden />
-              {t('addRequest')}
-            </Link>
-          </Button>
+          may('requests') ? (
+            <Button asChild>
+              <Link href="/admin/anfragen/neu">
+                <Plus className="size-4" aria-hidden />
+                {t('addRequest')}
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
 
-      <StatGrid>
-        <StatTile
-          label={t('statWaiting')}
-          value={waiting.length}
-          icon={Inbox}
-          tone={late.length > 0 ? 'danger' : 'default'}
-          hint={
-            late.length > 0
-              ? t('statWaitingHintLate', { n: late.length })
-              : t('statWaitingHintOk')
-          }
-          href="/admin/anfragen"
-          linkLabel={t('statWaitingLink')}
-        />
-        <StatTile
-          label={t('statToday')}
-          value={today.length}
-          icon={Sun}
-          hint={
-            todayStart
-              ? t('statTodayHint', { time: todayStart })
-              : t('statTodayHintEmpty')
-          }
-          href="/admin/kalender"
-          linkLabel={t('statTodayLink')}
-        />
-        <StatTile
-          label={t('statTomorrow')}
-          value={tomorrow.length}
-          icon={CalendarDays}
-          hint={
-            tomorrowStart
-              ? t('statTomorrowHint', { time: tomorrowStart })
-              : t('statTodayHintEmpty')
-          }
-          href="/admin/kalender"
-          linkLabel={t('statTomorrowLink')}
-        />
-        <StatTile
-          label={t('statRenewals')}
-          value={renewals.length}
-          icon={RefreshCw}
-          hint={t('statRenewalsHint')}
-          href="/admin/abos"
-          linkLabel={t('statRenewalsLink')}
-        />
-      </StatGrid>
+      {/*
+        Nothing at all, said properly.
 
+        An account with none of the four rights these blocks read — a
+        bookkeeper, say — would otherwise land on a greeting followed by white
+        space, which reads as a screen that failed to load rather than one that
+        has nothing to say to this reader. Every block below is gated on one of
+        the same rights, so an empty tile row means an empty page.
+      */}
+      {tiles.length === 0 && (
+        <EmptyState
+          title={t('quietTitle')}
+          body={t('quietBody')}
+          action={
+            firstArea ? (
+              <Button asChild>
+                <Link href={firstArea.href}>{navT(firstArea.permission)}</Link>
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
+
+      {tiles.length > 0 && <StatGrid>{tiles}</StatGrid>}
+
+      {may('requests') && (
       <Card className="mt-app-section" pad="none">
         <CardHeader
           className="p-card"
@@ -268,7 +339,9 @@ export default function AdminDashboard() {
           </ul>
         )}
       </Card>
+      )}
 
+      {(may('bookings') || may('calendar')) && (
       <div className="mt-app-section gap-app grid lg:grid-cols-2">
         {[
           { key: 'today', title: t('todayTitle'), jobs: today },
@@ -342,7 +415,9 @@ export default function AdminDashboard() {
           </Card>
         ))}
       </div>
+      )}
 
+      {may('subscriptions') && (
       <Card className="mt-app-section" pad="none">
         <CardHeader className="p-card" title={t('renewalsTitle')} />
         {renewals.length === 0 ? (
@@ -378,6 +453,7 @@ export default function AdminDashboard() {
           </ul>
         )}
       </Card>
+      )}
     </div>
   );
 }

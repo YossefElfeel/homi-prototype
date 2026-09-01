@@ -3,20 +3,32 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input } from '@/components/ui/field';
+import { MIN_QUERY, SEARCH_GROUPS, searchAll, type SearchGroup } from '@/lib/admin-search';
+import { grantedPermissions } from '@/lib/admin-permissions';
 import { useHydrated, useStore } from '@/mock/store';
+import type { AdminPermission } from '@/mock/schema';
 
-interface Hit {
-  group: 'Customers' | 'Requests' | 'Offers' | 'Invoices' | 'Properties';
-  id: string;
-  title: string;
-  detail: string;
-  href: string;
-}
+/** Which right a group belongs to. The palette holds the same map. */
+const GROUP_PERMISSION: Record<SearchGroup, AdminPermission> = {
+  Customers: 'customers',
+  Requests: 'requests',
+  Offers: 'offers',
+  Invoices: 'invoices',
+  Properties: 'properties',
+};
+
+const GROUP_LABEL_KEY: Record<SearchGroup, string> = {
+  Customers: 'groupCustomers',
+  Requests: 'groupRequests',
+  Offers: 'groupOffers',
+  Invoices: 'groupInvoices',
+  Properties: 'groupProperties',
+};
 
 /**
  * Screen 84 — one search across everything.
@@ -26,12 +38,28 @@ interface Hit {
  * matching is deliberately loose — name, reference, street, postcode, email,
  * phone and QR reference all hit the same box — and results stay grouped so a
  * reference that matches two entities shows both rather than picking one.
+ *
+ * **The matching itself is `searchAll` now.** `lib/admin-search.ts` was written
+ * to stop this screen and the ⌘K palette drifting apart, and then this screen
+ * kept its own copy of the loop — so they drifted anyway. The palette learned to
+ * match a property's `label` («Büro Seestrasse», the one name the office
+ * actually uses) and this page did not, which meant the narrower surface found
+ * something the wider one could not.
+ *
+ * **And it is gated.** Rights hide a sidebar row and refuse a URL; a search that
+ * reached past both would hand a bookkeeper the customer, the request and the
+ * quote behind one street name, each as a link to a screen the shell then
+ * refuses. Refusing after showing the answer is worse than not showing it — the
+ * record has already been read off the result line.
  */
 export default function AdminSearchPage() {
   const t = useTranslations('admin.search');
+  const shell = useTranslations('admin.shell');
   const hydrated = useHydrated();
 
   const data = useStore((s) => s.data);
+  const memberId = useStore((s) => s.demo.currentMemberId);
+  const granted = grantedPermissions(data.team.find((m) => m.id === memberId));
 
   /* Seeded from ?q so the palette's «see all results» row lands on the search
      it was showing, not on an empty field the owner has to retype. Initial
@@ -40,95 +68,37 @@ export default function AdminSearchPage() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
 
-  const hits = useMemo<Hit[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
+  const visibleGroups = useMemo(
+    () => SEARCH_GROUPS.filter((group) => granted.includes(GROUP_PERMISSION[group])),
+    [granted],
+  );
 
-    const has = (...values: (string | undefined)[]) =>
-      values.some((v) => v?.toLowerCase().includes(q));
-
-    const customerName = (id: string) => {
-      const c = data.customers.find((x) => x.id === id);
-      return c ? `${c.firstName} ${c.lastName}` : '—';
-    };
-
-    const results: Hit[] = [];
-
-    for (const c of data.customers) {
-      if (has(c.firstName, c.lastName, `${c.firstName} ${c.lastName}`, c.email, c.phone)) {
-        results.push({
-          group: 'Customers',
-          id: c.id,
-          title: `${c.firstName} ${c.lastName}`,
-          detail: c.email,
-          href: `/admin/kunden/${c.id}`,
-        });
-      }
-    }
-
-    for (const p of data.properties) {
-      if (has(p.street, p.postcode, p.city, `${p.postcode} ${p.city}`)) {
-        results.push({
-          group: 'Properties',
-          id: p.id,
-          title: p.street,
-          detail: `${p.postcode} ${p.city} · ${customerName(p.customerId)}`,
-          href: `/admin/objekte/${p.id}`,
-        });
-      }
-    }
-
-    for (const r of data.requests) {
-      if (has(r.reference, customerName(r.customerId))) {
-        results.push({
-          group: 'Requests',
-          id: r.id,
-          title: r.reference,
-          detail: customerName(r.customerId),
-          href: `/admin/anfragen/${r.id}`,
-        });
-      }
-    }
-
-    for (const o of data.offers) {
-      const request = data.requests.find((r) => r.id === o.requestId);
-      if (has(o.reference, request && customerName(request.customerId))) {
-        results.push({
-          group: 'Offers',
-          id: o.id,
-          title: o.reference,
-          detail: request ? customerName(request.customerId) : '—',
-          href: `/admin/offerten/${o.id}`,
-        });
-      }
-    }
-
-    for (const i of data.invoices) {
-      if (has(i.reference, i.qrReference, customerName(i.customerId))) {
-        results.push({
-          group: 'Invoices',
-          id: i.id,
-          title: i.reference,
-          detail: customerName(i.customerId),
-          href: `/admin/rechnungen/${i.id}`,
-        });
-      }
-    }
-
-    return results;
-  }, [query, data]);
+  const hits = useMemo(
+    () =>
+      searchAll(data, query).filter((hit) => granted.includes(GROUP_PERMISSION[hit.group])),
+    [data, query, granted],
+  );
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
-  const groups: { key: Hit['group']; label: string }[] = [
-    { key: 'Customers', label: t('groupCustomers') },
-    { key: 'Requests', label: t('groupRequests') },
-    { key: 'Offers', label: t('groupOffers') },
-    { key: 'Invoices', label: t('groupInvoices') },
-    { key: 'Properties', label: t('groupProperties') },
-  ];
+  const typing = query.trim().length >= MIN_QUERY;
 
-  const typing = query.trim().length >= 2;
+  /* Nothing at all is searchable for this account — a real state on a finance
+     account, and one that has to say why rather than reporting «0 Treffer» for
+     every query somebody types. */
+  if (visibleGroups.length === 0) {
+    return (
+      <div>
+        <h1 className="display-type text-3xl">{t('title')}</h1>
+        <EmptyState
+          className="mt-10"
+          icon={Lock}
+          title={shell('areaLockedTitle', { area: t('title') })}
+          body={shell('areaLockedBody')}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -168,12 +138,14 @@ export default function AdminSearchPage() {
           <p aria-live="polite" className="mt-8 text-sm text-ink-tertiary">
             {t('resultCount', { n: hits.length })}
           </p>
-          {groups.map((group) => {
-            const items = hits.filter((h) => h.group === group.key);
+          {visibleGroups.map((group) => {
+            const items = hits.filter((h) => h.group === group);
             if (items.length === 0) return null;
             return (
-              <section key={group.key} className="mt-6">
-                <h2 className="label-type text-ink-secondary">{group.label}</h2>
+              <section key={group} className="mt-6">
+                <h2 className="label-type text-ink-secondary">
+                  {t(GROUP_LABEL_KEY[group])}
+                </h2>
                 <ul className="mt-2 border-t border-line-subtle">
                   {items.map((hit) => (
                     <li key={`${hit.group}-${hit.id}`} className="border-b border-line-subtle">

@@ -23,6 +23,7 @@ import { Toolbar } from '@/components/ui/toolbar';
 import { bookingAmount, bookingPaymentState, customerName } from '@/lib/offer-facts';
 import { ActionIcon } from '@/lib/action-icons';
 import {
+  assignableTeam,
   hasWorkRecord,
   hoursOf,
   memberById,
@@ -152,6 +153,25 @@ export default function BookingsPage() {
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
+  /*
+   * Names the filter can actually find something under.
+   *
+   * It listed the whole of `data.team`, which since wave 85 includes office
+   * accounts — people who never go anywhere. Picking one emptied the table
+   * every time, and an option that always returns nothing reads as a broken
+   * filter rather than an empty result, which is the exact failure the
+   * «Zahlung» filter was given a `covered` option to avoid.
+   *
+   * Assignable *plus* anybody currently holding a job, because deactivating
+   * somebody does not un-assign their week and «was hat Marta noch offen» is
+   * the first question asked about them after they are switched off.
+   */
+  const filterable = team.filter(
+    (m) =>
+      assignableTeam(team).some((a) => a.id === m.id) ||
+      bookings.some((b) => b.assigneeId === m.id),
+  );
+
   const columns: Column<Booking>[] = [
     {
       key: 'reference',
@@ -234,8 +254,13 @@ export default function BookingsPage() {
         const member = memberById(team, b.assigneeId);
         return (
           <span className="flex flex-col gap-0.5">
+            {/* `/admin/benutzer`, not `/admin/team` — wave 85 replaced the
+                roster screens with the users module and the old route is
+                gone. A name that links to a 404 is worse than a name. */}
             {member ? (
-              <RecordLink href={`/admin/team/${member.id}`}>{memberName(member)}</RecordLink>
+              <RecordLink href={`/admin/benutzer/${member.id}`}>
+                {memberName(member)}
+              </RecordLink>
             ) : (
               <span className="text-ink-tertiary">{t('unassigned')}</span>
             )}
@@ -388,7 +413,7 @@ export default function BookingsPage() {
                 is one person and the control would be a dropdown with the
                 owner in it — see /open-questions §2a for the version of this
                 screen that shipped exactly that and had it removed. */}
-            {team.length > 1 && (
+            {filterable.length > 1 && (
               <label className="min-w-40">
                 <span className="sr-only">{t('filterAssignee')}</span>
                 <Select
@@ -400,7 +425,7 @@ export default function BookingsPage() {
                     {t('filterAssignee')}: {t('filterAll')}
                   </option>
                   <option value={UNASSIGNED}>{t('unassigned')}</option>
-                  {team.map((m) => (
+                  {filterable.map((m) => (
                     <option key={m.id} value={m.id}>
                       {memberName(m)}
                     </option>
@@ -492,7 +517,10 @@ export default function BookingsPage() {
                   reached with the right section already open. Hidden once the
                   job is settled — a control that refuses is worse than one
                   that is not there. */}
-              {!SETTLED.includes(b.status) && team.length > 1 && (
+              {/* Gated on who could take it, not on how many accounts exist:
+                  the roster grew two office accounts in wave 85 and neither
+                  makes assigning a job possible. */}
+              {!SETTLED.includes(b.status) && assignableTeam(team).length > 1 && (
                 <RowAction
                   href={`/admin/buchungen/${b.id}?action=assign`}
                   label={t('rowAssign')}

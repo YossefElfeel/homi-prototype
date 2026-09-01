@@ -15,157 +15,100 @@ import {
   Inbox,
   KeyRound,
   LayoutDashboard,
+  Lock,
   Mail,
   Percent,
   Receipt,
   RefreshCw,
   Settings,
+  ShieldUser,
   Sparkles,
   Star,
   Tags,
   UserPlus,
   Users,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react';
 
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { AccessGate } from '@/components/app/access-gate';
 import { AppShell, type AppNavGroup } from '@/components/app/app-shell';
 import { Button } from '@/components/ui/button';
 import type { CommandGroup } from '@/components/ui/command-palette';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SEARCH_GROUPS, searchAll, type SearchGroup } from '@/lib/admin-search';
+import {
+  AREAS,
+  PERMISSION_GROUPS,
+  grantedPermissions,
+  permissionForPath,
+  type PermissionGroup,
+} from '@/lib/admin-permissions';
+import type { AdminPermission } from '@/mock/schema';
 import { useHydrated, useStore } from '@/mock/store';
 
-type NavKey =
-  | 'dashboard'
-  | 'requests'
-  | 'offers'
-  | 'bookings'
-  | 'calendar'
-  | 'customers'
-  | 'properties'
-  | 'keys'
-  | 'subscriptions'
-  | 'invoices'
-  | 'expenses'
-  | 'workforce'
-  | 'analytics'
-  | 'catalogue'
-  | 'addons'
-  | 'coupons'
-  | 'reviews'
-  | 'templates'
-  | 'messages'
-  | 'applications'
-  | 'postings'
-  | 'teamMembers'
-  | 'settings'
-  | 'changelog';
+/**
+ * The glyph each area wears, and the only thing about the sidebar that still
+ * lives here.
+ *
+ * The list of destinations moved to `lib/admin-permissions.ts`, because it was
+ * two lists pretending to be one: this file decided what was in the menu, and a
+ * line further down decided who could see the menu, and nothing connected them.
+ * A `Record<AdminPermission, …>` means a new area cannot reach the sidebar
+ * without also reaching the rights matrix — the compiler asks for its icon here
+ * and for its route and group over there, and refuses to build until it has
+ * both.
+ */
+const ICONS: Record<AdminPermission, LucideIcon> = {
+  requests: Inbox,
+  offers: FileText,
+  /* What a paid quote turns into. The calendar answers "what is on Tuesday"
+     and cannot answer anything else, so bookings had no list. */
+  bookings: CalendarCheck,
+  calendar: CalendarDays,
+  customers: Users,
+  messages: Mail,
+  properties: Home,
+  keys: KeyRound,
+  subscriptions: RefreshCw,
+  invoices: Receipt,
+  expenses: Wallet,
+  /* Hours, not receipts — the same records read the other way round, so it is a
+     clock rather than a second wallet. Two wallets in one group would say the
+     two rows were the same kind of thing seen twice. */
+  workforce: Clock,
+  analytics: BarChart3,
+  catalogue: Tags,
+  addons: Sparkles,
+  coupons: Percent,
+  reviews: Star,
+  templates: Mail,
+  applications: UserPlus,
+  postings: Briefcase,
+  /* Not the plain `Users` the customer list wears. These are people too, and
+     one glyph for both would put the same picture on «Kunden» and «Benutzer» —
+     two rows, four apart, in the same column. The shield is what separates
+     them: this list is about access, not about who buys. */
+  users: ShieldUser,
+  settings: Settings,
+  changelog: History,
+};
 
 /**
- * Grouped rather than flat.
+ * Which groups open folded, and the order they sit in.
  *
- * Twenty items in one column is a wall: nothing is findable and the daily
+ * Twenty-odd items in one column is a wall: nothing is findable and the daily
  * three — requests, quotes, calendar — stop reading as the daily three. The
  * order is by frequency, not by the specification's chapter order, and the two
  * groups an owner opens least start folded.
+ *
+ * `hiring` folds for a second reason. Team is no longer one of its rows — the
+ * roster left for «Benutzer» in System, where it sits beside the two other
+ * things only the owner touches — so what is left here really is the hiring
+ * pipeline and nothing else.
  */
-const NAV: {
-  group: 'operations' | 'customers' | 'finance' | 'content' | 'hiring' | 'system';
-  collapsed?: boolean;
-  items: { href: string; key: NavKey; icon: typeof LayoutDashboard; exact?: boolean }[];
-}[] = [
-  {
-    group: 'operations',
-    items: [
-      { href: '/admin', key: 'dashboard', icon: LayoutDashboard, exact: true },
-      { href: '/admin/anfragen', key: 'requests', icon: Inbox },
-      { href: '/admin/offerten', key: 'offers', icon: FileText },
-      /* What a paid quote turns into. The calendar answers "what is on
-         Tuesday" and cannot answer anything else, so bookings had no list. */
-      { href: '/admin/buchungen', key: 'bookings', icon: CalendarCheck },
-      { href: '/admin/kalender', key: 'calendar', icon: CalendarDays },
-    ],
-  },
-  {
-    group: 'customers',
-    items: [
-      { href: '/admin/kunden', key: 'customers', icon: Users },
-      { href: '/admin/nachrichten', key: 'messages', icon: Mail },
-      { href: '/admin/objekte', key: 'properties', icon: Home },
-      { href: '/admin/schluessel', key: 'keys', icon: KeyRound },
-      { href: '/admin/abos', key: 'subscriptions', icon: RefreshCw },
-    ],
-  },
-  {
-    /*
-     * The money, as its own group.
-     *
-     * It was one row — «Rechnungen» — inside «Kunden & Geld», and that held
-     * while invoices were the only money screen there was. With costs and the
-     * profit line beside them, one row could only name one of the three, and
-     * the other two were findable by knowing they existed.
-     *
-     * Three rows rather than one row and a tab strip inside it. Every other
-     * screen in this panel is one row in this list, and a section that
-     * navigated differently from the rest would be a second thing to learn for
-     * no gain — the group heading already says these three belong together.
-     * The strip that used to do that job is gone with this.
-     *
-     * «Kunden & Geld» lost its second half in the same move and is «Kunden»
-     * now: the money left it.
-     */
-    group: 'finance',
-    items: [
-      { href: '/admin/rechnungen', key: 'invoices', icon: Receipt },
-      { href: '/admin/ausgaben', key: 'expenses', icon: Wallet },
-      /* Under «Ausgaben» because it is the same records read the other way
-         round — hours rather than receipts. A tab inside that screen was the
-         alternative and it is the one this group already rejected once: every
-         screen in this panel is one row here, and the money group is not
-         allowed to navigate differently from the rest of it. */
-      { href: '/admin/ausgaben/arbeitszeit', key: 'workforce', icon: Clock },
-      { href: '/admin/finanzen', key: 'analytics', icon: BarChart3 },
-    ],
-  },
-  {
-    group: 'content',
-    collapsed: true,
-    items: [
-      { href: '/admin/leistungen', key: 'catalogue', icon: Tags },
-      { href: '/admin/zusatzleistungen', key: 'addons', icon: Sparkles },
-      { href: '/admin/gutscheine', key: 'coupons', icon: Percent },
-      { href: '/admin/bewertungen', key: 'reviews', icon: Star },
-      { href: '/admin/vorlagen', key: 'templates', icon: Mail },
-    ],
-  },
-  {
-    group: 'hiring',
-    collapsed: true,
-    /*
-     * Team is not in the sidebar.
-     *
-     * H6 and H7 still exist and are still reachable — from the «Im Team»
-     * banner on an accepted application, and from the screen the account is
-     * created on, which is the only way somebody gets onto the team in the
-     * first place. What they are not is a place the owner navigates *to*: the
-     * roster is two contractors, it is read from the application it came from,
-     * and a third of the People group was pointing at it.
-     */
-    items: [
-      { href: '/admin/bewerbungen', key: 'applications', icon: UserPlus },
-      { href: '/admin/stellen', key: 'postings', icon: Briefcase },
-    ],
-  },
-  {
-    group: 'system',
-    collapsed: true,
-    items: [
-      { href: '/admin/einstellungen', key: 'settings', icon: Settings },
-      { href: '/admin/protokoll', key: 'changelog', icon: History },
-    ],
-  },
-];
+const COLLAPSED: PermissionGroup[] = ['content', 'hiring', 'system'];
 
 const GROUP_LABEL_KEY: Record<SearchGroup, string> = {
   Customers: 'searchGroupCustomers',
@@ -175,25 +118,45 @@ const GROUP_LABEL_KEY: Record<SearchGroup, string> = {
   Properties: 'searchGroupProperties',
 };
 
+/** Which right a search group belongs to, so results cannot outrun the nav. */
+const SEARCH_PERMISSION: Record<SearchGroup, AdminPermission> = {
+  Customers: 'customers',
+  Requests: 'requests',
+  Offers: 'offers',
+  Invoices: 'invoices',
+  Properties: 'properties',
+};
+
 /**
  * Admin chrome.
  *
- * Two things worth knowing:
+ * Three things worth knowing:
  *
  *  1. It is fully responsive. The client overrode the screen-map's
  *     desktop-first decision in favour of the specification, which says the
  *     owner opens this from a phone between two jobs.
- *  2. It is gated on the owner role, and the gate is real — it reads the same
- *     role the field interface and the applicant screens read. Switching to
- *     "Mitarbeiter" in the demo bar locks this out, which is the point.
+ *  2. **The gate reads rights, not the role.** It used to be one line —
+ *     `role !== 'owner'` — which was the whole of the access model: one person
+ *     saw all fifty-eight screens and everybody else saw a lock. That was fine
+ *     while the roster was the owner and two contractors who never open a
+ *     laptop. It stopped being fine the moment the office needed a bookkeeper
+ *     who sees three finance screens and nothing else. Now the panel asks
+ *     `grantedPermissions`, and so does the sidebar, and so does the URL check
+ *     below — one answer, three readers.
+ *  3. **The URL is checked too.** Hiding a row would be theatre: `/admin/
+ *     finanzen` typed into the bar would still have rendered the margin. The
+ *     path is mapped back to the right it needs on every navigation, in this
+ *     one place rather than in fifty-eight page files, so a screen added next
+ *     month is gated without anybody remembering to gate it.
  *
- * Everything below the gate is now AppShell, shared with the customer area.
+ * Everything below the gate is AppShell, shared with the customer area.
  */
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('admin.shell');
   const appT = useTranslations('app');
   const demoRoles = useTranslations('demo.roles');
   const router = useRouter();
+  const pathname = usePathname();
   const hydrated = useHydrated();
 
   const role = useStore((s) => s.demo.role);
@@ -201,23 +164,45 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const data = useStore((s) => s.data);
   const memberId = useStore((s) => s.demo.currentMemberId);
 
+  const member = data.team.find((m) => m.id === memberId);
+  const granted = grantedPermissions(member);
+  const may = (permission: AdminPermission) => granted.includes(permission);
+
   const search = useCallback(
     (query: string): CommandGroup[] => {
+      /* Looked up inside rather than closed over. Both the member object and
+         its permission array are rebuilt on every render, and the React
+         Compiler will not preserve a memo whose dependency it cannot prove
+         stable — so the dependency is the id, which is a string. */
+      const allowed = new Set(
+        grantedPermissions(data.team.find((m) => m.id === memberId)),
+      );
       const hits = searchAll(data, query);
-      const groups: CommandGroup[] = SEARCH_GROUPS.map((group) => ({
-        key: group,
-        label: appT(GROUP_LABEL_KEY[group]),
-        items: hits
-          .filter((hit) => hit.group === group)
-          .slice(0, 5)
-          .map((hit) => ({
-            id: `${hit.group}-${hit.id}`,
-            label: hit.title,
-            detail: hit.detail,
-            href: hit.href,
-            onSelect: () => router.push(hit.href),
-          })),
-      })).filter((group) => group.items.length > 0);
+      const groups: CommandGroup[] = SEARCH_GROUPS
+        /*
+         * The palette was the hole in the model. Rights hide a row and gate a
+         * route; the search reached straight past both — a bookkeeper typing a
+         * street name got the customer, the request and the quote back, each
+         * one a link to a screen the gate would then refuse. Refusing after
+         * showing the answer is worse than not showing it: the record has
+         * already been read off the result line.
+         */
+        .filter((group) => allowed.has(SEARCH_PERMISSION[group]))
+        .map((group) => ({
+          key: group,
+          label: appT(GROUP_LABEL_KEY[group]),
+          items: hits
+            .filter((hit) => hit.group === group)
+            .slice(0, 5)
+            .map((hit) => ({
+              id: `${hit.group}-${hit.id}`,
+              label: hit.title,
+              detail: hit.detail,
+              href: hit.href,
+              onSelect: () => router.push(hit.href),
+            })),
+        }))
+        .filter((group) => group.items.length > 0);
 
       /*
        * The palette keeps five rows per group, so a street name shared by nine
@@ -225,9 +210,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
        * had no inbound link anywhere to go and find them on. This row appears
        * only when something was actually cut, and carries the query across, so
        * the wider list opens on the same search rather than an empty field.
+       *
+       * Counted over the groups this reader may see, not over every hit:
+       * «und 12 weitere» that resolve to records they cannot open would be a
+       * number that promises something the next screen takes away.
        */
+      const visible = hits.filter((hit) => allowed.has(SEARCH_PERMISSION[hit.group]));
       const shown = groups.reduce((n, group) => n + group.items.length, 0);
-      if (hits.length > shown) {
+      if (visible.length > shown) {
         const href = `/admin/suche?q=${encodeURIComponent(query)}`;
         groups.push({
           key: 'all',
@@ -235,7 +225,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           items: [
             {
               id: 'search-all',
-              label: appT('searchAllResults', { total: hits.length }),
+              label: appT('searchAllResults', { total: visible.length }),
               href,
               onSelect: () => router.push(href),
             },
@@ -245,10 +235,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       return groups;
     },
-    [data, appT, router],
+    [data, memberId, appT, router],
   );
 
-  if (hydrated && role !== 'owner') {
+  /*
+   * Three refusals, three different sentences.
+   *
+   * "You are signed in as a customer", "your account has been switched off"
+   * and "you have no areas yet" are not the same news, and the person reading
+   * one of them can only act on it if it says which one it is. A single
+   * «Nur für den Inhaber» covered all three and was wrong about two.
+   */
+  if (hydrated && (role === 'visitor' || role === 'customer')) {
     return (
       <AccessGate
         title={t('gateTitle')}
@@ -267,28 +265,86 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const waitingRequests = hydrated
-    ? data.requests.filter((r) => r.status === 'new' || r.status === 'inReview')
-    : [];
+  if (hydrated && member && !member.active) {
+    return (
+      <AccessGate
+        title={t('gateDeactivatedTitle')}
+        body={t('gateDeactivatedBody')}
+        action={
+          <Button asChild variant="secondary">
+            <Link href="/">{t('gateHome')}</Link>
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (hydrated && granted.length === 0) {
+    return (
+      <AccessGate
+        title={t('gateNoAccessTitle')}
+        body={t('gateNoAccessBody')}
+        action={
+          <div className="flex flex-wrap justify-center gap-3">
+            {/* The field interface, for the person this gate is mostly about:
+                a contractor with no console rights still has a working day to
+                look at, and sending them to the marketing home page would read
+                as "there is nothing here for you". */}
+            <Button asChild>
+              <Link href="/einsatz">{t('gateFieldView')}</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/">{t('gateHome')}</Link>
+            </Button>
+          </div>
+        }
+      />
+    );
+  }
+
+  const waitingRequests =
+    hydrated && may('requests')
+      ? data.requests.filter((r) => r.status === 'new' || r.status === 'inReview')
+      : [];
 
   /* The sidebar footer used to print "Marco Brunner" as a literal, so the
      scenario's own team data and the name on screen could disagree. The field
      shell already read it from the store; this now does the same. */
-  const member = data.team.find((m) => m.id === memberId);
   const userName = member ? `${member.firstName} ${member.lastName}` : t('title');
+  const roleLabel = member ? t(`roles.${member.role}`) : demoRoles(role);
 
-  const nav: AppNavGroup[] = NAV.map((section, index) => ({
-    key: section.group,
-    label: index === 0 ? undefined : t(`groups.${section.group}`),
-    defaultCollapsed: section.collapsed,
-    items: section.items.map((item) => ({
-      href: item.href,
-      label: t(`nav.${item.key}`),
-      icon: item.icon,
-      exact: item.exact,
-      badge: item.key === 'requests' ? waitingRequests.length : undefined,
+  const nav: AppNavGroup[] = [
+    /* The dashboard is not a right and so is not in `AREAS` — it is the home
+       everybody who gets this far lands on. It filters its own blocks instead;
+       see screen 51. */
+    {
+      key: 'home',
+      items: [
+        {
+          href: '/admin',
+          label: t('nav.dashboard'),
+          icon: LayoutDashboard,
+          exact: true,
+        },
+      ],
+    },
+    ...PERMISSION_GROUPS.map((group) => ({
+      key: group,
+      label: t(`groups.${group}`),
+      defaultCollapsed: COLLAPSED.includes(group),
+      items: AREAS.filter((area) => area.group === group && may(area.permission)).map(
+        (area) => ({
+          href: area.href,
+          label: t(`nav.${area.permission}`),
+          icon: ICONS[area.permission],
+          badge: area.permission === 'requests' ? waitingRequests.length : undefined,
+        }),
+      ),
     })),
-  }));
+    /* A heading with nothing under it is a group that looks broken rather than
+       one that is empty — and on a three-right account, four of the six would
+       have been exactly that. */
+  ].filter((group) => group.items.length > 0);
 
   function signOut() {
     setRole('visitor');
@@ -296,12 +352,25 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     router.push('/');
   }
 
+  /*
+   * The route this reader is standing on, checked against what they hold.
+   *
+   * Rendered inside the shell rather than as the full-page `AccessGate` above.
+   * The distinction is real: the gates above are for somebody who has no
+   * business in the console at all, and showing them its navigation would be
+   * showing them the shape of a thing they cannot use. This one is for
+   * somebody who belongs here and has walked into the one room they may not
+   * enter — they need their own sidebar to walk back out of it.
+   */
+  const needed = permissionForPath(pathname);
+  const denied = hydrated && needed !== null && !may(needed);
+
   return (
     <AppShell
       nav={nav}
       navLabel={t('title')}
       homeHref="/admin"
-      user={{ name: userName, role: demoRoles('owner') }}
+      user={{ name: userName, role: roleLabel }}
       onSignOut={signOut}
       notifications={waitingRequests.slice(0, 6).map((request) => ({
         id: request.id,
@@ -309,15 +378,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         detail: customerLabel(data, request.customerId),
         href: `/admin/anfragen/${request.id}`,
       }))}
-      notificationsHref="/admin/anfragen"
+      notificationsHref={may('requests') ? '/admin/anfragen' : undefined}
       search={search}
     >
-      {children}
+      {denied ? (
+        <EmptyState
+          icon={Lock}
+          headingLevel={1}
+          title={t('areaLockedTitle', { area: t(`nav.${needed}`) })}
+          body={t('areaLockedBody')}
+          action={
+            <Button asChild variant="secondary">
+              <Link href="/admin">{t('areaLockedAction')}</Link>
+            </Button>
+          }
+        />
+      ) : (
+        children
+      )}
     </AppShell>
   );
 }
 
-function customerLabel(data: { customers: { id: string; firstName: string; lastName: string }[] }, id: string) {
+function customerLabel(
+  data: { customers: { id: string; firstName: string; lastName: string }[] },
+  id: string,
+) {
   const customer = data.customers.find((c) => c.id === id);
   return customer ? `${customer.firstName} ${customer.lastName}` : '—';
 }

@@ -10,16 +10,19 @@ transitions are implemented from the specification rather than faked.
 ## What this is for
 
 The specification describes 88 screens across six tracks; a seventh (hiring)
-adds 13 more, for **101 screens**. This prototype replaces the usual Figma
-click-through: the design brief calls for the interactive model to be built in
-code directly, so design ships as working screens and states.
+and an eighth (users & access) came later, and every template variant and
+sub-screen since. **`/screens` counts them** — the number is derived there and
+is not repeated here, because the version that was repeated here said 101 while
+the board said 121. This prototype replaces the usual Figma click-through: the
+design brief calls for the interactive model to be built in code directly, so
+design ships as working screens and states.
 
 Progress board: **`/screens`** · Flow board: **`/flows`** · Open assumptions:
 **`/open-questions`**
 
 `/screens` counts screens; `/flows` counts *ways through them*. The second board
-exists because the first one stopped being enough: all 101 screens were built
-and typechecked while the customer list still had no way to add a customer,
+exists because the first one stopped being enough: every screen was built and
+typechecked while the customer list still had no way to add a customer,
 three declared request states were unreachable from any button, and a
 checked-out job had no exit.
 
