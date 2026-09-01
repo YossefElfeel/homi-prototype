@@ -74,7 +74,9 @@ export function DemoBar({
   const setRole = useStore((s) => s.setRole);
   const setScenario = useStore((s) => s.setScenario);
   const setCurrentCustomer = useStore((s) => s.setCurrentCustomer);
+  const setCurrentMember = useStore((s) => s.setCurrentMember);
   const customers = useStore((s) => s.data.customers);
+  const team = useStore((s) => s.data.team);
   const setDateOverride = useStore((s) => s.setDateOverride);
   const updateSettings = useStore((s) => s.updateSettings);
   const reset = useStore((s) => s.reset);
@@ -249,6 +251,42 @@ export function DemoBar({
             {customers.map((customer) => (
               <option key={customer.id} value={customer.id} className="bg-[#111318]">
                 {customer.firstName} {customer.lastName}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/*
+          The same problem as the customer picker, one wave later.
+
+          «Rolle» has four values and the roster has five accounts, so the role
+          switch could only ever put you in two of them: the owner, and
+          whichever contractor `repoint` happened to find first. With rights
+          deciding what the console shows, that left three states unreachable —
+          an account with no areas at all, an office account with three finance
+          areas, and a deactivated one. Each is a different screen, and none of
+          them could be looked at.
+
+          It sets the role too, so picking Marco does not leave you signed in as
+          the owner while the bar says «Mitarbeiter».
+        */}
+        <Field label={t('member')}>
+          <select
+            aria-label={t('member')}
+            value={demo.currentMemberId}
+            onChange={(e) => {
+              setCurrentMember(e.target.value);
+              /* Stay put if the current screen belongs to the console, so
+                 comparing two accounts on one screen does not mean navigating
+                 back to it each time. */
+              if (!pathname.startsWith('/admin')) router.push('/admin');
+            }}
+            className="w-full rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {team.map((member) => (
+              <option key={member.id} value={member.id} className="bg-[#111318]">
+                {member.firstName} {member.lastName}
+                {member.active ? '' : ` — ${t('memberInactive')}`}
               </option>
             ))}
           </select>

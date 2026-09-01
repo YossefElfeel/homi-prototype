@@ -26,7 +26,8 @@ export type StatusEntity =
   | 'key'
   | 'service'
   | 'addOn'
-  | 'coupon';
+  | 'coupon'
+  | 'user';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   /*
@@ -244,6 +245,25 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
     'used-up': 'warning',
     expired: 'neutral',
     inactive: 'neutral',
+  },
+  /*
+   * A user account, and the two-state case this file was written for.
+   *
+   * The team list drew these itself — a hand-typed `border-status-success-line
+   * bg-status-success` against a hand-typed neutral, in the cell — which is the
+   * shape every entry here started as. Now that the same two states are read on
+   * a list, on a record, on a confirm dialog and on the gate a deactivated
+   * person hits when they try to sign in, four screens would have been picking
+   * their own green.
+   *
+   * `deactivated` is neutral rather than danger. A colleague who has left is
+   * not an alarm — the row is closed business, and the same reasoning keeps a
+   * returned key and a cancelled invoice grey. Red here would put the busiest
+   * colour in the palette on the one list that is mostly people who left.
+   */
+  user: {
+    active: 'success',
+    deactivated: 'neutral',
   },
 };
 

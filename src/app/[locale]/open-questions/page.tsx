@@ -334,6 +334,30 @@ const ENTRIES: Entry[] = [
     screens: '76, 77',
     state: 'open',
   },
+  {
+    ref: '§22a',
+    question: 'Who besides the owner may hand out access?',
+    decision:
+      'DECIDED for now, and the decision has a cost the business has to look at. The «Benutzer» right is not grantable: anybody holding it can open their own record and tick the other twenty-one, so offering it would make the whole matrix decoration. «Bewerbungen» is the same shape for a different reason — revDSG, and an application carries a permit and a date of birth belonging to somebody who was never hired. The consequence is that the owner is a single point of failure for access: if Marco is unreachable, nobody can unlock a colleague who has locked themselves out, and nobody can switch off the account of somebody who left on bad terms. The three ways out are a second owner, a break-glass path, or accepting the risk on a company this size. All three are the business’s call, not a default worth inventing — and the screen says out loud which two rights «Voller Zugriff» excludes rather than quietly overstating itself.',
+    screens: 'U1, U5',
+    state: 'decided',
+  },
+  {
+    ref: '§22b',
+    question: 'What happens to the jobs of somebody who is deactivated?',
+    decision:
+      'OPEN, and the screen refuses to guess. Deactivating stops the sign-in and touches nothing else: assigned jobs keep their assignee, and the confirm dialog counts how many are still ahead and links to the calendar rather than acting. That is deliberate — unassigning them automatically empties a Tuesday nobody has been told about, and holding them for a person who cannot sign in leaves a customer waiting on somebody who has left. Three candidate rules, and they are genuinely different products: unassign and let the calendar show the hole, refuse the deactivation until the jobs are reassigned, or keep them and add an «unbesetzt» state the dashboard counts. The last needs a state that does not exist yet, which is why it is a decision before it is a schema change.',
+    screens: 'U1, U2, 62',
+    state: 'open',
+  },
+  {
+    ref: '§22c',
+    question: 'Does a deactivated colleague’s name stay on the records they left behind?',
+    decision:
+      'DECIDED, and it is the assumption the whole feature rests on, so it is written down rather than implied. Switching an account off removes nothing: the jobs stay assigned, the change-log entries keep the name that made them, and the record shows the counts before the confirm so the promise can be checked rather than believed. Deleting is refused outright for anybody those counts are not zero for — a user has no archive to be moved into the way a customer does, so the honest answer is a refusal with the number in it, not a second soft state nobody can see. What is not settled is retention: revDSG gives a former employee the same erasure right as anybody else, and «Pia Roth» sitting on a change-log entry two years after she left is personal data with no expiry on it. The applications screen already carries a retention date; accounts do not, and whether they should is a legal question rather than a design one.',
+    screens: 'U1, U2, 83',
+    state: 'decided',
+  },
 ];
 
 const STATE_CLASS: Record<Entry['state'], string> = {

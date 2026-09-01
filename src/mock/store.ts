@@ -7,6 +7,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { Locale } from '@/i18n/routing';
 import type {
   AddOn,
+  AdminPermission,
   Application,
   ApplicationDraft,
   ApplicationStatus,
@@ -26,6 +27,7 @@ import type {
   MessageTemplate,
   JobPosting,
   TeamMember,
+  TeamRole,
   Offer,
   OfferLine,
   Payment,
@@ -58,6 +60,7 @@ import { normaliseAddress } from '@/lib/contact-address';
 import { propertyUsage } from '@/lib/property-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
+import { RESET_LINK_HOURS } from '@/lib/user-facts';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { checkCoverage } from './engines/coverage';
 import {
@@ -281,7 +284,13 @@ Marco Brunner`;
    every month. And the coupon form's third field would render for a reader who
    had opened the app before with nothing in it, on the one screen this wave
    added it to. */
-const SCHEMA_VERSION = 29;
+/* 30: every `TeamMember` grew a `permissions` array, and the panel now reads it
+   to decide what a signed-in account may open. A blob saved before this wave
+   carries four members with no such field — `merge` fills in a missing
+   *collection* but keeps a stale array whole, so those members would reach
+   `grantedPermissions` and every screen would be a locked door. `roles` gained
+   a third value in the same change. */
+const SCHEMA_VERSION = 30;
 
 /**
  * §10 — the default payment term.
@@ -662,6 +671,57 @@ interface StoreState {
   updatePosting: (id: ID, patch: Partial<JobPosting>) => void;
   updateTeamMember: (id: ID, patch: Partial<TeamMember>) => void;
 
+  /* ---- users & rights (screens U1–U5) ----
+     The team could only be *joined*, through an accepted application, and once
+     inside, the only thing about a member that could change was a checkbox.
+     There was no way to add the bookkeeper who never applied for anything, no
+     way to take somebody's access away without deleting the person, and no way
+     to say what any of them were allowed to open. All five gaps are one entity,
+     so they are one block of actions. */
+
+  /**
+   * A user typed in by hand — the path `/flows` carried as deliberately open.
+   *
+   * Deliberately not `convertApplicant` with the applicant made optional. That
+   * one exists to tie a contractor's rights to a record somebody checked, and
+   * it should keep meaning exactly that; an office account has no application
+   * behind it and pretending otherwise would put an empty «Aus Bewerbung» link
+   * on half the roster.
+   */
+  createTeamMember: (
+    input: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      role: TeamRole;
+      permissions: AdminPermission[];
+      skills?: string[];
+      regions?: string[];
+    },
+    now: Date,
+  ) => ID;
+
+  /**
+   * The one writer of `active` and `deactivatedAt`, so the flag and the date it
+   * changed cannot disagree. Nothing else is touched — see the schema note:
+   * rights are kept while an account is off, because switching somebody back on
+   * has to restore what they had.
+   */
+  setTeamMemberActive: (id: ID, active: boolean, now: Date) => void;
+
+  setTeamMemberPermissions: (id: ID, permissions: AdminPermission[]) => void;
+
+  /** Real, and refused by the screen wherever anything still names the person. */
+  deleteTeamMember: (id: ID) => void;
+
+  /**
+   * Mints a reset link and remembers it was minted. Returns the token so the
+   * screen can show the link once; the record keeps enough to answer "did I
+   * already send Sandra one?" after a reload.
+   */
+  issuePasswordReset: (id: ID, now: Date) => string;
+
   /* ---- change log (screen 83) ----
      Nothing wrote to data.changeLog before this; the only entries in the whole
      app came from the seed. So the screen that promises to answer "since when
@@ -974,6 +1034,16 @@ interface StoreState {
   setScenario: (scenario: ScenarioName) => void;
   setDateOverride: (iso: string | null) => void;
   setCurrentCustomer: (id: string) => void;
+  /**
+   * Which account the panel is signed in as.
+   *
+   * The mirror of `setCurrentCustomer`, and it exists for exactly the reason
+   * that one does. `repoint` picks the *first* contractor whenever the role
+   * changes, so with rights now deciding what the console shows, four of the
+   * five seeded accounts had states — no rights at all, three finance areas,
+   * deactivated — that nothing on screen could reach.
+   */
+  setCurrentMember: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
 
   /* ---- message templates (screen 79) ----
@@ -1165,7 +1235,18 @@ interface StoreState {
  * anyone yet.
  */
 function repoint(demo: DemoState, data: DataSet): DemoState {
-  const wantedRole = demo.role === 'contractor' ? 'contractor' : 'owner';
+  const wantsOwner = demo.role !== 'contractor';
+  /*
+   * "Not the owner" rather than "is a contractor".
+   *
+   * `DemoRole` has four values and `TeamRole` now has three, so the two lists
+   * stopped lining up the day the office account arrived: matching on
+   * `role === 'contractor'` threw Sandra away on every scenario switch and
+   * dropped the demo back onto Marta. Which is exactly what the member picker
+   * in the demo bar exists to prevent — four of the five seeded accounts have
+   * a permission state nothing else on screen can reach.
+   */
+  const fits = (m: TeamMember) => (wantsOwner ? m.role === 'owner' : m.role !== 'owner');
   const current = data.team.find((m) => m.id === demo.currentMemberId);
 
   return {
@@ -1174,9 +1255,9 @@ function repoint(demo: DemoState, data: DataSet): DemoState {
       ? demo.currentCustomerId
       : (data.customers[0]?.id ?? ''),
     currentMemberId:
-      current?.role === wantedRole
+      current && fits(current)
         ? demo.currentMemberId
-        : (data.team.find((m) => m.role === wantedRole)?.id ?? ''),
+        : (data.team.find(fits)?.id ?? ''),
   };
 }
 
@@ -2332,6 +2413,15 @@ export const useStore = create<StoreState>()(
           phone: app.phone,
           role: 'contractor',
           active: true,
+          /*
+           * None, and the conversion screen has always said so — its four
+           * sentences describe somebody who works from the field interface and
+           * never opens the console. Handing a new hire console rights as a
+           * side effect of being hired would make that screen's copy false at
+           * the moment it is read. Rights are granted afterwards, deliberately,
+           * on the account's own rights screen.
+           */
+          permissions: [],
           regions: s.settings.servedPostcodes,
           skills: app.experienceAreas.includes('assembly')
             ? ['moebelmontage']
@@ -2403,6 +2493,149 @@ export const useStore = create<StoreState>()(
             team: s.data.team.map((m) => (m.id === id ? { ...m, ...patch } : m)),
           },
         })),
+
+      createTeamMember: (input, now) => {
+        const s = get();
+        /* Length before the clock, for the reason `createCustomer` spells out:
+           `useNow` ticks every 30 seconds and the demo clock can be pinned, so
+           two accounts added in one sitting would otherwise share an id. */
+        const id = `tm_${s.data.team.length}_${now.getTime().toString(36).slice(-4)}`;
+
+        const member: TeamMember = {
+          id,
+          firstName: input.firstName.trim(),
+          lastName: input.lastName.trim(),
+          email: input.email.trim(),
+          phone: input.phone.trim(),
+          role: input.role,
+          active: true,
+          permissions: input.permissions,
+          /* An office account gets neither, and the form does not ask: skills
+             and regions decide which jobs somebody may be handed, and a
+             bookkeeper is handed none. */
+          regions: input.regions ?? [],
+          skills: input.skills ?? [],
+          startedAt: now.toISOString(),
+        };
+
+        set({ data: { ...s.data, team: [...s.data.team, member] } });
+        get().logChange({
+          entity: 'user',
+          entityId: id,
+          summary: `User created: ${member.firstName} ${member.lastName}`,
+        });
+        return id;
+      },
+
+      setTeamMemberActive: (id, active, now) => {
+        const member = get().data.team.find((m) => m.id === id);
+        if (!member) return;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            team: s.data.team.map((m) =>
+              m.id === id
+                ? {
+                    ...m,
+                    active,
+                    /* Cleared on the way back in, so «deaktiviert am» can never
+                       be printed under a live account. */
+                    deactivatedAt: active ? undefined : now.toISOString(),
+                  }
+                : m,
+            ),
+          },
+        }));
+
+        get().logChange({
+          entity: 'user',
+          entityId: id,
+          summary: `${active ? 'Reactivated' : 'Deactivated'} ${member.firstName} ${member.lastName}`,
+        });
+      },
+
+      setTeamMemberPermissions: (id, permissions) => {
+        const member = get().data.team.find((m) => m.id === id);
+        if (!member) return;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            team: s.data.team.map((m) => (m.id === id ? { ...m, permissions } : m)),
+          },
+        }));
+
+        get().logChange({
+          entity: 'user',
+          entityId: id,
+          summary: `Access changed for ${member.firstName} ${member.lastName}: ${
+            permissions.length === 0 ? 'no areas' : `${permissions.length} areas`
+          }`,
+          /* The rights screen writes on every flip. Without this, granting four
+             areas one switch at a time files four entries and the log reads as
+             an argument somebody had with themselves. */
+          coalesce: true,
+        });
+      },
+
+      deleteTeamMember: (id) => {
+        const member = get().data.team.find((m) => m.id === id);
+        if (!member) return;
+
+        set((s) => ({
+          data: { ...s.data, team: s.data.team.filter((m) => m.id !== id) },
+        }));
+
+        /* Logged *after* the row is gone, and the entry keeps the name rather
+           than pointing at an id nothing resolves any more. The log is the only
+           thing left that says this account ever existed. */
+        get().logChange({
+          entity: 'user',
+          entityId: id,
+          summary: `User deleted: ${member.firstName} ${member.lastName}`,
+        });
+      },
+
+      issuePasswordReset: (id, now) => {
+        const member = get().data.team.find((m) => m.id === id);
+        if (!member) return '';
+
+        /* Not random. `Math.random` inside a persisted store would hand a
+           different token to the server render and the client one, and the
+           prototype has no secret to protect — what the link has to be is
+           unguessable-looking and stable for as long as the screen shows it. */
+        const token = `rst_${now.getTime().toString(36)}${id.replace(/[^a-z0-9]/gi, '')}`
+          .toUpperCase()
+          .slice(0, 24);
+        const expiresAt = new Date(now.getTime() + RESET_LINK_HOURS * 3600_000);
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            team: s.data.team.map((m) =>
+              m.id === id
+                ? {
+                    ...m,
+                    passwordReset: {
+                      token,
+                      issuedAt: now.toISOString(),
+                      expiresAt: expiresAt.toISOString(),
+                    },
+                  }
+                : m,
+            ),
+          },
+        }));
+
+        get().logChange({
+          entity: 'user',
+          entityId: id,
+          summary: `Password reset link issued for ${member.firstName} ${member.lastName}`,
+        });
+
+        return token;
+      },
 
       /**
        * Switching role also picks somebody to *be* — see `repoint`. The field
@@ -3826,6 +4059,21 @@ export const useStore = create<StoreState>()(
 
       setCurrentCustomer: (currentCustomerId) =>
         set((s) => ({ demo: { ...s.demo, currentCustomerId } })),
+
+      /* Sets the role alongside, so picking the owner from the list does not
+         leave the demo standing in a contractor session wearing the owner's
+         name — `repoint` would then swap the member back on the next reload. */
+      setCurrentMember: (currentMemberId) =>
+        set((s) => {
+          const member = s.data.team.find((m) => m.id === currentMemberId);
+          return {
+            demo: {
+              ...s.demo,
+              currentMemberId,
+              role: member?.role === 'owner' ? 'owner' : 'contractor',
+            },
+          };
+        }),
 
       /*
        * These three are the ones screen 83 exists to report on — prices,

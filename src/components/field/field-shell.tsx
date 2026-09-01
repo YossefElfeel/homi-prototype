@@ -27,7 +27,20 @@ export function FieldShell({ children }: { children: React.ReactNode }) {
     s.data.team.find((m) => m.id === s.demo.currentMemberId),
   );
 
-  if (hydrated && role !== 'contractor') {
+  /*
+   * Two gates now, and the second one is what makes deactivation mean
+   * something.
+   *
+   * Switching an account off stops it opening the console — that is enforced in
+   * `AdminShell`. It has to stop this too, or «deaktiviert» would mean "cannot
+   * see the office" while the person still had every address, access code and
+   * alarm code for tomorrow on their phone. That is the case deactivation
+   * exists for: somebody who left, and whose key you have not got back yet.
+   */
+  const locked = hydrated && (role !== 'contractor' || member?.active === false);
+
+  if (locked) {
+    const deactivated = role === 'contractor';
     return (
       <main id="main" className="mx-auto max-w-2xl px-gutter py-section">
         {/*
@@ -37,8 +50,12 @@ export function FieldShell({ children }: { children: React.ReactNode }) {
         <EmptyState
           icon={Lock}
           headingLevel={1}
-          title={t('gateTitle')}
-          body={`${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`}
+          title={deactivated ? t('gateDeactivatedTitle') : t('gateTitle')}
+          body={
+            deactivated
+              ? t('gateDeactivatedBody')
+              : `${t('gateBody')} ${t('gateCurrent', { role: demoRoles(role) })}`
+          }
           action={
             <Button asChild>
               <Link href="/">{t('gateHome')}</Link>

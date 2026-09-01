@@ -7,6 +7,9 @@ export const fieldEn: typeof fieldDe = {
     gateBody:
       'This view is for the person doing the work. Switch the role to “Team member” at the bottom right.',
     gateCurrent: 'Current role: {role}',
+    gateDeactivatedTitle: 'This account is deactivated',
+    gateDeactivatedBody:
+      'Your jobs are no longer available here. Everything recorded is kept — please talk to management.',
     gateHome: 'Back to the site',
     jobsLink: 'Back to the jobs',
     exit: 'Open the Homivaro site',

@@ -1177,10 +1177,71 @@ export const FLOWS: Flow[] = [
     ],
     exits: [
       ok('Rejected with a reason', '/admin/bewerbungen/app_1'),
-      ok('Hired', '/admin/team'),
+      ok('Hired', '/admin/benutzer'),
+      added(
+        'Add a user by hand',
+        '/admin/benutzer/neu',
+        'Was the open item on this board for nine waves. The reasoning for keeping it shut — permissions tied to a record somebody checked — held for contractors and never covered the bookkeeper, who applies for nothing and whose account the office therefore could not create at all',
+      ),
+    ],
+  },
+  {
+    /*
+     * Who may open what — and it is a flow rather than a screen list because
+     * the interesting part is not the matrix, it is what happens at the two
+     * ends of it: somebody being let in, and somebody walking into a room they
+     * are not allowed in.
+     */
+    id: 'access',
+    en: 'Users & access',
+    actors: ['owner', 'contractor'],
+    entries: [
+      added('The user list', '/admin/benutzer', 'Sidebar → System → Benutzer'),
+      added('Add a user by hand', '/admin/benutzer/neu'),
+      ok(
+        'Accept an application',
+        '/admin/bewerbungen/app_1/konto',
+        'Still the only way a contractor arrives — and it grants no console rights, so the four sentences on that screen stay true',
+      ),
+    ],
+    actions: [
+      added('Grant or withdraw an area', '/admin/benutzer/tm_marta/rechte'),
+      added(
+        'Apply a template',
+        '/admin/benutzer/tm_marta/rechte',
+        'Five starting points. Not roles — «Rechnungen + Ausgaben» and «Ausgaben + Finanzen» are two people in one job, and as roles that would be two roles for one thing',
+      ),
+      added('Correct name, contact or role', '/admin/benutzer/tm_sandra/bearbeiten'),
+      added(
+        'Create a password link',
+        '/admin/benutzer/tm_sandra',
+        'Shown once, valid two hours, points at screen 34 — the real reset page rather than an invented host',
+      ),
+    ],
+    exits: [
+      added(
+        'Deactivated',
+        '/admin/benutzer/tm_pia',
+        'Sign-in stops; jobs, expenses and change-log entries stay, and the record counts them before the confirm rather than promising it in a sentence',
+      ),
+      added('Reactivated', '/admin/benutzer/tm_pia', 'Rights come back as they were'),
+      added(
+        'Deleted',
+        '/admin/benutzer/neu',
+        'Only where nothing names the person — otherwise the menu item is disabled and says which records would have been orphaned. Reachable on an account you have just created and not used',
+      ),
+      added(
+        'Locked out of one area',
+        '/admin/finanzen',
+        'Sign in as a contractor with no finance right and type the URL: the sidebar hides the row and the shell refuses the path, in one place rather than fifty-eight',
+      ),
       open(
-        'Add a team member by hand',
-        'The only way into the team is through an application. That is defensible — it keeps permissions tied to a checked record — but on day one it leaves /admin/team empty and fillable only through an invented application',
+        'Somebody other than the owner managing users',
+        'The «Benutzer» right cannot be granted, because anybody holding it can grant themselves the rest. That makes the owner a single point of failure for access — if they are unreachable, nobody can unlock a colleague. A second owner, or a break-glass path, is a business decision and sits on /open-questions',
+      ),
+      open(
+        'Reassigning a deactivated person’s future jobs',
+        'Deactivating warns that N jobs are still assigned and links to the calendar, but does not move them. Whether those should be unassigned automatically, held for the same person, or refused until reassigned is a decision about a customer’s Tuesday, not about an account',
       ),
     ],
   },

@@ -30,7 +30,8 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { Field, Select, Textarea } from '@/components/ui/field';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { buildTextPdf, downloadBlob } from '@/lib/pdf';
-import { canSeeApplicants, useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useStore } from '@/mock/store';
+import { may } from '@/lib/admin-permissions';
 import type { ApplicantDocument } from '@/mock/schema';
 
 const REASONS = [
@@ -115,7 +116,7 @@ export default function ApplicationDetailPage({
   const router = useRouter();
   const hydrated = useHydrated();
 
-  const role = useStore((s) => s.demo.role);
+  const signedInAs = useStore((s) => s.data.team.find((m) => m.id === s.demo.currentMemberId));
   const applications = useStore((s) => s.data.applications);
   const postings = useStore((s) => s.data.postings);
   const team = useStore((s) => s.data.team);
@@ -137,7 +138,7 @@ export default function ApplicationDetailPage({
    * but it can no longer render a second, differently-worded lock screen — it
    * returns nothing, which is what "already handled upstream" looks like.
    */
-  if (!canSeeApplicants(role)) return null;
+  if (!may(signedInAs, 'applications')) return null;
 
   const application = applications.find((a) => a.id === id);
   if (!application) return <p className="text-ink-tertiary">—</p>;
@@ -206,7 +207,7 @@ export default function ApplicationDetailPage({
             title={t('convertedTitle')}
             action={
               <Button asChild variant="secondary" size="sm">
-                <Link href={`/admin/team/${member.id}`}>
+                <Link href={`/admin/benutzer/${member.id}`}>
                   {t('convertedLink')}
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>

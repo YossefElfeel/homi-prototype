@@ -186,36 +186,4 @@ export const adminHiringEn: typeof adminHiringDe = {
     saved: 'Saved',
     preview: 'See it on the jobs page',
   },
-
-  team: {
-    title: 'Team',
-    lead: 'Who works for Homivaro — and what each person is allowed to see.',
-    colName: 'Name',
-    colRole: 'Role',
-    colRegions: 'Area',
-    colSkills: 'Services',
-    colStatus: 'Status',
-    roleOwner: 'Owner',
-    roleContractor: 'Team member',
-    active: 'Active',
-    inactive: 'Inactive',
-    emptyTitle: 'Just you',
-    emptyBody:
-      'As soon as an application is accepted, that person appears here — with their permissions.',
-  },
-
-  member: {
-    back: 'All team members',
-    contactTitle: 'Contact',
-    since: 'On the team since',
-    fromApplication: 'From application {reference}',
-    regionsTitle: 'Area',
-    skillsTitle: 'Services they may take',
-    skillsHint: 'Only released services can be assigned.',
-    accessTitle: 'Permissions',
-    activeLabel: 'Active — can be assigned jobs',
-    ownerNote: 'The owner sees everything. These permissions cannot be changed.',
-    jobsTitle: 'Upcoming jobs',
-    jobsEmpty: 'No jobs assigned at the moment.',
-  },
 };
