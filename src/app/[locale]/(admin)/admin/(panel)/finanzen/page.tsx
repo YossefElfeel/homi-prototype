@@ -6,6 +6,7 @@ import { useFormatter } from '@/i18n/format';
 import { toast } from 'sonner';
 import { BarChart3, Download, Info, Receipt, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 
+import { Link } from '@/i18n/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -388,6 +389,23 @@ export default function FinanceAnalyticsPage() {
                       {row.count === 1
                         ? t('categoryCountOne')
                         : t('categoryCount', { n: row.count })}
+                      {/* One heading on this card has a screen behind it. The
+                          others are a total and nothing more — «Material» has
+                          no second question to ask — but labour does: whose
+                          hours, on which job, and who is still owed. Without
+                          the link the reader has the largest number on the
+                          screen and no way through it. */}
+                      {row.category === 'labour' && (
+                        <>
+                          {' · '}
+                          <Link
+                            href="/admin/ausgaben/arbeitszeit"
+                            className="text-ink-accent underline-offset-4 hover:underline"
+                          >
+                            {t('linkWorkforce')}
+                          </Link>
+                        </>
+                      )}
                     </p>
                   </li>
                 ))}

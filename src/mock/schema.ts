@@ -1005,8 +1005,26 @@ export interface Coupon {
  * company by a distance, and a profit figure that leaves them out is not a
  * profit figure. This prototype has no payroll — the entry is typed by hand
  * like every other cost, which /open-questions says out loud.
+ *
+ * `labour` is the ninth and it is not a second word for `wages`. The two
+ * answer different questions and one heading was answering both, badly.
+ * `wages` is the payout: a lump leaving the account at the end of the month
+ * with a person's name on it and nothing behind it — no job, no hours, no
+ * rate. It stays, because that is genuinely how the standing payroll runs.
+ * `labour` is one person's hours on one job, and it carries the four facts
+ * that make that a record rather than a note — who worked, how long, who paid,
+ * and who carries it. See `LabourEntry`.
+ *
+ * What that buys is the question neither side could answer before: «was hat
+ * uns dieser Umzug an Leuten gekostet». The job knew its price, the month knew
+ * its payroll, and nothing joined the two.
+ *
+ * It sorts first because it is the largest line and the only one with
+ * structure behind it — the reader opening this filter wants this heading more
+ * often than any other.
  */
 export type ExpenseCategory =
+  | 'labour'
   | 'supplies'
   | 'vehicle'
   | 'wages'
@@ -1029,6 +1047,45 @@ export type ExpenseCategory =
  * not entered.
  */
 export type ExpenseStatus = 'open' | 'paid';
+
+/**
+ * Who worked, for how long, who paid them, and who carries it.
+ *
+ * The chain the workforce screen exists to make readable runs
+ * job → worker → hours → cost → payer → responsible, and every link past the
+ * second was missing: `Booking.assigneeId` says who was *sent*, and nothing
+ * anywhere said what that hour cost or whose money settled it.
+ *
+ * All three people are ids into `team`, not free text. A name typed into a box
+ * cannot be totalled, cannot be linked, and spells itself differently the
+ * second time — and the whole point of this record is that «wie viele Stunden
+ * hat Marta diesen Monat gemacht» is a sum rather than a search.
+ *
+ * Why the payer and the responsible are two fields rather than one: they come
+ * apart in the ordinary case, not the exotic one. The contractor running a
+ * Saturday job settles the second pair of hands out of her own pocket and is
+ * reimbursed on Monday — she is the payer, the owner is still who the cost
+ * belongs to. One field would make the reimbursement invisible, which is
+ * precisely what somebody is looking for when they open this screen.
+ */
+export interface LabourEntry {
+  /** Who did the work. Not necessarily the booking's `assigneeId` — a job can
+      carry two people, and each pair of hands is its own record. */
+  workerId: ID;
+  /** Whose money actually left. Usually the owner; not always. */
+  paidById: ID;
+  /** Who the cost belongs to — who signed it off and answers for it. */
+  responsibleId: ID;
+  /**
+   * Hours on the job, decimal — 3.5, not 3:30.
+   *
+   * Decimal because everything derived from it is a multiplication: the
+   * effective rate, the month's total, the cost of one job. Storing a clock
+   * would mean parsing one before every sum, and the office already writes
+   * quarter hours on the timesheet.
+   */
+  hours: number;
+}
 
 /**
  * A cost the company carries — the other half of the finance picture.
@@ -1064,8 +1121,30 @@ export interface Expense {
    * A tank of fuel belongs to the month; the special detergent bought for one
    * move-out clean belongs to that job. Optional, because most costs are the
    * first kind and forcing a job onto them would produce made-up attribution.
+   *
+   * Required on a `labour` row, and that requirement is what separates the
+   * category from `wages`: hours with no job on them are a payout, and a
+   * payout is what `wages` is for. Enforced by the store and the form rather
+   * than by the type — see `labour` below for why this is not a union.
    */
   bookingId?: ID;
+  /**
+   * Present exactly when `category === 'labour'`, and so is `bookingId`.
+   *
+   * Not a discriminated union, and that is a decision rather than an omission.
+   * An `Expense` is read by a dozen screens that do not care which kind it is
+   * — the list, the export, the month buckets, the profit line — and splitting
+   * the type would make every one of them narrow before it could reach
+   * `amount`. The pairing is enforced where it can be: the store refuses to
+   * write a labour row without it and strips it from a row that stops being
+   * labour, and `labourOf` in `lib/labour-facts.ts` is the one reader that
+   * asserts the pair for everybody else.
+   *
+   * `supplier` is derived from `workerId` on these rows rather than typed, so
+   * the list, the search and the CSV keep working with no special case — see
+   * `createExpense`.
+   */
+  labour?: LabourEntry;
   /**
    * Recurs every month — rent, insurance, the software subscriptions.
    *

@@ -52,6 +52,11 @@ import {
   workEntryFor,
   workedMinutes,
 } from '../src/lib/workforce.ts';
+import {
+  hoursOnSite,
+  memberName as labourMemberName,
+  suggestedHours,
+} from '../src/lib/labour-facts.ts';
 import { de, en } from '../src/messages/index.ts';
 import type { Booking } from '../src/mock/schema.ts';
 
@@ -492,10 +497,78 @@ const NOW = new Date('2026-08-25T10:00:00Z');
     check(`admin.booking.${key} is translated`, de.admin.booking[key] !== en.admin.booking[key]);
   }
   check('the field asks for hours worked, not for the difference', 'hoursLabel' in de.field.check);
-  check('and the member screen totals them', 'hoursTitle' in de.admin.member);
+  /* The booking screen carries two hours cards since wave 83 landed — the
+     report on the left, the wage cost on the right. They must not both say
+     «Gearbeitet», and the cost card must not claim nothing is recorded on a
+     job whose report is on the same screen. */
+  check('the reported hours are labelled as reported', de.admin.booking.workedLabel === 'Gemeldet');
+  check('and the labour card talks about money, not about the report',
+    !de.admin.booking.labourEmpty.includes('erfasst'), de.admin.booking.labourEmpty);
+  check('the two cards do not share a heading',
+    de.admin.booking.workTitle !== de.admin.booking.labourTitle);
   check(
     'the settled hint still names assigning, which is true again',
     de.admin.booking.settledHint.includes('Zuweisen'),
+  );
+}
+
+
+/* ------------------------------------- the join with the labour costs */
+{
+  /*
+   * Wave 83 opens the wage form on `hoursOnSite` — the span between the two
+   * stamps — and its own note says why that is uncomfortable: somebody who
+   * forgets to check out books an eleven-hour day. The report is the better
+   * figure and it exists now, so the form has to prefer it *and say which one
+   * it got*: «Check-in bis Check-out» over a reported number would be a claim
+   * about a provenance it does not have.
+   */
+  const data = buildScenario('demo', NOW);
+  const reported = data.bookings.find(hasWorkRecord)!;
+
+  const fromReport = suggestedHours(reported);
+  check('a job with a report suggests the report', fromReport?.source === 'reported');
+  check(
+    'and the figure is the reported one',
+    fromReport?.hours === hoursOf(workedMinutes(reported)),
+  );
+  /*
+   * And the seed has to keep a job where the two genuinely disagree, or the
+   * whole preference is unreviewable: a reader opening the wage form would see
+   * the same figure either way and could not tell which one it came from.
+   * B-1054 is it — stamped 09:02 to 12:10, three hours reported.
+   */
+  const divergent = data.bookings
+    .filter(hasWorkRecord)
+    .find((b) => hoursOnSite(b) !== null && hoursOnSite(b) !== hoursOf(workedMinutes(b)));
+  check('the seed keeps a job whose report and stamps disagree', Boolean(divergent));
+  check(
+    'and the suggestion follows the report there, not the span',
+    suggestedHours(divergent)?.hours === hoursOf(workedMinutes(divergent!)),
+    `report ${hoursOf(workedMinutes(divergent!))} vs span ${hoursOnSite(divergent!)}`,
+  );
+
+  const stampsOnly = { ...reported, work: undefined };
+  const fromStamps = suggestedHours(stampsOnly);
+  check('a job from before this wave falls back to the stamps', fromStamps?.source === 'onSite');
+  check(
+    'and says so, so the sentence beside it stays true',
+    fromStamps?.hours === hoursOnSite(stampsOnly),
+  );
+
+  check(
+    'a job nobody has finished suggests nothing at all',
+    suggestedHours({ ...reported, work: undefined, checkInAt: undefined, checkOutAt: undefined }) ===
+      null,
+  );
+  check('and neither does no job', suggestedHours(undefined) === null);
+
+  /* One spelling of a name across both libraries — see labour-facts.memberName. */
+  const marta = data.team.find((m) => m.id === 'tm_marta')!;
+  check('both libraries spell a name the same way', labourMemberName(marta) === memberName(marta));
+  check(
+    'and only the cost side falls back to a dash',
+    labourMemberName(undefined) === '—' && memberName(undefined) === '',
   );
 }
 

@@ -223,15 +223,24 @@ export const adminHiringDe = {
     ownerNote: 'Die Geschäftsleitung sieht alles. Diese Rechte lassen sich nicht ändern.',
     jobsTitle: 'Kommende Einsätze',
     jobsEmpty: 'Zurzeit keine Einsätze zugewiesen.',
-    /* Kein Lohnbüro — §22 lässt Löhne, Absenzen und Zeiterfassung im engeren
-       Sinn draussen. Was hier steht, ist die Summe dessen, was am Einsatz
-       erfasst wurde; siehe §22a unter /open-questions. */
-    hoursTitle: 'Erfasste Stunden',
-    hoursTotal: '{hours} Std.',
-    hoursJobs: 'Auf {n, plural, one {# Einsatz} other {# Einsätzen}} erfasst.',
-    hoursRow: '{hours} Std.',
-    hoursAllJobs: 'Alle Einsätze dieser Person',
-    hoursEmpty:
-      'Noch nichts erfasst. Die Zeit entsteht beim Auschecken — sobald ein Einsatz dieser Person abgeschlossen ist, steht sie hier.',
+    /* Die zweite Hälfte der Personenseite: was diese Person gearbeitet hat.
+       Stand nirgends — die Stunden lagen in den Ausgaben und waren von hier
+       aus nur über die Suche zu finden.
+
+       Welle 84 hatte hier einen zweiten Block «Erfasste Stunden» — die vom
+       Feld *gemeldete* Zeit. Zwei Kästen mit fast derselben Überschrift auf
+       einer Seite, und der Leser muss raten, welcher welcher ist. Dieser hier
+       bleibt: er trägt das Geld, und das ist das, was der Personenseite
+       gefehlt hat. Die gemeldete Zeit steht am Einsatz, wo sie freigegeben
+       wird. */
+    labourTitle: 'Arbeitszeit',
+    labourHours: 'Stunden erfasst',
+    labourAmount: 'Lohnkosten',
+    labourOutstanding: 'Noch nicht ausbezahlt',
+    labourJobs: 'Auf {n} Einsätzen',
+    labourJobsOne: 'Auf einem Einsatz',
+    labourEmpty: 'Für diese Person sind noch keine Stunden erfasst.',
+    labourLink: 'In der Arbeitszeit ansehen',
+    labourHoursValue: '{hours} Std.',
   },
 };

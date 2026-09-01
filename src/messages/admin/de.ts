@@ -23,6 +23,10 @@ export const adminDe = {
       subscriptions: 'Abos',
       invoices: 'Rechnungen',
       expenses: 'Ausgaben',
+      /* Eigene Zeile statt eines Tabs in «Ausgaben»: jeder Screen im Panel ist
+         eine Zeile in dieser Liste, und eine Gruppe, die anders navigiert,
+         wäre eine zweite Sache zum Lernen ohne Gegenwert. */
+      workforce: 'Arbeitszeit',
       analytics: 'Auswertung',
       catalogue: 'Leistungen',
       addons: 'Zusatzleistungen',
@@ -975,6 +979,20 @@ export const adminDe = {
     propertyArea: 'Fläche',
     serviceTitle: 'Leistung',
     moneyTitle: 'Betrag & Belege',
+    /* Was der Einsatz an Leuten gekostet hat — die andere Hälfte der
+       Geldkarte, die bis jetzt nur sagen konnte, was er einbringt. */
+    labourTitle: 'Arbeitszeit',
+    labourTotal: '{hours} Std. von {n} Personen',
+    labourTotalOne: '{hours} Std. von einer Person',
+    labourOpen: 'Davon noch nicht ausbezahlt: {amount}.',
+    /* «verrechnet», nicht «erfasst». Links auf derselben Seite kann seit
+       Welle 84 «Gemeldet: 6.5 Std.» stehen — «noch keine Stunden erfasst»
+       daneben widerspricht dem einfach. Diese Karte handelt vom Lohn, nicht
+       von der Meldung. */
+    labourEmpty: 'Für diesen Einsatz ist noch keine Arbeitszeit verrechnet.',
+    labourAdd: 'Arbeitszeit erfassen',
+    labourAll: 'Alle Einträge',
+    labourHours: '{hours} Std.',
     /* Hiess `amountOnPlan` und wurde immer dann gezeigt, wenn keine Offerte
        da war — also auch für den telefonisch gebuchten Einsatz, der weder
        Offerte noch Abo hat. B-1044 behauptete, eine Monatsgebühr decke ihn,
@@ -997,11 +1015,17 @@ export const adminDe = {
     unassignDone: 'Zuweisung entfernt.',
     assignClosed: 'Dieser Einsatz ist {state} — die Zuweisung lässt sich nicht mehr ändern.',
     plannedLabel: 'Geplant',
-    workedLabel: 'Gearbeitet',
+    /* «Gemeldet», nicht «Gearbeitet». Rechts auf derselben Seite steht die
+       Karte «Arbeitszeit» aus Welle 83 — die verrechneten Stunden mit ihrem
+       Franken-Betrag. Zwei Kästen mit «Gearbeitet: 6.5 Std.» nebeneinander,
+       und der Leser weiss nicht, welcher die Meldung ist und welcher die
+       Kosten. Links steht, was die ausführende Person gemeldet hat und was
+       das Büro freigibt (§5.3); rechts, was daraus an Lohn wurde. */
+    workedLabel: 'Gemeldet',
     /* Mit Namen, weil ein Einsatz weitergegeben werden kann: die Stunden
        bleiben bei der Person, die sie gearbeitet hat. */
-    workedBy: 'Gearbeitet — {name}',
-    noHours: 'Noch nicht erfasst',
+    workedBy: 'Gemeldet — {name}',
+    noHours: 'Noch nichts gemeldet',
     varianceLabel: 'Differenz',
     varianceOver: '{hours} Std. über der Planung',
     varianceUnder: '{hours} Std. unter der Planung',

@@ -9,10 +9,13 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/field';
+import { Money } from '@/components/ui/money';
+import { cn } from '@/lib/cn';
+import { labourAmount, labourExpenses, labourHours, unpaidLabour } from '@/lib/labour-facts';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceSlug } from '@/mock/schema';
-import { hoursOf, memberMinutes, workEntryFor } from '@/lib/workforce';
+
 
 /**
  * Screen H7 — one team member.
@@ -35,6 +38,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   const members = useStore((s) => s.data.team);
   const applications = useStore((s) => s.data.applications);
   const bookings = useStore((s) => s.data.bookings);
+  const expenses = useStore((s) => s.data.expenses);
   const properties = useStore((s) => s.data.properties);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
@@ -52,19 +56,19 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
     .slice(0, 5);
 
   /*
-   * What this person has actually worked — and deliberately not a payroll run.
+   * What this person actually worked, as opposed to what they are booked for.
    *
-   * §22 puts wages, attendance and absence out of scope, and that stands. But
-   * the hours are recorded against the job now, and a roster screen that could
-   * not say how many of them there were would send the owner back to counting
-   * bookings by eye — which is the thing every list in this panel exists to
-   * stop. Totals and the last few jobs, no rates and no period: see §22a on
-   * /open-questions for what a real payroll view would still have to settle.
+   * The section above is the diary and it looks forward; this looks back, and
+   * until this wave there was nothing to look back at — hours were a monthly
+   * lump under «Löhne» with a name typed into the supplier box, so a person's
+   * own page could not say how much they had done or whether they had been
+   * paid for it. Every figure here is over all time on purpose: the person is
+   * the subject, not the quarter, and the board one link away is where a period
+   * is chosen.
    */
-  const worked = bookings
-    .filter((b) => (b.work ?? []).some((w) => w.memberId === member.id))
-    .sort((a, b) => (a.start < b.start ? 1 : -1));
-  const totalMinutes = memberMinutes(bookings, member.id);
+  const labour = labourExpenses(expenses).filter((e) => e.labour.workerId === member.id);
+  const labourJobs = new Set(labour.map((e) => e.bookingId)).size;
+  const labourOpen = unpaidLabour(labour, now);
 
   return (
     <div>
@@ -210,6 +214,47 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
       )}
 
       <section className="mt-10 border-t border-line-subtle pt-8">
+        <h2 className="display-type text-xl">{t('labourTitle')}</h2>
+        {labour.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-tertiary">{t('labourEmpty')}</p>
+        ) : (
+          <>
+            <dl className="mt-4 grid gap-5 sm:grid-cols-3">
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourHours')}</dt>
+                <dd data-numeric className="mt-1.5 text-lg">
+                  {t('labourHoursValue', { hours: labourHours(labour) })}
+                </dd>
+                <p className="mt-1 text-sm text-ink-tertiary">
+                  {labourJobs === 1 ? t('labourJobsOne') : t('labourJobs', { n: labourJobs })}
+                </p>
+              </div>
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourAmount')}</dt>
+                <dd className="mt-1.5 text-lg">
+                  <Money amount={labourAmount(labour)} />
+                </dd>
+              </div>
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourOutstanding')}</dt>
+                {/* Warning-coloured only when there is something to chase — a
+                    zero in orange is a problem the reader goes looking for and
+                    does not find. */}
+                <dd
+                  className={cn('mt-1.5 text-lg', labourOpen > 0 && 'text-status-warning-fg')}
+                >
+                  <Money amount={labourOpen} />
+                </dd>
+              </div>
+            </dl>
+            <Button asChild variant="secondary" className="mt-5">
+              <Link href="/admin/ausgaben/arbeitszeit">{t('labourLink')}</Link>
+            </Button>
+          </>
+        )}
+      </section>
+
+      <section className="mt-10 border-t border-line-subtle pt-8">
         <h2 className="display-type text-xl">{t('jobsTitle')}</h2>
         {upcoming.length === 0 ? (
           <p className="mt-3 text-sm text-ink-tertiary">{t('jobsEmpty')}</p>
@@ -248,62 +293,6 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         )}
       </section>
 
-      {/*
-        The hours side of the same roster.
-        Not payroll — see the note on `worked` above and §22a on
-        /open-questions. What it answers is "how much has this person actually
-        done", which until now could only be counted by opening every job.
-      */}
-      <section className="mt-10 border-t border-line-subtle pt-8">
-        <h2 className="display-type text-xl">{t('hoursTitle')}</h2>
-        {worked.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-tertiary">{t('hoursEmpty')}</p>
-        ) : (
-          <>
-            <p data-numeric className="mt-3 text-2xl">
-              {t('hoursTotal', { hours: hoursOf(totalMinutes) })}
-            </p>
-            <p className="mt-1 text-sm text-ink-tertiary">
-              {t('hoursJobs', { n: worked.length })}
-            </p>
-            <ul className="mt-5 border-t border-line-subtle">
-              {worked.slice(0, 5).map((booking) => {
-                const property = properties.find((p) => p.id === booking.propertyId);
-                const entry = workEntryFor(booking, member.id);
-                return (
-                  <li key={booking.id} className="border-b border-line-subtle">
-                    <Link
-                      href={`/admin/buchungen/${booking.id}`}
-                      className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
-                    >
-                      <span data-numeric className="text-sm">
-                        {format.dateTime(new Date(booking.start), {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: '2-digit',
-                        })}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-ink-secondary">
-                        {property ? `${property.street}, ${property.city}` : '—'}
-                      </span>
-                      <span data-numeric className="text-sm font-medium">
-                        {t('hoursRow', { hours: hoursOf(entry?.minutes ?? 0) })}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-            {worked.length > 5 && (
-              <Button asChild variant="link" className="mt-3">
-                <Link href={`/admin/buchungen?assignee=${member.id}`}>
-                  {t('hoursAllJobs')}
-                </Link>
-              </Button>
-            )}
-          </>
-        )}
-      </section>
     </div>
   );
 }

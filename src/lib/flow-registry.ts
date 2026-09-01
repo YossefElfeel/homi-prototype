@@ -568,6 +568,16 @@ export const FLOWS: Flow[] = [
         'The job was the only way in, so everything else this firm bills for — travel, materials, a correction after a complaint — had no path into the app at all. That got written in the accounting system, and so a customer ends up holding an invoice the app has never heard of. The job is a field on the form now, rather than the door',
       ),
       added(
+        'Book somebody’s hours to a job',
+        '/admin/ausgaben/neu?kategorie=arbeitszeit',
+        'Wages were one lump a month with a person’s name typed into the supplier box — no job, no hours, no rate — so the largest cost in a cleaning company was the one nothing could be asked about. «Wie viele Stunden hat Marta im März gemacht» was a phone call, and «was hat dieser Umzug an Leuten gekostet» had no answer at all: the job knew its price, the month knew its payroll, and nothing joined the two. «Arbeitszeit» is one person on one job and carries the four facts that make it a record — who worked, how long, whose money settled it, who carries it. «Löhne» stays, for the payout that really does have nothing behind it',
+      ),
+      added(
+        'Start from the job, with the job already filled in',
+        '/admin/buchungen/bkg_9',
+        'The booking screen said what a job was worth and could never say what it took to do, so the subtraction stopped one step short on the one screen where both halves belong. «Arbeitszeit erfassen» opens the form on that job and on the hours the check-in and check-out already recorded — offered rather than written, because somebody who forgets to check out would otherwise book an eleven-hour day',
+      ),
+      added(
         'Record a cost',
         '/admin/ausgaben/neu',
         'Half of the money had no entity at all. `invoices` said what came in and nothing said what went out, so the question this section is opened to ask — what is left at the end of the month — was answered in a banking app from memory. A supplier bill is open when it is entered and settled in its own step, so the payment route can never be skipped on the way in',
@@ -619,7 +629,22 @@ export const FLOWS: Flow[] = [
       added(
         'Settle a cost, and say how',
         '/admin/ausgaben',
-        'The same dialog an invoice is settled with, in the other direction. The route is required for the same reason: "paid" with nothing saying how is the half of the fact nobody can look up afterwards',
+        'The same dialog an invoice is settled with, in the other direction. The route is required for the same reason: "paid" with nothing saying how is the half of the fact nobody can look up afterwards. It is one component now rather than one per screen, because the workforce board settles the same records — and two copies of that rule is one copy that eventually loses it',
+      ),
+      added(
+        'Read the hours as hours',
+        '/admin/ausgaben/arbeitszeit',
+        'Three tables and three questions: every entry as the chain it is, the same hours by person — who worked how much and who is still owed — and by job, which is the only place a crew is visible at all. A booking carries one `assigneeId` and a Saturday carries two people, so the second pair of hands exists nowhere else in the app. It reads the same month window the analytics screen does, so the labour figure on the two screens cannot disagree',
+      ),
+      added(
+        'Narrow the costs to one person',
+        '/admin/ausgaben',
+        'The expense list could be narrowed by heading and by state and never by who. A person is a labour fact, so the filter drops everything else by construction — the honest answer to «was hat Marta gekostet», rather than a list that also carries the month’s diesel. The job a cost belongs to is a column now, and searchable: `bookingId` had been on the record since the day it was written and appeared on no screen, so an attribution made in the form was made where nobody could see it',
+      ),
+      added(
+        'Read one person’s hours from their own page',
+        '/admin/team/tm_marta',
+        'H7 looked forward and only forward — the diary of what somebody is booked for. What they had actually worked, and whether they had been paid for it, sat in the expenses under a name typed into a supplier box, reachable from here only through the search box',
       ),
     ],
     exits: [
@@ -640,6 +665,11 @@ export const FLOWS: Flow[] = [
         '§15 keeps everything that has been with a customer — a draft has been with nobody. Carrying it forever as "cancelled" buries the real cancellations under paperwork. Drafts only, and the store checks that again itself',
       ),
       added(
+        'Hours settled',
+        '/admin/ausgaben/arbeitszeit',
+        'Open → paid from the board itself, with the route recorded, so hours that can be *seen* to be unpaid do not send the reader to a second list to press the button. The «noch nicht ausbezahlt» tile is the number that closes',
+      ),
+      added(
         'A cost settled',
         '/admin/ausgaben',
         'Open → paid, with the route recorded. The third state — overdue — is derived from the due date rather than stored, for the reason the invoice side gives: writing it down would need a nightly sweep to stay true',
@@ -648,6 +678,14 @@ export const FLOWS: Flow[] = [
         'A cost deleted',
         '/admin/ausgaben',
         'At any status, which is where it parts company with an invoice. §15 keeps a released invoice because somebody outside the company is holding a copy; nobody has ever been handed one of these — it is the office’s own note of a bill it received, and one entered twice is clerical noise rather than a document. The change-log entry outlives the record, so a cost vanishing out of a month somebody has read the profit for can still be accounted for',
+      ),
+      open(
+        'Hours that arrive on their own',
+        'The check-in and check-out on a booking are real stamps and the form now offers them — but somebody still has to open the form, pick the person and type an amount, once per pair of hands per job. That is fine for a company of three and it is not a timesheet. What it needs first is a decision rather than code: does a finished job raise its own labour entry for the office to price, or is a reminder that a job has no hours against it the honest version. The second is less machinery and does not put a cost into the accounts that nobody has looked at. On /open-questions',
+      ),
+      open(
+        'A rate somebody agreed to',
+        'The hourly rate on this board is a division — the amount typed over the hours typed — and there is no rate card behind it. So two entries for the same person in the same week can carry different rates with nothing saying which is right, and «what do we pay Marta» is not answerable from the app. A rate on `TeamMember` would fix the arithmetic and raise the question that has to be answered first: whether the rate belongs to the person, to the service, or to the contract',
       ),
       open(
         'A cost that recurs on its own',
