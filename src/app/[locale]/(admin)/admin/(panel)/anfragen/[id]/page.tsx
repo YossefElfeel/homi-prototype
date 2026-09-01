@@ -34,6 +34,7 @@ import { SecretValue } from '@/components/ui/secret-value';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
+import { areaLabel, figure } from '@/lib/property-size';
 import { estimateHours } from '@/mock/engines/pricing';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
@@ -142,19 +143,33 @@ export default function RequestDetailPage({
     offers.find((o) => o.requestId === request.id && o.status !== 'draft') ??
     offers.find((o) => o.requestId === request.id);
 
-  const duration = estimateHours(
-    {
-      service,
-      addOns: chosen,
-      area: property.area,
-      bathrooms: property.bathrooms,
-      hasPets: property.hasPets,
-      needsExtraEffort: property.needsExtraEffort,
-      windowCount: request.windowCount,
-      furniturePieces: request.furniturePieces,
-    },
-    settings,
-  );
+  /*
+   * Null when nobody has measured the place.
+   *
+   * Intake will not create a request without an area, so this is unreachable
+   * from the normal path — but an address can now exist unmeasured (a customer
+   * typed in from a phone call), and defaulting the area to 0 here would print
+   * an hour figure built on nothing. An estimate the office reads out loud has
+   * to come from a measurement or not appear.
+   */
+  const duration =
+    property.area == null
+      ? null
+      : estimateHours(
+          {
+            service,
+            addOns: chosen,
+            area: property.area,
+            // §5.2 bills every bathroom past the first, so one is the neutral
+            // assumption rather than a guess that moves the price.
+            bathrooms: property.bathrooms ?? 1,
+            hasPets: property.hasPets,
+            needsExtraEffort: property.needsExtraEffort,
+            windowCount: request.windowCount,
+            furniturePieces: request.furniturePieces,
+          },
+          settings,
+        );
 
   const access = property.access;
 
@@ -404,7 +419,11 @@ export default function RequestDetailPage({
                   {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddOns')}
                 </Row>
                 <Row label={t('estimated')}>
-                  <span data-numeric>{duration.scheduledHours} Std.</span>
+                  {duration ? (
+                    <span data-numeric>{duration.scheduledHours} Std.</span>
+                  ) : (
+                    <span className="text-ink-tertiary">{t('estimatedNoArea')}</span>
+                  )}
                 </Row>
               </dl>
               <p className="pt-3 text-xs text-ink-tertiary">{t('estimatedNote')}</p>
@@ -423,13 +442,13 @@ export default function RequestDetailPage({
                 </Row>
                 <Row label={t('kind')}>{property.kind}</Row>
                 <Row label={t('area')}>
-                  <span data-numeric>{property.area} m²</span>
+                  <span data-numeric>{areaLabel(property.area)}</span>
                 </Row>
                 <Row label={t('rooms')}>
-                  <span data-numeric>{property.rooms}</span>
+                  <span data-numeric>{figure(property.rooms)}</span>
                 </Row>
                 <Row label={t('bathrooms')}>
-                  <span data-numeric>{property.bathrooms}</span>
+                  <span data-numeric>{figure(property.bathrooms)}</span>
                 </Row>
                 <Row label={t('floor')}>
                   <span data-numeric>{property.floor}</span>

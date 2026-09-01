@@ -393,6 +393,7 @@ export const adminEn: typeof adminDe = {
     noAddOns: 'None',
     estimated: 'Estimated duration',
     estimatedNote: 'Calculated by the system from area, bathrooms and condition.',
+    estimatedNoArea: 'No floor area on file',
     preferredTitle: 'Preferred time',
     flexible: 'Flexible',
     customerLead: 'Who to reach about this request. Belongs to the customer account.',

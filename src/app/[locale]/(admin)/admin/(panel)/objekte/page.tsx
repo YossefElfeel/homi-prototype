@@ -178,9 +178,19 @@ export default function PropertiesPage() {
       cell: (p) => (
         <span>
           {t(`kinds.${p.kind}`)}
-          <span data-numeric className="block text-sm text-ink-tertiary">
-            {p.area} m² · {p.rooms} Zi. · {p.bathrooms} Bad
-          </span>
+          {p.area == null ? (
+            <span className="block text-sm text-ink-tertiary">{t('sizeUnknown')}</span>
+          ) : (
+            <span data-numeric className="block text-sm text-ink-tertiary">
+              {[
+                `${p.area} m²`,
+                p.rooms != null && `${p.rooms} Zi.`,
+                p.bathrooms != null && `${p.bathrooms} Bad`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
         </span>
       ),
       sortBy: (p) => p.kind,

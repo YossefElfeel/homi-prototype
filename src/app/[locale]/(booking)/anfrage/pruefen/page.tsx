@@ -48,9 +48,17 @@ export default function ReviewStep() {
   const address = saved
     ? `${saved.street}, ${saved.postcode} ${saved.city}`
     : `${draft.property.street}, ${draft.property.postcode} ${draft.property.city}`;
-  const specs = saved
-    ? `${saved.area} m² · ${saved.rooms} Zi. · ${saved.bathrooms} Bad`
-    : `${draft.property.area} m² · ${draft.property.rooms} Zi. · ${draft.property.bathrooms} Bad`;
+  /* A saved property may predate its measurements — the office can now file an
+     address from a phone call. The draft's own numbers are always there, since
+     the step that collects them will not advance without them. */
+  const size = saved ?? draft.property;
+  const specs = [
+    size.area != null && `${size.area} m²`,
+    size.rooms != null && `${size.rooms} Zi.`,
+    size.bathrooms != null && `${size.bathrooms} Bad`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const accessLabel = draft.access
     ? {

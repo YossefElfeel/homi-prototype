@@ -7,11 +7,13 @@ import { AlertTriangle, Mail, Phone } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { LOCALE_LABELS, routing, type Locale } from '@/i18n/routing';
+import { AddressFields } from '@/components/admin/address-fields';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { normaliseAddress, toDraft } from '@/lib/contact-address';
 import { useHydrated, useStore } from '@/mock/store';
 
 /**
@@ -34,6 +36,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
   const hydrated = useHydrated();
 
   const customers = useStore((s) => s.data.customers);
+  const settings = useStore((s) => s.settings);
   const updateCustomer = useStore((s) => s.updateCustomer);
   const customer = customers.find((c) => c.id === id);
 
@@ -44,6 +47,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
     phone: customer?.phone ?? '',
     language: (customer?.language ?? 'de') as Locale,
     internalNotes: customer?.internalNotes ?? '',
+    address: toDraft(customer?.address),
   }));
   const [touched, setTouched] = useState(false);
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
@@ -56,6 +60,17 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim()))
       next.email = ft('errorEmail');
     if (!draft.phone.trim()) next.phone = ft('errorPhone');
+
+    /* 64a's rules, not a second opinion on them: optional as a whole, and
+       refused half-typed. See the note there. */
+    const postcode = draft.address.postcode.trim();
+    if (postcode && !/^\d{4}$/.test(postcode)) next.postcode = ft('errorPostcode');
+    if (draft.address.street.trim() && !postcode) next.postcode = ft('errorRequired');
+    if (draft.address.street.trim() && !draft.address.city.trim())
+      next.city = ft('errorRequired');
+    if (!draft.address.street.trim() && (postcode || draft.address.city.trim()))
+      next.street = ft('errorStreetMissing');
+
     return next;
   }, [draft, ft]);
 
@@ -96,6 +111,10 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
       /* Empty means "no note", not an empty string — the detail screen tests
          the field for truthiness before it renders the block. */
       internalNotes: draft.internalNotes.trim() || undefined,
+      /* Same treatment, and it is what makes clearing an address possible:
+         emptying the street drops the whole block rather than storing four
+         blank strings the detail screen would render as an empty card. */
+      address: normaliseAddress(draft.address),
     });
     toast.success(
       t('done', { name: `${draft.firstName.trim()} ${draft.lastName.trim()}` }),
@@ -191,6 +210,26 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
                 </Select>
               )}
             </Field>
+          </CardBody>
+        </Card>
+
+        {/* 64a's block, in 64a's position. The Objekt checkbox is deliberately
+            not here: this customer's properties already exist as records of
+            their own, and a box that silently created a fourth one every time
+            somebody fixed a house number is not an edit. */}
+        <Card className="mt-app-section">
+          <CardHeader title={ft('addressTitle')} description={ft('addressHint')} />
+          <CardBody>
+            <AddressFields
+              value={draft.address}
+              onChange={(address) => set({ address })}
+              served={settings.servedPostcodes}
+              errors={{
+                street: show('street'),
+                postcode: show('postcode'),
+                city: show('city'),
+              }}
+            />
           </CardBody>
         </Card>
 

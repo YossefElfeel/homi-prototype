@@ -129,13 +129,20 @@ export default function AccountPropertiesPage() {
       key: 'size',
       header: t('colSize'),
       align: 'end',
-      sortBy: (p) => p.area,
-      cell: (p) => (
-        <span data-numeric className="text-sm text-ink-secondary">
-          {t('area', { n: p.area })}
-          <span className="block text-ink-tertiary">{t('rooms', { n: p.rooms })}</span>
-        </span>
-      ),
+      /* Unmeasured places group at one end rather than scattering through the
+         column as if they were the smallest flats on the list. */
+      sortBy: (p) => p.area ?? -1,
+      cell: (p) =>
+        p.area == null ? (
+          <span className="text-sm text-ink-tertiary">{t('sizeUnknown')}</span>
+        ) : (
+          <span data-numeric className="text-sm text-ink-secondary">
+            {t('area', { n: p.area })}
+            {p.rooms != null && (
+              <span className="block text-ink-tertiary">{t('rooms', { n: p.rooms })}</span>
+            )}
+          </span>
+        ),
     },
     {
       /*

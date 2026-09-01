@@ -15,6 +15,7 @@ import { SecretValue } from '@/components/ui/secret-value';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Textarea } from '@/components/ui/field';
 import { useHydrated, useStore } from '@/mock/store';
+import { areaLabel, figure } from '@/lib/property-size';
 
 const ACCESS_LABELS: Record<string, string> = {
   'customer-present': 'Kunde ist da',
@@ -143,13 +144,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <DetailRow label={t('kindLabel')}>{lt(`kinds.${property.kind}`)}</DetailRow>
                 <DetailRow label={t('zoneLabel')}>{zoneOf(property).label}</DetailRow>
                 <DetailRow label={rt('area')}>
-                  <span data-numeric>{property.area} m²</span>
+                  <span data-numeric>{areaLabel(property.area)}</span>
                 </DetailRow>
                 <DetailRow label={rt('rooms')}>
-                  <span data-numeric>{property.rooms}</span>
+                  <span data-numeric>{figure(property.rooms)}</span>
                 </DetailRow>
                 <DetailRow label={rt('bathrooms')}>
-                  <span data-numeric>{property.bathrooms}</span>
+                  <span data-numeric>{figure(property.bathrooms)}</span>
                 </DetailRow>
                 <DetailRow label={rt('floor')}>
                   <span data-numeric>{property.floor}</span>

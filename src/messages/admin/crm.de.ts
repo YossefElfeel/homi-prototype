@@ -88,6 +88,16 @@ export const adminCrmDe = {
     phone: 'Telefon',
     language: 'Sprache',
     languageHint: 'Bestimmt die Sprache jeder E-Mail an diese Person.',
+    addressTitle: 'Adresse',
+    addressHint:
+      'Wo die Person ist. Optional — Name und Nummer reichen, um jemanden zu erfassen; die Adresse kann nachkommen.',
+    errorPostcode: 'Eine Schweizer PLZ hat vier Ziffern.',
+    errorStreetMissing: 'Strasse ergänzen — eine PLZ allein erreicht keinen Briefkasten.',
+    alsoPropertyLabel: 'Hier wird auch gearbeitet',
+    alsoPropertyHint:
+      'Legt die Adresse als Objekt an, damit eine Anfrage darauf laufen kann. Weglassen, wenn jemand für eine fremde Adresse bucht.',
+    propertyKind: 'Objektart',
+    propertyKindHint: 'Fläche und Zimmer kommen später, wenn der Einsatz aufgenommen wird.',
     notesTitle: 'Interne Notiz',
     notesHint: 'Nur für Sie. Der Kunde sieht das nie.',
     notesPlaceholder: 'z. B. empfohlen von Frau Berger, ruft am liebsten vormittags an …',
@@ -117,6 +127,7 @@ export const adminCrmDe = {
   customer: {
     back: 'Alle Kunden',
     detailsTitle: 'Kontakt & Stammdaten',
+    addressLabel: 'Adresse',
     statusLabel: 'Status',
     edit: 'Bearbeiten',
     archivedTitle: 'Dieser Kunde ist archiviert.',
@@ -269,6 +280,9 @@ export const adminCrmDe = {
     /* Ersetzt `colSpecs`: die Zahlen standen in der Spalte, die Objektart
        nirgends — und genau danach wird jetzt gefiltert. */
     colKind: 'Art & Eckdaten',
+    /* Kein Fehler: Eine Adresse darf aus einem Telefonat entstehen, bevor
+       jemand sie ausgemessen hat. */
+    sizeUnknown: 'Noch nicht ausgemessen',
     colLastService: 'Letzter Einsatz',
     colNextVisit: 'Nächster Termin',
     colAccess: 'Zutritt',

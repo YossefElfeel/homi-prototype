@@ -443,6 +443,7 @@ export const adminDe = {
     noAddOns: 'Keine',
     estimated: 'Geschätzte Dauer',
     estimatedNote: 'Vom System aus Fläche, Bädern und Zustand berechnet.',
+    estimatedNoArea: 'Keine Fläche erfasst',
     preferredTitle: 'Wunschtermin',
     flexible: 'Flexibel',
     /*

@@ -14,6 +14,7 @@ import type {
   CalendarEvent,
   CalendarEventKind,
   CalendarEventStatus,
+  ContactAddress,
   Customer,
   CustomerMessage,
   Expense,
@@ -53,6 +54,7 @@ import {
   type CancelBlock,
   type UpgradeBlock,
 } from '@/lib/plan-facts';
+import { normaliseAddress } from '@/lib/contact-address';
 import { propertyUsage } from '@/lib/property-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
@@ -487,6 +489,8 @@ interface StoreState {
       phone: string;
       language: Locale;
       internalNotes?: string;
+      /** Where the person is. Absent when the call ended before the address. */
+      address?: ContactAddress;
     },
     now: Date,
   ) => ID;
@@ -1383,6 +1387,10 @@ export const useStore = create<StoreState>()(
             channelSms: true,
           },
           internalNotes: input.internalNotes?.trim() || undefined,
+          /* Absent rather than a record of empty strings — the detail screen
+             tests the whole address for truthiness before it renders the
+             block, the same way it treats the internal note. */
+          address: normaliseAddress(input.address),
         };
 
         set({ data: { ...s.data, customers: [customer, ...s.data.customers] } });

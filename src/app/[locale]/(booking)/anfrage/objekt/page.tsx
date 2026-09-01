@@ -11,6 +11,7 @@ import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useStore } from '@/mock/store';
 import type { PropertyKind } from '@/mock/schema';
 import { cn } from '@/lib/cn';
+import { areaLabel } from '@/lib/property-size';
 
 const KINDS: { value: PropertyKind; icon: typeof Home; key: 'kindApartment' | 'kindHouse' | 'kindOffice' }[] = [
   { value: 'apartment', icon: Building2, key: 'kindApartment' },
@@ -102,7 +103,13 @@ export default function PropertyStep() {
                         {property.street}, {property.postcode} {property.city}
                       </span>
                       <span data-numeric className="mt-1 block text-sm text-ink-tertiary">
-                        {property.area} m² · {property.rooms} Zi. · {property.bathrooms} Bad
+                        {[
+                          areaLabel(property.area),
+                          property.rooms != null && `${property.rooms} Zi.`,
+                          property.bathrooms != null && `${property.bathrooms} Bad`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                     </span>
                   </label>

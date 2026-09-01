@@ -70,9 +70,19 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
     if (!draft.street.trim()) next.street = t('errorRequired');
     if (!/^\d{4}$/.test(draft.postcode.trim())) next.postcode = t('errorPostcode');
     if (!draft.city.trim()) next.city = t('errorRequired');
-    if (!(Number(draft.area) > 0)) next.area = t('errorPositive');
-    if (!(Number(draft.rooms) > 0)) next.rooms = t('errorPositive');
-    if (!(Number(draft.bathrooms) > 0)) next.bathrooms = t('errorPositive');
+    /*
+     * Blank is allowed; a bad number is not.
+     *
+     * These three used to be required, and that made this screen unusable for
+     * the record it matters most on: an address filed from a phone call has no
+     * measurements yet, so correcting a house number on one meant inventing a
+     * square-metre figure to get past the form. Empty now means «still not
+     * measured» and saves as absent — see `Property.area`.
+     */
+    for (const key of ['area', 'rooms', 'bathrooms'] as const) {
+      const raw = draft[key].trim();
+      if (raw && !(Number(raw) > 0)) next[key] = t('errorPositive');
+    }
     return next;
   }, [draft, t]);
 
@@ -114,9 +124,11 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
       postcode: draft.postcode.trim(),
       city: draft.city.trim(),
       kind: draft.kind,
-      area: Number(draft.area),
-      rooms: Number(draft.rooms),
-      bathrooms: Number(draft.bathrooms),
+      /* Absent, not zero. Zero is a measurement, and it prices — see
+         `Property.area` and the note in `buildOfferLines`. */
+      area: draft.area.trim() ? Number(draft.area) : undefined,
+      rooms: draft.rooms.trim() ? Number(draft.rooms) : undefined,
+      bathrooms: draft.bathrooms.trim() ? Number(draft.bathrooms) : undefined,
       floor: Number(draft.floor) || 0,
       hasElevator: draft.hasElevator,
       hasPets: draft.hasPets,

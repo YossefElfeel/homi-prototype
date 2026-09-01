@@ -125,6 +125,23 @@ export interface NotificationPrefs {
   channelSms: boolean;
 }
 
+/**
+ * The postal half of an address, with no service facts attached.
+ *
+ * Deliberately a subset of `Property`'s fields and deliberately not the same
+ * type: a property is somewhere work happens, and it carries a size, an access
+ * method and a floor. A contact address carries none of those and must not
+ * grow them — the moment the two become one type, every customer needs a
+ * square-metre figure before they can be stored.
+ */
+export interface ContactAddress {
+  street: string;
+  /** Floor, entrance, bell — the half that gets somebody to the door. */
+  addressDetail?: string;
+  postcode: string;
+  city: string;
+}
+
 export interface Customer {
   id: ID;
   firstName: string;
@@ -137,6 +154,20 @@ export interface Customer {
   createdAt: ISODate;
   notifications: NotificationPrefs;
   internalNotes?: string;
+  /**
+   * Where the person is, as opposed to where the work is.
+   *
+   * Every address in this app was a `Property`, and a property is a thing that
+   * gets cleaned. That left the office with nowhere to write down where a
+   * customer actually lives: a record typed in from a phone call had a name, a
+   * number and no postcode, so there was no address on file until the first
+   * job created one.
+   *
+   * Optional because the call comes before the address does. A name and a
+   * number is a real customer, and refusing to save one without a street loses
+   * the person who just rang.
+   */
+  address?: ContactAddress;
   /**
    * Out of the working list, still in the data. Deleting outright is not
    * available: `customerId` is dereferenced with `!` on three admin screens
@@ -194,9 +225,23 @@ export interface Property {
   postcode: string;
   city: string;
   kind: PropertyKind;
-  area: number; // m²
-  rooms: number;
-  bathrooms: number;
+  /**
+   * The three facts that decide the price — and the three the office does not
+   * always have yet.
+   *
+   * They became optional when an address could first be recorded without a
+   * survey. A customer created from a phone call gets a street and a postcode,
+   * and «how many square metres?» is not the second question you ask somebody
+   * who has just rung. Absent means unmeasured: no screen prints a figure for
+   * it, and `computeEstimate` returns null rather than pricing the job.
+   *
+   * Zero was the cheap way to spell this, and it is a lie the type system
+   * cannot catch — 0 m² reads as a measurement, sorts as the smallest flat on
+   * the list, and prices.
+   */
+  area?: number; // m²
+  rooms?: number;
+  bathrooms?: number;
   floor: number;
   hasElevator: boolean;
   hasPets: boolean;

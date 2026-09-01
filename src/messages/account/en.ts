@@ -256,6 +256,7 @@ export const accountEn: typeof accountDe = {
     rooms: '{n} rooms',
     bathrooms: '{n} bathrooms',
     area: '{n} m²',
+    sizeUnknown: 'Not recorded yet',
     colLabel: 'Name',
     colAddress: 'Address',
     colKind: 'Type',
