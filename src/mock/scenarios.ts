@@ -2620,7 +2620,14 @@ function baseData(now: Date): DataSet {
     payments: [...payments, ...books.payments],
     subscriptions,
     invoices: [...invoices, ...books.invoices],
-    expenses: books.expenses,
+    /* The year of receipts, then the hours booked against the jobs above.
+       Appended rather than merged so the AUS numbering stays one run — the
+       labour rows continue where `financeHistory` stopped, which is what
+       `nextExpenseSeq` expects when the office records the next one. */
+    expenses: [
+      ...books.expenses,
+      ...labourCosts(now, [...bookings, ...quoteBookings, ...accountBookings], books.expenses.length),
+    ],
     reviews,
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for
@@ -4549,6 +4556,181 @@ function financeHistory(now: Date): {
 
   return { invoices, expenses, payments };
 }
+
+/**
+ * What five of the seeded jobs cost in people.
+ *
+ * Separate from `financeHistory` because it needs something that function does
+ * not have: the jobs. A labour cost points at a booking, and a seed that
+ * invented booking ids would draw a workforce board whose every row leads to
+ * a screen saying the job does not exist — which is worse than an empty board,
+ * because it looks like data.
+ *
+ * The twelve months behind these keep their `wages` lumps and that is
+ * deliberate rather than an omission. It is the story the two categories tell:
+ * the standing payroll goes out once a month with nothing behind it, and the
+ * hours that *can* be attributed to a job now are. Backfilling a year of
+ * labour would mean inventing a year of jobs to hang it on.
+ *
+ * The owner is not on this list. /admin/finanzen states that his own pay is
+ * not in the costs — a sole proprietor draws from the profit, so a wage beside
+ * the rent would count the same money twice — and seeding his hours here would
+ * make that sentence false on the screen it is printed on. The form still
+ * offers him, because a job he is genuinely paid for is a thing that can
+ * happen; the seed just does not claim it has.
+ */
+const LABOUR_SEED: {
+  bookingId: ID;
+  workerId: ID;
+  paidById: ID;
+  responsibleId: ID;
+  hours: number;
+  amount: number;
+  note: string;
+  /** Days after the cost arose that the payout was agreed for. */
+  termDays?: number;
+  /** Days after the cost arose that it actually went out. Absent = still open. */
+  paidAfterDays?: number;
+  method?: Expense['method'];
+}[] = [
+  {
+    /* Settled on the day, no deadline — which is what a payout normally is,
+       and the «ohne Frist» cell needs a labour row behind it too. */
+    bookingId: 'bkg_10',
+    workerId: 'tm_marta',
+    paidById: 'tm_owner',
+    responsibleId: 'tm_owner',
+    hours: 6,
+    amount: 192,
+    paidAfterDays: 0,
+    note: 'Office contract, full shift',
+  },
+  {
+    bookingId: 'bkg_9',
+    workerId: 'tm_marta',
+    paidById: 'tm_owner',
+    responsibleId: 'tm_owner',
+    hours: 3.25,
+    amount: 104,
+    termDays: 10,
+    paidAfterDays: 6,
+    note: 'Windows, two floors',
+  },
+  {
+    /* Still to go out, and inside its term. The board needs one row that is
+       owed and not yet late, or «offen» and «überfällig» are one colour. */
+    bookingId: 'bkg_7',
+    workerId: 'tm_marta',
+    paidById: 'tm_owner',
+    responsibleId: 'tm_owner',
+    hours: 6.5,
+    amount: 208,
+    termDays: 12,
+    note: 'Deep clean, lead on site',
+  },
+  {
+    /*
+     * The row where the three people come apart, and the reason the record has
+     * three fields rather than one.
+     *
+     * Marta ran that job, put a second pair of hands on it and settled him in
+     * cash on the day out of her own pocket. So the worker is Yusuf, the payer
+     * is Marta and the cost belongs to Marta — and a «Bezahlt von» column that
+     * only ever repeated the worker's name would look like a field nobody
+     * needs.
+     */
+    bookingId: 'bkg_7',
+    workerId: 'tm_yusuf',
+    paidById: 'tm_marta',
+    responsibleId: 'tm_marta',
+    hours: 6.5,
+    amount: 195,
+    paidAfterDays: 0,
+    method: 'cash',
+    note: 'Deep clean, second pair of hands',
+  },
+  {
+    /* Past the day it was promised for. A payout nobody made is the one row on
+       this board that costs something to ignore, so it is the state the
+       screen has to open on. */
+    bookingId: 'bkg_3',
+    workerId: 'tm_yusuf',
+    paidById: 'tm_owner',
+    responsibleId: 'tm_owner',
+    hours: 2,
+    amount: 60,
+    termDays: 2,
+    note: 'Maintenance visit, cover',
+  },
+];
+
+function labourCosts(now: Date, bookings: Booking[], startSeq: number): Expense[] {
+  const day = 86_400_000;
+  let seq = startSeq;
+
+  return LABOUR_SEED.flatMap((row) => {
+    const booking = bookings.find((b) => b.id === row.bookingId);
+    /* A row whose job did not make it into this scenario is dropped rather
+       than pointed at nothing — the same rule the store enforces on the way
+       in, applied to the seed so the two cannot disagree. */
+    if (!booking) return [];
+
+    /*
+     * The day the hours were worked, and never a day that has not happened.
+     *
+     * Check-out is the truthful stamp where there is one; the start of the job
+     * otherwise. Clamped against the clock for the reason `notAhead` gives one
+     * function up: the demo bar moves `now`, and a cost dated into the future
+     * sorts above everything real and is measured against a deadline that has
+     * not arrived.
+     */
+    const worked = new Date(booking.checkOutAt ?? booking.start);
+    const at = worked.getTime() <= now.getTime() ? worked : days(now, -1);
+
+    seq += 1;
+    return [
+      {
+        id: `exp_lab_${seq}`,
+        reference: `AUS-${zonedParts(at).year}-${String(seq).padStart(4, '0')}`,
+        category: 'labour' as const,
+        /* The worker's name, the way `createExpense` writes it — so a seeded
+           row and one typed in the app read identically in the list, the
+           search box and the export. */
+        supplier: `${TEAM_NAMES[row.workerId] ?? '—'}`,
+        note: row.note,
+        amount: row.amount,
+        incurredAt: iso(at),
+        dueAt: row.termDays === undefined ? undefined : iso(new Date(at.getTime() + row.termDays * day)),
+        paidAt:
+          row.paidAfterDays === undefined
+            ? undefined
+            : iso(new Date(at.getTime() + row.paidAfterDays * day)),
+        method: row.paidAfterDays === undefined ? undefined : (row.method ?? 'qr-bill'),
+        status: row.paidAfterDays === undefined ? ('open' as const) : ('paid' as const),
+        bookingId: row.bookingId,
+        labour: {
+          workerId: row.workerId,
+          paidById: row.paidById,
+          responsibleId: row.responsibleId,
+          hours: row.hours,
+        },
+      },
+    ];
+  });
+}
+
+/**
+ * The three names, spelled once.
+ *
+ * `supplier` on a labour row is a copy of the worker's name — see
+ * `createExpense` for why it is copied rather than looked up — and a seed that
+ * typed it out per row would be five places for one spelling to drift.
+ */
+const TEAM_NAMES: Record<string, string> = {
+  tm_owner: 'Marco Brunner',
+  tm_marta: 'Marta Nowak',
+  tm_yusuf: 'Yusuf Demir',
+};
 
 /* Offices only for office cleaning, homes for everything else — routing a
    Umzugsreinigung to a reception desk would price and schedule fine and read

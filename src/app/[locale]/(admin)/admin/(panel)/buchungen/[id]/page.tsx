@@ -9,8 +9,10 @@ import {
   Building2,
   CalendarClock,
   Check,
+  Clock,
   DoorClosed,
   Lock,
+  Plus,
   User,
 } from 'lucide-react';
 
@@ -20,13 +22,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Money } from '@/components/ui/money';
+import { Money, formatChf } from '@/components/ui/money';
 import { Field, Input } from '@/components/ui/field';
 import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
 import { bookingAmount } from '@/lib/offer-facts';
+import {
+  labourAmount,
+  labourExpenses,
+  labourHours,
+  memberName,
+  unpaidLabour,
+} from '@/lib/labour-facts';
 import { fromZoned, zonedParts } from '@/lib/business-time';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { areaLabel } from '@/lib/property-size';
@@ -71,6 +80,8 @@ export default function BookingDetailPage({
   const properties = useStore((s) => s.data.properties);
   const offers = useStore((s) => s.data.offers);
   const invoices = useStore((s) => s.data.invoices);
+  const expenses = useStore((s) => s.data.expenses);
+  const team = useStore((s) => s.data.team);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
@@ -104,6 +115,16 @@ export default function BookingDetailPage({
   const service = services.find((s) => s.slug === booking.serviceSlug)!;
   const offer = offers.find((o) => o.id === booking.offerId);
   const invoice = invoices.find((i) => i.bookingId === booking.id);
+
+  /* Oldest first, so two people on one job read in the order they were
+     recorded rather than in store order — which is newest-first and would put
+     the second pair of hands above the person who ran the job. */
+  const labour = labourExpenses(expenses)
+    .filter((e) => e.bookingId === booking.id)
+    .sort((a, b) => a.incurredAt.localeCompare(b.incurredAt));
+  const labourTotalHours = labourHours(labour);
+  const labourPeople = new Set(labour.map((e) => e.labour.workerId)).size;
+  const labourOpen = unpaidLabour(labour, now);
 
   const start = new Date(booking.start);
   const access = property.access;
@@ -451,6 +472,88 @@ export default function BookingDetailPage({
                     {t('invoiceLink', { reference: invoice.reference })}
                   </Link>
                 </Button>
+              )}
+            </CardBody>
+          </Card>
+
+          {/*
+            What the job cost in people.
+            
+            The card above says what the job is worth and could never say what
+            it took to do — so «haben wir an dem Umzug etwas verdient» stopped
+            one subtraction short on the one screen where both halves belong.
+            A job can carry more than one person, which is why this is a list
+            rather than a line: `assigneeId` holds who was sent, and a Saturday
+            has two people on it.
+          */}
+          <Card>
+            <CardHeader
+              title={t('labourTitle')}
+              actions={
+                labour.length > 0 ? (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/admin/ausgaben/neu?einsatz=${booking.id}`}>
+                      <Plus className="size-4" aria-hidden />
+                      {t('labourAdd')}
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+            />
+            <CardBody>
+              {labour.length === 0 ? (
+                <>
+                  <p className="text-sm text-ink-secondary">{t('labourEmpty')}</p>
+                  <Button asChild block variant="secondary" className="mt-4">
+                    <Link href={`/admin/ausgaben/neu?einsatz=${booking.id}`}>
+                      <Plus className="size-4" aria-hidden />
+                      {t('labourAdd')}
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-ink-secondary">
+                      {labourPeople === 1
+                        ? t('labourTotalOne', { hours: labourTotalHours })
+                        : t('labourTotal', { hours: labourTotalHours, n: labourPeople })}
+                    </span>
+                    <Money amount={labourAmount(labour)} emphasis="strong" />
+                  </p>
+
+                  <ul className="mt-4 divide-y divide-line-subtle border-t border-line-subtle">
+                    {labour.map((entry) => (
+                      <li key={entry.id} className="py-2.5">
+                        <Link
+                          href={`/admin/ausgaben/${entry.id}`}
+                          className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm underline-offset-4 hover:underline"
+                        >
+                          <span className="font-medium">
+                            {memberName(team.find((m) => m.id === entry.labour.workerId))}
+                          </span>
+                          <span data-numeric className="text-ink-tertiary">
+                            {t('labourHours', { hours: entry.labour.hours })}
+                          </span>
+                          <Money amount={entry.amount} emphasis="quiet" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* The half that costs something to ignore: hours somebody
+                      has worked and not been paid for. */}
+                  {labourOpen > 0 && (
+                    <p className="mt-3 flex gap-2 text-sm text-status-warning-fg">
+                      <Clock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      {t('labourOpen', { amount: formatChf(labourOpen, locale) })}
+                    </p>
+                  )}
+
+                  <Button asChild block variant="secondary" className="mt-4">
+                    <Link href="/admin/ausgaben/arbeitszeit">{t('labourAll')}</Link>
+                  </Button>
+                </>
               )}
             </CardBody>
           </Card>

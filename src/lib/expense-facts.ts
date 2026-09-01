@@ -20,8 +20,14 @@ export type ExpenseState = ExpenseStatus | 'overdue';
  * The order is the order the office reads them in, and it is what the create
  * form and the filter both iterate — so a category can never exist in one and
  * not the other.
+ *
+ * `labour` leads because it is the biggest number on the screen behind it and
+ * the only heading with a record shape of its own. `wages` stays where it was:
+ * the two sit apart on purpose, because they are not the same money — see
+ * `ExpenseCategory` and `lib/labour-facts.ts`.
  */
 export const EXPENSE_CATEGORIES: readonly ExpenseCategory[] = [
+  'labour',
   'supplies',
   'vehicle',
   'wages',

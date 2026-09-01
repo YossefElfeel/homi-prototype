@@ -223,5 +223,17 @@ export const adminHiringDe = {
     ownerNote: 'Die Geschäftsleitung sieht alles. Diese Rechte lassen sich nicht ändern.',
     jobsTitle: 'Kommende Einsätze',
     jobsEmpty: 'Zurzeit keine Einsätze zugewiesen.',
+    /* Die zweite Hälfte der Personenseite: was diese Person gearbeitet hat.
+       Stand nirgends — die Stunden lagen in den Ausgaben und waren von hier
+       aus nur über die Suche zu finden. */
+    labourTitle: 'Arbeitszeit',
+    labourHours: 'Stunden erfasst',
+    labourAmount: 'Lohnkosten',
+    labourOutstanding: 'Noch nicht ausbezahlt',
+    labourJobs: 'Auf {n} Einsätzen',
+    labourJobsOne: 'Auf einem Einsatz',
+    labourEmpty: 'Für diese Person sind noch keine Stunden erfasst.',
+    labourLink: 'In der Arbeitszeit ansehen',
+    labourHoursValue: '{hours} Std.',
   },
 };

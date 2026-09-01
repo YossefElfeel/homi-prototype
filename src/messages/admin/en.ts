@@ -18,6 +18,10 @@ export const adminEn: typeof adminDe = {
       subscriptions: 'Plans',
       invoices: 'Invoices',
       expenses: 'Expenses',
+      /* Its own row rather than a tab inside “Expenses”: every screen in this
+         panel is one row in this list, and a group that navigated differently
+         would be a second thing to learn for nothing. */
+      workforce: 'Workforce',
       analytics: 'Analytics',
       catalogue: 'Services',
       addons: 'Add-ons',
@@ -833,6 +837,16 @@ export const adminEn: typeof adminDe = {
     propertyArea: 'Area',
     serviceTitle: 'Service',
     moneyTitle: 'Amount & records',
+    /* What the job cost in people — the other half of a money card that could
+       only ever say what it brought in. */
+    labourTitle: 'Labour',
+    labourTotal: '{hours} h from {n} people',
+    labourTotalOne: '{hours} h from one person',
+    labourOpen: 'Not paid out yet: {amount}.',
+    labourEmpty: 'No hours recorded for this job yet.',
+    labourAdd: 'Record labour',
+    labourAll: 'All entries',
+    labourHours: '{hours} h',
     /* Was `amountOnPlan`, and it showed whenever there was no quote — which
        includes the job taken over the phone, which has neither quote nor plan.
        B-1044 claimed a monthly charge covered it, above a link to the invoice
