@@ -38,6 +38,7 @@ import {
   type CalendarEntry,
 } from '@/lib/calendar-entries';
 import { statesOf, statusTone, type StatusTone } from '@/lib/status-registry';
+import { memberById, memberName } from '@/lib/workforce';
 import { ActionIcon } from '@/lib/action-icons';
 import type { CalendarEventKind } from '@/mock/schema';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -194,6 +195,7 @@ export default function CalendarPage({
   const bookings = useStore((s) => s.data.bookings);
   const events = useStore((s) => s.data.events);
   const properties = useStore((s) => s.data.properties);
+  const team = useStore((s) => s.data.team);
   const customers = useStore((s) => s.data.customers);
   const closures = useStore((s) => s.data.closures);
   const holds = useStore((s) => s.holds);
@@ -320,7 +322,19 @@ export default function CalendarPage({
     if (entry.booking) {
       const property = propertyOf(entry.booking.propertyId);
       const where = [property?.street, property?.city].filter(Boolean).join(', ');
-      return [serviceName(entry.booking.serviceSlug), where].filter(Boolean).join(' · ');
+      /*
+       * Who is driving there, on the line that already says what and where.
+       *
+       * The calendar answers "what is on Tuesday" — and with two contractors
+       * on the roster that question is not answered until it says whose
+       * Tuesday. Only when somebody is on it: an unassigned job says so in
+       * the office's list and its own screen, and a third «—» on every
+       * calendar row would be noise on the view that has least room.
+       */
+      const who = memberName(memberById(team, entry.booking.assigneeId));
+      return [serviceName(entry.booking.serviceSlug), where, who]
+        .filter(Boolean)
+        .join(' · ');
     }
     if (entry.event) {
       const who =

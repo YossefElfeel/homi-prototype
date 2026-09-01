@@ -209,6 +209,9 @@ export const adminFinanceDe = {
        Vorgeschlagen statt eingetragen — wer vergisst auszuchecken, hätte sonst
        einen Elf-Stunden-Tag im Beleg. */
     hoursOnSite: 'Vor Ort waren es {hours} Std. — Check-in bis Check-out.',
+    /* Die gemeldete Zeit schlägt die Stempel: sie ist eine Zahl, die jemand
+       eingetippt hat, nicht der Abstand zwischen zwei Zeitpunkten. */
+    hoursReported: 'Gemeldet wurden {hours} Std. beim Auschecken.',
     hoursUse: 'Übernehmen',
     paidByLabel: 'Bezahlt von',
     paidByHint: 'Wessen Konto das Geld verlässt. Ob es schon raus ist, sagt der Status.',

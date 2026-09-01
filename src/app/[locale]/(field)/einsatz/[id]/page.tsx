@@ -2,9 +2,11 @@
 
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Check,
+  Clock,
   DoorClosed,
   Eye,
   EyeOff,
@@ -18,8 +20,16 @@ import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Field, Input } from '@/components/ui/field';
 import { BottomActionBar, BottomActionBarSpacer } from '@/components/ui/bottom-action-bar';
 import { canSeeAccessCodes, useHydrated, useNow, useStore } from '@/mock/store';
+import {
+  hoursOf,
+  isValidWorkHours,
+  MAX_WORK_HOURS,
+  minutesOf,
+  workEntryFor,
+} from '@/lib/workforce';
 
 function sameDay(a: Date, b: Date) {
   return (
@@ -64,8 +74,13 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
   const bookings = useStore((s) => s.data.bookings);
   const properties = useStore((s) => s.data.properties);
   const services = useStore((s) => s.services);
+  const recordWorkHours = useStore((s) => s.recordWorkHours);
 
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  /* Null while the number on the record is the number on screen. Opening the
+     box is what starts an edit, so a stale draft cannot survive a correction
+     made from the office in between. */
+  const [editingHours, setEditingHours] = useState<string | null>(null);
 
   if (!hydrated) return <p className="py-10 text-ink-tertiary">…</p>;
 
@@ -80,6 +95,19 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
   const end = new Date(new Date(booking.start).getTime() + booking.arrivalWindow * 60_000);
   const checkedIn = Boolean(booking.checkInAt);
   const finished = Boolean(booking.checkOutAt);
+
+  /*
+   * The hours, and whether they can still be touched.
+   *
+   * Open until the office accepts the job — a five typed for a five-and-a-half
+   * is noticed on the drive home, and the alternative to fixing it here is a
+   * phone call. Closed the moment it is approved, because at that point the
+   * number has been priced and changing it silently would move money.
+   */
+  const entry = workEntryFor(booking, memberId);
+  const hoursLocked = booking.status !== 'awaitingApproval';
+  const draftHours = editingHours ?? String(entry ? hoursOf(entry.minutes) : '');
+  const draftOk = isValidWorkHours(Number(draftHours));
 
   const secret = (key: string, value: string) => (
     <div className="flex items-center justify-between gap-3 border-b border-line-subtle py-3">
@@ -241,13 +269,93 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
       )}
 
       {finished ? (
-        <div className="mt-10 flex gap-3 border-l-2 border-status-success-line bg-status-success p-5">
-          <Check className="mt-0.5 size-4 shrink-0 text-status-success-fg" aria-hidden />
-          <div>
-            <h2 className="font-medium text-status-success-fg">{t('doneTitle')}</h2>
-            <p className="mt-1 text-sm text-status-success-fg">{t('doneBody')}</p>
+        <>
+          <div className="mt-10 flex gap-3 border-l-2 border-status-success-line bg-status-success p-5">
+            <Check className="mt-0.5 size-4 shrink-0 text-status-success-fg" aria-hidden />
+            <div>
+              <h2 className="font-medium text-status-success-fg">{t('doneTitle')}</h2>
+              <p className="mt-1 text-sm text-status-success-fg">{t('doneBody')}</p>
+            </div>
           </div>
-        </div>
+
+          {/*
+            What was reported, and the one chance to fix it.
+
+            Until this wave the number went into the store at check-out and the
+            person who typed it never saw it again — so a mistyped afternoon
+            could only be corrected by ringing the office, which is exactly the
+            workaround the field app exists to remove.
+          */}
+          <section className="mt-8">
+            <h2 className="flex items-center gap-2 label-type text-ink-tertiary">
+              <Clock className="size-3.5" aria-hidden />
+              {t('hoursTitle')}
+            </h2>
+            <p data-numeric className="mt-2 text-lg">
+              {entry
+                ? t('hoursRecorded', { hours: hoursOf(entry.minutes) })
+                : t('hoursNone')}
+            </p>
+            <p data-numeric className="mt-1 text-sm text-ink-tertiary">
+              {t('hoursPlanned', { hours: booking.duration / 60 })}
+            </p>
+
+            {hoursLocked ? (
+              <p className="mt-3 text-sm text-ink-tertiary">{t('hoursLocked')}</p>
+            ) : editingHours === null ? (
+              <Button
+                variant="secondary"
+                className="mt-4"
+                onClick={() => setEditingHours(String(entry ? hoursOf(entry.minutes) : ''))}
+              >
+                {t('hoursCorrect')}
+              </Button>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <Field
+                  label={t('hoursLabel')}
+                  error={draftOk ? undefined : t('hoursInvalid', { max: MAX_WORK_HOURS })}
+                >
+                  {(props) => (
+                    <Input
+                      type="number"
+                      step={0.5}
+                      min={0.5}
+                      max={MAX_WORK_HOURS}
+                      inputMode="decimal"
+                      value={draftHours}
+                      onChange={(e) => setEditingHours(e.target.value)}
+                      {...props}
+                    />
+                  )}
+                </Field>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    disabled={!draftOk}
+                    onClick={() => {
+                      recordWorkHours(
+                        {
+                          bookingId: booking.id,
+                          memberId,
+                          minutes: minutesOf(Number(draftHours)),
+                          source: 'field',
+                        },
+                        now,
+                      );
+                      setEditingHours(null);
+                      toast.success(t('hoursSaved'));
+                    }}
+                  >
+                    {t('hoursSave')}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setEditingHours(null)}>
+                    {t('hoursCancel')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
+        </>
       ) : (
         <>
           <BottomActionBarSpacer className="h-[calc(8rem+env(safe-area-inset-bottom))]" />

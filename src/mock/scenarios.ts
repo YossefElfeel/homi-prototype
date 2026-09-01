@@ -550,7 +550,13 @@ function baseData(now: Date): DataSet {
       start: iso(at(days(now, 1), 8, 30)),
       duration: 180,
       arrivalWindow: 60,
-      assigneeId: 'tm_owner',
+      /* Not Marco. Every booking in this seed carried `tm_owner`, which was
+         true while the company was one person and made the new «Ausführung»
+         column a name repeated down the page the moment it was not. Marta is
+         cleared for `einmalreinigung` and works 8706, so this row assigns
+         cleanly — the warnings are reached by *changing* it, not by seeding a
+         mistake. */
+      assigneeId: 'tm_marta',
       /*
        * The one moved job that belongs to the demo *account*.
        *
@@ -618,7 +624,7 @@ function baseData(now: Date): DataSet {
       start: iso(at(days(now, 8), 9)),
       duration: 300,
       arrivalWindow: 120,
-      assigneeId: 'tm_owner',
+      assigneeId: 'tm_marta',
       status: 'scheduled',
       photoIds: [],
       history: [{ at: iso(days(now, -7)), kind: 'created', label: 'Plan visit scheduled' }],
@@ -648,7 +654,15 @@ function baseData(now: Date): DataSet {
       start: iso(at(days(now, 4), 9, 30)),
       duration: 180,
       arrivalWindow: 60,
-      assigneeId: 'tm_owner',
+      /*
+       * Deliberately nobody's.
+       *
+       * `assigneeId` was set on every seeded booking, so «Nicht zugewiesen» —
+       * the state the new filter is opened for on a Friday, and the one the
+       * assign panel exists to clear — could not be seen without unassigning
+       * something first. A plan visit four days out that nobody has picked up
+       * is the honest shape of it.
+       */
       status: 'scheduled',
       photoIds: [],
       history: [{ at: iso(days(now, -10)), kind: 'created', label: 'Plan visit scheduled' }],
@@ -726,11 +740,39 @@ function baseData(now: Date): DataSet {
       start: iso(at(pastOpenDay(now, -1), 9)),
       duration: 300,
       arrivalWindow: 90,
-      assigneeId: 'tm_owner',
+      /*
+       * Marta, and the warning that comes with it is deliberate.
+       *
+       * Egg is 8132 — Marco's postcode list, not hers. The office sent her
+       * anyway, which is what a two-person firm does and exactly the case the
+       * assignment panel warns about rather than refusing. It is also the only
+       * seeded record that trips a warning, so «ausserhalb des Einsatzgebiets»
+       * can be read on a real row instead of being constructed by hand. She is
+       * cleared for `grundreinigung`, so it trips one and not three.
+       */
+      assigneeId: 'tm_marta',
       status: 'awaitingApproval',
       photoIds: [],
       checkInAt: iso(at(pastOpenDay(now, -1), 9, 6)),
       checkOutAt: iso(at(pastOpenDay(now, -1), 15, 40)),
+      /*
+       * §5.3, as data rather than as a sentence.
+       *
+       * The overrun used to live only inside the timeline label below — so the
+       * approval banner could say "check the history" and nothing could add
+       * the hours up, filter on them, or correct a typo in them. 6.5 against a
+       * planned 5 is the same story the label tells, in a field.
+       */
+      work: [
+        {
+          id: 'wrk_seed_1',
+          memberId: 'tm_marta',
+          minutes: 390,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -1), 15, 40)),
+          note: 'Garage was agreed on top',
+        },
+      ],
       history: [
         { at: iso(days(now, -16)), kind: 'created', label: 'Booked' },
         { at: iso(at(pastOpenDay(now, -1), 9, 6)), kind: 'checkIn', label: 'Checked in' },
@@ -739,7 +781,7 @@ function baseData(now: Date): DataSet {
           kind: 'checkOut',
           /* §5.3 — reported by the person on site, priced by the office. This
              is the sentence the approval button is asking about. */
-          label: 'Checked out · +1.5 h reported · garage was agreed on top',
+          label: 'Checked out · 6.5 h worked · garage was agreed on top',
         },
       ],
     },
@@ -778,9 +820,24 @@ function baseData(now: Date): DataSet {
       photoIds: [],
       checkInAt: iso(at(pastOpenDay(now, -8), 9, 2)),
       checkOutAt: iso(at(pastOpenDay(now, -8), 12, 10)),
+      /* Bang on the estimate — so «Differenz» has a record that omits it, not
+         only records that print one. */
+      work: [
+        {
+          id: 'wrk_seed_2',
+          memberId: 'tm_owner',
+          minutes: 180,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -8), 12, 10)),
+        },
+      ],
       history: [
         { at: iso(days(now, -19)), kind: 'created', label: 'Booked' },
-        { at: iso(at(pastOpenDay(now, -8), 12, 10)), kind: 'checkOut', label: 'Checked out' },
+        {
+          at: iso(at(pastOpenDay(now, -8), 12, 10)),
+          kind: 'checkOut',
+          label: 'Checked out · 3 h worked',
+        },
         { at: iso(days(now, -7)), kind: 'approved', label: 'Approved' },
       ],
     },
@@ -804,9 +861,26 @@ function baseData(now: Date): DataSet {
       assigneeId: 'tm_owner',
       status: 'closed',
       photoIds: [],
+      /* Half an hour under. The overrun case had a record and the shortfall
+         had none, so «unter der Planung» was a branch nothing could reach —
+         and §5.3 read the wrong way round, as if reported time only ever
+         goes up. */
+      work: [
+        {
+          id: 'wrk_seed_3',
+          memberId: 'tm_owner',
+          minutes: 330,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -13), 14)),
+        },
+      ],
       history: [
         { at: iso(days(now, -27)), kind: 'created', label: 'Booked' },
-        { at: iso(at(pastOpenDay(now, -13), 14)), kind: 'checkOut', label: 'Checked out' },
+        {
+          at: iso(at(pastOpenDay(now, -13), 14)),
+          kind: 'checkOut',
+          label: 'Checked out · 5.5 h worked',
+        },
         { at: iso(days(now, -12)), kind: 'closed', label: 'Closed and paid' },
       ],
     },
@@ -4086,13 +4160,28 @@ function hiredMembers(now: Date): TeamMember[] {
  * scenario the app opens on — a reviewer had to know the demo bar existed and
  * switch to «Personal» before either screen had anything in it. They are in
  * `baseData` now. What is left here is the part that really is scenario-only:
- * handing the week's jobs to Marta, so that switching to the contractor role
- * shows a day rather than an empty state.
+ * handing the week's open jobs to the two contractors, so that switching to
+ * the contractor role shows a day rather than an empty state.
+ *
+ * Two things changed with the workforce wave. It used to hand *every* booking
+ * to Marta — which made the office's new «Ausführung» column one name repeated
+ * down the page, and left Yusuf, who is equally on the roster, with nothing at
+ * all and an empty day behind the demo bar's member picker. And it reached
+ * back over finished jobs, whose recorded hours name the person who actually
+ * worked them: moving `assigneeId` there would have left B-1052 assigned to
+ * one contractor and its six and a half hours credited to another. So only the
+ * jobs still to be done move, and they alternate.
  */
 function withHiring(data: DataSet): DataSet {
+  const OPEN: Booking['status'][] = ['scheduled', 'rescheduled', 'inProgress'];
+  let n = 0;
   return {
     ...data,
-    bookings: data.bookings.map((b) => ({ ...b, assigneeId: 'tm_marta' })),
+    bookings: data.bookings.map((b) =>
+      OPEN.includes(b.status)
+        ? { ...b, assigneeId: n++ % 2 === 0 ? 'tm_marta' : 'tm_yusuf' }
+        : b,
+    ),
   };
 }
 
@@ -5320,10 +5409,26 @@ function withAllStates(data: DataSet, now: Date): DataSet {
           'invoiced',
           'closed',
         ];
+        /* Parallel to BOOKING_ARC, one entry per service. `undefined` on the
+           `inProgress` row is on purpose: a job somebody is standing in with
+           nobody's name on it is the state the office most wants to find. */
+        const ASSIGNEE_ARC: (string | undefined)[] = [
+          'tm_owner',
+          'tm_marta',
+          undefined,
+          'tm_marta',
+          'tm_owner',
+          'tm_yusuf',
+          'tm_owner',
+        ];
         const bookingStatus = BOOKING_ARC[si]!;
         const future = bookingStatus === 'scheduled' || bookingStatus === 'rescheduled';
         const start = future ? at(days(now, 2 + si), 9) : at(days(now, -(si + 2)), 9);
         const bookingId = `bkg_m_${SHORT[slug]}`;
+        /* Alternately over and under the estimate, so «über der Planung» and
+           «unter der Planung» both have records in the scenario that exists to
+           carry every branch. */
+        const workedMin = 180 + si * 30 + (si % 2 === 0 ? 60 : -30);
 
         matrixBookings.push({
           id: bookingId,
@@ -5334,12 +5439,35 @@ function withAllStates(data: DataSet, now: Date): DataSet {
           start: iso(start),
           duration: 180 + si * 30,
           arrivalWindow: 60,
-          assigneeId: 'tm_owner',
+          /* One expression, read by the field, the label and the variance.
+             Written twice they disagreed on the first edit — the label said
+             5.5 h while the record held 4. */
+          /* Rotated across the roster, with one deliberately nobody's. This is
+             the scenario whose promise is that every declared value has a
+             record carrying it, and «nicht zugewiesen» is a value the new
+             column and its filter both have to be able to draw. */
+          assigneeId: ASSIGNEE_ARC[si],
           status: bookingStatus,
           photoIds: [],
           checkInAt: future ? undefined : iso(at(start, 9, 5)),
           checkOutAt:
             future || bookingStatus === 'inProgress' ? undefined : iso(at(start, 13, 30)),
+          /* Every job that has been checked out of carries its hours, so the
+             office's «Gearbeitet» row and the approval banner have something
+             to read on each of the four finished states rather than only on
+             the one this arc happened to seed a sentence for. */
+          work:
+            future || bookingStatus === 'inProgress' || !ASSIGNEE_ARC[si]
+              ? undefined
+              : [
+                  {
+                    id: `wrk_m_${SHORT[slug]}`,
+                    memberId: ASSIGNEE_ARC[si]!,
+                    minutes: workedMin,
+                    source: 'field' as const,
+                    recordedAt: iso(at(start, 13, 30)),
+                  },
+                ],
           history: [
             { at: iso(days(now, -settledDays)), kind: 'created', label: 'Booked' },
             ...(bookingStatus === 'awaitingApproval'
@@ -5347,7 +5475,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
                   {
                     at: iso(at(start, 13, 30)),
                     kind: 'checkOut',
-                    label: 'Checked out · +1 h reported',
+                    label: `Checked out · ${workedMin / 60} h worked`,
                   },
                 ]
               : []),
@@ -5503,11 +5631,21 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       start: iso(at(days(now, -1), 9)),
       duration: 300,
       arrivalWindow: 90,
-      assigneeId: 'tm_owner',
+      assigneeId: 'tm_marta',
       status: 'awaitingApproval',
       photoIds: [],
       checkInAt: iso(at(days(now, -1), 9, 3)),
       checkOutAt: iso(at(days(now, -1), 15, 20)),
+      work: [
+        {
+          id: 'wrk_s_await',
+          memberId: 'tm_marta',
+          minutes: 390,
+          source: 'field',
+          recordedAt: iso(at(days(now, -1), 15, 20)),
+          note: 'Cellar was agreed on top',
+        },
+      ],
       history: [
         { at: iso(days(now, -8)), kind: 'created', label: 'Booked' },
         { at: iso(at(days(now, -1), 9, 3)), kind: 'checkIn', label: 'Checked in' },
@@ -5515,8 +5653,9 @@ function withAllStates(data: DataSet, now: Date): DataSet {
           at: iso(at(days(now, -1), 15, 20)),
           kind: 'checkOut',
           /* §5.3 — reported by the person on site, priced by the office. This
-             is the sentence the approval button is asking about. */
-          label: 'Checked out · +1.5 h reported · cellar was agreed on top',
+             is the sentence the approval button is asking about, and the hours
+             beside it are the field it now reads. */
+          label: 'Checked out · 6.5 h worked · cellar was agreed on top',
         },
       ],
     },
@@ -5567,9 +5706,22 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       photoIds: [],
       checkInAt: iso(at(days(now, -6), 9, 2)),
       checkOutAt: iso(at(days(now, -6), 13, 10)),
+      work: [
+        {
+          id: 'wrk_s_completed',
+          memberId: 'tm_owner',
+          minutes: 240,
+          source: 'field',
+          recordedAt: iso(at(days(now, -6), 13, 10)),
+        },
+      ],
       history: [
         { at: iso(days(now, -12)), kind: 'created', label: 'Booked' },
-        { at: iso(at(days(now, -6), 13, 10)), kind: 'checkOut', label: 'Checked out' },
+        {
+          at: iso(at(days(now, -6), 13, 10)),
+          kind: 'checkOut',
+          label: 'Checked out · 4 h worked',
+        },
         { at: iso(days(now, -5)), kind: 'approved', label: 'Approved' },
       ],
     },

@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { InvoiceLines } from '@/components/admin/invoice-lines';
 import { offerLineLabel } from '@/lib/offer-label';
+import { hasWorkRecord, workedMinutes } from '@/lib/workforce';
 import { mayInvoice } from '@/lib/invoice-permissions';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Booking, InvoiceLine } from '@/mock/schema';
@@ -120,14 +121,25 @@ export default function NewInvoicePage() {
     const offer = offers.find((o) => o.id === booking.offerId);
     const picked = (offer?.lines ?? []).filter((line) => line.selected);
     if (picked.length === 0) {
-      /* A job booked by phone has no quote behind it. Priced at the hourly
-         rate against its own booked duration, which is a starting point the
-         owner can see and change — not a zero that has to be noticed. */
+      /*
+       * A job booked by phone has no quote behind it. Priced at the hourly
+       * rate — a starting point the owner can see and change, not a zero that
+       * has to be noticed.
+       *
+       * Against the hours actually worked where somebody has recorded them,
+       * and the booked duration only until they have. The plan was the only
+       * number on the record when this was written; now that check-out stores
+       * what really happened, billing the estimate would mean the office
+       * reading «6.5 Std. gearbeitet» on the job and typing 5 on its invoice.
+       * It stays editable, and what an overrun should *cost* is still open —
+       * see §5.3a on /open-questions.
+       */
+      const minutes = hasWorkRecord(booking) ? workedMinutes(booking) : booking.duration;
       return [
         {
           label: services.find((s) => s.slug === booking.serviceSlug)?.name[locale] ??
             booking.serviceSlug,
-          quantity: Math.round((booking.duration / 60) * 2) / 2,
+          quantity: Math.round((minutes / 60) * 2) / 2,
           unitPrice: settings.hourlyRate,
         },
       ];

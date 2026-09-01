@@ -18,7 +18,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
 import { EXPENSE_CATEGORIES, effectiveExpenseStatus } from '@/lib/expense-facts';
-import { hoursOnSite, isCompleteLabour, memberName } from '@/lib/labour-facts';
+import { isCompleteLabour, memberName, suggestedHours } from '@/lib/labour-facts';
 import type { Locale } from '@/i18n/routing';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Booking, Expense, ExpenseCategory, LabourEntry, TeamMember } from '@/mock/schema';
@@ -185,10 +185,12 @@ function NewExpense() {
       ...blank,
       category: 'labour',
       bookingId: job?.id,
-      /* The stamps the field interface already left on the job. Offered, not
-         imposed — the hours field is editable and says where the figure came
-         from. */
-      labour: { ...blankLabour(owner?.id ?? ''), hours: hoursOnSite(job) ?? 0 },
+      /* What the job already knows. Offered, not imposed — the hours field is
+         editable and says where the figure came from. Was the check-in/
+         check-out span; it is the hours the person *reported* where there are
+         any, which is a figure two people have looked at rather than the
+         distance between two stamps. */
+      labour: { ...blankLabour(owner?.id ?? ''), hours: suggestedHours(job)?.hours ?? 0 },
     };
   });
 
@@ -355,7 +357,7 @@ function ExpenseEditor({ expense, isNew = false }: { expense: Expense; isNew?: b
   ];
 
   const selectedJob = bookings.find((b) => b.id === form.bookingId);
-  const onSite = hoursOnSite(selectedJob);
+  const suggestion = suggestedHours(selectedJob);
 
   /**
    * Who the three selects offer.
@@ -525,14 +527,22 @@ function ExpenseEditor({ expense, isNew = false }: { expense: Expense; isNew?: b
                     {/* What the job itself recorded, offered as a button
                         rather than written in. Somebody who forgets to check
                         out would otherwise book an eleven-hour day, and the
-                        person entering the cost is the one who knows. */}
-                    {onSite !== null && onSite !== form.labour?.hours && (
+                        person entering the cost is the one who knows.
+
+                        Two sentences, not one with a number swapped in: the
+                        hours the cleaner reported and the span between two
+                        stamps are different claims, and «Check-in bis
+                        Check-out» said over a reported figure would be a lie
+                        about where it came from. */}
+                    {suggestion !== null && suggestion.hours !== form.labour?.hours && (
                       <p className="text-sm text-ink-tertiary">
-                        {t('hoursOnSite', { hours: onSite })}{' '}
+                        {suggestion.source === 'reported'
+                          ? t('hoursReported', { hours: suggestion.hours })
+                          : t('hoursOnSite', { hours: suggestion.hours })}{' '}
                         <button
                           type="button"
                           className="font-medium text-ink-accent underline-offset-4 hover:underline"
-                          onClick={() => patchLabour({ hours: onSite })}
+                          onClick={() => patchLabour({ hours: suggestion.hours })}
                         >
                           {t('hoursUse')}
                         </button>

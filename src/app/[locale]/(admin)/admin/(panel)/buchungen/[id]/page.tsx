@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import {
+  AlertTriangle,
   ArrowLeft,
   Building2,
   CalendarClock,
@@ -14,6 +15,7 @@ import {
   Lock,
   Plus,
   User,
+  Users,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -23,22 +25,36 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Money, formatChf } from '@/components/ui/money';
-import { Field, Input } from '@/components/ui/field';
+import { Field, Input, Select } from '@/components/ui/field';
 import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { SecretValue } from '@/components/ui/secret-value';
 import type { Booking, TimelineEvent } from '@/mock/schema';
 import { addMinutes } from '@/mock/engines/availability';
 import { bookingAmount } from '@/lib/offer-facts';
-import {
-  labourAmount,
-  labourExpenses,
-  labourHours,
-  memberName,
-  unpaidLabour,
-} from '@/lib/labour-facts';
+/* `memberName` is not in this list, though wave 83 imported it from here: it
+   is one implementation in `workforce.ts` now, and this screen would
+   otherwise import two functions of the same name with different fallbacks —
+   see the note on `labour-facts.memberName`. */
+import { labourAmount, labourExpenses, labourHours, unpaidLabour } from '@/lib/labour-facts';
 import { fromZoned, zonedParts } from '@/lib/business-time';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { areaLabel } from '@/lib/property-size';
+import {
+  assignableTeam,
+  assignmentWarnings,
+  hasWorkRecord,
+  hoursOf,
+  isValidWorkHours,
+  MAX_WORK_HOURS,
+  memberById,
+  memberName,
+  minutesOf,
+  varianceMinutes,
+  workedMinutes,
+} from '@/lib/workforce';
+
+/** Not a member id and not "nobody" — see `assigning` below. */
+const CURRENT = '\u0000current';
 
 const ACCESS_LABELS: Record<string, string> = {
   'customer-present': 'Kunde ist da',
@@ -89,6 +105,8 @@ export default function BookingDetailPage({
   const patchData = useStore((s) => s.patchData);
   const approveBooking = useStore((s) => s.approveBooking);
   const rescheduleBooking = useStore((s) => s.rescheduleBooking);
+  const assignBooking = useStore((s) => s.assignBooking);
+  const recordWorkHours = useStore((s) => s.recordWorkHours);
   const now = useNow();
 
   /*
@@ -99,10 +117,33 @@ export default function BookingDetailPage({
    * name and the address are the two you keep glancing at, so they are the
    * summaries; everything behind them opens when it is actually needed.
    */
-  const [openSections, setOpenSections] = useState<string[]>(['slot']);
+  const [openSections, setOpenSections] = useState<string[]>(() =>
+    /* The list and the calendar both deep-link «Zuweisen» here. Landing on a
+       folded section would be a link that appears to do nothing. */
+    action === 'assign' ? ['slot', 'work'] : ['slot'],
+  );
   const [rescheduling, setRescheduling] = useState(() => action === 'reschedule');
   const [confirming, setConfirming] = useState<'noAccess' | 'cancel' | null>(() =>
     action === 'cancel' ? 'cancel' : action === 'noAccess' ? 'noAccess' : null,
+  );
+  /*
+   * Null while nothing is being edited; the id (or '' for nobody) while the
+   * select is open. Not seeded from the record, so an assignment made in
+   * another tab cannot be overwritten by a draft nobody meant to submit.
+   *
+   * `CURRENT` is the deep link's opening state: `?action=assign` has to open
+   * the panel on whoever is on the job, and the job is not resolved yet at
+   * this point — a `useState` initialiser runs before hydration. It resolves
+   * to `booking.assigneeId` on the first render that has one, exactly as
+   * pressing the button does.
+   */
+  const [assigning, setAssigning] = useState<string | null>(() =>
+    action === 'assign' ? CURRENT : null,
+  );
+  /* Which person's hours, and the value being typed — never just the value.
+     Correcting somebody's afternoon has to know whose it is. */
+  const [editingHours, setEditingHours] = useState<{ memberId: string; value: string } | null>(
+    null,
   );
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
@@ -192,6 +233,57 @@ export default function BookingDetailPage({
     ['completed', 'invoiced', 'closed', 'cancelled', 'noAccess'] as Booking['status'][]
   ).includes(booking.status);
 
+  /* ------------------------------------------------------------ workforce */
+
+  const assignee = memberById(team, booking.assigneeId);
+  const roster = assignableTeam(team);
+  /*
+   * The name on the record even when it is no longer assignable.
+   *
+   * Deactivating somebody does not un-assign their week. Dropping them from
+   * the select would leave the field showing a person the list says does not
+   * exist, and the office would have no way to see who to take the job off.
+   */
+  const options = assignee && !roster.some((m) => m.id === assignee.id)
+    ? [...roster, assignee]
+    : roster;
+
+  const worked = workedMinutes(booking);
+  const variance = varianceMinutes(booking);
+  const recorded = hasWorkRecord(booking);
+
+  /*
+   * One row per person who worked it, and the office edits the row it means.
+   *
+   * The first version of this pointed the edit at the assignee, which is right
+   * until a finished job is handed on: the hours then belong to the person who
+   * left and the field opens empty against the person who arrived, so saving
+   * adds a second afternoon to a job that only had one. Editing an *entry*
+   * cannot go wrong that way, and it is also the shape a job worked by two
+   * people needs.
+   */
+  const entries = booking.work ?? [];
+  const editEntry = editingHours && memberById(team, editingHours.memberId);
+  const draftOk = isValidWorkHours(Number(editingHours?.value ?? ''));
+  /*
+   * Open until the money is on paper.
+   *
+   * §5.3 leaves the pricing decision with the office, so the office has to be
+   * able to correct a five typed for a five and a half — the contractor has
+   * gone home. Once an invoice exists the number behind it stops moving, or
+   * the bill and the record start disagreeing.
+   */
+  const hoursOpen = !(
+    ['invoiced', 'closed', 'cancelled'] as Booking['status'][]
+  ).includes(booking.status);
+
+  const warnings = assignee
+    ? assignmentWarnings(assignee, booking, bookings, properties)
+    : [];
+
+  /** What the select is showing, with the deep link's sentinel resolved. */
+  const picked = assigning === CURRENT ? (booking.assigneeId ?? '') : (assigning ?? '');
+
   return (
     <div>
       {/* Was `/admin/kalender`, because the calendar was the only way in.
@@ -224,6 +316,22 @@ export default function BookingDetailPage({
           <h2 className="font-medium">{t('approveTitle')}</h2>
           <p className="mt-1.5 max-w-[var(--measure)] text-sm text-ink-secondary">
             {t('approveBody')}
+          </p>
+          {/*
+            The number being approved, in the banner asking for the approval.
+            It used to say "check the history" — so the one figure the button
+            commits the office to was three collapsed sections down, in a
+            sentence, and the reported hours were not a field anybody could
+            read off the record at all.
+          */}
+          <p data-numeric className="mt-3 text-sm font-medium">
+            {recorded
+              ? t('approveHours', {
+                  worked: hoursOf(worked),
+                  planned: booking.duration / 60,
+                })
+              : t('approveNoHours')}
+            {recorded && variance > 0 && ` · ${t('varianceOver', { hours: hoursOf(variance) })}`}
           </p>
           <Button
             className="mt-4"
@@ -284,11 +392,12 @@ export default function BookingDetailPage({
               }
             >
               {/*
-                Three facts, not four. «Ausführung» was here and is gone: this
-                is a one-person company, so every job is Marco's and a line
-                saying so on every booking is a column of the same name
-                repeated down the screen. `assigneeId` stays on the record and
-                is still set when a job is created — see /open-questions §2a.
+                Three facts about the slot. «Ausführung» was folded in here
+                once, then removed as a line printing the same name on every
+                record; it is back as a section of its own, because who does
+                the job now varies and carries hours, warnings and an action
+                — none of which fit in a cell of this grid. See §2a on
+                /open-questions for the whole round trip.
               */}
               <dl className="grid gap-5 sm:grid-cols-3">
                 <div>
@@ -314,6 +423,289 @@ export default function BookingDetailPage({
                   </dd>
                 </div>
               </dl>
+            </CollapsibleSection>
+
+            {/*
+              Who is doing it, how long it took, and the one control that
+              changes either. Second in the group, directly under the slot:
+              «when» and «who» are the two facts the office is asked for on
+              the phone, and the customer's own details are behind them.
+            */}
+            <CollapsibleSection
+              value="work"
+              icon={Users}
+              title={t('workTitle')}
+              summary={
+                assignee ? (
+                  memberName(assignee)
+                ) : (
+                  <span className="text-ink-tertiary">{t('unassigned')}</span>
+                )
+              }
+            >
+              <dl className="divide-y divide-line-subtle border-t border-line-subtle">
+                <Row label={t('assigneeLabel')}>
+                  {assignee ? (
+                    <Link
+                      href={`/admin/benutzer/${assignee.id}`}
+                      className="font-medium text-ink-accent hover:underline"
+                    >
+                      {memberName(assignee)}
+                    </Link>
+                  ) : (
+                    <span className="text-ink-tertiary">{t('unassigned')}</span>
+                  )}
+                </Row>
+                <Row label={t('plannedLabel')}>
+                  <span data-numeric>{t('hours', { hours: booking.duration / 60 })}</span>
+                </Row>
+                {/* Absent, not zero. A job nobody has checked out of has no
+                    hours; printing «0 Std.» would claim somebody worked none.
+                    One row per person, named — a total on its own cannot say
+                    that the six and a half hours on a reassigned job were
+                    worked by whoever left. */}
+                {recorded ? (
+                  entries.map((entry) => (
+                    <Row
+                      key={entry.id}
+                      label={t('workedBy', {
+                        name:
+                          memberName(memberById(team, entry.memberId)) || entry.memberId,
+                      })}
+                    >
+                      <span className="inline-flex items-center gap-3">
+                        <span data-numeric className="font-medium">
+                          {t('hours', { hours: hoursOf(entry.minutes) })}
+                        </span>
+                        {hoursOpen && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingHours({
+                                memberId: entry.memberId,
+                                value: String(hoursOf(entry.minutes)),
+                              })
+                            }
+                            className="rounded-[var(--radius-xs)] text-sm text-ink-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+                          >
+                            {t('hoursCorrect')}
+                          </button>
+                        )}
+                      </span>
+                    </Row>
+                  ))
+                ) : (
+                  <Row label={t('workedLabel')}>
+                    <span className="text-ink-tertiary">{t('noHours')}</span>
+                  </Row>
+                )}
+                {recorded && variance !== 0 && (
+                  <Row label={t('varianceLabel')}>
+                    <span
+                      data-numeric
+                      className={
+                        variance > 0 ? 'text-status-warning-fg' : 'text-ink-secondary'
+                      }
+                    >
+                      {variance > 0
+                        ? t('varianceOver', { hours: hoursOf(variance) })
+                        : t('varianceUnder', { hours: hoursOf(-variance) })}
+                    </span>
+                  </Row>
+                )}
+              </dl>
+
+              {/*
+                Never a refusal, always a sentence. The office knows things the
+                record does not — the person is driving past anyway, the skill
+                list is a fortnight out of date — so the save goes through and
+                the screen says what it noticed.
+              */}
+              {warnings.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {warnings.map((warning) => (
+                    <li
+                      key={warning}
+                      className="flex gap-2 text-sm text-status-warning-fg"
+                    >
+                      <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      {t(`warn_${warning}`, { name: memberName(assignee) })}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {assigning === null ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-4"
+                    disabled={settled}
+                    onClick={() => setAssigning(booking.assigneeId ?? '')}
+                  >
+                    {assignee ? t('reassign') : t('assign')}
+                  </Button>
+                  {/* The actions column says this once for the buttons that
+                      live in it. This one is three sections away from that
+                      note, and a greyed control with no reason beside it
+                      reads as broken rather than closed. */}
+                  {settled && (
+                    <p className="mt-2 text-sm text-ink-tertiary">
+                      {t('assignClosed', { state: statusT(booking.status) })}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <form
+                  className="surface-card mt-4 space-y-3 p-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    assignBooking({ id: booking!.id, memberId: picked || null }, now);
+                    setAssigning(null);
+                    toast.success(picked ? t('assignDone') : t('unassignDone'));
+                  }}
+                >
+                  <Field label={t('assigneeLabel')}>
+                    {(props) => (
+                      <Select
+                        {...props}
+                        value={picked}
+                        onChange={(e) => setAssigning(e.target.value)}
+                      >
+                        {/* First, and not a disabled placeholder: taking a job
+                            off somebody is a real choice, not the absence of
+                            one — see `assignBooking`. */}
+                        <option value="">{t('unassigned')}</option>
+                        {options.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {memberName(m)}
+                            {m.active ? '' : ` — ${t('memberInactive')}`}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  {/* The warnings for the person being *picked*, before the
+                      save rather than after it. */}
+                  {(() => {
+                    const next = memberById(team, picked || undefined);
+                    if (!next) return null;
+                    const found = assignmentWarnings(next, booking!, bookings, properties);
+                    if (found.length === 0) return null;
+                    return (
+                      <ul className="space-y-2">
+                        {found.map((warning) => (
+                          <li
+                            key={warning}
+                            className="flex gap-2 text-sm text-status-warning-fg"
+                          >
+                            <AlertTriangle
+                              className="mt-0.5 size-3.5 shrink-0"
+                              aria-hidden
+                            />
+                            {t(`warn_${warning}`, { name: memberName(next) })}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" size="sm">
+                      {t('assignSave')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAssigning(null)}
+                    >
+                      {t('dismiss')}
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {/*
+                The office's own correction, and the second half of §5.3.
+                The contractor reports; the office prices — and pricing
+                something you cannot correct means phoning somebody who has
+                gone home. The timeline records which of the two wrote the
+                number, so «reported» and «set by the office» stay different
+                claims.
+              */}
+              {/* Only for the person on the job, and only while they have
+                  nothing on it. Every other correction is the pencil beside
+                  the row it belongs to. */}
+              {hoursOpen &&
+                editingHours === null &&
+                assignee &&
+                !entries.some((w) => w.memberId === assignee.id) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setEditingHours({ memberId: assignee.id, value: '' })}
+                  >
+                    {t('hoursAdd')}
+                  </Button>
+                )}
+
+              {editingHours !== null && (
+                <form
+                  className="surface-card mt-4 space-y-3 p-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    recordWorkHours(
+                      {
+                        bookingId: booking!.id,
+                        memberId: editingHours.memberId,
+                        minutes: minutesOf(Number(editingHours.value)),
+                        source: 'office',
+                      },
+                      now,
+                    );
+                    setEditingHours(null);
+                    toast.success(t('hoursSaved'));
+                  }}
+                >
+                  <Field
+                    label={t('hoursFieldLabel', {
+                      name: memberName(editEntry || undefined) || editingHours.memberId,
+                    })}
+                    hint={t('hoursFieldHint')}
+                    error={draftOk ? undefined : t('hoursInvalid', { max: MAX_WORK_HOURS })}
+                  >
+                    {(props) => (
+                      <Input
+                        {...props}
+                        type="number"
+                        step={0.5}
+                        min={0.5}
+                        max={MAX_WORK_HOURS}
+                        inputMode="decimal"
+                        value={editingHours.value}
+                        onChange={(e) =>
+                          setEditingHours({ ...editingHours, value: e.target.value })
+                        }
+                      />
+                    )}
+                  </Field>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" size="sm" disabled={!draftOk}>
+                      {t('hoursSave')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingHours(null)}
+                    >
+                      {t('dismiss')}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CollapsibleSection>
 
             <CollapsibleSection
@@ -530,7 +922,7 @@ export default function BookingDetailPage({
                           className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm underline-offset-4 hover:underline"
                         >
                           <span className="font-medium">
-                            {memberName(team.find((m) => m.id === entry.labour.workerId))}
+                            {memberName(memberById(team, entry.labour.workerId)) || '—'}
                           </span>
                           <span data-numeric className="text-ink-tertiary">
                             {t('labourHours', { hours: entry.labour.hours })}

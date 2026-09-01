@@ -15,6 +15,12 @@
  */
 
 import { effectiveExpenseStatus, isExpenseOutstanding } from '@/lib/expense-facts';
+import {
+  hasWorkRecord,
+  hoursOf,
+  memberName as fullName,
+  workedMinutes,
+} from '@/lib/workforce';
 import type { Booking, Expense, ID, LabourEntry, TeamMember } from '@/mock/schema';
 
 /**
@@ -94,9 +100,20 @@ export function unpaidLabour(rows: LabourExpense[], now: Date): number {
     .reduce((sum, row) => sum + row.amount, 0);
 }
 
-/** «Marta Nowak», and an em dash for an id that no longer resolves. */
+/**
+ * «Marta Nowak», and an em dash for an id that no longer resolves.
+ *
+ * The spelling comes from `workforce.ts` — wave 84 put the same two lines
+ * there for the assignment screens, and two implementations of "how a person's
+ * name is written" is the failure `status-registry` and `action-icons` exist to
+ * prevent: the day somebody adds a middle initial, half the panel gets it.
+ *
+ * The dash stays this module's own. These are table cells and an empty one
+ * reads as a rendering fault; `workforce` returns an empty string on purpose,
+ * because its callers fall back to «Nicht zugewiesen» rather than to a rule.
+ */
 export function memberName(member: TeamMember | undefined): string {
-  return member ? `${member.firstName} ${member.lastName}` : '—';
+  return fullName(member) || '—';
 }
 
 /**
@@ -222,4 +239,32 @@ export function labourTotals(rows: LabourExpense[], now: Date): LabourTotals {
     outstanding: unpaidLabour(rows, now),
     rate: averageRate(rows),
   };
+}
+
+/**
+ * What to open the hours field on, and which of the two it is.
+ *
+ * `hoursOnSite` was the only answer this file could give, and its own note
+ * says why that was uncomfortable: a cleaner who forgets to check out books an
+ * eleven-hour day. Wave 84 removed the reason to guess — the person on the job
+ * now *reports* their hours at check-out, the office approves them, and that
+ * figure is on the booking as `work`.
+ *
+ * So the report wins where there is one. It is a number a human typed and a
+ * second human accepted; the span between two stamps is neither, and it counts
+ * the break and the drive home. The stamps stay as the fallback for a job
+ * finished before this wave, and the caller has to say which it got — the two
+ * cannot share a sentence, because «Check-in bis Check-out» would then be a
+ * claim about a figure that did not come from there.
+ */
+export type HoursSource = 'reported' | 'onSite';
+
+export function suggestedHours(
+  booking: Booking | undefined,
+): { hours: number; source: HoursSource } | null {
+  if (booking && hasWorkRecord(booking)) {
+    return { hours: hoursOf(workedMinutes(booking)), source: 'reported' };
+  }
+  const span = hoursOnSite(booking);
+  return span === null ? null : { hours: span, source: 'onSite' };
 }

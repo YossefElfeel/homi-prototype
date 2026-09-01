@@ -64,6 +64,21 @@ export const fieldDe = {
     noAccessAction: 'Kein Zutritt',
     doneTitle: 'Abgeschlossen',
     doneBody: 'Ein- und ausgecheckt. Der Bericht ist beim Büro.',
+    /* Die gemeldete Zeit war nach dem Auschecken nirgends mehr zu sehen —
+       ein Vertipper liess sich nur per Telefon korrigieren. */
+    hoursTitle: 'Gemeldete Zeit',
+    hoursRecorded: '{hours} Std. gemeldet',
+    hoursNone: 'Keine Zeit gemeldet.',
+    hoursPlanned: 'Geplant waren {hours} Std.',
+    hoursCorrect: 'Zeit korrigieren',
+    hoursLabel: 'Gearbeitete Stunden',
+    hoursInvalid: 'Zwischen 0.5 und {max} Stunden.',
+    hoursSave: 'Speichern',
+    hoursCancel: 'Abbrechen',
+    hoursSaved: 'Zeit aktualisiert.',
+    /* Nach der Freigabe ist die Zahl bewertet — sie hier still zu ändern
+       würde Geld verschieben. */
+    hoursLocked: 'Das Büro hat den Einsatz freigegeben. Änderungen laufen über das Büro.',
   },
 
   check: {
@@ -83,10 +98,16 @@ export const fieldDe = {
     remove: 'Entfernen',
     noteLabel: 'Notiz ans Büro',
     noteHint: 'Nur intern. Zum Beispiel: Backofen war stärker verschmutzt als angegeben.',
-    extraTitle: 'Mehraufwand',
-    extraLabel: 'Zusätzliche Zeit in Stunden',
-    extraHint:
-      'Wird nicht automatisch verrechnet. Das Büro entscheidet und informiert die Kundschaft.',
+    /* Hiess «Mehraufwand» und fragte nach der Differenz — also nach einer
+       Subtraktion im Treppenhaus, und die eine Zahl, die das Büro freigibt
+       (wie lange der Einsatz gedauert hat), stand nirgends im Datensatz. */
+    hoursTitle: 'Gearbeitete Zeit',
+    hoursPlanned: 'Geplant waren {hours} Std.',
+    hoursLabel: 'Gearbeitete Stunden',
+    hoursHint:
+      'Wird nicht automatisch verrechnet. Das Büro sieht die Differenz zur Planung und entscheidet.',
+    hoursSuggested: 'Vorgeschlagen ist die Zeit seit dem Einchecken — bitte prüfen.',
+    hoursInvalid: 'Zwischen 0.5 und {max} Stunden.',
     confirmIn: 'Einsatz starten',
     confirmOut: 'Einsatz abschliessen',
     doneInTitle: 'Eingecheckt um {time}',

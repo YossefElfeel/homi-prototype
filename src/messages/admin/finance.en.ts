@@ -210,6 +210,7 @@ export const adminFinanceEn = {
        Offered rather than written — somebody who forgets to check out would
        otherwise book an eleven-hour day. */
     hoursOnSite: 'On site it was {hours} h — check-in to check-out.',
+    hoursReported: '{hours} h were reported at check-out.',
     hoursUse: 'Use it',
     paidByLabel: 'Paid by',
     paidByHint: 'Whose account the money leaves. Whether it has left is what the status says.',

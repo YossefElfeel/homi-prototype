@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Trash2,
   Undo2,
+  UserCheck,
   X,
 } from 'lucide-react';
 
@@ -70,6 +71,15 @@ export const ActionIcon = {
      confirming settles a date and moving one un-settles it, and one glyph for
      both would make the strip say the same thing for opposite outcomes. */
   reschedule: CalendarSync,
+  /*
+   * Handing a job to a person.
+   *
+   * `UserCheck` rather than `Users`: the sidebar's «Team» meaning is the
+   * roster, and this is one person being put against one job. Not `edit`
+   * either — a pencil says "change these fields", and every row that offers
+   * this also offers reschedule, which is also changing a field.
+   */
+  assign: UserCheck,
   edit: Pencil,
 
   /* Reversible pairs. Each reversal is a distinct glyph rather than the same

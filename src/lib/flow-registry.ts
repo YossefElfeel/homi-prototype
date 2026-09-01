@@ -438,9 +438,24 @@ export const FLOWS: Flow[] = [
         'The booking was the one large entity without a list of its own. The calendar answers "what is on on Tuesday" — not "which jobs come out of quotes", not "which finished job still has no invoice"',
       ),
       ok('Today’s jobs', '/einsatz', 'Role "team member"'),
+      added(
+        'Read the day as a different contractor',
+        '/einsatz',
+        'The demo bar picked the first contractor in the data and offered no way to pick another. With two on the roster and the office able to hand a job to either, assigning one to Yusuf and switching role landed you in Marta\'s day with the job you had just created nowhere on it',
+      ),
     ],
     actions: [
-      ok('Assign and reschedule', '/admin/buchungen/bkg_1'),
+      ok('Reschedule', '/admin/buchungen/bkg_1'),
+      added(
+        'Hand the job to somebody, and take it back',
+        '/admin/buchungen/bkg_plan_2?action=assign',
+        'This row used to read "Assign and reschedule" and only half of it was true: `assigneeId` was written when a booking was created and no screen could change it afterwards, while the field app filtered a contractor\'s entire day on that one field. The panel warns rather than refuses — not cleared for the service, outside the area, already at another address that hour — because the office knows things the record does not. B-1058 is the seeded job nobody has picked up',
+      ),
+      added(
+        'Find the jobs nobody is doing',
+        '/admin/buchungen',
+        'The «Ausführung» column and its filter. "What is on Marta\'s week" meant opening every row; "what has nobody yet" was not a question the list could be asked at all',
+      ),
       added(
         'Act straight from the calendar',
         '/admin/kalender',
@@ -458,16 +473,30 @@ export const FLOWS: Flow[] = [
         'Move the demo clock — the block really does empty',
       ),
       added(
-        'Approve extra time',
-        '/admin/buchungen/bkg_1',
-        '§5.3 splits the process: the person doing the work reports it, the office judges it. Only the first half was built — "awaiting approval" had no exit and "completed" was unreachable',
+        'Record the hours worked',
+        '/einsatz/bkg_1/check',
+        'Check-out asked for the *extra* hours, which made the person in the stairwell subtract the estimate from their own afternoon — and the number the office approves, how long the job took, was never stored at all: it went into the timeline label as a phrase. The field opens on the reading since check-in, the overrun is derived, and the contractor can still correct it until the office accepts the job',
+      ),
+      ok(
+        'Approve the reported time',
+        '/admin/buchungen/bkg_7',
+        '§5.3 splits the process: the person doing the work reports it, the office judges it. The banner now prints the hours it is asking about instead of pointing at the history',
+      ),
+      added(
+        'Correct the hours from the office',
+        '/admin/buchungen/bkg_7',
+        'The contractor has gone home and typed 5 for 5.5. Open until an invoice exists, and the timeline says which of the two wrote the number',
       ),
     ],
     exits: [
-      added('Approved and billable', '/admin/buchungen/bkg_1'),
+      ok('Approved and billable', '/admin/buchungen/bkg_7'),
       ok('No access, with waiting time and a photo', '/einsatz/bkg_1/kein-zutritt'),
       ok('Cancelled', '/admin/buchungen/bkg_1'),
       ok('Invoiced', '/admin/rechnungen'),
+      open(
+        'Bill the overrun',
+        'The office can see that a job ran an hour and a half long and can approve it. Turning that into money is still a manual invoice line — nothing carries `varianceMinutes` into the invoice builder, and what the surcharge *is* has never been settled: the hourly rate, a different rate for unplanned time, or nothing at all when the estimate was ours. See §5.3a on /open-questions',
+      ),
     ],
   },
   {
