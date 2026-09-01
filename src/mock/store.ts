@@ -42,6 +42,7 @@ import type {
   ServiceStatus,
   Settings,
   SlotHold,
+  WorkEntry,
   ISODate,
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
@@ -281,7 +282,17 @@ Marco Brunner`;
    every month. And the coupon form's third field would render for a reader who
    had opened the app before with nothing in it, on the one screen this wave
    added it to. */
-const SCHEMA_VERSION = 29;
+/* 30: `Booking` gained `work` — the hours somebody actually spent, per person
+   — and `assigneeId` became something a screen can write. Neither is the
+   dangerous kind: `work` is optional and reads as "nothing recorded yet" when
+   a blob from 29 has none, which is the truth about a job nobody has checked
+   out of. What a stale blob really loses is the *seed*: the demo bookings now
+   carry hours and two of them are handed to the contractors rather than all
+   nine to Marco, so /admin/buchungen would open with an empty «Ausführung»
+   column and the approval banner would have no reported time to approve — a
+   reader would see the screens the wave added and none of the data that makes
+   them mean anything. */
+const SCHEMA_VERSION = 30;
 
 /**
  * §10 — the default payment term.
@@ -379,6 +390,20 @@ function releaseBooking(bookings: Booking[], invoice: Invoice): Booking[] {
       ? b
       : { ...b, status: 'completed' as const },
   );
+}
+
+/**
+ * One entry per person, replaced rather than stacked.
+ *
+ * Recording hours twice is a correction — somebody typed 5 and meant 5.5 — not
+ * a second afternoon. Without this, checking out, spotting the typo and
+ * checking the number again would bill the customer for ten and a half hours,
+ * and the total on the approval screen would be the sum of a mistake and its
+ * fix.
+ */
+function upsertWork(existing: WorkEntry[] | undefined, entry: WorkEntry): WorkEntry[] {
+  const rest = (existing ?? []).filter((w) => w.memberId !== entry.memberId);
+  return [...rest, entry];
 }
 
 export type DemoRole = 'visitor' | 'customer' | 'owner' | 'contractor';
@@ -803,8 +828,62 @@ interface StoreState {
       kind: 'in' | 'out';
       photos: string[];
       note: string;
-      /** §5.3 — reported for the office to price. Never charged here. */
-      extraHours?: number | null;
+      /**
+       * Hours actually worked, reported at check-out. §5.3 — reported for the
+       * office to price, never charged here.
+       *
+       * Replaces `extraHours`. Asking for the *difference* put the arithmetic
+       * on the person standing in a stairwell, and left the one number the
+       * office is asked to approve — how long the job took — nowhere on the
+       * record at all. Extra time is derived from this and the estimate now
+       * (`varianceMinutes`), so the two can no longer disagree.
+       */
+      hours?: number | null;
+      /** Whose hours. Defaults to whoever the job is assigned to. */
+      memberId?: ID;
+    },
+    now: Date,
+  ) => void;
+
+  /* ---- who does the job (screens 57b, 63) ----
+     `assigneeId` was written once, when the booking was created, and no screen
+     could ever change it — see /open-questions §2a for why the panel was taken
+     out and the note that said it would be needed back. The field app filters
+     a contractor's entire day on this field. */
+  /**
+   * Hand a job to somebody, move it, or take the name off it.
+   *
+   * `null` un-assigns rather than being an error: a job whose contractor
+   * called in sick is unassigned until somebody picks it up, and forcing the
+   * office to park it on the wrong name meanwhile is how the field app starts
+   * lying about whose day it is.
+   *
+   * The hours already recorded stay where they are. They carry their own
+   * `memberId` precisely so that reassigning a job cannot move an afternoon
+   * somebody worked onto a new name.
+   */
+  assignBooking: (input: { id: ID; memberId: ID | null }, now: Date) => void;
+
+  /**
+   * Record — or correct — the hours one person spent on a job.
+   *
+   * Upserts on `memberId`: recording twice is a correction, not a second
+   * afternoon. `source` keeps the two claims apart, because "the cleaner
+   * reported five hours" and "the office decided it was five hours" are
+   * different sentences and the approval screen has to be able to say which
+   * one it is looking at.
+   *
+   * Only an office correction reaches the change log. The field report is the
+   * record itself and is already in the timeline; logging every check-out
+   * there would bury the edits the log exists to surface.
+   */
+  recordWorkHours: (
+    input: {
+      bookingId: ID;
+      memberId: ID;
+      minutes: number;
+      source: 'field' | 'office';
+      note?: string;
     },
     now: Date,
   ) => void;
@@ -974,6 +1053,16 @@ interface StoreState {
   setScenario: (scenario: ScenarioName) => void;
   setDateOverride: (iso: string | null) => void;
   setCurrentCustomer: (id: string) => void;
+  /**
+   * Which team member the field app is being read as.
+   *
+   * `repoint` picks the first contractor in the data and there was no way to
+   * pick another. That held while every job was Marco's; it does not now that
+   * the office hands jobs to two different people — a reviewer who assigns a
+   * job to Yusuf and switches to «Mitarbeitende:r» would land in Marta's day
+   * and find the job they had just created missing.
+   */
+  setCurrentMember: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
 
   /* ---- message templates (screen 79) ----
@@ -2865,7 +2954,7 @@ export const useStore = create<StoreState>()(
        * the property, which is what makes them findable from the account side.
        * They stay internal until someone consents to publishing (§20.6).
        */
-      recordCheck: (bookingId, { kind, photos, note, extraHours }, now) =>
+      recordCheck: (bookingId, { kind, photos, note, hours, memberId }, now) =>
         set((s) => {
           const booking = s.data.bookings.find((b) => b.id === bookingId);
           if (!booking) return s;
@@ -2883,12 +2972,27 @@ export const useStore = create<StoreState>()(
             takenAt: now.toISOString(),
           }));
 
-          const parts = [
-            kind === 'in' ? 'Eingecheckt' : 'Ausgecheckt',
-            photos.length > 0 ? `${photos.length} Fotos` : null,
-            extraHours ? `+${extraHours} h reported` : null,
-            note.trim() || null,
-          ].filter(Boolean);
+          /*
+           * The hours land as data, not as a phrase in the label.
+           *
+           * Whose hours: the person the office handed the job to. It is passed
+           * in only so a caller can be explicit — otherwise the assignment is
+           * the answer, and a second field asking the contractor to name
+           * themselves would be one more place for the two to drift apart.
+           */
+          const worker = memberId ?? booking.assigneeId;
+          const minutes = hours != null && hours > 0 ? Math.round(hours * 60) : null;
+          const work =
+            kind === 'out' && minutes != null && worker
+              ? upsertWork(booking.work, {
+                  id: `wrk_${stamp}_${worker}`,
+                  memberId: worker,
+                  minutes,
+                  source: 'field' as const,
+                  recordedAt: now.toISOString(),
+                  note: note.trim() || undefined,
+                })
+              : booking.work;
 
           return {
             data: {
@@ -2905,6 +3009,7 @@ export const useStore = create<StoreState>()(
                             checkOutAt: now.toISOString(),
                             status: 'awaitingApproval' as const,
                           }),
+                      work,
                       photoIds: [...b.photoIds, ...records.map((p) => p.id)],
                       /* Without this the panel's booking detail showed nothing
                          at all for either end of the job. */
@@ -2913,7 +3018,18 @@ export const useStore = create<StoreState>()(
                         {
                           at: now.toISOString(),
                           kind: kind === 'in' ? ('checkIn' as const) : ('checkOut' as const),
-                          label: parts.join(' · '),
+                          /* English, and it always should have been — see
+                             EVENT_STATUS_EVENT above. This line read
+                             «Eingecheckt · 3 Fotos» among nine English
+                             entries, in a record no dictionary ever sees. */
+                          label: [
+                            kind === 'in' ? 'Checked in' : 'Checked out',
+                            photos.length > 0 ? `${photos.length} photos` : null,
+                            minutes != null ? `${Math.round((minutes / 60) * 10) / 10} h worked` : null,
+                            note.trim() || null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · '),
                         },
                       ],
                     },
@@ -2921,6 +3037,104 @@ export const useStore = create<StoreState>()(
             },
           };
         }),
+
+      assignBooking: ({ id, memberId }, now) => {
+        const booking = get().data.bookings.find((b) => b.id === id);
+        /* Re-assigning to the name already on the record is not a change, and
+           a timeline line saying so is one more thing to read past. */
+        if (!booking || booking.assigneeId === (memberId ?? undefined)) return;
+
+        const member = get().data.team.find((m) => m.id === memberId);
+        const who = member ? `${member.firstName} ${member.lastName}` : null;
+        /* English, written once — see EVENT_STATUS_EVENT. It names both ends
+           of the move, because "assigned to Yusuf" on its own does not say
+           whether a job was picked up or taken off somebody. */
+        const previous = get().data.team.find((m) => m.id === booking.assigneeId);
+        const label = who
+          ? previous
+            ? `Reassigned from ${previous.firstName} ${previous.lastName} to ${who}`
+            : `Assigned to ${who}`
+          : 'Assignment removed';
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            bookings: s.data.bookings.map((b) =>
+              b.id !== id
+                ? b
+                : {
+                    ...b,
+                    assigneeId: memberId ?? undefined,
+                    history: [
+                      ...b.history,
+                      { at: now.toISOString(), kind: 'assigned', label },
+                    ],
+                  },
+            ),
+          },
+        }));
+
+        get().logChange({
+          entity: 'booking',
+          entityId: id,
+          /* Only the first letter. `toLowerCase()` on the whole line turned
+             «Reassigned from Marta Nowak to Yusuf Demir» into a sentence with
+             four lower-case surnames in it. */
+          summary: `${booking.reference} — ${label[0]!.toLowerCase()}${label.slice(1)}`,
+        });
+      },
+
+      recordWorkHours: ({ bookingId, memberId, minutes, source, note }, now) => {
+        const booking = get().data.bookings.find((b) => b.id === bookingId);
+        /* Zero is a refusal, not an erasure. "Nobody has recorded anything"
+           and "somebody worked no time at all" are different facts, and only
+           the first one has a screen that means it. */
+        if (!booking || minutes <= 0) return;
+
+        const member = get().data.team.find((m) => m.id === memberId);
+        const who = member ? `${member.firstName} ${member.lastName}` : memberId;
+        const hours = Math.round((minutes / 60) * 10) / 10;
+        /* Which of the two §5.3 claims this is. "Reported" and "set by the
+           office" are not the same sentence, and the timeline is the only
+           place the difference survives. */
+        const label =
+          source === 'office'
+            ? `Hours set by the office: ${hours} h — ${who}`
+            : `Hours reported: ${hours} h — ${who}`;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            bookings: s.data.bookings.map((b) =>
+              b.id !== bookingId
+                ? b
+                : {
+                    ...b,
+                    work: upsertWork(b.work, {
+                      id: `wrk_${now.getTime().toString(36)}_${memberId}`,
+                      memberId,
+                      minutes,
+                      source,
+                      recordedAt: now.toISOString(),
+                      note: note?.trim() || undefined,
+                    }),
+                    history: [
+                      ...b.history,
+                      { at: now.toISOString(), kind: 'hours', label },
+                    ],
+                  },
+            ),
+          },
+        }));
+
+        if (source === 'office') {
+          get().logChange({
+            entity: 'booking',
+            entityId: bookingId,
+            summary: `${booking.reference} — ${label[0]!.toLowerCase()}${label.slice(1)}`,
+          });
+        }
+      },
 
       addPaymentMethod: ({ customerId, kind, label, expiresAt }, now) =>
         set((s) => {
@@ -3826,6 +4040,9 @@ export const useStore = create<StoreState>()(
 
       setCurrentCustomer: (currentCustomerId) =>
         set((s) => ({ demo: { ...s.demo, currentCustomerId } })),
+
+      setCurrentMember: (currentMemberId) =>
+        set((s) => ({ demo: { ...s.demo, currentMemberId } })),
 
       /*
        * These three are the ones screen 83 exists to report on — prices,

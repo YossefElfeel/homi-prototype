@@ -66,9 +66,25 @@ const ENTRIES: Entry[] = [
     ref: '§2a',
     question: 'Does a booking need to be assignable after it is created?',
     decision:
-      'Not today. Homivaro is one person, so every job is Marco’s: the booking screen carried an «Assigned to» line printing the same name on every record, and a «Zuweisen» panel whose select had one option in it. Both are gone, and the calendar’s row menu no longer offers a step that leads nowhere. `assigneeId` stays on the record and is still set when a job is created, because the hiring track exists to produce a second pair of hands — the day an application is accepted this screen needs the panel back, and this entry is the note that says so. Confirmed by the client: «no assigned to because it’s solo (one person)».',
-    screens: '63, 65',
-    state: 'decided',
+      'REVERSED, on the condition this entry named. The original answer was no: Homivaro was one person, every job was Marco’s, and the booking screen carried an «Assigned to» line printing the same name on every record beside a «Zuweisen» panel whose select had one option in it. Both were removed, and the note ended «the day an application is accepted this screen needs the panel back». Two applications have been accepted — Marta and Yusuf are on the roster and in the seed — and the client has now asked for assignment outright. So it is back, and wider than it was: a panel on the booking, a column and a filter on the list, the name on the calendar line, and warnings rather than refusals when the person is not cleared for the service, works another area, or is already at a different address that hour. The office decides; the screen says what it noticed. What has *not* come back is the line printing one name on every record — the section shows the assignment because the assignment now varies.',
+    screens: '57b, 58, 63, H7',
+    state: 'overridden',
+  },
+  {
+    ref: '§22a',
+    question: 'How much of working time does the prototype hold?',
+    decision:
+      'The hours on the job, and nothing that turns them into money. §22 puts payroll, attendance and absence out of scope and that still stands — there are no rates, no periods, no approval chain and no export. What §5.3 needs, and what was missing, is the hours themselves: check-out reported the *extra* time as a phrase inside a timeline label, so the one number the office is asked to approve was neither stored nor addable. It is a field now, per person, on the booking; the team screen totals it. Three things a real time module would still have to settle, and none of them are design questions: whether a contractor may record time against a job nobody assigned to them, whether the office correcting an entry needs the contractor to see it, and how long the record is kept.',
+    screens: '63, 87, H7',
+    state: 'open',
+  },
+  {
+    ref: '§5.3a',
+    question: 'What does an hour over the estimate cost the customer?',
+    decision:
+      'Unanswered, and it is now the only gap left in the job flow. The overrun is visible on both sides — the contractor reports the hours, the office sees «1.5 Std. über der Planung» in the banner it approves from — and turning that into a line on an invoice is still typing. Three candidates and none of them obviously right: the hourly rate, a separate rate for unplanned time, or nothing at all when the estimate was ours to get right. Until the business picks one, approving an overrun means agreeing that it happened, not agreeing to charge for it — which is what the screen says.',
+    screens: '63, 71a, 87',
+    state: 'open',
   },
   {
     ref: '§9.2a',

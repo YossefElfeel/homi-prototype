@@ -16,6 +16,7 @@ import { dayBlockReason, type DayBlockReason } from '@/mock/engines/availability
 import type { CalendarEventKind, ServiceSlug } from '@/mock/schema';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { isOffered } from '@/lib/service-catalogue';
+import { assignableTeam, memberName } from '@/lib/workforce';
 import { cn } from '@/lib/cn';
 
 type Mode = 'job' | 'event';
@@ -53,6 +54,7 @@ export default function NewAppointmentPage() {
   const bookings = useStore((s) => s.data.bookings);
   const closures = useStore((s) => s.data.closures);
   const team = useStore((s) => s.data.team);
+  const roster = assignableTeam(team);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const createManualBooking = useStore((s) => s.createManualBooking);
@@ -393,7 +395,7 @@ export default function NewAppointmentPage() {
             </div>
           )}
 
-          {team.length > 0 && (
+          {roster.length > 0 && (
             <Field label={t('assigneeLabel')} optional>
               {(props) => (
                 <Select
@@ -402,9 +404,13 @@ export default function NewAppointmentPage() {
                   onChange={(e) => setAssigneeId(e.target.value)}
                 >
                   <option value="">—</option>
-                  {team.map((m) => (
+                  {/* Only people who can actually take it. The team screen
+                      labels the switch «kann Einsätze zugewiesen bekommen»
+                      and this list ignored it, so somebody parked over the
+                      winter stayed in the dropdown with nothing saying so. */}
+                  {roster.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.firstName} {m.lastName}
+                      {memberName(m)}
                     </option>
                   ))}
                 </Select>

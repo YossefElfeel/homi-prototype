@@ -217,5 +217,12 @@ export const adminHiringEn: typeof adminHiringDe = {
     ownerNote: 'The owner sees everything. These permissions cannot be changed.',
     jobsTitle: 'Upcoming jobs',
     jobsEmpty: 'No jobs assigned at the moment.',
+    hoursTitle: 'Hours recorded',
+    hoursTotal: '{hours} hrs',
+    hoursJobs: 'Recorded on {n, plural, one {# job} other {# jobs}}.',
+    hoursRow: '{hours} hrs',
+    hoursAllJobs: 'All jobs for this person',
+    hoursEmpty:
+      'Nothing recorded yet. The time is entered at check-out — as soon as one of this person’s jobs is finished it appears here.',
   },
 };

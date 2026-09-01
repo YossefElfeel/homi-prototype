@@ -13,6 +13,7 @@ import {
   Plus,
   RefreshCw,
   Sun,
+  UserCheck,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -27,6 +28,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { addDays, addMinutes, bookingsOnDay, startOfDay } from '@/mock/engines/availability';
 import { elapsed, hoursSince } from '@/lib/elapsed';
+import { memberById, memberName } from '@/lib/workforce';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
@@ -313,6 +315,21 @@ export default function AdminDashboard() {
                                 {ACCESS_SHORT[property.access.method]}
                               </span>
                             )}
+                            {/* Who is going. The first screen the owner opens
+                                answers "what is on today" and could not say
+                                whose today it was — and the one that has
+                                nobody on it is the row this screen exists to
+                                catch before the morning does. */}
+                            <span
+                              className={cn(
+                                'flex items-center gap-1',
+                                !job.assigneeId && 'text-status-warning-fg',
+                              )}
+                            >
+                              <UserCheck className="size-3" aria-hidden />
+                              {memberName(memberById(team, job.assigneeId)) ||
+                                t('unassigned')}
+                            </span>
                           </span>
                         </span>
                         <StatusBadge entity="booking" state={job.status} size="sm" />

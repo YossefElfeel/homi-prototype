@@ -517,6 +517,41 @@ export interface BookingReschedule {
   at: ISODate;
 }
 
+/**
+ * What one person actually spent on one job.
+ *
+ * §5.3 has always split the job in two — the person on site reports the time,
+ * the office prices it — and only the reporting half existed. It reported into
+ * a *sentence*: check-out folded the hours into the timeline label as
+ * «Ausgecheckt · +1 h reported», which no screen can add up, filter on or
+ * correct. So the one number the office is asked to approve was the one number
+ * the record did not hold.
+ *
+ * A list on the booking rather than a field, and every entry naming its own
+ * member, for two reasons that are the same reason: a job is not permanently
+ * one person's. Reassigning it must not move somebody else's afternoon onto a
+ * new name, and the day two people clean a house together the model already
+ * says so.
+ */
+export interface WorkEntry {
+  id: ID;
+  /** Whose hours these are — never read back off `Booking.assigneeId`. */
+  memberId: ID;
+  /**
+   * Minutes, like `Booking.duration`.
+   *
+   * The two are subtracted on every screen that shows this, and a record
+   * holding one of them in hours and the other in minutes is a bug waiting for
+   * the first half-hour anybody works.
+   */
+  minutes: number;
+  /** The person on the job, or the office correcting them. Both are legitimate
+      and they are not the same claim — see §5.3 on /open-questions. */
+  source: 'field' | 'office';
+  recordedAt: ISODate;
+  note?: string;
+}
+
 export interface Booking {
   id: ID;
   reference: string;
@@ -536,6 +571,12 @@ export interface Booking {
   checkOutAt?: ISODate;
   reschedule?: BookingReschedule;
   photoIds: ID[];
+  /**
+   * Hours actually worked, per person. Optional because "nobody has recorded
+   * anything yet" and "somebody recorded zero" are different facts, and a
+   * scheduled job has to be able to say the first one.
+   */
+  work?: WorkEntry[];
   history: TimelineEvent[];
 }
 

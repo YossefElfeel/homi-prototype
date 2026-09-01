@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useFormatter } from '@/i18n/format';
 import { CalendarDays, Repeat } from 'lucide-react';
 
@@ -17,10 +18,17 @@ import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { CustomerLink } from '@/components/ui/record-link';
+import { CustomerLink, RecordLink } from '@/components/ui/record-link';
 import { Toolbar } from '@/components/ui/toolbar';
 import { bookingAmount, bookingPaymentState, customerName } from '@/lib/offer-facts';
 import { ActionIcon } from '@/lib/action-icons';
+import {
+  hasWorkRecord,
+  hoursOf,
+  memberById,
+  memberName,
+  workedMinutes,
+} from '@/lib/workforce';
 import { statesOf } from '@/lib/status-registry';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Booking } from '@/mock/schema';
@@ -34,6 +42,9 @@ import { cn } from '@/lib/cn';
  * it under one of the other three would be wrong whichever it picked.
  */
 const PAYMENT_STATES = ['paid', 'pending', 'unpaid', 'covered'] as const;
+
+/** Not a member id, deliberately — see the filter's own note. */
+const UNASSIGNED = 'none';
 
 /** A finished job is history — it can be read, not moved. Same list the
     booking detail and the calendar's row menu close their actions on. */
@@ -68,6 +79,7 @@ export default function BookingsPage() {
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
+  const search = useSearchParams();
   const hydrated = useHydrated();
 
   const bookings = useStore((s) => s.data.bookings);
@@ -79,10 +91,19 @@ export default function BookingsPage() {
   const plans = useStore((s) => s.plans);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
+  const team = useStore((s) => s.data.team);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [paid, setPaid] = useState('');
+  /* `''` is every job, `UNASSIGNED` is the ones nobody is going to do. The
+     second is the one this filter is opened for on a Friday — it has no team
+     member to select, so it cannot be a member id.
+
+     Seeded from the URL so «alle Einsätze von …» on a team member's screen
+     lands on the list already filtered, rather than on all of them with the
+     name to find again. */
+  const [assignee, setAssignee] = useState(() => search.get('assignee') ?? '');
 
   const nameOf = (b: Booking) =>
     customerName(customers.find((c) => c.id === b.customerId));
@@ -107,6 +128,16 @@ export default function BookingsPage() {
          us" — the question a Friday afternoon is made of — meant reading the
          invoice column down the page and holding the count in your head. */
       .filter((b) => !paid || paymentOf(b) === paid)
+      /* "What is on Marta's week" and "what has nobody yet" are the two
+         questions this list could not answer at all — the first meant opening
+         every row, the second was invisible. */
+      .filter((b) =>
+        !assignee
+          ? true
+          : assignee === UNASSIGNED
+            ? !b.assigneeId
+            : b.assigneeId === assignee,
+      )
       .filter((b) => {
         if (!q) return true;
         const customer = customers.find((c) => c.id === b.customerId);
@@ -117,7 +148,7 @@ export default function BookingsPage() {
       })
       .sort((a, b) => b.start.localeCompare(a.start));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings, customers, invoices, payments, query, status, paid]);
+  }, [bookings, customers, invoices, payments, query, status, paid, assignee]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -185,6 +216,37 @@ export default function BookingsPage() {
           </span>
         </span>
       ),
+    },
+    {
+      /*
+       * Who is doing it, and what it cost in time.
+       *
+       * Both were unreadable from any list. The name only existed on the
+       * record and no screen could change it; the hours were a phrase inside
+       * a timeline entry. Together in one column because they are one
+       * question — «wer war da, und wie lange» — and because the second line
+       * is empty until somebody has actually been.
+       */
+      key: 'assignee',
+      header: t('colAssignee'),
+      sortBy: (b) => memberName(memberById(team, b.assigneeId)),
+      cell: (b) => {
+        const member = memberById(team, b.assigneeId);
+        return (
+          <span className="flex flex-col gap-0.5">
+            {member ? (
+              <RecordLink href={`/admin/team/${member.id}`}>{memberName(member)}</RecordLink>
+            ) : (
+              <span className="text-ink-tertiary">{t('unassigned')}</span>
+            )}
+            {hasWorkRecord(b) && (
+              <span data-numeric className="text-xs text-ink-tertiary">
+                {t('workedHours', { hours: hoursOf(workedMinutes(b)) })}
+              </span>
+            )}
+          </span>
+        );
+      },
     },
     {
       /*
@@ -286,7 +348,7 @@ export default function BookingsPage() {
           clearLabel: appT('clearSearch'),
         }}
         count={
-          query || status || paid
+          query || status || paid || assignee
             ? appT('results', { shown: visible.length, total: bookings.length })
             : appT('resultsAll', { total: bookings.length })
         }
@@ -321,6 +383,31 @@ export default function BookingsPage() {
                 ))}
               </Select>
             </label>
+
+            {/* Only where there is somebody to filter by. On day one the team
+                is one person and the control would be a dropdown with the
+                owner in it — see /open-questions §2a for the version of this
+                screen that shipped exactly that and had it removed. */}
+            {team.length > 1 && (
+              <label className="min-w-40">
+                <span className="sr-only">{t('filterAssignee')}</span>
+                <Select
+                  dense
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                >
+                  <option value="">
+                    {t('filterAssignee')}: {t('filterAll')}
+                  </option>
+                  <option value={UNASSIGNED}>{t('unassigned')}</option>
+                  {team.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {memberName(m)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            )}
           </>
         }
       />
@@ -356,6 +443,11 @@ export default function BookingsPage() {
                   onClick={() => {
                     setQuery('');
                     setStatus('');
+                    /* Both were left set, so «Filter zurücksetzen» could
+                       return an empty table — the one thing the button exists
+                       to make impossible. */
+                    setPaid('');
+                    setAssignee('');
                   }}
                 >
                   {t('filterReset')}
@@ -394,6 +486,18 @@ export default function BookingsPage() {
                   label={t('rowReschedule')}
                 >
                   <ActionIcon.reschedule aria-hidden />
+                </RowAction>
+              )}
+              {/* Same deep link, same reason: one implementation of assigning,
+                  reached with the right section already open. Hidden once the
+                  job is settled — a control that refuses is worse than one
+                  that is not there. */}
+              {!SETTLED.includes(b.status) && team.length > 1 && (
+                <RowAction
+                  href={`/admin/buchungen/${b.id}?action=assign`}
+                  label={t('rowAssign')}
+                >
+                  <ActionIcon.assign aria-hidden />
                 </RowAction>
               )}
               {offer && (

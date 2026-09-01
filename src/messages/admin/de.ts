@@ -89,6 +89,9 @@ export const adminDe = {
     tomorrowTitle: 'Morgen',
     dayEmptyTitle: 'Nichts geplant',
     dayEmptyBody: 'Für diesen Tag ist kein Einsatz eingetragen.',
+    /* Hervorgehoben, nicht nur ergänzt: ein Einsatz von heute ohne Namen ist
+       genau die Zeile, die dieser Bildschirm vor dem Morgen finden soll. */
+    unassigned: 'Nicht zugewiesen',
     renewalsTitle: 'Abos, die bald auslaufen',
     addRequest: 'Anfrage erfassen',
     renewalsEmptyTitle: 'Keine Abo-Termine',
@@ -745,6 +748,14 @@ export const adminDe = {
     paid_covered: 'Im Abo',
     colInvoice: 'Rechnung',
     colStatus: 'Status',
+    /* Wer den Einsatz macht, stand auf keiner Liste — und die gearbeitete Zeit
+       steckte als Satzteil in einem Verlaufseintrag. Beide sind dieselbe
+       Frage: «wer war da, und wie lange». */
+    colAssignee: 'Ausführung',
+    unassigned: 'Nicht zugewiesen',
+    workedHours: '{hours} Std. gearbeitet',
+    filterAssignee: 'Ausführung',
+    rowAssign: 'Zuweisen',
     sourceSubscription: 'Abo',
     sourceManual: 'Manuell',
     hours: '{hours} Std.',
@@ -973,6 +984,45 @@ export const adminDe = {
     amountBasis_plan: 'Im Abo enthalten — die monatliche Belastung deckt diesen Einsatz.',
     amountBasis_estimate: 'Schätzung nach Stunden. Noch nichts verrechnet.',
     hours: '{hours} Std.',
+    /* §2a kam zurück: die Zuweisung ist wieder ein Feld, das ein Bildschirm
+       schreiben kann — mit Stunden, Warnungen und einer Aktion daneben. */
+    workTitle: 'Ausführung',
+    assigneeLabel: 'Zugewiesen an',
+    unassigned: 'Nicht zugewiesen',
+    memberInactive: 'inaktiv',
+    assign: 'Zuweisen',
+    reassign: 'Zuweisung ändern',
+    assignSave: 'Zuweisung speichern',
+    assignDone: 'Einsatz zugewiesen.',
+    unassignDone: 'Zuweisung entfernt.',
+    assignClosed: 'Dieser Einsatz ist {state} — die Zuweisung lässt sich nicht mehr ändern.',
+    plannedLabel: 'Geplant',
+    workedLabel: 'Gearbeitet',
+    /* Mit Namen, weil ein Einsatz weitergegeben werden kann: die Stunden
+       bleiben bei der Person, die sie gearbeitet hat. */
+    workedBy: 'Gearbeitet — {name}',
+    noHours: 'Noch nicht erfasst',
+    varianceLabel: 'Differenz',
+    varianceOver: '{hours} Std. über der Planung',
+    varianceUnder: '{hours} Std. unter der Planung',
+    /* Nie eine Sperre — das Büro weiss Dinge, die im Datensatz nicht stehen.
+       Aber schweigen darf der Bildschirm nicht: ein Einsatz bei jemandem, der
+       zur selben Stunde an einer anderen Adresse steht, ist ein Auto, das
+       nicht kommt. */
+    warn_clash: '{name} hat zur gleichen Zeit bereits einen anderen Einsatz.',
+    warn_skill: '{name} ist für diese Leistung nicht freigegeben.',
+    warn_region: 'Diese Adresse liegt ausserhalb des Einsatzgebiets von {name}.',
+    warn_inactive: '{name} ist als inaktiv markiert.',
+    hoursCorrect: 'Stunden korrigieren',
+    hoursAdd: 'Stunden erfassen',
+    hoursFieldLabel: 'Gearbeitete Stunden — {name}',
+    hoursFieldHint:
+      'Die Korrektur des Büros. Im Verlauf steht danach, dass sie vom Büro kommt und nicht von der ausführenden Person.',
+    hoursInvalid: 'Zwischen 0.5 und {max} Stunden.',
+    hoursSave: 'Stunden speichern',
+    hoursSaved: 'Stunden gespeichert.',
+    approveHours: 'Gemeldet: {worked} Std. — geplant waren {planned} Std.',
+    approveNoHours: 'Es wurde keine Zeit gemeldet.',
     customerTitle: 'Kunde',
     propertyTitle: 'Objekt',
     accessTitle: 'Zutritt',
@@ -1025,8 +1075,10 @@ export const adminDe = {
        war ein Endzustand ohne Ausgang, und «abgeschlossen» war von keinem
        Bildschirm aus erreichbar. */
     approveTitle: 'Wartet auf Freigabe',
+    /* Stand vorher «prüfen Sie den Verlauf» — schickte also zum Suchen nach
+       einer Zahl, die seit dieser Welle direkt darunter steht. */
     approveBody:
-      'Der Einsatz ist ausgecheckt. Prüfen Sie den Verlauf — gemeldeter Mehraufwand steht dort mit Zeitstempel — und geben Sie ihn frei. Danach ist er verrechenbar.',
+      'Der Einsatz ist ausgecheckt. Die gemeldete Zeit steht unten, die Differenz zur Planung daneben. Nach der Freigabe ist der Einsatz verrechenbar — was ein Mehraufwand kostet, entscheiden Sie auf der Rechnung.',
     approveAction: 'Einsatz freigeben',
     approveEvent: 'Freigegeben',
     approveDone: 'Einsatz freigegeben.',

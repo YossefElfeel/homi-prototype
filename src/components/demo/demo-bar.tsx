@@ -74,10 +74,14 @@ export function DemoBar({
   const setRole = useStore((s) => s.setRole);
   const setScenario = useStore((s) => s.setScenario);
   const setCurrentCustomer = useStore((s) => s.setCurrentCustomer);
+  const setCurrentMember = useStore((s) => s.setCurrentMember);
   const customers = useStore((s) => s.data.customers);
+  const team = useStore((s) => s.data.team);
   const setDateOverride = useStore((s) => s.setDateOverride);
   const updateSettings = useStore((s) => s.updateSettings);
   const reset = useStore((s) => s.reset);
+
+  const contractors = team.filter((m) => m.role === 'contractor');
 
   function onTheme(next: Theme) {
     setTheme(next);
@@ -253,6 +257,32 @@ export function DemoBar({
             ))}
           </select>
         </Field>
+
+        {/*
+          Which contractor the field app is being read as.
+          `repoint` picks the first one in the data and there was no way to
+          pick another — fine while every job was Marco's, wrong the moment the
+          office can hand one to Yusuf: you would assign it, switch role, and
+          land in Marta's day with the job you just created nowhere on it.
+          Only when there is a choice to make, which is the mistake §2a records
+          on the screen this replaces.
+        */}
+        {hydrated && demo.role === 'contractor' && contractors.length > 1 && (
+          <Field label={t('member')}>
+            <select
+              aria-label={t('member')}
+              value={demo.currentMemberId}
+              onChange={(e) => setCurrentMember(e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              {contractors.map((member) => (
+                <option key={member.id} value={member.id} className="bg-[#111318]">
+                  {member.firstName} {member.lastName}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         <Field label={t('today')}>
           <div className="flex gap-2">

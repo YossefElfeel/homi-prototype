@@ -360,6 +360,7 @@ export const de = {
     locale: 'Sprache',
     role: 'Rolle',
     customer: 'Kundenkonto',
+    member: 'Mitarbeitendenkonto',
     scenario: 'Szenario',
     today: 'Heute ist',
     todayReset: 'Heute',

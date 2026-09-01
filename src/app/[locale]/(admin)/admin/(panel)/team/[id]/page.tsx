@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/field';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceSlug } from '@/mock/schema';
+import { hoursOf, memberMinutes, workEntryFor } from '@/lib/workforce';
 
 /**
  * Screen H7 — one team member.
@@ -49,6 +50,21 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
     .filter((b) => b.assigneeId === member.id && new Date(b.start) >= now)
     .sort((a, b) => (a.start < b.start ? -1 : 1))
     .slice(0, 5);
+
+  /*
+   * What this person has actually worked — and deliberately not a payroll run.
+   *
+   * §22 puts wages, attendance and absence out of scope, and that stands. But
+   * the hours are recorded against the job now, and a roster screen that could
+   * not say how many of them there were would send the owner back to counting
+   * bookings by eye — which is the thing every list in this panel exists to
+   * stop. Totals and the last few jobs, no rates and no period: see §22a on
+   * /open-questions for what a real payroll view would still have to settle.
+   */
+  const worked = bookings
+    .filter((b) => (b.work ?? []).some((w) => w.memberId === member.id))
+    .sort((a, b) => (a.start < b.start ? 1 : -1));
+  const totalMinutes = memberMinutes(bookings, member.id);
 
   return (
     <div>
@@ -203,8 +219,12 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
               const property = properties.find((p) => p.id === booking.propertyId);
               return (
                 <li key={booking.id} className="border-b border-line-subtle">
+                  {/* Was the calendar, filtered to the day. That answered
+                      "what else is on then" and never "what is this job" —
+                      and the booking it means has had a screen of its own
+                      since /admin/buchungen was built. */}
                   <Link
-                    href={`/admin/kalender?tag=${booking.start.slice(0, 10)}`}
+                    href={`/admin/buchungen/${booking.id}`}
                     className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
                   >
                     <span data-numeric className="text-sm">
@@ -225,6 +245,63 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
               );
             })}
           </ul>
+        )}
+      </section>
+
+      {/*
+        The hours side of the same roster.
+        Not payroll — see the note on `worked` above and §22a on
+        /open-questions. What it answers is "how much has this person actually
+        done", which until now could only be counted by opening every job.
+      */}
+      <section className="mt-10 border-t border-line-subtle pt-8">
+        <h2 className="display-type text-xl">{t('hoursTitle')}</h2>
+        {worked.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-tertiary">{t('hoursEmpty')}</p>
+        ) : (
+          <>
+            <p data-numeric className="mt-3 text-2xl">
+              {t('hoursTotal', { hours: hoursOf(totalMinutes) })}
+            </p>
+            <p className="mt-1 text-sm text-ink-tertiary">
+              {t('hoursJobs', { n: worked.length })}
+            </p>
+            <ul className="mt-5 border-t border-line-subtle">
+              {worked.slice(0, 5).map((booking) => {
+                const property = properties.find((p) => p.id === booking.propertyId);
+                const entry = workEntryFor(booking, member.id);
+                return (
+                  <li key={booking.id} className="border-b border-line-subtle">
+                    <Link
+                      href={`/admin/buchungen/${booking.id}`}
+                      className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
+                    >
+                      <span data-numeric className="text-sm">
+                        {format.dateTime(new Date(booking.start), {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit',
+                        })}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-ink-secondary">
+                        {property ? `${property.street}, ${property.city}` : '—'}
+                      </span>
+                      <span data-numeric className="text-sm font-medium">
+                        {t('hoursRow', { hours: hoursOf(entry?.minutes ?? 0) })}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {worked.length > 5 && (
+              <Button asChild variant="link" className="mt-3">
+                <Link href={`/admin/buchungen?assignee=${member.id}`}>
+                  {t('hoursAllJobs')}
+                </Link>
+              </Button>
+            )}
+          </>
         )}
       </section>
     </div>

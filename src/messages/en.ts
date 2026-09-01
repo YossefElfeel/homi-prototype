@@ -340,6 +340,7 @@ export const en: Messages = {
     locale: 'Language',
     role: 'Role',
     customer: 'Customer account',
+    member: 'Team member account',
     scenario: 'Scenario',
     today: 'Today is',
     todayReset: 'Today',

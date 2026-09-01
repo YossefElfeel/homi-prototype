@@ -223,5 +223,15 @@ export const adminHiringDe = {
     ownerNote: 'Die Geschäftsleitung sieht alles. Diese Rechte lassen sich nicht ändern.',
     jobsTitle: 'Kommende Einsätze',
     jobsEmpty: 'Zurzeit keine Einsätze zugewiesen.',
+    /* Kein Lohnbüro — §22 lässt Löhne, Absenzen und Zeiterfassung im engeren
+       Sinn draussen. Was hier steht, ist die Summe dessen, was am Einsatz
+       erfasst wurde; siehe §22a unter /open-questions. */
+    hoursTitle: 'Erfasste Stunden',
+    hoursTotal: '{hours} Std.',
+    hoursJobs: 'Auf {n, plural, one {# Einsatz} other {# Einsätzen}} erfasst.',
+    hoursRow: '{hours} Std.',
+    hoursAllJobs: 'Alle Einsätze dieser Person',
+    hoursEmpty:
+      'Noch nichts erfasst. Die Zeit entsteht beim Auschecken — sobald ein Einsatz dieser Person abgeschlossen ist, steht sie hier.',
   },
 };
