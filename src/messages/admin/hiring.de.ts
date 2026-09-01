@@ -192,48 +192,4 @@ export const adminHiringDe = {
     saved: 'Gespeichert',
     preview: 'Auf der Jobseite ansehen',
   },
-
-  team: {
-    title: 'Team',
-    lead: 'Wer für Homivaro im Einsatz ist — und was diese Person sehen darf.',
-    colName: 'Name',
-    colRole: 'Rolle',
-    colRegions: 'Gebiet',
-    colSkills: 'Leistungen',
-    colStatus: 'Status',
-    roleOwner: 'Geschäftsleitung',
-    roleContractor: 'Mitarbeitende:r',
-    active: 'Aktiv',
-    inactive: 'Inaktiv',
-    emptyTitle: 'Nur Sie',
-    emptyBody:
-      'Sobald eine Bewerbung angenommen wird, erscheint die Person hier — mit ihren Rechten.',
-  },
-
-  member: {
-    back: 'Alle Teammitglieder',
-    contactTitle: 'Kontakt',
-    since: 'Im Team seit',
-    fromApplication: 'Aus Bewerbung {reference}',
-    regionsTitle: 'Einsatzgebiet',
-    skillsTitle: 'Freigegebene Leistungen',
-    skillsHint: 'Nur freigegebene Leistungen lassen sich zuweisen.',
-    accessTitle: 'Rechte',
-    activeLabel: 'Aktiv — kann Einsätze zugewiesen bekommen',
-    ownerNote: 'Die Geschäftsleitung sieht alles. Diese Rechte lassen sich nicht ändern.',
-    jobsTitle: 'Kommende Einsätze',
-    jobsEmpty: 'Zurzeit keine Einsätze zugewiesen.',
-    /* Die zweite Hälfte der Personenseite: was diese Person gearbeitet hat.
-       Stand nirgends — die Stunden lagen in den Ausgaben und waren von hier
-       aus nur über die Suche zu finden. */
-    labourTitle: 'Arbeitszeit',
-    labourHours: 'Stunden erfasst',
-    labourAmount: 'Lohnkosten',
-    labourOutstanding: 'Noch nicht ausbezahlt',
-    labourJobs: 'Auf {n} Einsätzen',
-    labourJobsOne: 'Auf einem Einsatz',
-    labourEmpty: 'Für diese Person sind noch keine Stunden erfasst.',
-    labourLink: 'In der Arbeitszeit ansehen',
-    labourHoursValue: '{hours} Std.',
-  },
 };

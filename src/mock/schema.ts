@@ -1321,8 +1321,86 @@ export interface ApplicationDraft {
   updatedAt: ISODate | null;
 }
 
-export type TeamRole = 'owner' | 'contractor';
+/**
+ * Every area of the panel a user can be let into, in sidebar order.
+ *
+ * A `const` array rather than a bare union, because everything downstream is a
+ * `Record<AdminPermission, …>` — the route it gates, the group it sits in, the
+ * label it wears. Adding an area is adding one string here, and the compiler
+ * then refuses to build until its route, its group and its two labels exist.
+ * That is the whole of the "scalable" requirement: a tab cannot enter the
+ * panel without also entering the permission matrix, because there is no
+ * second list to forget.
+ *
+ * `dashboard` is deliberately absent. It is the panel's home — the screen
+ * every signed-in user lands on — and a right that can be withheld from the
+ * landing page produces an account that signs in to a locked door. What it
+ * does instead is show only the blocks the reader may open; see screen 51.
+ */
+export const ADMIN_PERMISSIONS = [
+  'requests',
+  'offers',
+  'bookings',
+  'calendar',
+  'customers',
+  'messages',
+  'properties',
+  'keys',
+  'subscriptions',
+  'invoices',
+  'expenses',
+  /*
+   * Hours worked, which is a right of its own rather than a corner of
+   * `expenses`.
+   *
+   * It sits at /admin/ausgaben/arbeitszeit — inside the costs route — and the
+   * temptation is to let it inherit. It must not: that board names who worked
+   * which job and what they are owed, so it is the one costs screen that is
+   * also a staffing record. A bookkeeper who enters receipts and a manager who
+   * checks the crew are not always the same person, and `permissionForPath`
+   * takes the longest matching prefix precisely so a child route can be
+   * narrower than its parent.
+   */
+  'workforce',
+  'analytics',
+  'catalogue',
+  'addons',
+  'coupons',
+  'reviews',
+  'templates',
+  'applications',
+  'postings',
+  'users',
+  'settings',
+  'changelog',
+] as const;
 
+export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];
+
+/**
+ * `office` is the role the permission model made necessary.
+ *
+ * Until now everyone in `team` did field work: `role` decided whether you were
+ * the boss or held a mop, and both ends of it turn up in the calendar's
+ * assignee list. A bookkeeper with «Rechnungen + Ausgaben» and no van does
+ * neither — and putting one in as a `contractor` would offer them a Tuesday
+ * morning job, which is how a name ends up on a booking nobody can staff.
+ *
+ * So the role now answers two questions at once, and they are separable on
+ * purpose: `office` never appears in an assignee picker (see `doesFieldWork`),
+ * and what it may *open* is the permission list, not the role.
+ */
+export type TeamRole = 'owner' | 'contractor' | 'office';
+
+/**
+ * One person, one record — the field's team member and the panel's user.
+ *
+ * They were never two people. Marta holds a mop on Tuesday and reads her own
+ * week in the calendar on Monday evening, and splitting that into a "team
+ * member" and a "user" would give the office two records to keep in step and
+ * one of them would lose. So the field's half (`skills`, `regions`) and the
+ * panel's half (`permissions`, `active`) hang off the same id.
+ */
 export interface TeamMember {
   id: ID;
   firstName: string;
@@ -1331,9 +1409,37 @@ export interface TeamMember {
   phone: string;
   role: TeamRole;
   active: boolean;
+  /**
+   * Which areas of the panel this person may open. Empty is a real and common
+   * answer: a contractor who works from the field screens alone has no
+   * business in the console, and the sign-in gate says so in those words.
+   *
+   * Never read directly to decide access — `grantedPermissions` in
+   * `lib/admin-permissions.ts` is the one place that answers that, because the
+   * owner's rights are not in this array and never should be.
+   */
+  permissions: AdminPermission[];
   regions: string[];
   skills: string[];
   startedAt: ISODate;
+  /**
+   * When the account was switched off, alongside `active` rather than instead
+   * of it.
+   *
+   * `active` is the state the rest of the app reads; this is the date the list
+   * prints under «Deaktiviert», and without it the only honest answer to
+   * "since when?" is a shrug. Both are written by `setTeamMemberActive` and by
+   * nothing else, so they cannot drift — the same arrangement `Customer` uses
+   * for `status` and `archivedAt`.
+   */
+  deactivatedAt?: ISODate;
+  /**
+   * The last reset link handed out for this account, and when it stops
+   * working. Kept on the record rather than in the screen's state so that
+   * "did I already send Sandra one?" survives a reload — the question the
+   * office actually asks, usually on the phone.
+   */
+  passwordReset?: { token: string; issuedAt: ISODate; expiresAt: ISODate };
   fromApplicationId?: ID;
 }
 

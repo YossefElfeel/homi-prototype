@@ -17,7 +17,9 @@ import { adminFinanceEn } from './admin/finance.en';
 import { adminContentDe } from './admin/content.de';
 import { adminContentEn } from './admin/content.en';
 import { adminHiringDe } from './admin/hiring.de';
+import { adminUsersDe } from './admin/users.de';
 import { adminHiringEn } from './admin/hiring.en';
+import { adminUsersEn } from './admin/users.en';
 import { careersDe } from './careers/de';
 import { fieldDe } from './field/de';
 import { fieldEn } from './field/en';
@@ -36,7 +38,14 @@ export const de = {
   account: accountDe,
   careers: careersDe,
   field: fieldDe,
-  admin: { ...adminDe, ...adminCrmDe, ...adminFinanceDe, ...adminContentDe, ...adminHiringDe },
+  admin: {
+    ...adminDe,
+    ...adminCrmDe,
+    ...adminFinanceDe,
+    ...adminContentDe,
+    ...adminHiringDe,
+    ...adminUsersDe,
+  },
 };
 export const en = {
   ...enCore,
@@ -46,7 +55,14 @@ export const en = {
   account: accountEn,
   careers: careersEn,
   field: fieldEn,
-  admin: { ...adminEn, ...adminCrmEn, ...adminFinanceEn, ...adminContentEn, ...adminHiringEn },
+  admin: {
+    ...adminEn,
+    ...adminCrmEn,
+    ...adminFinanceEn,
+    ...adminContentEn,
+    ...adminHiringEn,
+    ...adminUsersEn,
+  },
 };
 
 export type Messages = typeof de;

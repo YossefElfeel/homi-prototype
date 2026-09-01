@@ -242,6 +242,11 @@ function owner(now: Date): TeamMember {
     phone: '+41 76 227 79 66',
     role: 'owner',
     active: true,
+    /* Empty, and correct. The owner's rights are not stored — see
+       `grantedPermissions`, which never reads this array for them. Writing the
+       twenty-two of today in here would produce an owner who is missing the
+       twenty-third screen the month after somebody adds it. */
+    permissions: [],
     regions: ['8700', '8706', '8707', '8708', '8712', '8132', '8627', '8634'],
     skills: [
       'unterhaltsreinigung',
@@ -1251,6 +1256,31 @@ function baseData(now: Date): DataSet {
       entity: 'Leistung',
       entityId: 'svc_grund',
       summary: 'Deep cleaning: minimum duration set to 3 hours',
+    },
+    /*
+     * Pia's, from before she left — and the point of them.
+     *
+     * "Deactivating a user must not delete their historical data" is a promise
+     * that costs nothing to make and cannot be checked against an empty
+     * roster. These two entries sit under a name whose account is switched off,
+     * and they are what the user record counts when it tells the reader what a
+     * deactivation is about to leave alone.
+     */
+    {
+      id: 'chg_3',
+      at: iso(days(now, -52)),
+      actor: 'Pia Roth',
+      entity: 'Einstellungen',
+      entityId: 'settings',
+      summary: 'Payment term shortened to 20 days',
+    },
+    {
+      id: 'chg_4',
+      at: iso(days(now, -38)),
+      actor: 'Pia Roth',
+      entity: 'Gutschein',
+      entityId: 'cpn_2',
+      summary: 'Spring campaign code closed early',
     },
   ];
 
@@ -3956,13 +3986,29 @@ function hiringApplications(now: Date): Application[] {
 }
 
 /**
- * The two people the accepted applications turned into.
+ * The roster, minus the owner — and it is a roster now rather than two hires.
  *
- * They live in `baseData` rather than in the hiring scenario now, because
+ * Marta and Yusuf live in `baseData` rather than in the hiring scenario because
  * without them screen H2 draws an accepted application with no «Im Team»
  * banner — `convertedTeamMemberId` pointing at nobody — which is the one thing
- * on that screen that says the acceptance actually did something. Yusuf has no
- * jobs assigned, which is H7's empty state and had no record to stand on.
+ * on that screen that says the acceptance did something.
+ *
+ * The other two are here for the user list, and each one is a state that screen
+ * cannot otherwise be looked at in:
+ *
+ *  · **Sandra** is an account nobody could previously create: office staff who
+ *    have never held a mop, exist only to be let into three finance screens,
+ *    and would be offered a Tuesday morning job if they were filed as
+ *    contractors. She is the brief's own example — «Ausgaben + Finanzen» — and
+ *    the reason `TeamRole` grew a third value.
+ *  · **Pia** is deactivated. Without her the «Deaktiviert» tab is a tab nobody
+ *    has seen hold a row, the reactivate path is unreachable, and the promise
+ *    the whole feature rests on — that switching an account off keeps its trail
+ *    — has nothing to demonstrate it on. She has change-log entries under her
+ *    name from before she left, and they are still there.
+ *
+ * Between the four, every combination the list has to render is on screen at
+ * once: full rights, a handful, none at all, and switched off.
  */
 function hiredMembers(now: Date): TeamMember[] {
   return [
@@ -3974,6 +4020,10 @@ function hiredMembers(now: Date): TeamMember[] {
       phone: '+41 78 000 00 14',
       role: 'contractor',
       active: true,
+      /* Her own week, and nothing that prices it. This is what the field
+         interface leaves out: `/einsatz` shows today and tomorrow, so a
+         contractor planning around a Thursday had to ring the office. */
+      permissions: ['calendar', 'bookings'],
       regions: ['8700', '8706', '8707', '8708', '8712'],
       skills: ['unterhaltsreinigung', 'einmalreinigung', 'grundreinigung'],
       startedAt: iso(days(now, -40)),
@@ -3987,10 +4037,43 @@ function hiredMembers(now: Date): TeamMember[] {
       phone: '+41 78 000 00 31',
       role: 'contractor',
       active: true,
+      /* Nothing. A contractor who works from the field screens alone is the
+         common case, not an oversight, and the console tells him so in those
+         words rather than showing an empty sidebar. */
+      permissions: [],
       regions: ['8708', '8712', '8634'],
       skills: ['unterhaltsreinigung', 'umzugsreinigung', 'moebelmontage'],
       startedAt: iso(days(now, -14)),
       fromApplicationId: 'app_14',
+    },
+    {
+      id: 'tm_sandra',
+      firstName: 'Sandra',
+      lastName: 'Meili',
+      email: 'sandra.meili@homivaro.ch',
+      phone: '+41 79 000 00 52',
+      role: 'office',
+      active: true,
+      permissions: ['invoices', 'expenses', 'analytics'],
+      regions: [],
+      skills: [],
+      startedAt: iso(days(now, -75)),
+    },
+    {
+      id: 'tm_pia',
+      firstName: 'Pia',
+      lastName: 'Roth',
+      email: 'pia.roth@homivaro.ch',
+      phone: '+41 79 000 00 18',
+      role: 'office',
+      active: false,
+      /* Kept, not cleared. Reactivating her has to give back what she had — a
+         blank matrix would ask the office to remember it. */
+      permissions: ['invoices', 'customers'],
+      regions: [],
+      skills: [],
+      startedAt: iso(days(now, -240)),
+      deactivatedAt: iso(days(now, -24)),
     },
   ];
 }

@@ -638,7 +638,7 @@ export default function WorkforcePage() {
                   surface="plain"
                   stickyHeader={false}
                   getKey={(r) => r.workerId}
-                  onSelect={(r) => router.push(`/admin/team/${r.workerId}`)}
+                  onSelect={(r) => router.push(`/admin/benutzer/${r.workerId}`)}
                   caption={t('peopleTitle')}
                   openLabel={t('rowPerson')}
                   empty={

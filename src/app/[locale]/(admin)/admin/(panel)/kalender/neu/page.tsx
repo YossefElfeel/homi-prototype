@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { dayBlockReason, type DayBlockReason } from '@/mock/engines/availability';
 import type { CalendarEventKind, ServiceSlug } from '@/mock/schema';
+import { doesFieldWork } from '@/lib/user-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { isOffered } from '@/lib/service-catalogue';
 import { cn } from '@/lib/cn';
@@ -53,6 +54,7 @@ export default function NewAppointmentPage() {
   const bookings = useStore((s) => s.data.bookings);
   const closures = useStore((s) => s.data.closures);
   const team = useStore((s) => s.data.team);
+  const assignable = team.filter((m) => m.active && doesFieldWork(m));
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const createManualBooking = useStore((s) => s.createManualBooking);
@@ -393,7 +395,17 @@ export default function NewAppointmentPage() {
             </div>
           )}
 
-          {team.length > 0 && (
+          {/*
+            Only the people a job can actually be handed to.
+
+            The list was the whole of `data.team` — every row in it — and that
+            list has since grown two kinds of person a Tuesday morning cannot be
+            given to. An office account does no field work at all (see
+            `doesFieldWork`), and a deactivated one cannot sign in to read the
+            address. Both would have been offered here, saved onto the booking,
+            and found on the day.
+          */}
+          {assignable.length > 0 && (
             <Field label={t('assigneeLabel')} optional>
               {(props) => (
                 <Select
@@ -402,7 +414,7 @@ export default function NewAppointmentPage() {
                   onChange={(e) => setAssigneeId(e.target.value)}
                 >
                   <option value="">—</option>
-                  {team.map((m) => (
+                  {assignable.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.firstName} {m.lastName}
                     </option>

@@ -17,7 +17,8 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Toolbar } from '@/components/ui/toolbar';
 import { ActionIcon } from '@/lib/action-icons';
-import { canSeeApplicants, useHydrated, useNow, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
+import { may } from '@/lib/admin-permissions';
 import type { Application, ApplicationStatus } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
@@ -54,7 +55,7 @@ export default function AdminApplicationsPage() {
   const now = useNow();
   const dismissLabel = useDismissLabel();
 
-  const role = useStore((s) => s.demo.role);
+  const signedInAs = useStore((s) => s.data.team.find((m) => m.id === s.demo.currentMemberId));
   const applications = useStore((s) => s.data.applications);
   const postings = useStore((s) => s.data.postings);
   const setApplicationStatus = useStore((s) => s.setApplicationStatus);
@@ -97,7 +98,7 @@ export default function AdminApplicationsPage() {
 
   /* See the note on the detail screen: AdminShell has already gated this, so
      rendering a second lock screen here was dead code. */
-  if (!canSeeApplicants(role)) return null;
+  if (!may(signedInAs, 'applications')) return null;
 
   const daysLeft = (iso: string) =>
     Math.ceil((new Date(iso).getTime() - now.getTime()) / 86_400_000);

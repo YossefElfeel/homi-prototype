@@ -6,6 +6,13 @@ export const fieldDe = {
     gateBody:
       'Diese Ansicht ist für die ausführende Person. Wechseln Sie unten rechts die Rolle auf «Mitarbeitende:r».',
     gateCurrent: 'Aktuelle Rolle: {role}',
+    /* Der zweite Grund, warum diese Ansicht zu ist — und der wichtigere: das
+       Konto wurde abgeschaltet. Ohne eigenen Text stünde hier «wechseln Sie
+       die Rolle», was für jemanden, der gar nicht mehr hinein soll, wie ein
+       Bedienfehler aussieht. */
+    gateDeactivatedTitle: 'Dieses Konto ist deaktiviert',
+    gateDeactivatedBody:
+      'Ihre Einsätze sind nicht mehr abrufbar. Die erfassten Einsätze bleiben erhalten — bitte wenden Sie sich an die Geschäftsleitung.',
     gateHome: 'Zur Startseite',
     jobsLink: 'Zu den Einsätzen',
     exit: 'Homivaro-Website öffnen',

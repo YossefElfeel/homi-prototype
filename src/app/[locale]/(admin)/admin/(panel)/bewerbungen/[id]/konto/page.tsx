@@ -67,7 +67,7 @@ export default function ConvertApplicantPage({
       regions: regionValue,
       skills: skillValue,
     });
-    router.push(`/admin/team/${memberId}`);
+    router.push(`/admin/benutzer/${memberId}`);
   }
 
   return (
