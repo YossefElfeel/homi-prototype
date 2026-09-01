@@ -8,6 +8,7 @@ import {
   Briefcase,
   CalendarCheck,
   CalendarDays,
+  Clock,
   FileText,
   History,
   Home,
@@ -47,6 +48,7 @@ type NavKey =
   | 'subscriptions'
   | 'invoices'
   | 'expenses'
+  | 'workforce'
   | 'analytics'
   | 'catalogue'
   | 'addons'
@@ -117,6 +119,12 @@ const NAV: {
     items: [
       { href: '/admin/rechnungen', key: 'invoices', icon: Receipt },
       { href: '/admin/ausgaben', key: 'expenses', icon: Wallet },
+      /* Under «Ausgaben» because it is the same records read the other way
+         round — hours rather than receipts. A tab inside that screen was the
+         alternative and it is the one this group already rejected once: every
+         screen in this panel is one row here, and the money group is not
+         allowed to navigate differently from the rest of it. */
+      { href: '/admin/ausgaben/arbeitszeit', key: 'workforce', icon: Clock },
       { href: '/admin/finanzen', key: 'analytics', icon: BarChart3 },
     ],
   },

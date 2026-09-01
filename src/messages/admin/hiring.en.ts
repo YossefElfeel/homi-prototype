@@ -217,5 +217,17 @@ export const adminHiringEn: typeof adminHiringDe = {
     ownerNote: 'The owner sees everything. These permissions cannot be changed.',
     jobsTitle: 'Upcoming jobs',
     jobsEmpty: 'No jobs assigned at the moment.',
+    /* The second half of a person's page: what they actually worked. It was
+       nowhere — the hours sat in the expenses and were reachable from here
+       only through the search box. */
+    labourTitle: 'Labour',
+    labourHours: 'Hours recorded',
+    labourAmount: 'Labour cost',
+    labourOutstanding: 'Not paid out yet',
+    labourJobs: 'Across {n} jobs',
+    labourJobsOne: 'On one job',
+    labourEmpty: 'No hours recorded for this person yet.',
+    labourLink: 'See it in Workforce',
+    labourHoursValue: '{hours} h',
   },
 };

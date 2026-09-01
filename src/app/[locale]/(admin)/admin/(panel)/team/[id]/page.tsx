@@ -9,6 +9,9 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/field';
+import { Money } from '@/components/ui/money';
+import { cn } from '@/lib/cn';
+import { labourAmount, labourExpenses, labourHours, unpaidLabour } from '@/lib/labour-facts';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ServiceSlug } from '@/mock/schema';
@@ -34,6 +37,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   const members = useStore((s) => s.data.team);
   const applications = useStore((s) => s.data.applications);
   const bookings = useStore((s) => s.data.bookings);
+  const expenses = useStore((s) => s.data.expenses);
   const properties = useStore((s) => s.data.properties);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
@@ -49,6 +53,21 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
     .filter((b) => b.assigneeId === member.id && new Date(b.start) >= now)
     .sort((a, b) => (a.start < b.start ? -1 : 1))
     .slice(0, 5);
+
+  /*
+   * What this person actually worked, as opposed to what they are booked for.
+   *
+   * The section above is the diary and it looks forward; this looks back, and
+   * until this wave there was nothing to look back at — hours were a monthly
+   * lump under «Löhne» with a name typed into the supplier box, so a person's
+   * own page could not say how much they had done or whether they had been
+   * paid for it. Every figure here is over all time on purpose: the person is
+   * the subject, not the quarter, and the board one link away is where a period
+   * is chosen.
+   */
+  const labour = labourExpenses(expenses).filter((e) => e.labour.workerId === member.id);
+  const labourJobs = new Set(labour.map((e) => e.bookingId)).size;
+  const labourOpen = unpaidLabour(labour, now);
 
   return (
     <div>
@@ -192,6 +211,47 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
           </section>
         </>
       )}
+
+      <section className="mt-10 border-t border-line-subtle pt-8">
+        <h2 className="display-type text-xl">{t('labourTitle')}</h2>
+        {labour.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-tertiary">{t('labourEmpty')}</p>
+        ) : (
+          <>
+            <dl className="mt-4 grid gap-5 sm:grid-cols-3">
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourHours')}</dt>
+                <dd data-numeric className="mt-1.5 text-lg">
+                  {t('labourHoursValue', { hours: labourHours(labour) })}
+                </dd>
+                <p className="mt-1 text-sm text-ink-tertiary">
+                  {labourJobs === 1 ? t('labourJobsOne') : t('labourJobs', { n: labourJobs })}
+                </p>
+              </div>
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourAmount')}</dt>
+                <dd className="mt-1.5 text-lg">
+                  <Money amount={labourAmount(labour)} />
+                </dd>
+              </div>
+              <div>
+                <dt className="label-type text-ink-tertiary">{t('labourOutstanding')}</dt>
+                {/* Warning-coloured only when there is something to chase — a
+                    zero in orange is a problem the reader goes looking for and
+                    does not find. */}
+                <dd
+                  className={cn('mt-1.5 text-lg', labourOpen > 0 && 'text-status-warning-fg')}
+                >
+                  <Money amount={labourOpen} />
+                </dd>
+              </div>
+            </dl>
+            <Button asChild variant="secondary" className="mt-5">
+              <Link href="/admin/ausgaben/arbeitszeit">{t('labourLink')}</Link>
+            </Button>
+          </>
+        )}
+      </section>
 
       <section className="mt-10 border-t border-line-subtle pt-8">
         <h2 className="display-type text-xl">{t('jobsTitle')}</h2>
