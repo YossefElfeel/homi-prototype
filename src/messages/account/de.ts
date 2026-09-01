@@ -291,6 +291,7 @@ export const accountDe = {
     rooms: '{n} Zimmer',
     bathrooms: '{n} Bäder',
     area: '{n} m²',
+    sizeUnknown: 'Noch nicht erfasst',
     colLabel: 'Bezeichnung',
     colAddress: 'Adresse',
     colKind: 'Art',

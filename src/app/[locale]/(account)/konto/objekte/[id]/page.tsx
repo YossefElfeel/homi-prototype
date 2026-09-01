@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { areaLabel, figure } from '@/lib/property-size';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
 
@@ -91,9 +92,9 @@ export default function AccountPropertyPage({
   const historyView = paginate(history, historyPage, 10);
 
   const facts: [string, string][] = [
-    [t('area'), `${property.area} m²`],
-    [t('rooms'), `${property.rooms}`],
-    [t('bathrooms'), `${property.bathrooms}`],
+    [t('area'), areaLabel(property.area)],
+    [t('rooms'), figure(property.rooms)],
+    [t('bathrooms'), figure(property.bathrooms)],
     [t('floor'), `${property.floor}`],
     [t('elevator'), property.hasElevator ? t('yes') : t('no')],
     [t('pets'), property.hasPets ? t('yes') : t('no')],

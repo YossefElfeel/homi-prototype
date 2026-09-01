@@ -18,6 +18,7 @@ import { Field, Textarea } from '@/components/ui/field';
 import { Lifecycle } from '@/components/ui/lifecycle';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { areaLabel, figure } from '@/lib/property-size';
 import { quoteStages } from '@/lib/quote-lifecycle';
 import { requestBadgeState } from '@/lib/offer-label';
 import { isExpired } from '@/mock/engines/offers';
@@ -321,13 +322,13 @@ export default function AccountRequestPage({
                 {property && (
                   <>
                     <DetailRow label={pt('area')}>
-                      <span data-numeric>{property.area} m²</span>
+                      <span data-numeric>{areaLabel(property.area)}</span>
                     </DetailRow>
                     <DetailRow label={pt('rooms')}>
-                      <span data-numeric>{property.rooms}</span>
+                      <span data-numeric>{figure(property.rooms)}</span>
                     </DetailRow>
                     <DetailRow label={pt('bathrooms')}>
-                      <span data-numeric>{property.bathrooms}</span>
+                      <span data-numeric>{figure(property.bathrooms)}</span>
                     </DetailRow>
                     <DetailRow label={pt('floor')}>
                       <span data-numeric>{property.floor}</span>

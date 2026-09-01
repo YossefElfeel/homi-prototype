@@ -17,6 +17,7 @@ import type { CalcMethod, OfferLine } from '@/mock/schema';
 import { TemplatePicker } from '@/components/admin/template-picker';
 import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
+import { areaLabel } from '@/lib/property-size';
 
 /**
  * `optional` and `selected` are two fields but one decision, and the builder
@@ -422,7 +423,13 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                 <SummaryRow label={rt('serviceTitle')}>{service.name[locale]}</SummaryRow>
                 <SummaryRow label={rt('area')}>
                   <span data-numeric>
-                    {property.area} m² · {property.rooms} Zi. · {property.bathrooms} Bad
+                    {[
+                      areaLabel(property.area),
+                      property.rooms != null && `${property.rooms} Zi.`,
+                      property.bathrooms != null && `${property.bathrooms} Bad`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </span>
                 </SummaryRow>
                 <SummaryRow label={rt('preferredTitle')}>

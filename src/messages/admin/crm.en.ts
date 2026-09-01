@@ -73,6 +73,16 @@ export const adminCrmEn: typeof adminCrmDe = {
     phone: 'Phone',
     language: 'Language',
     languageHint: 'Sets the language of every email to this person.',
+    addressTitle: 'Address',
+    addressHint:
+      'Where the person is. Optional — a name and a number is enough to write somebody down, and the address can follow.',
+    errorPostcode: 'A Swiss postcode has four digits.',
+    errorStreetMissing: 'Add the street too — a postcode on its own reaches no letterbox.',
+    alsoPropertyLabel: 'Work happens at this address too',
+    alsoPropertyHint:
+      'Creates it as a property, so a request can be filed against it. Leave it off for somebody who books for an address that is not their own.',
+    propertyKind: 'Type of property',
+    propertyKindHint: 'Size and rooms are asked later, when the job is scoped.',
     notesTitle: 'Internal note',
     notesHint: 'Yours only. The customer never sees this.',
     notesPlaceholder: 'e.g. referred by Mrs Berger, prefers calls in the morning …',
@@ -98,6 +108,7 @@ export const adminCrmEn: typeof adminCrmDe = {
   customer: {
     back: 'All customers',
     detailsTitle: 'Contact & details',
+    addressLabel: 'Address',
     statusLabel: 'Status',
     edit: 'Edit',
     archivedTitle: 'This customer is archived.',
@@ -252,6 +263,9 @@ export const adminCrmEn: typeof adminCrmDe = {
     /* Replaces `colSpecs`: the numbers had a column and the property type had
        none — and the type is what the new filter selects on. */
     colKind: 'Type & key facts',
+    /* Not an error: an address may come from a phone call, before anybody
+       has measured the place. */
+    sizeUnknown: 'Not measured yet',
     colLastService: 'Last service',
     colNextVisit: 'Next visit',
     colAccess: 'Access',

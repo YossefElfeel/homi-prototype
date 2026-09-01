@@ -29,6 +29,7 @@ import { addMinutes } from '@/mock/engines/availability';
 import { bookingAmount } from '@/lib/offer-facts';
 import { fromZoned, zonedParts } from '@/lib/business-time';
 import { useHydrated, useNow, useStore } from '@/mock/store';
+import { areaLabel } from '@/lib/property-size';
 
 const ACCESS_LABELS: Record<string, string> = {
   'customer-present': 'Kunde ist da',
@@ -352,7 +353,7 @@ export default function BookingDetailPage({
                 </Row>
                 <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
                 <Row label={t('propertyArea')}>
-                  <span data-numeric>{property.area} m²</span>
+                  <span data-numeric>{areaLabel(property.area)}</span>
                 </Row>
               </dl>
             </CollapsibleSection>

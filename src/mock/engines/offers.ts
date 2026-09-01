@@ -38,8 +38,21 @@ export function buildOfferLines({
     {
       service,
       addOns: chosen,
-      area: property.area,
-      bathrooms: property.bathrooms,
+      /*
+       * A measured property is this function's precondition, not something it
+       * can recover from. `areaTier(0)` lands in the *smallest* bracket, so an
+       * unmeasured flat would quote at the cheapest rate on the sheet — the
+       * kind of wrong number nobody queries, because a low price reads as a
+       * good price rather than as a bug.
+       *
+       * Nothing reaches here without an area: intake refuses to file a request
+       * until the place is measured, and the unmeasured addresses the customer
+       * form can now create carry no request. The fallback exists because the
+       * field is optional on the type, not because this case is handled.
+       */
+      area: property.area ?? 0,
+      // §5.2 bills every bathroom past the first — one adds nothing.
+      bathrooms: property.bathrooms ?? 1,
       hasPets: property.hasPets,
       needsExtraEffort: property.needsExtraEffort,
       windowCount: request.windowCount,

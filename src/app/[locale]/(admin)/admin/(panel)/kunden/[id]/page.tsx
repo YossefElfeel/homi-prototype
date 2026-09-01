@@ -80,6 +80,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   /* Field labels belong to the form that writes them (64a), not to a second
      list here that would drift the first time one is reworded. */
   const ft = useTranslations('admin.customerNew');
+  /* The properties list owns the words for what a property is and is not. */
+  const pt = useTranslations('admin.properties');
   const methodLabel = useTranslations('status.method');
   const locale = useLocale() as Locale;
   const format = useFormatter();
@@ -379,6 +381,29 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               <span data-numeric>{customer.phone}</span>
             </DetailRow>
             <DetailRow label={t('language')}>{customer.language.toUpperCase()}</DetailRow>
+            {/*
+              Where the person is, which the record could not say at all.
+
+              Rendered only when there is one: a row reading «—» would claim
+              the address was asked for and refused, when in fact it is
+              optional and this customer was written down mid-call. The prompt
+              to add one lives in the properties block below, where the reader
+              is already looking for an address.
+            */}
+            {customer.address && (
+              <DetailRow label={t('addressLabel')}>
+                <span className="block">{customer.address.street}</span>
+                {customer.address.addressDetail && (
+                  <span className="block text-ink-secondary">
+                    {customer.address.addressDetail}
+                  </span>
+                )}
+                <span className="block">
+                  <span data-numeric>{customer.address.postcode}</span>{' '}
+                  {customer.address.city}
+                </span>
+              </DetailRow>
+            )}
             {customer.archivedAt && (
               <DetailRow label={lt('tabArchived')}>
                 <span data-numeric>
@@ -442,9 +467,18 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                           {property.city}
                         </span>
                       </span>
-                      <span data-numeric className="text-sm text-ink-tertiary">
-                        {property.area} m²
-                      </span>
+                      {/* An address filed from a phone call has no
+                          measurements yet. Saying so is the difference between
+                          a record still being filled in and a broken one. */}
+                      {property.area == null ? (
+                        <span className="shrink-0 text-sm text-ink-tertiary">
+                          {pt('sizeUnknown')}
+                        </span>
+                      ) : (
+                        <span data-numeric className="text-sm text-ink-tertiary">
+                          {property.area} m²
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}
