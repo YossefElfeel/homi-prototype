@@ -255,6 +255,23 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§21a',
+    question:
+      'Do the condition surcharge and the pet surcharge apply to a service priced by count?',
+    decision:
+      'OPEN, and the two checkboxes are withdrawn from those screens rather than made to work. §5.2 adds one hour for «Der Zustand erfordert deutlich mehr Aufwand» and half an hour for pets, and both are read off the duration matrix — which a service with `durationProfile: none` never consults. So window cleaning and furniture assembly showed both controls, wrote both flags, and priced identically whichever way they were ticked: a form that appears to negotiate and does not. Hiding them is honest and it is not the whole answer. A window frame that has not been touched in three years genuinely costs more than one cleaned last spring, and the count of sashes cannot express that. Three ways out: give the counted services their own condition multiplier, which is a price the business has to set; leave the surcharge to the office and let the quote builder add a line by hand, which is what happens today by accident; or accept that a count is the whole price and say so on the service page. The same question for pets is narrower — a dog does not slow down a window clean, and «Haustiere im Haushalt» has no answer at a workplace at all, which is why office cleaning no longer asks it either.',
+    screens: '13, 14, 52a',
+    state: 'open',
+  },
+  {
+    ref: '§21b',
+    question: 'Does a room count belong on the request at all?',
+    decision:
+      'OPEN, and the prototype keeps asking for it where the job is a cleaning job. Rooms are required on every area-driven service and are read by nothing that produces a number: `estimateHours` uses area, bathrooms, pets and condition, and the room count appears only as context on the screens the office and the crew read. That is a defensible reason to collect it and a poor reason to make it *required* — it is the one mandatory field in the flow whose absence changes no output. Two answers, and neither is ours: make it optional, which shortens the longest step in the wizard by a field and costs the crew a planning hint; or keep it required and say on the screen what it is for, which is honest but adds a sentence to a step that already carries one. What has been settled: it is not asked at all for the services priced by count, where it is neither priced nor useful.',
+    screens: '14, 52a',
+    state: 'open',
+  },
+  {
     ref: '§17.2a',
     question: 'What does a service the owner adds herself look like on the website?',
     decision:

@@ -25,6 +25,7 @@ import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { PropertyKind, TimeBand } from '@/mock/schema';
 import { isOffered } from '@/lib/service-catalogue';
+import { serviceNeeds } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 const KINDS: {
@@ -74,11 +75,16 @@ const emptyProperty = () => ({
 /**
  * Screen 52a — intake for the phone.
  *
- * The eight-step wizard is the right shape for a visitor meeting the form for
- * the first time. It is the wrong shape for the person who knows it by heart
- * and is holding a phone while a customer says the address, then the date, then
- * goes back to the address. So the same eight steps live on one page as
- * collapsible sections that can be opened in any order and left open together.
+ * The wizard is the right shape for a visitor meeting the form for the first
+ * time. It is the wrong shape for the person who knows it by heart and is
+ * holding a phone while a customer says the address, then the date, then goes
+ * back to the address. So the same steps live on one page as collapsible
+ * sections that can be opened in any order and left open together.
+ *
+ * Which questions those sections carry is the service's answer, not this
+ * page's: `serviceNeeds` is the same module the wizard reads, so the office is
+ * never asked down the telephone for a figure the website would not have
+ * collected — nor spared one it would have.
  *
  * What is *not* rebuilt here matters more than what is: coverage, pricing and
  * the lead-time rules are the same engines the public flow calls, and the
@@ -202,6 +208,8 @@ export default function NewRequestPage() {
     : undefined;
 
   const service = services.find((s) => s.slug === serviceSlug);
+  const needs = serviceNeeds(service);
+  const office = needs.vocabulary === 'office';
   const serviceAddOns = useMemo(
     () =>
       serviceSlug
@@ -255,23 +263,24 @@ export default function NewRequestPage() {
 
   /* ------------------------------------------------------------ readiness */
 
+  /* The same rule the wizard applies, from the same module. The office had to
+     collect an area, a room count and a bathroom count before it could file a
+     phoned-in window clean — three questions to read down the line whose
+     answers the quote would never use. */
   const propertyReady = usingSaved
     ? Boolean(savedProperty)
     : Boolean(
         property.street &&
           coverage.state !== 'invalid' &&
           property.city &&
-          property.area &&
-          property.rooms &&
-          property.bathrooms,
+          (!needs.asksArea || property.area) &&
+          (!needs.asksRooms || property.rooms) &&
+          (!needs.asksBathrooms || property.bathrooms),
       );
 
   const countNeeded =
-    service?.calc === 'perUnit'
-      ? !windowCount
-      : service?.slug === 'moebelmontage'
-        ? !furniturePieces
-        : false;
+    (needs.asksWindowCount && !windowCount) ||
+    (needs.asksFurniturePieces && !furniturePieces);
 
   const serviceReady = Boolean(service) && !countNeeded;
   const timeReady = flexible || Boolean(date && band);
@@ -312,10 +321,13 @@ export default function NewRequestPage() {
         street: property.street,
         postcode: property.postcode,
         city: property.city,
-        kind: property.kind,
-        area: property.area ?? 0,
-        rooms: property.rooms ?? 0,
-        bathrooms: property.bathrooms ?? 1,
+        /* `Property.area` is optional so "unmeasured" and "measures nothing"
+           stay different facts — and a request the office takes for window
+           cleaning now legitimately has no area at all. */
+        kind: needs.fixedPropertyKind ?? property.kind,
+        area: property.area ?? undefined,
+        rooms: property.rooms ?? undefined,
+        bathrooms: property.bathrooms ?? undefined,
         floor: property.floor,
         hasElevator: property.hasElevator,
         hasPets: property.hasPets,
@@ -681,86 +693,103 @@ export default function NewRequestPage() {
                         </Card>
                       )}
 
-                      <fieldset>
-                        <legend className="mb-2 text-sm font-medium">{t('kind')}</legend>
-                        <div className="flex flex-wrap gap-2">
-                          {KINDS.map(({ value, icon: Icon, key }) => (
-                            <label
-                              key={value}
-                              className={cn(
-                                'flex cursor-pointer items-center gap-2 rounded-[var(--radius-action)] border px-4 py-2.5 text-sm transition-colors',
-                                property.kind === value
-                                  ? 'border-line-strong bg-accent-subtle'
-                                  : 'border-line hover:bg-sunken',
-                              )}
-                            >
-                              <input
-                                type="radio"
-                                name="kind"
-                                className="sr-only"
-                                checked={property.kind === value}
-                                onChange={() => setProperty({ ...property, kind: value })}
-                              />
-                              <Icon className="size-4" aria-hidden />
-                              {t(key)}
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
+                      {/* The service already named it — see `serviceNeeds`.
+                          Asking again on the phone is a question the office
+                          reads aloud and the customer answers with «it's an
+                          office, that's what I said». */}
+                      {needs.fixedPropertyKind ? (
+                        <p className="flex items-center gap-2 text-sm text-ink-secondary">
+                          <Store className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                          {t('kindFromService', { service: service?.name[locale] ?? '' })}
+                        </p>
+                      ) : (
+                        <fieldset>
+                          <legend className="mb-2 text-sm font-medium">{t('kind')}</legend>
+                          <div className="flex flex-wrap gap-2">
+                            {KINDS.map(({ value, icon: Icon, key }) => (
+                              <label
+                                key={value}
+                                className={cn(
+                                  'flex cursor-pointer items-center gap-2 rounded-[var(--radius-action)] border px-4 py-2.5 text-sm transition-colors',
+                                  property.kind === value
+                                    ? 'border-line-strong bg-accent-subtle'
+                                    : 'border-line hover:bg-sunken',
+                                )}
+                              >
+                                <input
+                                  type="radio"
+                                  name="kind"
+                                  className="sr-only"
+                                  checked={property.kind === value}
+                                  onChange={() => setProperty({ ...property, kind: value })}
+                                />
+                                <Icon className="size-4" aria-hidden />
+                                {t(key)}
+                              </label>
+                            ))}
+                          </div>
+                        </fieldset>
+                      )}
 
                       <div className="grid gap-5 sm:grid-cols-4">
-                        <Field label={t('area')}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              type="number"
-                              min={1}
-                              inputMode="numeric"
-                              value={property.area ?? ''}
-                              onChange={(e) =>
-                                setProperty({
-                                  ...property,
-                                  area: e.target.value ? Number(e.target.value) : null,
-                                })
-                              }
-                            />
-                          )}
-                        </Field>
-                        <Field label={t('rooms')}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              type="number"
-                              min={1}
-                              step={0.5}
-                              inputMode="decimal"
-                              value={property.rooms ?? ''}
-                              onChange={(e) =>
-                                setProperty({
-                                  ...property,
-                                  rooms: e.target.value ? Number(e.target.value) : null,
-                                })
-                              }
-                            />
-                          )}
-                        </Field>
-                        <Field label={t('bathrooms')}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              type="number"
-                              min={1}
-                              inputMode="numeric"
-                              value={property.bathrooms ?? ''}
-                              onChange={(e) =>
-                                setProperty({
-                                  ...property,
-                                  bathrooms: e.target.value ? Number(e.target.value) : null,
-                                })
-                              }
-                            />
-                          )}
-                        </Field>
+                        {needs.asksArea && (
+                          <Field label={t('area')}>
+                            {(props) => (
+                              <Input
+                                {...props}
+                                type="number"
+                                min={1}
+                                inputMode="numeric"
+                                value={property.area ?? ''}
+                                onChange={(e) =>
+                                  setProperty({
+                                    ...property,
+                                    area: e.target.value ? Number(e.target.value) : null,
+                                  })
+                                }
+                              />
+                            )}
+                          </Field>
+                        )}
+                        {needs.asksRooms && (
+                          <Field label={office ? t('roomsOffice') : t('rooms')}>
+                            {(props) => (
+                              <Input
+                                {...props}
+                                type="number"
+                                min={1}
+                                step={0.5}
+                                inputMode="decimal"
+                                value={property.rooms ?? ''}
+                                onChange={(e) =>
+                                  setProperty({
+                                    ...property,
+                                    rooms: e.target.value ? Number(e.target.value) : null,
+                                  })
+                                }
+                              />
+                            )}
+                          </Field>
+                        )}
+                        {needs.asksBathrooms && (
+                          <Field label={office ? t('bathroomsOffice') : t('bathrooms')}>
+                            {(props) => (
+                              <Input
+                                {...props}
+                                type="number"
+                                min={1}
+                                inputMode="numeric"
+                                value={property.bathrooms ?? ''}
+                                onChange={(e) =>
+                                  setProperty({
+                                    ...property,
+                                    bathrooms: e.target.value ? Number(e.target.value) : null,
+                                  })
+                                }
+                              />
+                            )}
+                          </Field>
+                        )}
                         <Field label={t('floor')} optional>
                           {(props) => (
                             <Input
@@ -787,23 +816,27 @@ export default function NewRequestPage() {
                             setProperty({ ...property, hasElevator: e.target.checked })
                           }
                         />
-                        <Checkbox
-                          label={t('pets')}
-                          checked={property.hasPets}
-                          onChange={(e) =>
-                            setProperty({ ...property, hasPets: e.target.checked })
-                          }
-                        />
-                        <Checkbox
-                          label={t('effort')}
-                          checked={property.needsExtraEffort}
-                          onChange={(e) =>
-                            setProperty({
-                              ...property,
-                              needsExtraEffort: e.target.checked,
-                            })
-                          }
-                        />
+                        {needs.asksPets && (
+                          <Checkbox
+                            label={t('pets')}
+                            checked={property.hasPets}
+                            onChange={(e) =>
+                              setProperty({ ...property, hasPets: e.target.checked })
+                            }
+                          />
+                        )}
+                        {needs.asksCondition && (
+                          <Checkbox
+                            label={t('effort')}
+                            checked={property.needsExtraEffort}
+                            onChange={(e) =>
+                              setProperty({
+                                ...property,
+                                needsExtraEffort: e.target.checked,
+                              })
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   )}
@@ -1112,7 +1145,17 @@ export default function NewRequestPage() {
                   <p className="mt-3 text-xs text-ink-tertiary">{t('estimateHint')}</p>
                 </>
               ) : (
-                <p className="mt-2 text-sm text-ink-secondary">{t('estimateWaiting')}</p>
+                /* Names the figure this service is actually waiting on. It
+                   said «Leistung und Fläche fehlen noch» for everything, so on
+                   a window clean the office was told to supply an area the
+                   form no longer has a field for. */
+                <p className="mt-2 text-sm text-ink-secondary">
+                  {needs.asksWindowCount
+                    ? t('estimateWaitingWindows')
+                    : needs.asksFurniturePieces
+                      ? t('estimateWaitingPieces')
+                      : t('estimateWaiting')}
+                </p>
               )}
 
               {missing.length > 0 && (

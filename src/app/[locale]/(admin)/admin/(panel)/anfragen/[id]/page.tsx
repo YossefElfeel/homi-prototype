@@ -36,6 +36,7 @@ import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { areaLabel, figure } from '@/lib/property-size';
 import { estimateHours } from '@/mock/engines/pricing';
+import { durationFacts, hasEnoughToPrice, serviceNeeds } from '@/lib/service-flow';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -144,32 +145,37 @@ export default function RequestDetailPage({
     offers.find((o) => o.requestId === request.id);
 
   /*
-   * Null when nobody has measured the place.
+   * Null when the answers this service is priced on are not all there.
    *
-   * Intake will not create a request without an area, so this is unreachable
-   * from the normal path — but an address can now exist unmeasured (a customer
-   * typed in from a phone call), and defaulting the area to 0 here would print
-   * an hour figure built on nothing. An estimate the office reads out loud has
-   * to come from a measurement or not appear.
+   * The gate used to be «no area, no hours», which was right for a deep clean
+   * and wrong for the two services priced from a count: a window clean carries
+   * no area by design now, so the office would have opened a perfectly
+   * complete request and found the planned duration blank — on the one screen
+   * where that figure is read out loud. Asking the service what it needs gets
+   * both cases right. Defaulting the area to 0 is still refused: `areaTier(0)`
+   * is the cheapest bracket, and an hour figure built on nothing reads exactly
+   * like one built on a measurement.
    */
-  const duration =
-    property.area == null
-      ? null
-      : estimateHours(
-          {
-            service,
-            addOns: chosen,
-            area: property.area,
-            // §5.2 bills every bathroom past the first, so one is the neutral
-            // assumption rather than a guess that moves the price.
-            bathrooms: property.bathrooms ?? 1,
-            hasPets: property.hasPets,
-            needsExtraEffort: property.needsExtraEffort,
-            windowCount: request.windowCount,
-            furniturePieces: request.furniturePieces,
-          },
-          settings,
-        );
+  const duration = !hasEnoughToPrice(service, {
+    area: property.area,
+    windowCount: request.windowCount,
+    furniturePieces: request.furniturePieces,
+  })
+    ? null
+    : estimateHours(
+        {
+          service,
+          addOns: chosen,
+          ...durationFacts(service, property),
+          windowCount: request.windowCount,
+          furniturePieces: request.furniturePieces,
+        },
+        settings,
+      );
+
+  /* Whether the hours came off a count rather than off the §5.2 matrix. */
+  const countPriced =
+    serviceNeeds(service).asksWindowCount || serviceNeeds(service).asksFurniturePieces;
 
   const access = property.access;
 
@@ -415,6 +421,24 @@ export default function RequestDetailPage({
             >
               <dl className="divide-y divide-line-subtle border-y border-line-subtle">
                 <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
+                {/*
+                  The count the whole quote rests on, and it was on no office
+                  screen at all: the panel showed the service name, the add-ons
+                  and the hours, and the customer's «18 Fensterflügel» lived
+                  only inside the arithmetic. Now that the same request carries
+                  no floor area either, the row underneath it reads «—» and the
+                  number that replaced it has to be visible.
+                */}
+                {request.windowCount != null && (
+                  <Row label={t('windowCount')}>
+                    <span data-numeric>{request.windowCount}</span>
+                  </Row>
+                )}
+                {request.furniturePieces != null && (
+                  <Row label={t('furniturePieces')}>
+                    <span data-numeric>{request.furniturePieces}</span>
+                  </Row>
+                )}
                 <Row label={t('addOns')}>
                   {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddOns')}
                 </Row>
@@ -426,7 +450,13 @@ export default function RequestDetailPage({
                   )}
                 </Row>
               </dl>
-              <p className="pt-3 text-xs text-ink-tertiary">{t('estimatedNote')}</p>
+              {/* The note names the inputs that were actually used. It said
+                  «aus Fläche, Bädern und Zustand» for every request, which is
+                  a description of the §5.2 matrix — and the matrix is not
+                  consulted at all for a service priced by count. */}
+              <p className="pt-3 text-xs text-ink-tertiary">
+                {countPriced ? t('estimatedNoteCount') : t('estimatedNote')}
+              </p>
             </CollapsibleSection>
 
             <CollapsibleSection

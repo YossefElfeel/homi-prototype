@@ -1484,9 +1484,18 @@ export const useStore = create<StoreState>()(
             postcode: input.postcode,
             city: input.city,
             kind: input.kind,
-            area: input.area ?? 0,
-            rooms: input.rooms ?? 0,
-            bathrooms: input.bathrooms ?? 1,
+            /*
+             * Absent, not zero. `Property.area` is optional precisely so that
+             * "nobody has measured it" and "it measures nothing" stay
+             * different facts — and now that window cleaning and furniture
+             * assembly no longer ask for a size they never priced, this is the
+             * path that would have written the lie. A 0 m² flat reads as a
+             * measurement, sorts to the top of the list and prices; `rooms: 0`
+             * prints «0 Zi.» on the request the office opens.
+             */
+            area: input.area ?? undefined,
+            rooms: input.rooms ?? undefined,
+            bathrooms: input.bathrooms ?? undefined,
             floor: input.floor,
             hasElevator: input.hasElevator,
             hasPets: input.hasPets,

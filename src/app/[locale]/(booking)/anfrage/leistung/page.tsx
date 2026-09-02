@@ -12,6 +12,7 @@ import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { durationRange } from '@/mock/engines/pricing';
 import { useHydrated, useStore } from '@/mock/store';
 import { isOffered } from '@/lib/service-catalogue';
+import { serviceNeeds } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
@@ -84,13 +85,16 @@ export default function ServiceStep({
   }, [hydrated, leistung, abo, plz, services, plans, draft.property, draft.planIntent, updateDraft]);
 
   const selected = services.find((s) => s.slug === draft.serviceSlug);
-  const needsWindows = selected?.slug === 'fensterreinigung';
-  const needsPieces = selected?.slug === 'moebelmontage';
+  /* Read off the record rather than matched against two slugs written here.
+     `calc: 'perUnit'` is what makes a service counted, and it is the same flag
+     the pricing engine tests — so a second counted service the owner adds gets
+     the count field without anybody remembering this line. */
+  const needs = serviceNeeds(selected);
 
   const complete =
     Boolean(selected) &&
-    (!needsWindows || Boolean(draft.windowCount)) &&
-    (!needsPieces || Boolean(draft.furniturePieces));
+    (!needs.asksWindowCount || Boolean(draft.windowCount)) &&
+    (!needs.asksFurniturePieces || Boolean(draft.furniturePieces));
 
   return (
     <BookingStep step="leistung" title={t('title')} lead={t('lead')} canContinue={complete}>
@@ -175,7 +179,7 @@ export default function ServiceStep({
         </ul>
       </fieldset>
 
-      {needsWindows && (
+      {needs.asksWindowCount && (
         <Field label={t('windowsLabel')} hint={t('windowsHint')} className="mt-8 max-w-xs">
           {(props) => (
             <Input
@@ -192,7 +196,7 @@ export default function ServiceStep({
         </Field>
       )}
 
-      {needsPieces && (
+      {needs.asksFurniturePieces && (
         <Field label={t('piecesLabel')} hint={t('piecesHint')} className="mt-8 max-w-xs">
           {(props) => (
             <Input
