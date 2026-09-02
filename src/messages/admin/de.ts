@@ -381,9 +381,13 @@ export const adminDe = {
     kindApartment: 'Wohnung',
     kindHouse: 'Haus',
     kindOffice: 'Büro',
+    /* Replaces the radio group when the service already answered it. */
+    kindFromService: '{service} — wir rechnen mit einem Büro.',
     area: 'Fläche m²',
     rooms: 'Zimmer',
+    roomsOffice: 'Räume',
     bathrooms: 'Bäder',
+    bathroomsOffice: 'Toiletten',
     floor: 'Stockwerk',
     elevator: 'Lift vorhanden',
     pets: 'Haustiere im Haushalt',
@@ -435,6 +439,10 @@ export const adminDe = {
 
     estimateTitle: 'Preisrahmen',
     estimateWaiting: 'Leistung und Fläche fehlen noch — sobald beides steht, rechnet der Rahmen mit.',
+    estimateWaitingWindows:
+      'Leistung und Anzahl Fensterflügel fehlen noch — sobald beides steht, rechnet der Rahmen mit.',
+    estimateWaitingPieces:
+      'Leistung und Anzahl Möbelstücke fehlen noch — sobald beides steht, rechnet der Rahmen mit.',
     estimateHint: 'Richtwert wie auf der Website. Verbindlich wird erst die Offerte.',
     estimateHours: 'Geplante Dauer',
     hoursValue: '{hours} Std.',
@@ -492,8 +500,14 @@ export const adminDe = {
     serviceTitle: 'Leistung',
     addOns: 'Zusatzleistungen',
     noAddOns: 'Keine',
+    windowCount: 'Anzahl Fensterflügel',
+    furniturePieces: 'Anzahl Möbelstücke',
     estimated: 'Geschätzte Dauer',
     estimatedNote: 'Vom System aus Fläche, Bädern und Zustand berechnet.',
+    /* The §5.2 matrix is not consulted for a service billed by count, so the
+       note that names its inputs would be describing arithmetic that did not
+       happen. */
+    estimatedNoteCount: 'Vom System aus der erfassten Anzahl berechnet.',
     estimatedNoArea: 'Keine Fläche erfasst',
     preferredTitle: 'Wunschtermin',
     flexible: 'Flexibel',

@@ -332,9 +332,13 @@ export const adminEn: typeof adminDe = {
     kindApartment: 'Apartment',
     kindHouse: 'House',
     kindOffice: 'Office',
+    /* Replaces the radio group when the service already answered it. */
+    kindFromService: '{service} — we are pricing this as an office.',
     area: 'Area m²',
     rooms: 'Rooms',
+    roomsOffice: 'Rooms',
     bathrooms: 'Bathrooms',
+    bathroomsOffice: 'Toilets',
     floor: 'Floor',
     elevator: 'Lift available',
     pets: 'Pets in the household',
@@ -386,6 +390,10 @@ export const adminEn: typeof adminDe = {
 
     estimateTitle: 'Price range',
     estimateWaiting: 'Service and area are still missing — the range computes as soon as both are in.',
+    estimateWaitingWindows:
+      'Service and the number of window sashes are still missing — the range computes as soon as both are in.',
+    estimateWaitingPieces:
+      'Service and the number of furniture pieces are still missing — the range computes as soon as both are in.',
     estimateHint: 'A guide figure, as on the website. Only the quote is binding.',
     estimateHours: 'Planned duration',
     hoursValue: '{hours} h',
@@ -440,8 +448,12 @@ export const adminEn: typeof adminDe = {
     serviceTitle: 'Service',
     addOns: 'Add-ons',
     noAddOns: 'None',
+    windowCount: 'Window sashes',
+    furniturePieces: 'Pieces of furniture',
     estimated: 'Estimated duration',
     estimatedNote: 'Calculated by the system from area, bathrooms and condition.',
+    /* The §5.2 matrix is not consulted for a service billed by count. */
+    estimatedNoteCount: 'Calculated by the system from the recorded count.',
     estimatedNoArea: 'No floor area on file',
     preferredTitle: 'Preferred time',
     flexible: 'Flexible',

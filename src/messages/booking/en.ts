@@ -40,8 +40,10 @@ export const bookingEn: typeof bookingDe = {
     durationUnit: 'By count',
     windowsLabel: 'How many window sashes?',
     windowsHint: 'Count the sashes, not the rooms. Five sashes equal half an hour.',
+    windowsSummary: 'Window sashes',
     piecesLabel: 'How many pieces of furniture?',
     piecesHint: 'A rough number is fine. You can add a photo later.',
+    piecesSummary: 'Pieces of furniture',
   },
 
   property: {
@@ -56,9 +58,19 @@ export const bookingEn: typeof bookingDe = {
     kindApartment: 'Flat',
     kindHouse: 'House',
     kindOffice: 'Office',
+    /* Replaces the radio group when the service already answered it — the
+       control is gone, so the fact has to be said out loud instead. */
+    kindFromService: '{service} — we are pricing this as an office.',
     area: 'Floor area in m²',
     rooms: 'Rooms',
+    /* A workplace has rooms and toilets, not bedrooms and bathrooms. */
+    roomsOffice: 'Rooms',
+    roomsShort: 'rooms',
+    roomsShortOffice: 'rooms',
     bathrooms: 'Bathrooms',
+    bathroomsOffice: 'Toilets',
+    bathroomsShort: 'bath',
+    bathroomsShortOffice: 'WC',
     floor: 'Floor',
     floorGround: 'Ground floor',
     elevator: 'Lift available',
@@ -74,6 +86,9 @@ export const bookingEn: typeof bookingDe = {
     coverageOutsideBody:
       'Postcode {postcode} is not one of our eight municipalities, so we cannot take a request for it. If you have another address inside the area, enter that one instead.',
     coverageShowAreas: 'See the service area',
+    savedUnmeasuredTitle: 'This property has no floor area on file',
+    savedUnmeasuredBody:
+      'We estimate the duration — and therefore the price — from the floor area, so we cannot give you a figure for this service without it. Please enter the property again.',
   },
 
   addons: {

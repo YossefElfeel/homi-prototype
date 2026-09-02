@@ -89,7 +89,11 @@ export const FLOWS: Flow[] = [
     en: 'Making a request',
     actors: ['visitor', 'customer', 'owner'],
     entries: [
-      ok('Wizard, 8 steps', '/anfrage', 'Public, no account — §8.3'),
+      added(
+        'Wizard, 7 or 8 steps — the service decides',
+        '/anfrage',
+        'Public, no account — §8.3. It was eight for everybody, and «Zusätze» was a full screen reading «for this service there are no extras» for the four services that have none. The step list is derived from the catalogue now, so the rail counts what this request actually has',
+      ),
       added(
         'Take one over the phone',
         '/admin/anfragen/neu',
@@ -108,6 +112,26 @@ export const FLOWS: Flow[] = [
         '8700 inside, 8001 outside, 80 invalid. "Outside" now blocks "continue" — for a saved property too',
       ),
       ok('Live price range', '/anfrage/leistung', 'Counts along from service and area'),
+      added(
+        'The property step asks only what this service is priced on',
+        '/anfrage/objekt',
+        'Window cleaning and furniture assembly are priced from a count — `durationProfile: none` makes the estimator skip area, bathrooms, pets and condition entirely — and the step refused to continue until all three numbers had been typed anyway. They are gone for those two services, and the price is unchanged to the rappen',
+      ),
+      added(
+        'Office cleaning stops asking what kind of property it is',
+        '/anfrage/objekt',
+        'The service names it. The radio group is replaced by a sentence, the saved-property list shows only offices, and «Haustiere im Haushalt» — which was quietly adding §5.2’s half hour to an office quote — is not asked',
+      ),
+      added(
+        'The count reaches the confirmation screen',
+        '/anfrage/pruefen',
+        '«24 Fensterflügel» is the entire basis of the price and appeared on no summary: not in the rail, which printed the flat’s m² instead, and not on «Alles richtig?». It is the one answer that could not be checked against anything else on the page',
+      ),
+      added(
+        'A stored address with no measurement is refused for a service that needs one',
+        '/anfrage/objekt',
+        'Picking a saved property skipped every check. `Property.area` is optional — the office can file an address from a phone call — so a deep clean could be requested with no area at all, and the quote builder prices that at `areaTier(0)`, the cheapest bracket on the sheet',
+      ),
       ok('Record the access method', '/anfrage/zutritt', 'Four methods, codes masked'),
       ok('The draft survives a reload', '/anfrage', '30 days, §20.1'),
       added(
@@ -167,6 +191,10 @@ export const FLOWS: Flow[] = [
         'Decline with a reason',
         '/admin/anfragen/req_2?action=reject',
         '§4.1. A dialog over the list rather than a page of its own — the refusal is decided where the row is',
+      ),
+      open(
+        'Heavily soiled windows cost more',
+        '«Der Zustand erfordert deutlich mehr Aufwand» adds an hour on the §5.2 matrix, and the matrix is not consulted for a service priced by count — so the checkbox was on the window-cleaning screen setting a flag that moved nothing. It is not shown there any more rather than made to work: what a filthy window is worth is a price decision, not a UI one. §21a on /open-questions',
       ),
     ],
   },

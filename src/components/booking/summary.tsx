@@ -6,6 +6,7 @@ import { Info } from 'lucide-react';
 import type { Locale } from '@/i18n/routing';
 import { MoneyRange } from '@/components/ui/money';
 import { useStore } from '@/mock/store';
+import { serviceNeeds } from '@/lib/service-flow';
 import { useEstimate } from './use-estimate';
 
 /**
@@ -17,6 +18,7 @@ import { useEstimate } from './use-estimate';
  */
 export function BookingSummary({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('booking.shell');
+  const ts = useTranslations('booking.service');
   const locale = useLocale() as Locale;
   const draft = useStore((s) => s.draft);
   const services = useStore((s) => s.services);
@@ -25,6 +27,7 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
   const estimate = useEstimate();
 
   const service = services.find((s) => s.slug === draft.serviceSlug);
+  const needs = serviceNeeds(service);
   const saved = draft.propertyId ? properties.find((p) => p.id === draft.propertyId) : null;
   const chosenAddOns = addOns.filter((a) => draft.addOnIds.includes(a.id));
 
@@ -41,9 +44,25 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
       <dl className={compact ? 'space-y-2.5' : 'mt-4 space-y-2.5'}>
         {service && <Row label={t('steps.leistung')}>{service.name[locale]}</Row>}
         {address && <Row label={t('steps.objekt')}>{address}</Row>}
-        {(saved?.area ?? draft.property.area) && (
+        {/*
+          The quantity this service is actually priced on. The rail printed m²
+          for everything, so a window clean showed the floor area of the flat —
+          a number the quote does not contain — and never showed the count of
+          windows, which is the only figure moving the estimate underneath it.
+        */}
+        {needs.asksArea && (saved?.area ?? draft.property.area) && (
           <Row label="m²">
             <span data-numeric>{saved?.area ?? draft.property.area}</span>
+          </Row>
+        )}
+        {needs.asksWindowCount && draft.windowCount && (
+          <Row label={ts('windowsSummary')}>
+            <span data-numeric>{draft.windowCount}</span>
+          </Row>
+        )}
+        {needs.asksFurniturePieces && draft.furniturePieces && (
+          <Row label={ts('piecesSummary')}>
+            <span data-numeric>{draft.furniturePieces}</span>
           </Row>
         )}
         {chosenAddOns.length > 0 && (

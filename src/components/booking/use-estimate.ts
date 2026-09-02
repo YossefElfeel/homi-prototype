@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useStore } from '@/mock/store';
 import { priceEstimate, type Estimate } from '@/mock/engines/pricing';
+import { durationFacts, hasEnoughToPrice } from '@/lib/service-flow';
 import type {
   AddOn,
   ID,
@@ -66,25 +67,25 @@ export function computeEstimate(
   const hasPets = saved?.hasPets ?? source.property.hasPets;
   const needsExtraEffort = saved?.needsExtraEffort ?? source.property.needsExtraEffort;
 
-  const perUnitReady =
-    service.calc === 'perUnit'
-      ? Boolean(source.windowCount)
-      : service.slug === 'moebelmontage'
-        ? Boolean(source.furniturePieces)
-        : false;
-
-  // Area-driven services need an area; counted services need a count.
-  if (service.durationProfile !== 'none' && !area) return null;
-  if (service.durationProfile === 'none' && !perUnitReady) return null;
+  /* Every quantity this service asked for, and nothing else — see
+     `hasEnoughToPrice`. The old gate assumed every profile-less service
+     carried a count, which left `fassadenreinigung` permanently unpriceable
+     the moment the owner switched it back on. */
+  if (
+    !hasEnoughToPrice(service, {
+      area,
+      windowCount: source.windowCount,
+      furniturePieces: source.furniturePieces,
+    })
+  ) {
+    return null;
+  }
 
   return priceEstimate(
     {
       service,
       addOns: addOns.filter((a) => source.addOnIds.includes(a.id)),
-      area: area ?? 0,
-      bathrooms: bathrooms ?? 1,
-      hasPets: hasPets ?? false,
-      needsExtraEffort: needsExtraEffort ?? false,
+      ...durationFacts(service, { area, bathrooms, hasPets, needsExtraEffort }),
       windowCount: source.windowCount ?? undefined,
       furniturePieces: source.furniturePieces ?? undefined,
       /* The estimate a visitor sees while picking a plan is the *quoted*

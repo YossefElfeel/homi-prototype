@@ -119,14 +119,21 @@ export const TRACKS: Track[] = [
     id: 'booking',
     de: 'Anfrage',
     en: 'Request flow',
-    note: 'Wave 2 · mobile first · live price range on every step',
+    note: 'Wave 2 · mobile first · live price range on every step · the step list is the service’s, 7 or 8 long',
     screens: [
       done('13', 'Leistung wählen', 'Choose service', '/anfrage/leistung', [
         'windows count',
         'furniture count',
       ]),
-      done('14', 'Gespeichertes Objekt', 'Saved property', '/anfrage/objekt', ['empty'], 'Visible when the demo role is "Kunde" — switch role in the demo bar'),
-      done('15', 'Neues Objekt', 'New property', '/anfrage/objekt', ['field error']),
+      done('14', 'Gespeichertes Objekt', 'Saved property', '/anfrage/objekt', ['empty', 'unmeasured'], 'Visible when the demo role is "Kunde" — switch role in the demo bar. Under Büroreinigung only the offices are listed; a stored address with no floor area is refused for a service priced on one'),
+      done(
+        '15',
+        'Neues Objekt',
+        'New property',
+        '/anfrage/objekt',
+        ['field error', 'area-driven', 'counted', 'office'],
+        'The fields are the service’s. Fensterreinigung and Möbelmontage ask no size at all; Büroreinigung asks no property type and no pets, and says «Räume»/«Toiletten»',
+      ),
       done(
         '16',
         'Gebietsprüfung',
@@ -135,7 +142,14 @@ export const TRACKS: Track[] = [
         ['inside', 'outside', 'invalid'],
         'Inline state on screen 15 rather than a page of its own — the spec allows this. Try 8700 (inside), 8001 (outside), 80 (invalid). Outside is now a stop, not a warning: it blocks Continue and no request is created',
       ),
-      done('17', 'Zusatzleistungen', 'Add-ons', '/anfrage/extras', ['none for this service']),
+      done(
+        '17',
+        'Zusatzleistungen',
+        'Add-ons',
+        '/anfrage/extras',
+        ['offered'],
+        'Only a step when the service has add-ons — the four cleaning services do, the other three do not, and for those the step is not in the rail at all. Opening the URL under Fensterreinigung sends you on to Zutritt',
+      ),
       done('18', 'Zutritt', 'Access method', '/anfrage/zutritt', [
         'present',
         'key left',

@@ -12,6 +12,7 @@ import { Money, MoneyRange } from '@/components/ui/money';
 import { BookingStep } from '@/components/booking/booking-step';
 import { useEstimate } from '@/components/booking/use-estimate';
 import { useNow, useStore } from '@/mock/store';
+import { hasAddOns, serviceNeeds } from '@/lib/service-flow';
 
 /**
  * Screen 22 — review and submit.
@@ -27,6 +28,8 @@ export default function ReviewStep() {
   const bt = useTranslations('booking.shell');
   const at = useTranslations('booking.access');
   const tt = useTranslations('booking.time');
+  const st = useTranslations('booking.service');
+  const pt = useTranslations('booking.property');
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const router = useRouter();
@@ -42,8 +45,15 @@ export default function ReviewStep() {
   const [sending, setSending] = useState(false);
 
   const service = services.find((s) => s.slug === draft.serviceSlug);
+  const needs = serviceNeeds(service);
   const saved = draft.propertyId ? properties.find((p) => p.id === draft.propertyId) : null;
   const chosen = addOns.filter((a) => draft.addOnIds.includes(a.id));
+  /* Same question the wizard asked: does this request have an add-ons step at
+     all. A row reading «Zusatzleistungen — Keine» with an «Ändern» link beside
+     it, pointing at a screen the visitor was never shown and cannot act on, is
+     worse than no row. */
+  const showAddOns = hasAddOns(addOns, draft.serviceSlug);
+  const office = needs.vocabulary === 'office';
 
   const address = saved
     ? `${saved.street}, ${saved.postcode} ${saved.city}`
@@ -52,10 +62,18 @@ export default function ReviewStep() {
      address from a phone call. The draft's own numbers are always there, since
      the step that collects them will not advance without them. */
   const size = saved ?? draft.property;
+  /* Only the measurements this service was asked for. A window clean carries
+     no area, and printing whatever happened to be left in the draft from an
+     earlier service would put a figure on the confirmation screen that the
+     quote is not built on. */
   const specs = [
-    size.area != null && `${size.area} m²`,
-    size.rooms != null && `${size.rooms} Zi.`,
-    size.bathrooms != null && `${size.bathrooms} Bad`,
+    needs.asksArea && size.area != null && `${size.area} m²`,
+    needs.asksRooms &&
+      size.rooms != null &&
+      `${size.rooms} ${pt(office ? 'roomsShortOffice' : 'roomsShort')}`,
+    needs.asksBathrooms &&
+      size.bathrooms != null &&
+      `${size.bathrooms} ${pt(office ? 'bathroomsShortOffice' : 'bathroomsShort')}`,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -106,17 +124,38 @@ export default function ReviewStep() {
     <BookingStep step="pruefen" title={t('title')} lead={t('lead')} canContinue>
       <dl className="divide-y divide-line-subtle border-y border-line-subtle">
         <Row label={t('sectionService')} href="/anfrage/leistung" edit={t('edit')}>
-          {service?.name[locale] ?? '—'}
+          <span className="block">{service?.name[locale] ?? '—'}</span>
+          {/*
+            The count the whole price rests on, and it appeared nowhere on the
+            confirmation screen. Somebody who typed 24 window leaves on the
+            first step was asked «Alles richtig?» about a page that never
+            mentioned the number — and it is the one answer they cannot check
+            against the address or the date.
+          */}
+          {needs.asksWindowCount && draft.windowCount && (
+            <span data-numeric className="block text-sm text-ink-tertiary">
+              {st('windowsSummary')}: {draft.windowCount}
+            </span>
+          )}
+          {needs.asksFurniturePieces && draft.furniturePieces && (
+            <span data-numeric className="block text-sm text-ink-tertiary">
+              {st('piecesSummary')}: {draft.furniturePieces}
+            </span>
+          )}
         </Row>
         <Row label={t('sectionProperty')} href="/anfrage/objekt" edit={t('edit')}>
           <span className="block">{address}</span>
-          <span data-numeric className="block text-sm text-ink-tertiary">
-            {specs}
-          </span>
+          {specs && (
+            <span data-numeric className="block text-sm text-ink-tertiary">
+              {specs}
+            </span>
+          )}
         </Row>
-        <Row label={t('sectionAddons')} href="/anfrage/extras" edit={t('edit')}>
-          {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddons')}
-        </Row>
+        {showAddOns && (
+          <Row label={t('sectionAddons')} href="/anfrage/extras" edit={t('edit')}>
+            {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddons')}
+          </Row>
+        )}
         <Row label={t('sectionAccess')} href="/anfrage/zutritt" edit={t('edit')}>
           {accessLabel}
         </Row>

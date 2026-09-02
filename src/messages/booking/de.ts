@@ -45,8 +45,10 @@ export const bookingDe = {
     durationUnit: 'Nach Anzahl',
     windowsLabel: 'Wie viele Fensterflügel?',
     windowsHint: 'Zählen Sie die Flügel, nicht die Räume. Fünf Flügel entsprechen einer halben Stunde.',
+    windowsSummary: 'Fensterflügel',
     piecesLabel: 'Wie viele Möbelstücke?',
     piecesHint: 'Ein Richtwert genügt. Details können Sie später als Foto anhängen.',
+    piecesSummary: 'Möbelstücke',
   },
 
   property: {
@@ -61,9 +63,20 @@ export const bookingDe = {
     kindApartment: 'Wohnung',
     kindHouse: 'Haus',
     kindOffice: 'Büro',
+    /* Replaces the radio group when the service already answered it — the
+       control is gone, so the fact has to be said out loud instead. */
+    kindFromService: '{service} — wir rechnen mit einem Büro.',
     area: 'Fläche in m²',
     rooms: 'Zimmer',
+    /* A workplace has «Räume» and «Toiletten». Same two fields, and the
+       residential nouns made the form read as one written for a flat. */
+    roomsOffice: 'Räume',
+    roomsShort: 'Zi.',
+    roomsShortOffice: 'Räume',
     bathrooms: 'Bäder',
+    bathroomsOffice: 'Toiletten',
+    bathroomsShort: 'Bad',
+    bathroomsShortOffice: 'WC',
     floor: 'Stockwerk',
     floorGround: 'Erdgeschoss',
     elevator: 'Lift vorhanden',
@@ -78,6 +91,9 @@ export const bookingDe = {
     coverageOutsideBody:
       'Die PLZ {postcode} gehört nicht zu unseren acht Gemeinden — für diese Adresse können wir keine Anfrage entgegennehmen. Haben Sie ein anderes Objekt im Gebiet, tragen Sie dieses ein.',
     coverageShowAreas: 'Einsatzgebiet ansehen',
+    savedUnmeasuredTitle: 'Für dieses Objekt fehlt die Fläche',
+    savedUnmeasuredBody:
+      'Die Dauer und damit der Preis werden aus der Fläche geschätzt — ohne sie können wir für diese Leistung keinen Richtwert rechnen. Tragen Sie das Objekt bitte neu ein.',
   },
 
   addons: {

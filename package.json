@@ -21,6 +21,7 @@
     "test:coupons": "npx --yes tsx@4 scripts/coupon-test.mts",
     "test:workforce": "npx --yes tsx@4 scripts/workforce-test.mts",
     "test:lang": "npx --yes tsx@4 scripts/lang-check.mts",
+    "test:service-flow": "npx --yes tsx@4 scripts/service-flow-test.mts",
     "test:type-floor": "npx --yes tsx@4 scripts/type-floor-check.mts"
   },
   "dependencies": {

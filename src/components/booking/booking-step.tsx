@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Check, ChevronUp, RotateCcw } from 'lucide-react';
@@ -13,7 +13,14 @@ import { cn } from '@/lib/cn';
 import { useHydrated, useStore } from '@/mock/store';
 import { BookingSummary } from './summary';
 import { useEstimate } from './use-estimate';
-import { BOOKING_STEPS, TOTAL_STEPS, nextStep, prevStep, stepIndex, type BookingStepName } from './steps';
+import {
+  nextStep,
+  prevStep,
+  resumeStep,
+  stepIndex,
+  stepsForService,
+  type BookingStepName,
+} from './steps';
 
 /**
  * The wizard shell. Every step gets the same five things the flow requires:
@@ -43,13 +50,33 @@ export function BookingStep({
   const router = useRouter();
   const hydrated = useHydrated();
   const draft = useStore((s) => s.draft);
+  const addOns = useStore((s) => s.addOns);
   const resetDraft = useStore((s) => s.resetDraft);
   const estimate = useEstimate();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const index = stepIndex(step);
-  const back = prevStep(step);
-  const forward = nextStep(step);
+  /*
+   * The steps this request has, not the eight the wizard can draw. A service
+   * with no add-ons has no «Zusätze» step, so the rail is seven long, Continue
+   * from the property step lands on «Zutritt», and Back from «Zutritt» returns
+   * to where the visitor actually came from rather than to a screen they were
+   * never shown.
+   */
+  const steps = stepsForService(draft.serviceSlug, addOns);
+  const index = stepIndex(step, steps);
+  const back = prevStep(step, steps);
+  const forward = nextStep(step, steps);
+
+  /*
+   * Gated on `hydrated`: the persisted draft arrives asynchronously, so until
+   * it lands every draft looks serviceless and every conditional step looks
+   * skipped — redirecting on that would throw somebody off a step they had
+   * legitimately reached.
+   */
+  useEffect(() => {
+    if (!hydrated || index !== -1) return;
+    router.replace(`/anfrage/${resumeStep(step, steps)}`);
+  }, [hydrated, index, step, steps, router]);
 
   function go() {
     if (onContinue && onContinue() === false) return;
@@ -68,8 +95,8 @@ export function BookingStep({
         className="pt-6"
         label={t('progressLabel')}
         current={index}
-        steps={BOOKING_STEPS.map((name) => ({ name, label: t(`steps.${name}`) }))}
-        caption={`${t('step', { current: index + 1, total: TOTAL_STEPS })} · ${t(
+        steps={steps.map((name) => ({ name, label: t(`steps.${name}`) }))}
+        caption={`${t('step', { current: index + 1, total: steps.length })} · ${t(
           `steps.${step}`,
         )}`}
       />

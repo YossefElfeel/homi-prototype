@@ -9,6 +9,7 @@ import type {
   Settings,
 } from '../schema';
 import { priceEstimate } from './pricing';
+import { durationFacts } from '@/lib/service-flow';
 
 /**
  * Turns a request into a draft set of quote lines.
@@ -39,22 +40,21 @@ export function buildOfferLines({
       service,
       addOns: chosen,
       /*
-       * A measured property is this function's precondition, not something it
-       * can recover from. `areaTier(0)` lands in the *smallest* bracket, so an
-       * unmeasured flat would quote at the cheapest rate on the sheet — the
-       * kind of wrong number nobody queries, because a low price reads as a
-       * good price rather than as a bug.
+       * `durationFacts` decides which of the property's facts this service is
+       * priced on, so the lines the owner starts from and the range the
+       * customer saw in the wizard come out of one rule rather than two.
        *
-       * Nothing reaches here without an area: intake refuses to file a request
-       * until the place is measured, and the unmeasured addresses the customer
-       * form can now create carry no request. The fallback exists because the
-       * field is optional on the type, not because this case is handled.
+       * A *measured* property is still the precondition for an area-driven
+       * service, and still not something this function can recover from:
+       * `areaTier(0)` lands in the smallest bracket, so an unmeasured flat
+       * would quote at the cheapest rate on the sheet — the kind of wrong
+       * number nobody queries, because a low price reads as a good price
+       * rather than as a bug. Intake refuses to file one, on the wizard and on
+       * the phone form alike. What has changed is that an unmeasured property
+       * is now perfectly normal for window cleaning and furniture assembly,
+       * which are priced from a count and never read the area at all.
        */
-      area: property.area ?? 0,
-      // §5.2 bills every bathroom past the first — one adds nothing.
-      bathrooms: property.bathrooms ?? 1,
-      hasPets: property.hasPets,
-      needsExtraEffort: property.needsExtraEffort,
+      ...durationFacts(service, property),
       windowCount: request.windowCount,
       furniturePieces: request.furniturePieces,
     },
