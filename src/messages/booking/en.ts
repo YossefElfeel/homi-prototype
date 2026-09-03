@@ -86,6 +86,19 @@ export const bookingEn: typeof bookingDe = {
     coverageOutsideBody:
       'Postcode {postcode} is not one of our eight municipalities, so we cannot take a request for it. If you have another address inside the area, enter that one instead.',
     coverageShowAreas: 'See the service area',
+    /* The second stop. The question names the address above it, or two
+       addresses stand there with no roles and nobody knows which is which. */
+    pickupTitle: 'Collection address',
+    pickupToggle: 'The furniture has to be collected from somewhere else first',
+    pickupHint:
+      'A shop, the old flat, a storage unit. The assembly happens at the address above.',
+    pickupNote: 'What we need to know about the collection',
+    pickupNoteHint:
+      'For example: it is in the cellar, deliveries go through the yard, the collection slip is ready.',
+    /* §5.1 in one sentence. Not a stop: the service area is about where the
+       work happens, and a collection is a detour. */
+    pickupOutside:
+      'This address is outside our eight municipalities. We can still take the request — we will look at it and put any travel cost on the quote.',
     savedUnmeasuredTitle: 'This property has no floor area on file',
     savedUnmeasuredBody:
       'We estimate the duration — and therefore the price — from the floor area, so we cannot give you a figure for this service without it. Please enter the property again.',

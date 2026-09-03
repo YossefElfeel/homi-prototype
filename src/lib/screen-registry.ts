@@ -131,8 +131,8 @@ export const TRACKS: Track[] = [
         'Neues Objekt',
         'New property',
         '/anfrage/objekt',
-        ['field error', 'area-driven', 'counted', 'office'],
-        'The fields are the service’s. Fensterreinigung and Möbelmontage ask no size at all; Büroreinigung asks no property type and no pets, and says «Räume»/«Toiletten»',
+        ['field error', 'area-driven', 'counted', 'office', 'two stops'],
+        'The fields are the service’s. Fensterreinigung and Möbelmontage ask no size at all; Büroreinigung asks no property type and no pets, and says «Räume»/«Toiletten». Möbelmontage alone offers an optional collection address — tick «Die Möbel müssen zuerst woanders abgeholt werden»',
       ),
       done(
         '16',

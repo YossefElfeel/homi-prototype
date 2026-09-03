@@ -23,7 +23,7 @@ import { computeEstimate } from '@/components/booking/use-estimate';
 import { addDays, dayBlockReason, startOfDay } from '@/mock/engines/availability';
 import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
-import type { PropertyKind, TimeBand } from '@/mock/schema';
+import type { PickupLocation, PropertyKind, TimeBand } from '@/mock/schema';
 import { isOffered } from '@/lib/service-catalogue';
 import { serviceNeeds } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
@@ -57,6 +57,15 @@ const ACCESS_LABELS: Record<string, string> = {
 const DAYS_SHOWN = 28;
 
 const NEW_PROPERTY = '__new__';
+
+/** A blank second stop. Same shape the wizard starts one with. */
+const emptyPickup = (): PickupLocation => ({
+  street: '',
+  postcode: '',
+  city: '',
+  floor: 0,
+  hasElevator: false,
+});
 
 const emptyProperty = () => ({
   street: '',
@@ -148,6 +157,7 @@ export default function NewRequestPage() {
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [windowCount, setWindowCount] = useState<number | null>(null);
   const [furniturePieces, setFurniturePieces] = useState<number | null>(null);
+  const [pickup, setPickup] = useState<PickupLocation | null>(null);
   const [date, setDate] = useState<string | null>(null);
   const [band, setBand] = useState<TimeBand | null>(null);
   const [flexible, setFlexible] = useState(false);
@@ -190,6 +200,7 @@ export default function NewRequestPage() {
     setAddOnIds(draft.addOnIds);
     setWindowCount(draft.windowCount ?? null);
     setFurniturePieces(draft.furniturePieces ?? null);
+    setPickup(draft.pickup ?? null);
     setFlexible(draft.preferred.flexible);
     setDate(draft.preferred.date ?? null);
     setBand(draft.preferred.band ?? null);
@@ -267,16 +278,23 @@ export default function NewRequestPage() {
      collect an area, a room count and a bathroom count before it could file a
      phoned-in window clean — three questions to read down the line whose
      answers the quote would never use. */
-  const propertyReady = usingSaved
-    ? Boolean(savedProperty)
-    : Boolean(
-        property.street &&
-          coverage.state !== 'invalid' &&
-          property.city &&
-          (!needs.asksArea || property.area) &&
-          (!needs.asksRooms || property.rooms) &&
-          (!needs.asksBathrooms || property.bathrooms),
-      );
+  /* Optional, but not blank — the same rule the wizard applies. A ticked box
+     with no street on it tells the crew nothing and reads to whoever picks the
+     job up as a form half filled in. */
+  const pickupReady = pickup === null || Boolean(pickup.street && pickup.postcode && pickup.city);
+
+  const propertyReady =
+    pickupReady &&
+    (usingSaved
+      ? Boolean(savedProperty)
+      : Boolean(
+          property.street &&
+            coverage.state !== 'invalid' &&
+            property.city &&
+            (!needs.asksArea || property.area) &&
+            (!needs.asksRooms || property.rooms) &&
+            (!needs.asksBathrooms || property.bathrooms),
+        ));
 
   const countNeeded =
     (needs.asksWindowCount && !windowCount) ||
@@ -353,6 +371,7 @@ export default function NewRequestPage() {
         addOnIds,
         windowCount: windowCount ?? undefined,
         furniturePieces: furniturePieces ?? undefined,
+        pickup: pickup ?? undefined,
         preferred,
         customerNote: customerNote.trim() || undefined,
         internalNote: internalNote.trim() || undefined,
@@ -373,6 +392,7 @@ export default function NewRequestPage() {
         addOnIds,
         windowCount,
         furniturePieces,
+        pickup,
         preferred,
         customerNote,
         internalNote,
@@ -416,6 +436,7 @@ export default function NewRequestPage() {
         addOnIds,
         windowCount: windowCount ?? undefined,
         furniturePieces: furniturePieces ?? undefined,
+        pickup: pickup ?? undefined,
         preferred,
         customerNote: customerNote.trim() || undefined,
         internalNote: internalNote.trim() || undefined,
@@ -436,6 +457,7 @@ export default function NewRequestPage() {
         addOnIds,
         windowCount,
         furniturePieces,
+        pickup,
         preferred,
         customerNote,
         internalNote,
@@ -840,6 +862,101 @@ export default function NewRequestPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Outside the `!usingSaved` branch, exactly as on the
+                      wizard: the assembly address is often one already on
+                      file while the furniture is still in a shop. */}
+                  {needs.asksPickupAddress && (
+                    <div className="border-t border-line-subtle pt-5">
+                      <Checkbox
+                        label={t('pickupToggle')}
+                        checked={pickup !== null}
+                        onChange={(e) => setPickup(e.target.checked ? emptyPickup() : null)}
+                      />
+
+                      {pickup && (
+                        <div className="mt-5 space-y-5">
+                          <Field label={t('street')}>
+                            {(props) => (
+                              <Input
+                                {...props}
+                                value={pickup.street}
+                                onChange={(e) =>
+                                  setPickup({ ...pickup, street: e.target.value })
+                                }
+                              />
+                            )}
+                          </Field>
+
+                          <div className="grid gap-5 sm:grid-cols-[8rem_1fr_8rem]">
+                            <Field label={t('postcode')}>
+                              {(props) => (
+                                <Input
+                                  {...props}
+                                  value={pickup.postcode}
+                                  inputMode="numeric"
+                                  maxLength={4}
+                                  onChange={(e) =>
+                                    setPickup({
+                                      ...pickup,
+                                      postcode: e.target.value.replace(/\D/g, ''),
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                            <Field label={t('city')}>
+                              {(props) => (
+                                <Input
+                                  {...props}
+                                  value={pickup.city}
+                                  onChange={(e) => setPickup({ ...pickup, city: e.target.value })}
+                                />
+                              )}
+                            </Field>
+                            <Field label={t('floor')} optional>
+                              {(props) => (
+                                <Input
+                                  {...props}
+                                  type="number"
+                                  inputMode="numeric"
+                                  value={pickup.floor}
+                                  onChange={(e) =>
+                                    setPickup({ ...pickup, floor: Number(e.target.value) || 0 })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
+                          <Checkbox
+                            label={t('elevator')}
+                            checked={pickup.hasElevator}
+                            onChange={(e) =>
+                              setPickup({ ...pickup, hasElevator: e.target.checked })
+                            }
+                          />
+
+                          <Field label={t('pickupNote')} optional>
+                            {(props) => (
+                              <Textarea
+                                {...props}
+                                value={pickup.note ?? ''}
+                                onChange={(e) => setPickup({ ...pickup, note: e.target.value })}
+                              />
+                            )}
+                          </Field>
+
+                          {/* §5.1: taken, then priced by hand. The office is
+                              the one writing that quote, so it is told here. */}
+                          {checkCoverage(pickup.postcode, settings.servedPostcodes).state ===
+                            'outside' && (
+                            <p className="text-sm text-status-warning-fg">{t('pickupOutside')}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CollapsibleSection>
@@ -905,7 +1022,7 @@ export default function NewRequestPage() {
                   )}
                 </Field>
 
-                {service?.calc === 'perUnit' && (
+                {needs.asksWindowCount && (
                   <Field label={t('windowCount')} hint={t('countHint')}>
                     {(props) => (
                       <Input
@@ -922,7 +1039,7 @@ export default function NewRequestPage() {
                   </Field>
                 )}
 
-                {service?.slug === 'moebelmontage' && (
+                {needs.asksFurniturePieces && (
                   <Field label={t('furniturePieces')} hint={t('countHint')}>
                     {(props) => (
                       <Input

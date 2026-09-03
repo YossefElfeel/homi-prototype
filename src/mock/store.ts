@@ -34,6 +34,7 @@ import type {
   Payment,
   PaymentMethod,
   Plan,
+  PickupLocation,
   PreferredTime,
   Subscription,
   Property,
@@ -467,6 +468,7 @@ export function emptyDraft(): RequestDraft {
     addOnIds: [],
     windowCount: null,
     furniturePieces: null,
+    pickup: null,
     access: null,
     preferred: { flexible: false },
     photos: [],
@@ -607,6 +609,8 @@ interface StoreState {
       addOnIds: ID[];
       windowCount?: number | null;
       furniturePieces?: number | null;
+      /** The second stop on an assembly job — see `ServiceRequest.pickup`. */
+      pickup?: PickupLocation | null;
       preferred: PreferredTime;
       customerNote?: string;
       internalNote?: string;
@@ -1526,6 +1530,11 @@ export const useStore = create<StoreState>()(
           addOnIds: draft.addOnIds,
           windowCount: draft.windowCount ?? undefined,
           furniturePieces: draft.furniturePieces ?? undefined,
+          /* Only when the visitor actually gave one. `pickup: null` on the
+             draft means "no second stop", and writing an empty object here
+             would put a blank address on the request that every downstream
+             screen would then draw a heading for. */
+          pickup: draft.pickup ?? undefined,
           preferred: draft.preferred,
           photoIds: draft.photos.map((p) => p.id),
           customerNote: draft.customerNote || undefined,
@@ -1758,6 +1767,7 @@ export const useStore = create<StoreState>()(
           addOnIds: input.addOnIds,
           windowCount: input.windowCount ?? undefined,
           furniturePieces: input.furniturePieces ?? undefined,
+          pickup: input.pickup ?? undefined,
           preferred: input.preferred,
           photoIds: [],
           customerNote: input.customerNote?.trim() || undefined,

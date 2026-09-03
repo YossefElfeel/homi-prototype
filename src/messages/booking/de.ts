@@ -91,6 +91,22 @@ export const bookingDe = {
     coverageOutsideBody:
       'Die PLZ {postcode} gehört nicht zu unseren acht Gemeinden — für diese Adresse können wir keine Anfrage entgegennehmen. Haben Sie ein anderes Objekt im Gebiet, tragen Sie dieses ein.',
     coverageShowAreas: 'Einsatzgebiet ansehen',
+    /*
+     * Der zweite Halt. Die Frage nennt das Objekt oben beim Namen — «dort, wo
+     * montiert wird» —, weil sonst zwei Adressen ohne Rollen untereinander
+     * stehen und niemand weiss, welche welche ist.
+     */
+    pickupTitle: 'Abholadresse',
+    pickupToggle: 'Die Möbel müssen zuerst woanders abgeholt werden',
+    pickupHint:
+      'Zum Beispiel im Möbelhaus, in der alten Wohnung oder im Lager. Montiert wird an der Adresse oben.',
+    pickupNote: 'Was wir zur Abholung wissen müssen',
+    pickupNoteHint:
+      'Zum Beispiel: im Keller, Anlieferung nur über den Hof, Abholschein liegt bereit.',
+    /* §5.1 in einem Satz. Kein Stopp: das Einsatzgebiet gilt für den Einsatz,
+       und eine Abholung ist ein Umweg. */
+    pickupOutside:
+      'Diese Adresse liegt ausserhalb unserer acht Gemeinden. Die Anfrage können wir trotzdem entgegennehmen — wir schauen sie an und weisen allfällige Anfahrtskosten in der Offerte aus.',
     savedUnmeasuredTitle: 'Für dieses Objekt fehlt die Fläche',
     savedUnmeasuredBody:
       'Die Dauer und damit der Preis werden aus der Fläche geschätzt — ohne sie können wir für diese Leistung keinen Richtwert rechnen. Tragen Sie das Objekt bitte neu ein.',

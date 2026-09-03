@@ -255,6 +255,14 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§5.1a',
+    question: 'What does a second address on a job cost?',
+    decision:
+      'OPEN, and the flow records it without pricing it. A furniture assembly can start somewhere else — the wardrobe is at the shop, the desk in the old flat, the bed in a storage unit — so the property step now offers an optional collection address, and it reaches the office panel, the quote builder’s source request and the customer’s own record. What it deliberately does not do is move a number. §5.1 already answers a detour: inside the free radius travel is included, beyond it the job goes to manual review and the owner puts the fee on the quote by hand — and the pricing engine has no distance input at all, so any figure invented here would be invented twice over. Three things the business has to settle. Whether a collection is billed at all, or absorbed the way travel inside the radius is. Whether it is billed by distance, which needs a distance the flow does not collect, or as a flat call-out, which is a price nobody has set. And whether a collection *outside* the eight municipalities is acceptable at all — the area is a hard stop for where work happens (§6, enforced at intake) and the screen currently treats a collection as a detour rather than a second job, which is a reading, not a ruling.',
+    screens: '15, 52a, 53',
+    state: 'open',
+  },
+  {
     ref: '§21a',
     question:
       'Do the condition surcharge and the pet surcharge apply to a service priced by count?',

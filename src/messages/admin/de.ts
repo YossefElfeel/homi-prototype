@@ -383,6 +383,13 @@ export const adminDe = {
     kindOffice: 'Büro',
     /* Replaces the radio group when the service already answered it. */
     kindFromService: '{service} — wir rechnen mit einem Büro.',
+    /* Der zweite Halt. Steht im Objekt-Abschnitt, weil der die Frage «wohin
+       schicke ich jemanden» beantwortet — bei einer Montage sind das zwei
+       Orte. */
+    pickupToggle: 'Möbel werden zuerst woanders abgeholt',
+    pickupNote: 'Hinweis zur Abholung',
+    pickupOutside:
+      'Ausserhalb des Einsatzgebiets. Anfahrt nach §5.1 von Hand in der Offerte ausweisen.',
     area: 'Fläche m²',
     rooms: 'Zimmer',
     roomsOffice: 'Räume',
@@ -509,6 +516,13 @@ export const adminDe = {
        happen. */
     estimatedNoteCount: 'Vom System aus der erfassten Anzahl berechnet.',
     estimatedNoArea: 'Keine Fläche erfasst',
+    /* Der zweite Halt. Steht im Objekt-Block, weil der die Frage «wohin
+       schicke ich jemanden» beantwortet — und hier lautet die Antwort: an zwei
+       Orte. */
+    pickupTitle: 'Abholadresse',
+    pickupNote: 'Hinweis zur Abholung',
+    pickupOutside:
+      'Ausserhalb des Einsatzgebiets. Anfahrt nach §5.1 von Hand in der Offerte ausweisen.',
     preferredTitle: 'Wunschtermin',
     flexible: 'Flexibel',
     /*

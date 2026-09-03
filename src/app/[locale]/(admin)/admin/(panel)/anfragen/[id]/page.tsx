@@ -16,6 +16,7 @@ import {
   Phone,
   RotateCcw,
   Sparkles,
+  Truck,
   X,
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ import { Field, Textarea } from '@/components/ui/field';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { areaLabel, figure } from '@/lib/property-size';
 import { estimateHours } from '@/mock/engines/pricing';
+import { checkCoverage } from '@/mock/engines/coverage';
 import { durationFacts, hasEnoughToPrice, serviceNeeds } from '@/lib/service-flow';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
@@ -487,6 +489,42 @@ export default function RequestDetailPage({
                 <Row label={t('pets')}>{property.hasPets ? 'Ja' : 'Nein'}</Row>
                 <Row label={t('effort')}>{property.needsExtraEffort ? 'Ja' : 'Nein'}</Row>
               </dl>
+
+              {/*
+                A second stop changes how the day is planned before it changes
+                anything else, so it sits inside the property panel rather than
+                in the notes — the office reads this block to answer "where am
+                I sending somebody", and on these jobs the answer is two places.
+              */}
+              {request.pickup && (
+                <div className="mt-6 border-t border-line-subtle pt-5">
+                  <h3 className="flex items-center gap-2 text-sm font-medium">
+                    <Truck className="size-4 text-ink-tertiary" aria-hidden />
+                    {t('pickupTitle')}
+                  </h3>
+                  <dl className="mt-3 divide-y divide-line-subtle border-y border-line-subtle">
+                    <Row label="Adresse">
+                      {request.pickup.street},{' '}
+                      <span data-numeric>{request.pickup.postcode}</span>{' '}
+                      {request.pickup.city}
+                    </Row>
+                    <Row label={t('floor')}>
+                      <span data-numeric>{request.pickup.floor}</span>
+                    </Row>
+                    <Row label={t('elevator')}>{request.pickup.hasElevator ? 'Ja' : 'Nein'}</Row>
+                    {request.pickup.note && (
+                      <Row label={t('pickupNote')}>{request.pickup.note}</Row>
+                    )}
+                  </dl>
+                  {/* §5.1 rather than a silent number: the flow takes the
+                      request and the travel is priced by hand on the quote —
+                      so the person writing the quote has to be told. */}
+                  {checkCoverage(request.pickup.postcode, settings.servedPostcodes).state !==
+                    'inside' && (
+                    <p className="mt-3 text-xs text-status-warning-fg">{t('pickupOutside')}</p>
+                  )}
+                </div>
+              )}
             </CollapsibleSection>
 
             <CollapsibleSection

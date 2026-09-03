@@ -7,14 +7,23 @@ import { AlertTriangle, Building2, Check, Home, Info, Plus, Store } from 'lucide
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { Field, Input, Checkbox } from '@/components/ui/field';
+import { Field, Input, Checkbox, Textarea } from '@/components/ui/field';
 import { BookingStep } from '@/components/booking/booking-step';
 import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useStore } from '@/mock/store';
-import type { PropertyKind } from '@/mock/schema';
+import type { PickupLocation, PropertyKind } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 import { areaLabel } from '@/lib/property-size';
 import { serviceNeeds } from '@/lib/service-flow';
+
+/** A blank second stop. Ground floor and no lift is the shape of a shop. */
+const emptyPickup = (): PickupLocation => ({
+  street: '',
+  postcode: '',
+  city: '',
+  floor: 0,
+  hasElevator: false,
+});
 
 const KINDS: { value: PropertyKind; icon: typeof Home; key: 'kindApartment' | 'kindHouse' | 'kindOffice' }[] = [
   { value: 'apartment', icon: Building2, key: 'kindApartment' },
@@ -90,6 +99,11 @@ export default function PropertyStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kindLocked, p.kind, p.hasPets]);
 
+  const pickup = draft.pickup;
+  const pickupOn = pickup !== null;
+  const patchPickup = (part: Partial<PickupLocation>) =>
+    updateDraft({ pickup: { ...(pickup ?? emptyPickup()), ...part } });
+
   const usingSaved = Boolean(draft.propertyId);
   const savedProperty = properties.find((x) => x.id === draft.propertyId);
 
@@ -101,6 +115,10 @@ export default function PropertyStep() {
     usingSaved ? (savedProperty?.postcode ?? '') : p.postcode,
     settings.servedPostcodes,
   );
+
+  /* Checked, and deliberately not enforced — see the note beside the message
+     it produces. */
+  const pickupCoverage = checkCoverage(pickup?.postcode ?? '', settings.servedPostcodes);
 
   /*
    * A saved address is not automatically a complete one.
@@ -127,7 +145,19 @@ export default function PropertyStep() {
    * by a rappen: the flow's own definition of a required field said so, and
    * nothing on the screen did.
    */
-  const complete = usingSaved
+  /*
+   * The second stop is optional; a *blank* second stop is not.
+   *
+   * Once somebody has said the furniture is somewhere else, the address is the
+   * whole content of that statement — «yes, collect it» with no street on it
+   * tells the crew nothing and reads to the office as a form half filled in.
+   * Same shape as the access step: choosing a method makes that method's
+   * fields required, and un-choosing it makes them go away.
+   */
+  const pickupComplete =
+    !pickupOn || Boolean(pickup?.street && pickup.postcode && pickup.city);
+
+  const addressComplete = usingSaved
     ? Boolean(savedProperty) && !savedIncomplete
     : Boolean(
         p.street &&
@@ -137,6 +167,8 @@ export default function PropertyStep() {
           (!needs.asksRooms || p.rooms) &&
           (!needs.asksBathrooms || p.bathrooms),
       );
+
+  const complete = addressComplete && pickupComplete;
 
   return (
     <BookingStep
@@ -416,6 +448,134 @@ export default function PropertyStep() {
             )}
           </div>
         </div>
+      )}
+
+      {/*
+        The second stop.
+
+        Outside the `!usingSaved` block on purpose: the assembly address can be
+        a property the customer already has on file while the furniture is
+        still sitting in a shop, and nesting this inside the "type a new
+        address" branch would have hidden the question from exactly the people
+        most likely to need it.
+
+        Optional, and the checkbox is what makes that legible — the fields
+        appear because the visitor said the furniture is somewhere else, not as
+        six more blanks to scroll past.
+      */}
+      {needs.asksPickupAddress && (
+        <section className="mt-10 border-t border-line-subtle pt-8">
+          <Checkbox
+            label={
+              <>
+                {t('pickupToggle')}
+                <span className="mt-1 block text-xs text-ink-tertiary">{t('pickupHint')}</span>
+              </>
+            }
+            checked={pickupOn}
+            onChange={(e) =>
+              updateDraft({ pickup: e.target.checked ? (draft.pickup ?? emptyPickup()) : null })
+            }
+          />
+
+          {pickupOn && pickup && (
+            <div className="mt-6 space-y-6">
+              {/* Only once the fields are there. With the checkbox unticked
+                  there is one address on the screen and it needs no label; with
+                  it ticked there are two, and an unlabelled pair is a puzzle. */}
+              <h2 className="label-type text-ink-tertiary">{t('pickupTitle')}</h2>
+
+              <Field label={t('street')}>
+                {(props) => (
+                  <Input
+                    value={pickup.street}
+                    autoComplete="off"
+                    onChange={(e) => patchPickup({ street: e.target.value })}
+                    {...props}
+                  />
+                )}
+              </Field>
+
+              <div className="grid gap-6 sm:grid-cols-[8rem_1fr]">
+                <Field
+                  label={t('postcode')}
+                  error={
+                    pickup.postcode && pickupCoverage.state === 'invalid'
+                      ? 'Vierstellige PLZ'
+                      : undefined
+                  }
+                >
+                  {(props) => (
+                    <Input
+                      value={pickup.postcode}
+                      inputMode="numeric"
+                      maxLength={4}
+                      onChange={(e) =>
+                        patchPickup({ postcode: e.target.value.replace(/\D/g, '') })
+                      }
+                      {...props}
+                    />
+                  )}
+                </Field>
+                <Field label={t('city')}>
+                  {(props) => (
+                    <Input
+                      value={pickup.city}
+                      onChange={(e) => patchPickup({ city: e.target.value })}
+                      {...props}
+                    />
+                  )}
+                </Field>
+              </div>
+
+              {/*
+                Says what happens rather than refusing. An address outside the
+                eight municipalities is a stop for the *job* — §6, enforced at
+                intake — but a collection is a detour, and §5.1 already answers
+                a detour: past the free radius the job goes to manual review and
+                the owner puts the travel on the quote by hand. So this states
+                that rule instead of blocking, and instead of inventing a
+                surcharge the pricing engine has no input for.
+              */}
+              {pickupCoverage.state === 'outside' && (
+                <p className="flex gap-2 text-sm text-ink-secondary">
+                  <Info className="mt-0.5 size-4 shrink-0 text-ink-tertiary" aria-hidden />
+                  {t('pickupOutside')}
+                </p>
+              )}
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label={t('floor')} optional>
+                  {(props) => (
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={pickup.floor}
+                      onChange={(e) => patchPickup({ floor: Number(e.target.value) || 0 })}
+                      {...props}
+                    />
+                  )}
+                </Field>
+              </div>
+
+              <Checkbox
+                label={t('elevator')}
+                checked={pickup.hasElevator}
+                onChange={(e) => patchPickup({ hasElevator: e.target.checked })}
+              />
+
+              <Field label={t('pickupNote')} hint={t('pickupNoteHint')} optional>
+                {(props) => (
+                  <Textarea
+                    value={pickup.note ?? ''}
+                    onChange={(e) => patchPickup({ note: e.target.value })}
+                    {...props}
+                  />
+                )}
+              </Field>
+            </div>
+          )}
+        </section>
       )}
 
       {/* A stored address with no measurement on it. Says which figure is

@@ -123,6 +123,11 @@ export const FLOWS: Flow[] = [
         'The service names it. The radio group is replaced by a sentence, the saved-property list shows only offices, and «Haustiere im Haushalt» — which was quietly adding §5.2’s half hour to an office quote — is not asked',
       ),
       added(
+        'A furniture-assembly job can have two stops',
+        '/anfrage/objekt',
+        'Collected at one address, assembled at another — a shop, the old flat, a storage unit. Optional and off by default; ticking it asks for the address, the floor and whether there is a lift, because carrying a wardrobe down four flights is the job. It reaches the office panel and the customer’s own request, and it is offered on no other service — everything else works on something that is already there',
+      ),
+      added(
         'The count reaches the confirmation screen',
         '/anfrage/pruefen',
         '«24 Fensterflügel» is the entire basis of the price and appeared on no summary: not in the rail, which printed the flat’s m² instead, and not on «Alles richtig?». It is the one answer that could not be checked against anything else on the page',
@@ -191,6 +196,10 @@ export const FLOWS: Flow[] = [
         'Decline with a reason',
         '/admin/anfragen/req_2?action=reject',
         '§4.1. A dialog over the list rather than a page of its own — the refusal is decided where the row is',
+      ),
+      open(
+        'A collection outside the area costs something',
+        'The second stop on an assembly job is recorded and shown, and it changes no number. §5.1 already answers a detour — past the free radius the job goes to manual review and the owner puts the travel on the quote by hand — so the screen says that instead of inventing a surcharge the pricing engine has no distance input for. Whether a collection should be priced automatically, and from what, is §5.1a on /open-questions',
       ),
       open(
         'Heavily soiled windows cost more',
