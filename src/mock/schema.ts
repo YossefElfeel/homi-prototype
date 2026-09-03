@@ -142,6 +142,36 @@ export interface ContactAddress {
   city: string;
 }
 
+/**
+ * A second address the job has to call at — furniture collected here and
+ * assembled somewhere else.
+ *
+ * Its own type rather than a second `Property` or a `ContactAddress`, because
+ * it is neither. A `Property` is somewhere work is *measured*: area, rooms,
+ * bathrooms, an access method, a standing note. None of those apply to a shop
+ * loading bay or an old flat somebody is moving out of, and making one would
+ * put a second address on the customer's «Objekte» list that they never asked
+ * to save. A `ContactAddress` is the opposite problem — deliberately postal
+ * only, and the one fact that decides how long a collection takes is whether
+ * the wardrobe comes down four flights or out of a lift.
+ *
+ * Deliberately not priced. §5.1 already says what happens when a job reaches
+ * beyond the free radius — it goes to manual review and the owner adds the fee
+ * to the quote by hand — and the flow has never collected a distance. Inventing
+ * a collection surcharge here would be inventing a price. See §5.1a on
+ * /open-questions.
+ */
+export interface PickupLocation {
+  street: string;
+  postcode: string;
+  city: string;
+  /** Carrying it down is the job. */
+  floor: number;
+  hasElevator: boolean;
+  /** «Im Keller, Schlüssel beim Nachbarn» — whatever the crew has to know. */
+  note?: string;
+}
+
 export interface Customer {
   id: ID;
   firstName: string;
@@ -283,6 +313,14 @@ export interface ServiceRequest {
   /** Windows are billed per unit (§5.1: 0.5h per five windows). */
   windowCount?: number;
   furniturePieces?: number;
+  /**
+   * Where the furniture is collected from, when that is not `propertyId`.
+   *
+   * Absent is the normal case — the flat-pack is already in the flat. Present
+   * means the visit has two stops, which changes how the day is planned long
+   * before it changes what anything costs.
+   */
+  pickup?: PickupLocation;
   preferred: PreferredTime;
   photoIds: ID[];
   customerNote?: string;
@@ -338,6 +376,8 @@ export interface RequestDraft {
   addOnIds: ID[];
   windowCount: number | null;
   furniturePieces: number | null;
+  /** Null until the visitor says the furniture is somewhere else. */
+  pickup: PickupLocation | null;
   access: AccessDetails | null;
   preferred: PreferredTime;
   photos: DraftPhoto[];

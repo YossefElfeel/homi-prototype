@@ -335,6 +335,20 @@ export default function AccountRequestPage({
                     </DetailRow>
                   </>
                 )}
+                {/* The customer asked for two stops, so the record of what
+                    they asked for has to show two. Without it the request they
+                    open later is missing the half of the job they were most
+                    likely to be nervous about. */}
+                {request.pickup && (
+                  /* Full width. Every other row in this list is a number or a
+                     word; an address in half a column with a long label beside
+                     it hits `overflow-wrap: anywhere` and breaks mid-street. */
+                  <DetailRow label={pt('pickupTitle')} className="sm:col-span-2">
+                    {request.pickup.street},{' '}
+                    <span data-numeric>{request.pickup.postcode}</span>{' '}
+                    {request.pickup.city}
+                  </DetailRow>
+                )}
               </DetailList>
             </CardBody>
           </Card>

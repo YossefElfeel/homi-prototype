@@ -311,6 +311,9 @@ export const accountEn: typeof accountDe = {
     floor: 'Floor',
     elevator: 'Lift',
     pets: 'Pets',
+    /* The second stop on a furniture assembly. It belongs to the request, not
+       to the property — a collection address is not somewhere you live. */
+    pickupTitle: 'Collection address',
     yes: 'Yes',
     no: 'No',
     accessTitle: 'Access',

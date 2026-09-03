@@ -347,6 +347,9 @@ export const accountDe = {
     floor: 'Etage',
     elevator: 'Lift',
     pets: 'Haustiere',
+    /* Der zweite Halt einer Möbelmontage. Gehört zur Anfrage, nicht zum
+       Objekt: eine Abholadresse ist kein Ort, an dem jemand wohnt. */
+    pickupTitle: 'Abholadresse',
     yes: 'Ja',
     no: 'Nein',
     accessTitle: 'Zutritt',
