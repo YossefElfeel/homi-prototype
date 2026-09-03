@@ -175,9 +175,10 @@ export default function RequestDetailPage({
         settings,
       );
 
+  const needs = serviceNeeds(service);
+  const office = needs.vocabulary === 'office';
   /* Whether the hours came off a count rather than off the §5.2 matrix. */
-  const countPriced =
-    serviceNeeds(service).asksWindowCount || serviceNeeds(service).asksFurniturePieces;
+  const countPriced = needs.asksWindowCount || needs.asksFurniturePieces;
 
   const access = property.access;
 
@@ -473,21 +474,40 @@ export default function RequestDetailPage({
                   {property.city}
                 </Row>
                 <Row label={t('kind')}>{property.kind}</Row>
-                <Row label={t('area')}>
-                  <span data-numeric>{areaLabel(property.area)}</span>
-                </Row>
-                <Row label={t('rooms')}>
-                  <span data-numeric>{figure(property.rooms)}</span>
-                </Row>
-                <Row label={t('bathrooms')}>
-                  <span data-numeric>{figure(property.bathrooms)}</span>
-                </Row>
+                {/*
+                  Only the answers this service was asked for.
+
+                  Six rows reading «—» and «Nein» on a window clean is not an
+                  empty record, it is a record of questions that were never put
+                  — and «Haustiere: Nein» in particular reads as an answer the
+                  customer gave. The floor and the lift stay for every service:
+                  they are how somebody reaches the door, not §5.2 inputs.
+                */}
+                {needs.asksArea && (
+                  <Row label={t('area')}>
+                    <span data-numeric>{areaLabel(property.area)}</span>
+                  </Row>
+                )}
+                {needs.asksRooms && (
+                  <Row label={t(office ? 'roomsOffice' : 'rooms')}>
+                    <span data-numeric>{figure(property.rooms)}</span>
+                  </Row>
+                )}
+                {needs.asksBathrooms && (
+                  <Row label={t(office ? 'bathroomsOffice' : 'bathrooms')}>
+                    <span data-numeric>{figure(property.bathrooms)}</span>
+                  </Row>
+                )}
                 <Row label={t('floor')}>
                   <span data-numeric>{property.floor}</span>
                 </Row>
                 <Row label={t('elevator')}>{property.hasElevator ? 'Ja' : 'Nein'}</Row>
-                <Row label={t('pets')}>{property.hasPets ? 'Ja' : 'Nein'}</Row>
-                <Row label={t('effort')}>{property.needsExtraEffort ? 'Ja' : 'Nein'}</Row>
+                {needs.asksPets && (
+                  <Row label={t('pets')}>{property.hasPets ? 'Ja' : 'Nein'}</Row>
+                )}
+                {needs.asksCondition && (
+                  <Row label={t('effort')}>{property.needsExtraEffort ? 'Ja' : 'Nein'}</Row>
+                )}
               </dl>
 
               {/*

@@ -41,6 +41,13 @@ export const fieldDe = {
     duration: 'Geplant {hours} Std.',
     addressTitle: 'Adresse',
     navigate: 'Route öffnen',
+    /* Der Halt vor dem Einsatz. Steht über den Aufgaben, weil er davor
+       passiert — und das Stockwerk steht in der Zeile, weil vier Etagen ohne
+       Lift der Unterschied zwischen zwanzig Minuten und einer Stunde sind. */
+    pickupTitle: 'Zuerst abholen',
+    pickupFloor: '{floor}. Stock',
+    pickupLift: 'Lift vorhanden',
+    pickupNoLift: 'Kein Lift',
     accessTitle: 'Zutritt',
     accessLockedTitle: 'Zutrittsangaben noch nicht sichtbar',
     accessLockedBody:

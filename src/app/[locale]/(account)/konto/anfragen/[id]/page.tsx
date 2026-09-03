@@ -19,6 +19,7 @@ import { Lifecycle } from '@/components/ui/lifecycle';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { areaLabel, figure } from '@/lib/property-size';
+import { serviceNeeds } from '@/lib/service-flow';
 import { quoteStages } from '@/lib/quote-lifecycle';
 import { requestBadgeState } from '@/lib/offer-label';
 import { isExpired } from '@/mock/engines/offers';
@@ -57,6 +58,7 @@ export default function AccountRequestPage({
   const { id } = use(params);
   const t = useTranslations('account.request');
   const pt = useTranslations('account.property');
+  const st = useTranslations('booking.service');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
@@ -95,6 +97,9 @@ export default function AccountRequestPage({
 
   const property = properties.find((p) => p.id === request.propertyId);
   const service = services.find((s) => s.slug === request.serviceSlug);
+  /* The same module the flow asked with — what was never asked must not be
+     shown back as a blank the customer left. */
+  const needs = serviceNeeds(service);
   const offer = offers.find((o) => o.requestId === request.id && o.status !== 'draft');
 
   /*
@@ -319,17 +324,40 @@ export default function AccountRequestPage({
                     '—'
                   )}
                 </DetailRow>
+                {/*
+                  The card is called «Ihre Angaben» — your answers — so every
+                  row in it has to be one. A window clean is never asked for a
+                  floor area, and printing «Fläche —» here tells the customer
+                  they left something blank on a screen that never showed them
+                  the field. The counts they *were* asked for take its place.
+                */}
+                {needs.asksWindowCount && request.windowCount != null && (
+                  <DetailRow label={st('windowsSummary')}>
+                    <span data-numeric>{request.windowCount}</span>
+                  </DetailRow>
+                )}
+                {needs.asksFurniturePieces && request.furniturePieces != null && (
+                  <DetailRow label={st('piecesSummary')}>
+                    <span data-numeric>{request.furniturePieces}</span>
+                  </DetailRow>
+                )}
                 {property && (
                   <>
-                    <DetailRow label={pt('area')}>
-                      <span data-numeric>{areaLabel(property.area)}</span>
-                    </DetailRow>
-                    <DetailRow label={pt('rooms')}>
-                      <span data-numeric>{figure(property.rooms)}</span>
-                    </DetailRow>
-                    <DetailRow label={pt('bathrooms')}>
-                      <span data-numeric>{figure(property.bathrooms)}</span>
-                    </DetailRow>
+                    {needs.asksArea && (
+                      <DetailRow label={pt('area')}>
+                        <span data-numeric>{areaLabel(property.area)}</span>
+                      </DetailRow>
+                    )}
+                    {needs.asksRooms && (
+                      <DetailRow label={pt('rooms')}>
+                        <span data-numeric>{figure(property.rooms)}</span>
+                      </DetailRow>
+                    )}
+                    {needs.asksBathrooms && (
+                      <DetailRow label={pt('bathrooms')}>
+                        <span data-numeric>{figure(property.bathrooms)}</span>
+                      </DetailRow>
+                    )}
                     <DetailRow label={pt('floor')}>
                       <span data-numeric>{property.floor}</span>
                     </DetailRow>

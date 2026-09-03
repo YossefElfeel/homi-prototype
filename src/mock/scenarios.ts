@@ -2082,7 +2082,7 @@ function baseData(now: Date): DataSet {
     accountHistory(now, { id: 'req_acc_h1', ref: 'A-2441', service: 'fensterreinigung', status: 'expired', agedDays: 430, note: 'The lake-side windows, inside and out.' }),
     accountHistory(now, { id: 'req_acc_h2', ref: 'A-2442', service: 'grundreinigung', status: 'rejected', agedDays: 380, office: true, note: 'The whole first floor once, before the audit.' }),
     accountHistory(now, { id: 'req_acc_h3', ref: 'A-2443', service: 'einmalreinigung', status: 'cancelledByCustomer', agedDays: 320, note: 'Guests over the weekend, ideally Friday.', internal: 'Withdrawn: visit postponed.' }),
-    accountHistory(now, { id: 'req_acc_h4', ref: 'A-2444', service: 'moebelmontage', status: 'accepted', agedDays: 260, note: 'A wardrobe and a desk, both flat-packed.' }),
+    accountHistory(now, { id: 'req_acc_h4', ref: 'A-2444', service: 'moebelmontage', status: 'accepted', agedDays: 260, pickup: true, note: 'A wardrobe and a desk, both flat-packed.' }),
     accountHistory(now, { id: 'req_acc_h5', ref: 'A-2445', service: 'umzugsreinigung', status: 'expired', agedDays: 210, office: true, note: 'We are giving up the back office at the end of the quarter.' }),
     accountHistory(now, { id: 'req_acc_h6', ref: 'A-2446', service: 'bueroreinigung', status: 'cancelledByCompany', agedDays: 160, office: true, note: 'An extra visit in the week of the trade fair.', internal: 'Called off by us: the fair week was already fully booked.' }),
     accountHistory(now, { id: 'req_acc_h7', ref: 'A-2447', service: 'fensterreinigung', status: 'rejected', agedDays: 120, office: true, note: 'The glass front towards the street.' }),
@@ -5007,6 +5007,8 @@ function accountHistory(
     agedDays: number;
     /** cus_2 holds a flat and an office. Office cleaning can only be the second. */
     office?: boolean;
+    /** Only an assembly job has a second stop — see `pickup` below. */
+    pickup?: boolean;
     note?: string;
     internal?: string;
   },
@@ -5022,6 +5024,26 @@ function accountHistory(
     addOnIds: [],
     windowCount: input.service === 'fensterreinigung' ? 10 : undefined,
     furniturePieces: input.service === 'moebelmontage' ? 3 : undefined,
+    /*
+     * The collection stop on the one assembly job that became a real booking.
+     *
+     * A-2515 already carries one, but it expired and never produced a job — so
+     * the block the *crew* reads on `/einsatz/[id]`, and the row the office
+     * reads on the booking, were both branches nothing could reach. This is
+     * the same address inside the service area, which is also the ordinary
+     * case: most collections are local, and the out-of-area warning stays a
+     * second, rarer state rather than the only one anybody ever sees.
+     */
+    pickup: input.pickup
+      ? {
+          street: 'Bahnhofstrasse 41',
+          postcode: '8712',
+          city: 'Stäfa',
+          floor: 0,
+          hasElevator: false,
+          note: 'Abholung im Lager hinter dem Laden, Personal ist informiert.',
+        }
+      : undefined,
     preferred: { flexible: true },
     photoIds: [],
     customerNote: input.note,

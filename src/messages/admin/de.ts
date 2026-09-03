@@ -500,6 +500,11 @@ export const adminDe = {
     area: 'Fläche',
     rooms: 'Zimmer',
     bathrooms: 'Bäder',
+    /* Ein Arbeitsplatz hat «Räume» und «Toiletten» — dieselben zwei Zahlen,
+       und die Wohnungs-Wörter lassen die Karte wie eine für jemand anderen
+       lesen. Dieselbe Regel wie im Anfrageflow. */
+    roomsOffice: 'Räume',
+    bathroomsOffice: 'Toiletten',
     floor: 'Stock',
     elevator: 'Lift',
     pets: 'Haustiere',
