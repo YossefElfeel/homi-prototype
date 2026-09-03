@@ -226,6 +226,21 @@ export const FLOWS: Flow[] = [
         'The status only moved to "in review" inside the quote builder — one screen too late. A request could be read from top to bottom while it stayed "New", and the customer went on seeing in their account that nobody had looked',
       ),
       ok('Edit the lines', '/admin/anfragen/req_2/offerte'),
+      added(
+        'The quote builder shows the figure the price rests on',
+        '/admin/anfragen/req_acc_expired/offerte',
+        'The summary card printed the flat’s measurements and nothing else. On the two services priced by count that now reads «Fläche —» — the size is not asked for because it is not priced — and the count that replaced it was on no screen the owner sees while setting the price. It is a row of its own now, and «Zimmer»/«Bäder» read «Räume»/«Toiletten» on an office job',
+      ),
+      added(
+        'A collection address reaches the person who has to price it',
+        '/admin/anfragen/req_acc_expired/offerte',
+        '§5.1 puts travel beyond the free radius on the quote *by hand* — this is the hand. Without the second address on this card the rule the request flow states to the customer is one nobody here could follow. Shown with the «put it on the quote» line when it falls outside the eight municipalities',
+      ),
+      added(
+        'And reaches the person who drives there',
+        '/einsatz/bkg_acc_h4',
+        'A `Booking` has no `requestId`, so the job reaches its collection stop through the quote it came from. The crew screen carries it above the tasks, with the floor, the lift and its own route link — the office knowing about a second stop is worth nothing if the van does not',
+      ),
       ok('Optional lines on and off', '/offerte/off_1', 'Price and duration move together'),
       ok('Pick a date, held 15 minutes', '/offerte/off_1/termin'),
       added(

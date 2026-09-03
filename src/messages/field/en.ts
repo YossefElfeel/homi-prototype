@@ -38,6 +38,13 @@ export const fieldEn: typeof fieldDe = {
     duration: 'Planned {hours} hrs',
     addressTitle: 'Address',
     navigate: 'Open directions',
+    /* The stop before the job. Above the tasks because it happens first, and
+       the floor is on the line because four flights without a lift is the
+       difference between twenty minutes and an hour. */
+    pickupTitle: 'Collect first',
+    pickupFloor: 'Floor {floor}',
+    pickupLift: 'Lift available',
+    pickupNoLift: 'No lift',
     accessTitle: 'Access',
     accessLockedTitle: 'Access details not visible yet',
     accessLockedBody:

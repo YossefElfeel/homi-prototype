@@ -14,6 +14,7 @@ import {
   MapPin,
   PawPrint,
   Phone,
+  Truck,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
@@ -73,6 +74,8 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
   const memberId = useStore((s) => s.demo.currentMemberId);
   const bookings = useStore((s) => s.data.bookings);
   const properties = useStore((s) => s.data.properties);
+  const offers = useStore((s) => s.data.offers);
+  const requests = useStore((s) => s.data.requests);
   const services = useStore((s) => s.services);
   const recordWorkHours = useStore((s) => s.recordWorkHours);
 
@@ -88,6 +91,13 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
   if (!booking) return <p className="py-10 text-ink-tertiary">—</p>;
 
   const property = properties.find((p) => p.id === booking.propertyId);
+  /*
+   * The collection stop, reached the only way a booking can reach one: through
+   * the quote it came from. A plan visit has no request and needs none — a
+   * package is recurring cleaning, and nothing recurring is collected first.
+   */
+  const offer = offers.find((o) => o.id === booking.offerId);
+  const pickup = offer ? requests.find((r) => r.id === offer.requestId)?.pickup : undefined;
   const assignedToday =
     booking.assigneeId === memberId && sameDay(new Date(booking.start), now);
   const canSee = canSeeAccessCodes(role, { assignedToday });
@@ -191,6 +201,48 @@ export default function FieldJobPage({ params }: { params: Promise<{ id: string 
           <MapPin className="size-4" aria-hidden />
           {t('navigate')}
         </a>
+      )}
+
+      {/*
+        The stop before the job.
+
+        This screen is read standing on a pavement, and until now it could only
+        name one pavement. A furniture assembly may start at a shop or an old
+        flat — and the person who has to go there was the only person in the
+        chain who could not see that. It sits above the tasks because it
+        happens before them, and it carries its own route link for the same
+        reason the address above does: nobody types an address into a phone
+        while holding a van key.
+      */}
+      {pickup && (
+        <section className="mt-8 rounded-[var(--radius-lg)] border border-line bg-sunken p-5">
+          <h2 className="flex items-center gap-2 label-type text-ink-tertiary">
+            <Truck className="size-4" aria-hidden />
+            {t('pickupTitle')}
+          </h2>
+          <p className="mt-2 font-medium">{pickup.street}</p>
+          <p className="text-ink-secondary">
+            <span data-numeric>{pickup.postcode}</span> {pickup.city}
+          </p>
+          {/* The floor is the whole difference between twenty minutes and an
+              hour, so it is a line rather than a detail further down. */}
+          <p data-numeric className="mt-1 text-sm text-ink-tertiary">
+            {t('pickupFloor', { floor: pickup.floor })} ·{' '}
+            {pickup.hasElevator ? t('pickupLift') : t('pickupNoLift')}
+          </p>
+          {pickup.note && <p className="mt-3 text-sm text-ink-secondary">{pickup.note}</p>}
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+              `${pickup.street}, ${pickup.postcode} ${pickup.city}`,
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-line bg-page px-4 text-sm font-medium transition-colors hover:bg-sunken"
+          >
+            <MapPin className="size-4" aria-hidden />
+            {t('navigate')}
+          </a>
+        </section>
       )}
 
       <section className="mt-8">
