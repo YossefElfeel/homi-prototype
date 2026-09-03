@@ -18,6 +18,8 @@ import { TemplatePicker } from '@/components/admin/template-picker';
 import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
 import { areaLabel } from '@/lib/property-size';
+import { serviceNeeds } from '@/lib/service-flow';
+import { checkCoverage } from '@/mock/engines/coverage';
 
 /**
  * `optional` and `selected` are two fields but one decision, and the builder
@@ -151,6 +153,10 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const customer = customers.find((c) => c.id === request.customerId)!;
   const property = properties.find((p) => p.id === request.propertyId)!;
   const service = services.find((s) => s.slug === request.serviceSlug)!;
+  /* The same module the request flow asked. What the customer was never asked
+     for must not be presented here as a fact they gave. */
+  const needs = serviceNeeds(service);
+  const office = needs.vocabulary === 'office';
   /*
    * The plan this customer holds *for this address*, not just any plan.
    *
@@ -421,17 +427,64 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
               </p>
               <dl className="mt-4 space-y-1.5 border-t border-line-subtle pt-3 text-sm">
                 <SummaryRow label={rt('serviceTitle')}>{service.name[locale]}</SummaryRow>
-                <SummaryRow label={rt('area')}>
-                  <span data-numeric>
-                    {[
-                      areaLabel(property.area),
-                      property.rooms != null && `${property.rooms} Zi.`,
-                      property.bathrooms != null && `${property.bathrooms} Bad`,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </SummaryRow>
+                {/*
+                  The figure this quote is priced on, whichever one it is.
+
+                  This card is the only thing on the screen that says what the
+                  job *is*, and it printed the flat's measurements and nothing
+                  else. On a window clean that now reads «Fläche —» — the size
+                  is not asked for any more because it is not priced — and the
+                  count of sashes that replaced it, which is the entire basis
+                  of the pre-filled hours below, appeared nowhere. The owner
+                  was being asked to approve a price whose input was not on the
+                  page.
+                */}
+                {needs.asksWindowCount && request.windowCount != null && (
+                  <SummaryRow label={rt('windowCount')}>
+                    <span data-numeric>{request.windowCount}</span>
+                  </SummaryRow>
+                )}
+                {needs.asksFurniturePieces && request.furniturePieces != null && (
+                  <SummaryRow label={rt('furniturePieces')}>
+                    <span data-numeric>{request.furniturePieces}</span>
+                  </SummaryRow>
+                )}
+                {needs.asksArea && (
+                  <SummaryRow label={rt('area')}>
+                    <span data-numeric>
+                      {[
+                        areaLabel(property.area),
+                        property.rooms != null &&
+                          `${property.rooms} ${rt(office ? 'roomsOffice' : 'rooms')}`,
+                        property.bathrooms != null &&
+                          `${property.bathrooms} ${rt(office ? 'bathroomsOffice' : 'bathrooms')}`,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </SummaryRow>
+                )}
+                {/*
+                  The second stop, on the one screen that can act on it. §5.1
+                  puts the travel beyond the free radius on the quote *by hand*
+                  — this is the hand, so this is where the address has to be.
+                  Without it the rule the request flow states to the customer
+                  is one nobody here can follow.
+                */}
+                {request.pickup && (
+                  <SummaryRow label={rt('pickupTitle')}>
+                    <span className="block">
+                      {request.pickup.street}, {request.pickup.postcode}{' '}
+                      {request.pickup.city}
+                    </span>
+                    {checkCoverage(request.pickup.postcode, settings.servedPostcodes).state !==
+                      'inside' && (
+                      <span className="block text-xs text-status-warning-fg">
+                        {rt('pickupOutside')}
+                      </span>
+                    )}
+                  </SummaryRow>
+                )}
                 <SummaryRow label={rt('preferredTitle')}>
                   {request.preferred.flexible
                     ? rt('flexible')

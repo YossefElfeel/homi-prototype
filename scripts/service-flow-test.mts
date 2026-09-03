@@ -139,6 +139,32 @@ check(
   'that request is an assembly job',
   withPickup.every((r) => serviceNeeds(SEED_SERVICES.find((s) => s.slug === r.serviceSlug)).asksPickupAddress),
 );
+/*
+ * Both halves of the §5.1 note. One collection inside the eight municipalities
+ * and one outside — otherwise the warning is either the only thing anybody
+ * ever sees, or a branch nothing reaches.
+ */
+const served = SEED_SETTINGS.servedPostcodes;
+check(
+  'the seed has a collection inside the area and one outside',
+  withPickup.some((r) => served.includes(r.pickup!.postcode)) &&
+    withPickup.some((r) => !served.includes(r.pickup!.postcode)),
+  withPickup.map((r) => `${r.pickup!.city}${served.includes(r.pickup!.postcode) ? '' : ' (outside)'}`).join(', '),
+);
+/*
+ * The crew has to be able to see it. A `Booking` reaches the request through
+ * its quote, so a collection address that never becomes a job is a block the
+ * one person who actually drives there can never open.
+ */
+const pickupJobs = DEMO.bookings.filter((b) => {
+  const offer = DEMO.offers.find((o) => o.id === b.offerId);
+  return offer && DEMO.requests.find((r) => r.id === offer.requestId)?.pickup;
+});
+check(
+  'a booking reaches a collection address through its quote',
+  pickupJobs.length > 0,
+  pickupJobs.map((b) => b.reference).join(', '),
+);
 
 console.log(`\n— the office knows it is an office —\n`);
 

@@ -39,6 +39,7 @@ import { labourAmount, labourExpenses, labourHours, unpaidLabour } from '@/lib/l
 import { fromZoned, zonedParts } from '@/lib/business-time';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { areaLabel } from '@/lib/property-size';
+import { serviceNeeds } from '@/lib/service-flow';
 import {
   assignableTeam,
   assignmentWarnings,
@@ -95,6 +96,7 @@ export default function BookingDetailPage({
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const offers = useStore((s) => s.data.offers);
+  const requests = useStore((s) => s.data.requests);
   const invoices = useStore((s) => s.data.invoices);
   const expenses = useStore((s) => s.data.expenses);
   const team = useStore((s) => s.data.team);
@@ -155,6 +157,15 @@ export default function BookingDetailPage({
   const property = properties.find((p) => p.id === booking.propertyId)!;
   const service = services.find((s) => s.slug === booking.serviceSlug)!;
   const offer = offers.find((o) => o.id === booking.offerId);
+  /*
+   * A `Booking` has no `requestId` — it reaches the request through the quote
+   * it came from. Undefined for a plan visit, which has no request at all, and
+   * that is the right answer there: a package visit is recurring cleaning, and
+   * nothing recurring has a collection stop.
+   */
+  const jobPickup = offer
+    ? requests.find((r) => r.id === offer.requestId)?.pickup
+    : undefined;
   const invoice = invoices.find((i) => i.bookingId === booking.id);
 
   /* Oldest first, so two people on one job read in the order they were
@@ -765,9 +776,36 @@ export default function BookingDetailPage({
                   </Link>
                 </Row>
                 <Row label={t('serviceTitle')}>{service.name[locale]}</Row>
-                <Row label={t('propertyArea')}>
-                  <span data-numeric>{areaLabel(property.area)}</span>
-                </Row>
+                {/* Only for the services it is a fact about. A window clean
+                    carries no floor area by design, and «—» on a row nobody
+                    asked for reads as a gap in the record. */}
+                {serviceNeeds(service).asksArea && (
+                  <Row label={t('propertyArea')}>
+                    <span data-numeric>{areaLabel(property.area)}</span>
+                  </Row>
+                )}
+                {/*
+                  Where the day actually starts.
+
+                  The job is scheduled from here, and a visit with a collection
+                  stop is a different shape of afternoon from one without —
+                  `arrivalWindow` and the travel buffer are both set against an
+                  address that is not the only one being driven to.
+                */}
+                {/* `rt`, not `t`: the label is the request's word for it, and
+                    two names for one address is two addresses to whoever reads
+                    both screens. */}
+                {jobPickup && (
+                  <Row label={rt('pickupTitle')}>
+                    <span className="block">
+                      {jobPickup.street}, <span data-numeric>{jobPickup.postcode}</span>{' '}
+                      {jobPickup.city}
+                    </span>
+                    {jobPickup.note && (
+                      <span className="block text-sm text-ink-tertiary">{jobPickup.note}</span>
+                    )}
+                  </Row>
+                )}
               </dl>
             </CollapsibleSection>
           </SectionGroup>

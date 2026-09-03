@@ -317,7 +317,7 @@ export const TRACKS: Track[] = [
         'Offerte erstellen',
         'Quote builder',
         '/admin/anfragen/req_2/offerte',
-        ['draft', 'inline editing', 'availability panel'],
+        ['draft', 'inline editing', 'availability panel', 'counted service', 'two stops'],
         'The screen the owner lives in. Two clicks to send, or ⌘/Ctrl+Enter for one — against a target of four',
       ),
       done('55', 'Vorschau & senden', 'Preview & send', '/admin/anfragen/req_2/offerte/senden', [
@@ -394,7 +394,7 @@ export const TRACKS: Track[] = [
           'not assigned',
           'hours over the estimate',
         ],
-        'Moving a job writes the customer their notice in the same call, and the screen says what it moved from — bkg_2 opens on a job that was already moved once. «Ausführung» is the section §2a took out and this wave put back: who is on it, planned against worked, and the panel that hands it to somebody else. bkg_7 opens on 6.5 h against a planned 5',
+        'bkg_acc_h4 is the one with a collection address — the job reaches it through its quote. Moving a job writes the customer their notice in the same call, and the screen says what it moved from — bkg_2 opens on a job that was already moved once. «Ausführung» is the section §2a took out and this wave put back: who is on it, planned against worked, and the panel that hands it to somebody else. bkg_7 opens on 6.5 h against a planned 5',
       ),
       done(
         '63a',

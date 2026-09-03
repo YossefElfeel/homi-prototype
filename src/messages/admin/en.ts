@@ -448,6 +448,9 @@ export const adminEn: typeof adminDe = {
     area: 'Area',
     rooms: 'Rooms',
     bathrooms: 'Bathrooms',
+    /* A workplace has rooms and toilets. Same rule as the request flow. */
+    roomsOffice: 'Rooms',
+    bathroomsOffice: 'Toilets',
     floor: 'Floor',
     elevator: 'Lift',
     pets: 'Pets',
