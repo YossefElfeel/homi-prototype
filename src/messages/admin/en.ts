@@ -150,6 +150,22 @@ export const adminEn: typeof adminDe = {
     statRenewalsLink: 'Open plans',
   },
 
+  /* One card on two screens, so one set of words. It used to live inside
+     `offerDetail` and only for the case where a note happened to exist; the
+     request screen did not know the state existed at all. */
+  revision: {
+    title: 'Change requested',
+    lead: '{name} asked for something different on version {version}. Answer it with a new version.',
+    leadNoName: 'Something different was asked for on version {version}. Answer it with a new version.',
+    /* No version number and no instruction to reply: the new version is
+       written, and `offer.version` now points at it rather than at the one the
+       customer objected to. */
+    leadAnswered: 'This is what the customer asked for on the previous version.',
+    since: 'Waiting: {time}',
+    noNote:
+      'The customer left no message — only that something does not work. Ring them before you re-price it.',
+  },
+
   offerDetail: {
     back: 'Back to quotes',
     notFoundTitle: 'Quote not found',
@@ -172,8 +188,6 @@ export const adminEn: typeof adminDe = {
     total: 'Total',
     hours: 'Scheduled time',
     messageTitle: 'Covering note',
-    revisionTitle: 'Change requested',
-    revisionLead: '{name} asked for something different. Issue a new version to answer it.',
     openAsCustomer: 'Open the customer view',
     openRequest: 'Open the request',
     reissue: 'Issue a new version',
@@ -438,6 +452,18 @@ export const adminEn: typeof adminDe = {
     reject: 'Decline',
     restore: 'Undo the decline',
     restored: 'The request is back in the queue.',
+    reissue: 'Issue a new version',
+    reissued: 'New version created.',
+    /* The quote was in the record all along — the lifecycle rail reads it to
+       draw "Quote sent" — and appeared nowhere on the page. "What did we
+       actually offer?" meant a trip through /admin/offerten. */
+    quoteTitle: 'Our quote',
+    quoteVersion: 'Version {n}',
+    quoteTotal: 'Total',
+    quoteIssued: 'Sent',
+    quoteNotSent: 'Not sent yet',
+    quoteExpires: 'Valid until',
+    quoteOpen: 'Open the quote',
     customerTitle: 'Customer',
     call: 'Call',
     whatsapp: 'WhatsApp',

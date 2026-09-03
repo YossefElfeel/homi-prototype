@@ -9,10 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Field, Textarea } from '@/components/ui/field';
 import { OfferShell } from '@/components/offer/offer-shell';
 import { useOffer } from '@/components/offer/use-offer';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
+import type { RevisionReason } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
-const REASONS = ['reasonPrice', 'reasonScope', 'reasonDate', 'reasonOther'] as const;
+/**
+ * The four buttons, each carrying the key it stores.
+ *
+ * The label used to be the whole record: `submit` sent `` `${t(reason)}: ${message}` ``
+ * and the key was thrown away at the call site. So what reached the office was
+ * the customer's *language*, and «Der Leistungsumfang» could not be shown as a
+ * chip, counted, or read by anybody working in English. The key travels beside
+ * the message now, and each screen looks up its own label.
+ */
+const REASONS = [
+  { key: 'price', label: 'reasonPrice' },
+  { key: 'scope', label: 'reasonScope' },
+  { key: 'date', label: 'reasonDate' },
+  { key: 'other', label: 'reasonOther' },
+] as const satisfies readonly { key: RevisionReason; label: string }[];
 
 /**
  * Screen 29 — negotiation.
@@ -30,8 +45,9 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
   const data = useOffer(id);
   const settings = useStore((s) => s.settings);
   const requestOfferChange = useStore((s) => s.requestOfferChange);
+  const now = useNow();
 
-  const [reason, setReason] = useState<(typeof REASONS)[number]>('reasonPrice');
+  const [reason, setReason] = useState<RevisionReason>('price');
   const [message, setMessage] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
 
@@ -42,7 +58,7 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
   function submit() {
     setState('sending');
     window.setTimeout(() => {
-      requestOfferChange(offer.id, `${t(reason)}: ${message}`);
+      requestOfferChange(offer.id, reason, message, now);
       setState('sent');
     }, 900);
   }
@@ -80,12 +96,12 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
         <fieldset className="mt-8">
           <legend className="mb-3 text-sm font-medium">{t('reasonLabel')}</legend>
           <div className="flex flex-wrap gap-2">
-            {REASONS.map((value) => (
+            {REASONS.map(({ key, label }) => (
               <label
-                key={value}
+                key={key}
                 className={cn(
                   'cursor-pointer rounded-[var(--radius-action)] border px-4 py-2.5 text-sm transition-colors',
-                  reason === value
+                  reason === key
                     ? 'border-line-strong bg-accent-subtle'
                     : 'border-line hover:bg-sunken',
                 )}
@@ -94,10 +110,10 @@ export default function ChangePage({ params }: { params: Promise<{ id: string }>
                   type="radio"
                   name="reason"
                   className="sr-only"
-                  checked={reason === value}
-                  onChange={() => setReason(value)}
+                  checked={reason === key}
+                  onChange={() => setReason(key)}
                 />
-                {t(value)}
+                {t(label)}
               </label>
             ))}
           </div>

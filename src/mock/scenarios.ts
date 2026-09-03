@@ -2118,6 +2118,31 @@ function baseData(now: Date): DataSet {
       ...quoteFor('off_retry', 'req_q_offer', { issuedDaysAgo: 3, validDays: 14 }),
       signedAt: iso(days(now, -1)),
     },
+    /*
+     * A-2495's quote, and the reason the row above it in `queue` was a lie.
+     *
+     * `req_q_revision` has been seeded `revisionRequested` since the queue was
+     * written, with no offer anywhere — a request whose status says the
+     * customer objected to a price nobody had quoted. Three things followed
+     * from it, all of them on /admin/anfragen/req_q_revision: the lifecycle
+     * rail lit «Änderung angefragt» while leaving «Offerte wird erstellt»
+     * before it grey, which draws a hole in the middle of itself; the screen's
+     * one constructive button greyed out, because the request counts as
+     * answered; and the new change-request card had nothing to hang off at
+     * all. The comment on `accountOffers` below already states the rule this
+     * broke — a request cannot be `revisionRequested` with nothing to revise.
+     */
+    {
+      ...quoteFor('off_q_revision', 'req_q_revision', {
+        issuedDaysAgo: 4,
+        validDays: 14,
+        status: 'revisionRequested',
+      }),
+      revisionReason: 'price',
+      revisionNote:
+        'That is a good deal more than I had budgeted for. Would it come down if we left the windows out? Otherwise I am afraid I will have to leave it.',
+      revisionRequestedAt: iso(days(now, -1)),
+    },
     /* First job, three dates in, waiting on the office. The row the "Termin
        bestätigen" panel exists for. */
     {
@@ -2169,11 +2194,32 @@ function baseData(now: Date): DataSet {
    * one was written) deliberately have none.
    */
   const accountOffers: Offer[] = [
-    quoteFor('off_acc_revision', 'req_acc_revision', {
-      issuedDaysAgo: 5,
-      validDays: 14,
-      status: 'revisionRequested',
-    }),
+    /*
+     * The quote the reported bug was found on.
+     *
+     * It was seeded `revisionRequested` and nothing else — no note, no reason,
+     * no date — so /admin/offerten/off_acc_revision opened on the warning badge
+     * «Änderung angefragt» with not one sentence anywhere on the page saying
+     * what the customer wanted. The office could see that somebody had
+     * objected and had no way at all to find out to what.
+     *
+     * A status is a claim about something that happened, and a seed that
+     * writes the status without the thing is the same lie as a declared state
+     * no screen can reach. The card renders on the state now, so the empty
+     * case is at least honest — but honest and useless is not the fix, and
+     * this row exists to stage the state properly.
+     */
+    {
+      ...quoteFor('off_acc_revision', 'req_acc_revision', {
+        issuedDaysAgo: 5,
+        validDays: 14,
+        status: 'revisionRequested',
+      }),
+      revisionReason: 'scope',
+      revisionNote:
+        'The frames are inside the square-metre price on the quote. Could you show them as a line of their own? The management pays for the glass only, I will cover the rest myself.',
+      revisionRequestedAt: iso(days(now, -2)),
+    },
     {
       ...quoteFor('off_acc_accepted', 'req_acc_accepted', {
         issuedDaysAgo: 18,
@@ -5588,9 +5634,11 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       validDays: 14,
       reference: 'O-2606-1',
     }),
-    /* The only seeded quote carrying a `revisionNote`. Without it the
-       "Änderungswunsch" card on the quote detail has no way in, and the field
-       would be one more declared state no screen can show. */
+    /* The `states` scenario's copy of the change request. The reason is a key
+       beside the note now rather than a word glued to the front of it: this
+       one used to open «Scope:» — an English label, stored because that is the
+       language whoever pressed the button was reading in, printed to a German
+       office. See `RevisionReason`. */
     {
       ...makeOffer('off_s_revision', find('req_s_revision'), prop('prp_2'), now, {
         issuedDaysAgo: 4,
@@ -5598,8 +5646,10 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         status: 'revisionRequested',
         reference: 'O-2607-1',
       }),
+      revisionReason: 'scope',
       revisionNote:
-        'Scope: could you take the windows out of the price? The rest is fine as it is, we would like to book this week.',
+        'Could you take the windows out of the price? The rest is fine as it is, we would like to book this week.',
+      revisionRequestedAt: iso(days(now, -1)),
     },
     makeOffer('off_s_accepted', find('req_s_accepted'), prop('prp_1'), now, {
       issuedDaysAgo: 11,

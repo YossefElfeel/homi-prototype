@@ -40,6 +40,7 @@ import type {
   Property,
   RequestDraft,
   ReviewStatus,
+  RevisionReason,
   SavedMethodKind,
   Service,
   ServiceRequest,
@@ -322,8 +323,16 @@ Marco Brunner`;
    says «Es wurde keine Zeit gemeldet», and the labour form's opening figure
    silently falls back to the check-in/check-out span. Every one of those is a
    screen working correctly against data that is a wave behind, which is
-   exactly the reading this list exists to prevent. */
-const SCHEMA_VERSION = 31;
+   exactly the reading this list exists to prevent.
+
+   32: `Offer` gained `revisionReason` and `revisionRequestedAt`, and the seed
+   finally puts a change request on every quote that claims to be waiting for
+   one. A store persisted under 31 is the bug this wave is about: `off_acc_revision`
+   holds the badge «Änderung angefragt» with no note behind it, so the panel's
+   new card opens on «Der Kunde hat nicht gesagt, was …» for a customer who did
+   say. That reads as the new card being broken rather than the old data being
+   a wave behind, which is the one misreading this list exists to prevent. */
+const SCHEMA_VERSION = 32;
 
 /**
  * §10 — the default payment term.
@@ -694,8 +703,19 @@ interface StoreState {
     outcome: 'succeeded' | 'failed',
     now: Date,
   ) => { bookingReference?: string; failureReason?: string };
-  /** Lands in `Offer.revisionNote`, never in `message` — see the schema. */
-  requestOfferChange: (offerId: ID, note: string) => void;
+  /**
+   * Lands in `Offer.revisionNote`, never in `message` — see the schema.
+   *
+   * The reason travels as a key beside the note rather than glued to the front
+   * of it: the office has to be able to read it in their own language, and a
+   * chip cannot be cut back out of a sentence.
+   */
+  requestOfferChange: (
+    offerId: ID,
+    reason: RevisionReason,
+    note: string,
+    now: Date,
+  ) => void;
   /** `false` when the quote is not one a new version applies to (`canReissue`). */
   reissueOffer: (offerId: ID, now: Date) => boolean;
 
@@ -2377,13 +2397,19 @@ export const useStore = create<StoreState>()(
       },
 
       // §20.1 — a negotiation produces a new version and voids the current one.
-      requestOfferChange: (offerId, note) =>
+      requestOfferChange: (offerId, reason, note, now) =>
         set((s) => ({
           data: {
             ...s.data,
             offers: s.data.offers.map((o) =>
               o.id === offerId
-                ? { ...o, status: 'revisionRequested' as const, revisionNote: note }
+                ? {
+                    ...o,
+                    status: 'revisionRequested' as const,
+                    revisionNote: note,
+                    revisionReason: reason,
+                    revisionRequestedAt: now.toISOString(),
+                  }
                 : o,
             ),
             requests: s.data.requests.map((r) =>
@@ -2436,6 +2462,26 @@ export const useStore = create<StoreState>()(
                     },
                   }
                 : o,
+            ),
+            /*
+             * The request moves with its quote — the half this action forgot.
+             *
+             * `reissueOffer` writes the offer `sent` and stops there, so a
+             * reissued quote left the request behind on whatever ended it:
+             * `revisionRequested`, `rejected` or `expired`. Nothing showed it
+             * while the two records lived on separate screens. They are on one
+             * screen now — the request detail badges the request in its header
+             * and the quote in the panel beside it — and the disagreement
+             * reads as «Änderung angefragt» printed directly above «Offerte
+             * versendet» for the same job.
+             *
+             * `sendOffer` already writes exactly this pair, and a reissue is a
+             * quote going out. Same two fields, same reason.
+             */
+            requests: s.data.requests.map((r) =>
+              r.id === offer.requestId
+                ? { ...r, status: 'offerSent' as const, respondedAt: now.toISOString() }
+                : r,
             ),
           },
         }));

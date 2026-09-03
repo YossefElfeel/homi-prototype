@@ -100,6 +100,17 @@ export const en: Messages = {
       cancelledByCustomer: 'Cancelled by customer',
       cancelledByCompany: 'Cancelled by us',
     },
+    /* What the customer reached for on screen 29 — and why it lives here and
+       not under `offer.change`. The customer picks it, the office reads it:
+       two sides, two languages, one key. Kept only in the customer namespace,
+       the console would have to carry the same four words a second time, and
+       two lists for one set of reasons drift. */
+    revisionReason: {
+      price: 'Price',
+      scope: 'What is included',
+      date: 'The slot',
+      other: 'Something else',
+    },
     booking: {
       scheduled: 'Scheduled',
       rescheduled: 'Rescheduled',

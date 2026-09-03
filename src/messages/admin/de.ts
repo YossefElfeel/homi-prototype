@@ -161,6 +161,31 @@ export const adminDe = {
     statRenewalsLink: 'Abos öffnen',
   },
 
+  /*
+   * Der Änderungswunsch — auf der Offerte und auf der Anfrage dieselben Worte,
+   * weil es dieselbe Karte ist. Stand vorher nur in `offerDetail` und nur für
+   * den Fall, dass ein Text da war; die Anfrage kannte den Vorgang gar nicht.
+   */
+  revision: {
+    title: 'Änderungswunsch',
+    lead: '{name} hat zu Version {version} etwas anderes gewünscht. Antworten Sie mit einer neuen Version.',
+    leadNoName: 'Zu Version {version} wurde etwas anderes gewünscht. Antworten Sie mit einer neuen Version.',
+    /* Ohne Versionsnummer, und ohne die Aufforderung zu antworten: die neue
+       Version steht schon, und `offer.version` zeigt inzwischen auf sie statt
+       auf die, gegen die der Kunde etwas hatte. */
+    leadAnswered: 'Das hat der Kunde zur vorherigen Version gewünscht.',
+    /* «Wartet: 2 Tage» und nicht «seit 2 Tagen»: `elapsed` liefert den
+       Nominativ («2 Tage»), und «seit» verlangt den Dativ. Das Muster auf dem
+       Dashboard schreibt genau diesen Fehler — hier nicht mitkopiert. */
+    since: 'Wartet: {time}',
+    /* Wenn kein Text da ist, sagt die Karte das — und nennt den nächsten
+       Schritt. Eine Karte, die in diesem Fall einfach verschwindet, lässt ein
+       Warnabzeichen ohne einen einzigen erklärenden Satz auf der Seite
+       zurück, und genau das ist der Fehler, den diese Karte behebt. */
+    noNote:
+      'Der Kunde hat keinen Text hinterlassen — nur, dass etwas nicht passt. Rufen Sie an, bevor Sie neu rechnen.',
+  },
+
   /**
    * Screen 57 had a list and no detail, so every row left the panel for the
    * customer-facing quote page — whose only exit is the public home page.
@@ -187,9 +212,6 @@ export const adminDe = {
     total: 'Total',
     hours: 'Geplante Zeit',
     messageTitle: 'Begleittext',
-    revisionTitle: 'Änderungswunsch',
-    revisionLead:
-      '{name} wünscht etwas anderes. Eine neue Version ist die Antwort darauf.',
     openAsCustomer: 'Kundenansicht öffnen',
     openRequest: 'Anfrage öffnen',
     reissue: 'Neue Version ausstellen',
@@ -490,6 +512,18 @@ export const adminDe = {
     reject: 'Ablehnen',
     restore: 'Ablehnung zurücknehmen',
     restored: 'Die Anfrage liegt wieder in der Warteschlange.',
+    reissue: 'Neue Version ausstellen',
+    reissued: 'Neue Version erstellt.',
+    /* Die Offerte lag immer schon im Datensatz — die Verlaufsleiste liest sie,
+       um «Offerte versendet» zu zeichnen — und stand nirgends auf der Seite.
+       «Was haben wir denn angeboten?» kostete den Umweg über /admin/offerten. */
+    quoteTitle: 'Unsere Offerte',
+    quoteVersion: 'Version {n}',
+    quoteTotal: 'Total',
+    quoteIssued: 'Versendet',
+    quoteNotSent: 'Noch nicht versendet',
+    quoteExpires: 'Gültig bis',
+    quoteOpen: 'Offerte öffnen',
     customerTitle: 'Kunde',
     call: 'Anrufen',
     whatsapp: 'WhatsApp',
