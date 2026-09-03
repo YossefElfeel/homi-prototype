@@ -151,6 +151,19 @@ export default function ReviewStep() {
             </span>
           )}
         </Row>
+        {/* Its own row, not a second line under the address: on a job with two
+            stops the whole point is that they are two different places, and
+            stacking them reads as one address that wrapped. */}
+        {draft.pickup && (
+          <Row label={pt('pickupTitle')} href="/anfrage/objekt" edit={t('edit')}>
+            <span className="block">
+              {draft.pickup.street}, {draft.pickup.postcode} {draft.pickup.city}
+            </span>
+            {draft.pickup.note && (
+              <span className="block text-sm text-ink-tertiary">{draft.pickup.note}</span>
+            )}
+          </Row>
+        )}
         {showAddOns && (
           <Row label={t('sectionAddons')} href="/anfrage/extras" edit={t('edit')}>
             {chosen.length ? chosen.map((a) => a.name[locale]).join(', ') : t('noAddons')}

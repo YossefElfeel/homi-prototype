@@ -334,6 +334,13 @@ export const adminEn: typeof adminDe = {
     kindOffice: 'Office',
     /* Replaces the radio group when the service already answered it. */
     kindFromService: '{service} — we are pricing this as an office.',
+    /* The second stop. It lives in the property section because that section
+       answers «where am I sending somebody», and an assembly can be two
+       places. */
+    pickupToggle: 'The furniture is collected from somewhere else first',
+    pickupNote: 'Note on the collection',
+    pickupOutside:
+      'Outside the service area. Put the travel on the quote by hand, per §5.1.',
     area: 'Area m²',
     rooms: 'Rooms',
     roomsOffice: 'Rooms',
@@ -455,6 +462,13 @@ export const adminEn: typeof adminDe = {
     /* The §5.2 matrix is not consulted for a service billed by count. */
     estimatedNoteCount: 'Calculated by the system from the recorded count.',
     estimatedNoArea: 'No floor area on file',
+    /* The second stop. It lives in the property block because that block
+       answers «where am I sending somebody», and here the answer is two
+       places. */
+    pickupTitle: 'Collection address',
+    pickupNote: 'Note on the collection',
+    pickupOutside:
+      'Outside the service area. Put the travel on the quote by hand, per §5.1.',
     preferredTitle: 'Preferred time',
     flexible: 'Flexible',
     customerLead: 'Who to reach about this request. Belongs to the customer account.',

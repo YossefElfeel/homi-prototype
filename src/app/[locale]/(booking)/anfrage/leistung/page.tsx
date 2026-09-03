@@ -71,6 +71,7 @@ export default function ServiceStep({
       patch.addOnIds = [];
       patch.windowCount = null;
       patch.furniturePieces = null;
+      patch.pickup = null;
     }
     // A postcode the visitor typed beats one inferred from a region page.
     if (plz && /^\d{4}$/.test(plz) && draft.property.postcode === '') {
@@ -145,10 +146,14 @@ export default function ServiceStep({
                         updateDraft({
                           serviceSlug: service.slug,
                           // Add-ons are service-scoped; keeping a stale one
-                          // would put an unbuyable line in the quote.
+                          // would put an unbuyable line in the quote. The
+                          // collection address is scoped the same way — only
+                          // assembly has one, and a leftover would send the
+                          // crew to a shop on a window-cleaning job.
                           addOnIds: [],
                           windowCount: null,
                           furniturePieces: null,
+                          pickup: null,
                         })
                       }
                     />

@@ -2003,6 +2003,24 @@ function baseData(now: Date): DataSet {
       serviceSlug: 'moebelmontage',
       addOnIds: [],
       furniturePieces: 4,
+      /*
+       * The one seeded job with two stops.
+       *
+       * `ServiceRequest.pickup` is optional, and a field no seeded record
+       * carries is a field nobody can see working — the office panel would
+       * draw a collection block that only a request typed by hand could ever
+       * fill. This one is deliberately *outside* the eight municipalities as
+       * well, so the §5.1 note beside it («put the travel on the quote») is a
+       * state on screen rather than a branch nothing reaches.
+       */
+      pickup: {
+        street: 'Industriestrasse 22',
+        postcode: '8604',
+        city: 'Volketswil',
+        floor: 0,
+        hasElevator: false,
+        note: 'Abholung beim Warenausgang, Abholschein liegt auf den Namen Widmer bereit.',
+      },
       preferred: { flexible: true },
       photoIds: [],
       customerNote: 'Two wardrobes plus a bed. The instructions are with them.',

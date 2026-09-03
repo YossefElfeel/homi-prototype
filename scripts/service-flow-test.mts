@@ -25,7 +25,10 @@ import { stepsForService, BOOKING_STEPS } from '../src/components/booking/steps.
 import { addOnsForService } from '../src/lib/addon-catalogue.ts';
 import { isOffered } from '../src/lib/service-catalogue.ts';
 import { priceEstimate } from '../src/mock/engines/pricing.ts';
+import { buildScenario } from '../src/mock/scenarios.ts';
 import type { Service } from '../src/mock/schema.ts';
+
+const DEMO = buildScenario('demo', new Date('2026-09-03T09:00:00.000Z'));
 
 let failures = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -106,6 +109,35 @@ check(
   'no other bookable service asks for either',
   BOOKABLE.filter((s) => serviceNeeds(s).asksWindowCount || serviceNeeds(s).asksFurniturePieces)
     .length === 2,
+);
+
+console.log(`\n— only assembly can have two stops —\n`);
+
+const assembly = SEED_SERVICES.find((s) => s.slug === 'moebelmontage')!;
+check('moebelmontage offers a collection address', serviceNeeds(assembly).asksPickupAddress);
+check(
+  'no other bookable service does',
+  BOOKABLE.filter((s) => serviceNeeds(s).asksPickupAddress).length === 1,
+);
+/* A second stop is a fact about the day, not about the money — §5.1 prices a
+   detour by hand on the quote, and the engine has no distance input at all.
+   Asserted so that "the pickup silently moved the estimate" cannot pass. */
+check(
+  'a collection address does not move the estimate',
+  estimate(assembly) === estimate(assembly, { area: 400, bathrooms: 9 }),
+  'assembly is priced from the piece count either way',
+);
+/* The state has to be reachable from the seed, or the office panel draws a
+   collection block only a hand-typed request could ever fill. */
+const withPickup = DEMO.requests.filter((r) => r.pickup);
+check(
+  'the seed carries a request with a collection address',
+  withPickup.length > 0,
+  withPickup.map((r) => r.reference).join(', '),
+);
+check(
+  'that request is an assembly job',
+  withPickup.every((r) => serviceNeeds(SEED_SERVICES.find((s) => s.slug === r.serviceSlug)).asksPickupAddress),
 );
 
 console.log(`\n— the office knows it is an office —\n`);

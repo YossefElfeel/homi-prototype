@@ -19,6 +19,7 @@ import { useEstimate } from './use-estimate';
 export function BookingSummary({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('booking.shell');
   const ts = useTranslations('booking.service');
+  const tp = useTranslations('booking.property');
   const locale = useLocale() as Locale;
   const draft = useStore((s) => s.draft);
   const services = useStore((s) => s.services);
@@ -63,6 +64,15 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
         {needs.asksFurniturePieces && draft.furniturePieces && (
           <Row label={ts('piecesSummary')}>
             <span data-numeric>{draft.furniturePieces}</span>
+          </Row>
+        )}
+        {/* A second stop is the biggest thing that can change about a job
+            without changing a single number, so it belongs in the running
+            selection rather than only on the review page. */}
+        {draft.pickup?.street && (
+          <Row label={tp('pickupTitle')}>
+            {draft.pickup.street}
+            {draft.pickup.city && `, ${draft.pickup.city}`}
           </Row>
         )}
         {chosenAddOns.length > 0 && (

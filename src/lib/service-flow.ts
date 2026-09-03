@@ -49,6 +49,16 @@ export interface ServiceNeeds {
   /** §5.1 — assembly is priced per piece. */
   asksFurniturePieces: boolean;
   /**
+   * Whether the job can have two stops.
+   *
+   * Assembly is the one service where the thing being worked on has to *get*
+   * to the address first: a wardrobe bought at the shop, a desk from the old
+   * flat, a bed out of a storage unit. Every other service works on something
+   * that is already there, so offering the question would be offering a field
+   * nobody can fill in sensibly.
+   */
+  asksPickupAddress: boolean;
+  /**
    * Which words the size questions are asked in. A workplace has «Räume» and
    * «Toiletten», not «Zimmer» and «Bäder» — the same fields, and the wrong
    * nouns make the form read as one written for somebody else.
@@ -74,6 +84,7 @@ export function serviceNeeds(service: Service | undefined): ServiceNeeds {
       asksCondition: false,
       asksWindowCount: false,
       asksFurniturePieces: false,
+      asksPickupAddress: false,
       vocabulary: 'home',
     };
   }
@@ -94,6 +105,11 @@ export function serviceNeeds(service: Service | undefined): ServiceNeeds {
        a field on the record; until then, inventing one here would put a
        column in the schema that nothing writes. */
     asksFurniturePieces: service.slug === 'moebelmontage',
+    /* Same slug and the same reason as the line above it: the two questions
+       are both facts about assembly work, and neither is expressible on the
+       `Service` record today. When a second assembly service exists, both
+       become fields on it together. */
+    asksPickupAddress: service.slug === 'moebelmontage',
     vocabulary: office ? 'office' : 'home',
   };
 }
