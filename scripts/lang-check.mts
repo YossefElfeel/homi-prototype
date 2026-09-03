@@ -69,7 +69,16 @@ for (const name of SCENARIOS) {
     for (const line of i.lines) check('invoice line', line.label, `${tag} ${i.reference}`);
     check('invoice cancel reason', i.cancelReason ?? '', `${tag} ${i.reference}`);
   }
-  for (const o of d.offers) check('quote message', o.message ?? '', `${tag} ${o.reference}`);
+  for (const o of d.offers) {
+    check('quote message', o.message ?? '', `${tag} ${o.reference}`);
+    /* The other direction. `message` goes out with the quote and was checked;
+       `revisionNote` comes back from the customer, reaches the panel exactly
+       the same way, and was not — so a German change request would have walked
+       straight past this script onto the office's screen. It nearly did: the
+       three notes seeded in this wave were written in German first and only
+       the missing coverage let them through. */
+    check('quote revision note', o.revisionNote ?? '', `${tag} ${o.reference}`);
+  }
   for (const m of d.messages) {
     if (m.customerId === FRENCH_CUSTOMER) continue;
     check('message body', m.body, `${tag} ${m.subject}`);

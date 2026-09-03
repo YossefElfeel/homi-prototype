@@ -439,6 +439,19 @@ export type OfferStatus =
   | 'expired';
 
 /**
+ * Which of the four buttons on screen 29 the customer pressed.
+ *
+ * A key, not the label. The change request used to reach the store as
+ * `` `${t(reason)}: ${message}` `` — the *translated* word welded onto the
+ * front of free text — and that cost three things at once. The office reading
+ * the panel in the other language got the customer's; nothing could chip,
+ * filter or count the reason, because it was prose by the time it was stored;
+ * and the seed still carries the evidence, a quote in a German prototype whose
+ * note opens «Scope:».
+ */
+export type RevisionReason = 'price' | 'scope' | 'date' | 'other';
+
+/**
  * One party's mark on a contract — §9.2.
  *
  * Stored as SVG path data rather than a raster, for two reasons that both
@@ -482,6 +495,17 @@ export interface Offer {
    * heading "Covering note".
    */
   revisionNote?: string;
+  /** See `RevisionReason` — stored as a key so the office reads it in *their* language. */
+  revisionReason?: RevisionReason;
+  /**
+   * When the change request landed, and why it is not `issuedAt` minus a guess.
+   *
+   * The office works this state as a queue: the whole question on arrival is
+   * whether this has been sitting for an hour or for a fortnight. Nothing on
+   * the record answered it — `issuedAt` is when *we* sent the quote, which on
+   * a fourteen-day validity says nothing about when they wrote back.
+   */
+  revisionRequestedAt?: ISODate;
   status: OfferStatus;
   issuedAt?: ISODate;
   expiresAt?: ISODate;

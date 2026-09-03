@@ -22,10 +22,16 @@ import {
 
 import { toast } from 'sonner';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
+import { RevisionRequest } from '@/components/admin/revision-request';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Money } from '@/components/ui/money';
+import { canReissue, daysLeft, offerTotal } from '@/mock/engines/offers';
+import { offerState } from '@/lib/offer-facts';
 import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { Lifecycle } from '@/components/ui/lifecycle';
@@ -96,8 +102,10 @@ export default function RequestDetailPage({
   const cancelRequest = useStore((s) => s.cancelRequest);
   const restoreRequest = useStore((s) => s.restoreRequest);
   const markRequestOpened = useStore((s) => s.markRequestOpened);
+  const reissueOffer = useStore((s) => s.reissueOffer);
   const holds = useStore((s) => s.holds);
   const now = useNow();
+  const router = useRouter();
 
   /*
    * Opening this screen is the review. It used to be the quote builder that
@@ -223,6 +231,32 @@ export default function RequestDetailPage({
    */
   const declinable = !answered;
 
+  /*
+   * The quote this request produced, and what state it is actually in.
+   *
+   * `offerState` rather than `offer.status` for the reason it exists: a quote
+   * whose validity window closed is never written `expired`, so reading the
+   * stored field here would have this screen and the quote list one click away
+   * badging the same record two ways.
+   */
+  const offerBadgeState = offer ? offerState(offer, data.bookings, now) : null;
+  const awaitingRevision = offerBadgeState === 'revisionRequested';
+  const offerDaysLeft = offer ? daysLeft(offer, now) : null;
+
+  /*
+   * The answer to a change request, on the screen where the change request is
+   * read — the same action the quote detail offers, called the same way.
+   *
+   * Not a second implementation: `reissueOffer` is the store's, it refuses on
+   * a quote a new version does not apply to, and the route it lands on is the
+   * builder that writes the new version.
+   */
+  function reissue() {
+    if (!offer || !reissueOffer(offer.id, now)) return;
+    toast.success(t('reissued'));
+    router.push(`/admin/anfragen/${request!.id}/offerte`);
+  }
+
   /* Read twice — once as the closed header's summary, once as the row inside.
      Deriving it once keeps the two from ever disagreeing. */
   const preferredSummary = request.preferred.flexible
@@ -304,12 +338,24 @@ export default function RequestDetailPage({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button asChild disabled={answered}>
-            <Link href={`/admin/anfragen/${request.id}/offerte`}>
-              <FileText className="size-4" aria-hidden />
-              {t('replyWithQuote')}
-            </Link>
-          </Button>
+          {/*
+            Hidden rather than disabled while a change request is open, because
+            here it was worse than a dead control — it was the *only* thing the
+            screen offered. A request in «Änderung angefragt» counts as
+            `answered`, so the one constructive button greyed itself out and
+            what remained was a red «Stornieren»: the office arrived at a
+            customer asking for a cheaper quote and the screen's advice was to
+            call the job off. The action that does apply is in the card below,
+            next to the sentence asking for it.
+          */}
+          {!awaitingRevision && (
+            <Button asChild disabled={answered}>
+              <Link href={`/admin/anfragen/${request.id}/offerte`}>
+                <FileText className="size-4" aria-hidden />
+                {t('replyWithQuote')}
+              </Link>
+            </Button>
+          )}
           {/* A decline was one-way: "Offerte schreiben" disables itself as
               soon as a request counts as answered, so the screen left after
               a mis-click offered exactly one thing — declining it again. */}
@@ -370,6 +416,35 @@ export default function RequestDetailPage({
           )}
         </Field>
       </ConfirmDialog>
+
+      {/*
+        Above the rail, because it outranks it.
+
+        The rail says where the request is; this says what to do about it, and
+        on the one status where those differ the second question is the one
+        being asked. Until now this screen answered neither: a request in
+        «Änderung angefragt» showed the warning badge in the header and then
+        went on to print the service, the property and the access codes as if
+        nothing had happened — the customer's objection, the quote it is about
+        and the price they are objecting to were all on other screens, and
+        nothing here even said a quote existed.
+      */}
+      {offer && awaitingRevision && (
+        <RevisionRequest
+          offer={offer}
+          customerName={customer.firstName}
+          now={now}
+          className="mt-8"
+          action={
+            canReissue(offer, now) && (
+              <Button onClick={reissue}>
+                <RotateCcw className="size-4" aria-hidden />
+                {t('reissue')}
+              </Button>
+            )
+          }
+        />
+      )}
 
       {/*
         Was first in the right-hand column, which made "where is this request?"
@@ -663,6 +738,63 @@ export default function RequestDetailPage({
         </div>
 
         <aside className="space-y-8 lg:col-span-5">
+          {/*
+            What we quoted — the one fact this screen was missing entirely.
+
+            The record held the offer all along: the lifecycle rail reads it to
+            draw «Offerte versendet», and the page then never named it. So a
+            request that had been answered showed a rail claiming a quote
+            existed and offered no reference for it, no price, no state, and no
+            way to open it — «was haben wir denn angeboten?» was a trip through
+            /admin/offerten and a search by customer name. It sits first in the
+            column because on every status past `inReview` it is the next thing
+            asked after "who is this".
+          */}
+          {offer && offerBadgeState && (
+            <Card>
+              <CardHeader
+                title={t('quoteTitle')}
+                actions={<StatusBadge entity="request" state={
+                  offerBadgeState === 'sent' ? 'offerSent' : offerBadgeState
+                } size="sm" />}
+              />
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span data-numeric className="text-ink-secondary">
+                  {offer.reference}
+                </span>
+                {offer.version > 1 && (
+                  <Chip tone="neutral">{t('quoteVersion', { n: offer.version })}</Chip>
+                )}
+              </div>
+              <dl className="mt-4 divide-y divide-line-subtle border-y border-line-subtle">
+                <Row label={t('quoteTotal')}>
+                  <Money amount={offerTotal(offer)} emphasis="strong" />
+                </Row>
+                <Row label={t('quoteIssued')}>
+                  <span data-numeric>
+                    {offer.issuedAt
+                      ? format.dateTime(new Date(offer.issuedAt), 'short')
+                      : t('quoteNotSent')}
+                  </span>
+                </Row>
+                {/* Only while it can still run out. On an accepted, declined or
+                    already lapsed quote the date is a fact about a window that
+                    closed, and printing «gültig bis» over it invites the reader
+                    to act on a deadline that no longer governs anything. */}
+                {offer.expiresAt && offerDaysLeft !== null && offerDaysLeft > 0 && (
+                  <Row label={t('quoteExpires')}>
+                    <span data-numeric>
+                      {format.dateTime(new Date(offer.expiresAt), 'short')}
+                    </span>
+                  </Row>
+                )}
+              </dl>
+              <Button asChild block variant="secondary" className="mt-4">
+                <Link href={`/admin/offerten/${offer.id}`}>{t('quoteOpen')}</Link>
+              </Button>
+            </Card>
+          )}
+
           <div className="surface-card p-6">
             <h2 className="label-type text-ink-tertiary">{t('customerTitle')}</h2>
             {/* One line saying what this block is for, because the block below

@@ -102,6 +102,17 @@ export const de = {
       cancelledByCustomer: 'Vom Kunden storniert',
       cancelledByCompany: 'Von uns storniert',
     },
+    /* Wonach der Kunde auf Screen 29 gegriffen hat — und warum es hier steht
+       und nicht bei `offer.change`. Der Kunde wählt es, das Büro liest es: zwei
+       Seiten, zwei Sprachen, ein Schlüssel. Stünde es nur im Kundennamensraum,
+       müsste die Konsole die Wörter ein zweites Mal führen, und zwei Listen für
+       dieselben vier Gründe driften auseinander. */
+    revisionReason: {
+      price: 'Preis',
+      scope: 'Leistungsumfang',
+      date: 'Termin',
+      other: 'Etwas anderes',
+    },
     booking: {
       scheduled: 'Geplant',
       rescheduled: 'Verschoben',

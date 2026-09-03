@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { ContractDocument, SignatureSlot } from '@/components/offer/contract';
 import { JobPhotos } from '@/components/admin/job-photos';
+import { RevisionRequest } from '@/components/admin/revision-request';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
@@ -186,7 +187,11 @@ export default function AdminOfferDetailPage({
         }
         actions={
           <>
-            {reissuable && (
+            {/* Not while the change request is on screen: the card below owns
+                the button there, beside the sentence that asks for it. Two of
+                the same control on one screen is the reader wondering whether
+                they do the same thing. */}
+            {reissuable && state !== 'revisionRequested' && (
               <Button variant="secondary" onClick={reissue}>
                 <RefreshCw className="size-4" aria-hidden />
                 {t('reissue')}
@@ -241,6 +246,42 @@ export default function AdminOfferDetailPage({
             panel here that wait is invisible, and the quote looks like it is
             sitting with the customer when in fact it is sitting with us.
           */}
+          {/*
+            First in the column, and rendered on the *state* rather than on the
+            note.
+
+            Both halves of that were wrong before. The card sat below the lines
+            table — so the one thing the office opened this quote to read was
+            under a scroll, beneath the prices it is about to change — and it
+            was gated on `offer.revisionNote` being set. `off_acc_revision` is
+            seeded in this state with no note, and the whole page therefore
+            offered a warning badge and not one sentence explaining it: the
+            reader could see that somebody objected and nowhere on the screen
+            what to. The component says so in words when the note is missing.
+
+            «Neue Version ausstellen» moves inside it. The button existed, in
+            the page header, an arm's length from the paragraph it answers —
+            and on a quote that is not `revisionRequested` it means something
+            else entirely (bring a lapsed quote back). Here it has one meaning,
+            and it is next to the reason for pressing it.
+          */}
+          {state === 'revisionRequested' && (
+            <RevisionRequest
+              offer={offer}
+              customerName={customer?.firstName}
+              now={now}
+              className="mb-app"
+              action={
+                reissuable && (
+                  <Button onClick={reissue}>
+                    <RefreshCw className="size-4" aria-hidden />
+                    {t('reissue')}
+                  </Button>
+                )
+              }
+            />
+          )}
+
           {awaitingSlot && (
             <Card id="termin" className="mb-app border-status-warning-line">
               <CardHeader
@@ -326,22 +367,20 @@ export default function AdminOfferDetailPage({
           </Card>
 
           {/*
-            What the customer wrote back, which until now had nowhere of its
-            own: it was stored over the covering note, so this text appeared
-            under the heading "Covering note" and the note the office had
-            actually sent was gone. Two headings because they are two
-            directions — one is what we said, one is what they answered.
+            The answered change request, kept below the lines once it is
+            history. While the quote is `revisionRequested` this same card is
+            at the top of the column; after a new version goes out the state
+            moves on and the note becomes a record of why — which belongs down
+            here with the covering note it is the reply to, not above the
+            prices it has already changed.
           */}
-          {offer.revisionNote && (
-            <Card className="mt-app border-status-warning-line">
-              <CardHeader
-                title={t('revisionTitle')}
-                description={t('revisionLead', { name: customer?.firstName ?? '' })}
-              />
-              <p className="mt-3 max-w-[var(--measure)] whitespace-pre-line text-ink-secondary">
-                {offer.revisionNote}
-              </p>
-            </Card>
+          {state !== 'revisionRequested' && offer.revisionNote && (
+            <RevisionRequest
+              offer={offer}
+              customerName={customer?.firstName}
+              now={now}
+              className="mt-app"
+            />
           )}
 
           {offer.message && (
