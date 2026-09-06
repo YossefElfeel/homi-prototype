@@ -78,7 +78,7 @@ export default function EditPostPage({ params }: { params: Promise<{ slug: strin
       <PageHeader
         title={post.title[locale] || post.title.de || t('untitled')}
         lead={t('editorLead')}
-        back={{ href: '/admin/inhalte/ratgeber', label: t('backToList') }}
+        back={{ href: '/admin/ratgeber', label: t('backToList') }}
         actions={
           <div className="flex items-center gap-3">
             <SaveIndicator

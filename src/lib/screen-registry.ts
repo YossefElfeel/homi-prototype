@@ -682,43 +682,21 @@ export const TRACKS: Track[] = [
       ]),
       done('83', 'Änderungsprotokoll', 'Change log', '/admin/protokoll', ['empty']),
       done('84', 'Suche', 'Unified search', '/admin/suche', ['idle', 'empty']),
-      /*
-       * Lettered like the users track, and for the same reason: these are not
-       * screens 85 and 86 of the specification's eighty-eight — the field
-       * track already holds those numbers — but a named area the waves added.
-       * Numbering them anyway would give the board two screen 85s.
-       */
-      done(
-        'W1',
-        'Website-Texte',
-        'Website text',
-        '/admin/inhalte',
-        ['filtered to a group', 'filtered to gaps', 'search finds a sentence', 'a live service with no page copy'],
-        'Filed by page, not by message file: every row is a route somebody can open',
-      ),
       done(
         'R3',
         'Ratgeber verwalten',
         'Manage guides',
-        '/admin/inhalte/ratgeber',
+        '/admin/ratgeber',
         ['drafts first', 'filtered to published', 'publish confirm', 'delete confirm'],
-        'Under /admin/inhalte so it inherits the «website» right through the longest-prefix rule — no second permission to grant',
+        'Its own right. The website-text editor it briefly lived under is gone — marketing copy is static, and an article is a record rather than a string',
       ),
       done(
         'R4',
         'Beitrag schreiben',
         'Write an article',
-        '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste',
+        '/admin/ratgeber/wohnungsabgabe-checkliste',
         ['German', 'English', 'a language with a gap', 'a section with an image'],
         'Autosaves per keystroke; publishing lives on the list because it is the one decision a keystroke must not make',
-      ),
-      done(
-        'W2',
-        'Website-Texte — eine Seite',
-        'Website text — one surface',
-        '/admin/inhalte/service.umzugsreinigung',
-        ['German', 'English (gap counted on the tab)', 'edited block', 'reset to shipped text'],
-        'Five editors, one per kind of block — a bullet list is not a paragraph with dashes in it',
       ),
     ],
   },

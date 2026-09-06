@@ -1370,76 +1370,24 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
-    id: 'content',
-    en: 'Writing the website',
-    actors: ['owner'],
-    entries: [
-      added(
-        'Every place on the site that has words in it',
-        '/admin/inhalte',
-        'Filed by page and not by message file. The first cut of this board had one row per dictionary namespace — «site», «booking», «admin» — which is how the strings are stored and is nobody’s answer to «where does the sentence on the pricing page live»',
-      ),
-      added(
-        'Straight to a service’s page copy',
-        '/admin/inhalte/service.umzugsreinigung',
-        'The lead paragraph, the included list, the «what is not included» block and the FAQ. §17.2 promised this screen in wave 1 and `content/services.ts` has carried the comment ever since',
-      ),
-      added(
-        'From the warning about a service with no copy',
-        '/admin/inhalte',
-        'A service that is on sale, has a price and has a blank lead paragraph is a page the site cannot build. The board says so and links to the one to write',
-      ),
-    ],
-    actions: [
-      added('Rewrite a paragraph or a heading', '/admin/inhalte/page.home', 'Autosaves per keystroke, logged once per two minutes rather than once per character'),
-      added(
-        'Add, remove and reorder a bullet',
-        '/admin/inhalte/service.umzugsreinigung',
-        'The unit is the line. Editing the included list as a textarea would make reordering a cut-and-paste, which is the operation that loses one',
-      ),
-      added(
-        'Write a language that has no dictionary',
-        '/admin/inhalte/page.home',
-        'French and Italian fall back to German by §20.6, so the tab shows the German the visitor actually gets and counts it as a gap rather than as text',
-      ),
-      added('Put the shipped text back', '/admin/inhalte/page.home', 'Per language, so a bad English translation can go without touching the German'),
-      added(
-        'Take the changes out as a file',
-        '/admin/inhalte',
-        'The marketing pages are built at deploy time. Without this the screen would be a box that swallows work',
-      ),
-    ],
-    exits: [
-      added('The panel and the request flow read it at once', '/anfrage/leistung', 'Anything rendered from the store follows immediately'),
-      open(
-        'The marketing pages read it',
-        'They are statically rendered and read `SEED_SERVICES`, `content/services.ts` and the dictionaries, so an edit here is the copy the *next build* ships. Same boundary as §17.2b for add-ons, and the export is the hand-off it implies. Making them live means turning the editable blocks into client components — a decision about the whole marketing site, not about this screen',
-      ),
-      open(
-        'A service the owner added gets a marketing page',
-        'Its four blocks are now writable, which was the missing half of §17.2a. The other half is the route: /leistungen/[slug] is pre-rendered from the seed, so a new slug has no page to put the copy on until the site is rebuilt',
-      ),
-    ],
-  },
-  {
     id: 'ratgeber',
     en: 'Writing a guide',
     actors: ['owner', 'visitor'],
     entries: [
-      added('Write a new one', '/admin/inhalte/ratgeber', 'Created as a draft, always — «aufschalten» on an untitled post would put a blank card on the index'),
-      added('Pick up a draft', '/admin/inhalte/ratgeber', 'Drafts sort to the top: the list is a desk, not an archive'),
+      added('Write a new one', '/admin/ratgeber', 'Created as a draft, always — «aufschalten» on an untitled post would put a blank card on the index'),
+      added('Pick up a draft', '/admin/ratgeber', 'Drafts sort to the top: the list is a desk, not an archive'),
       added('Read one', '/ratgeber', 'The section a visitor finds through search rather than through the menu'),
     ],
     actions: [
-      added('Write it in sections', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'A heading and its paragraphs, so every block is separately translatable — and no markdown in front of the office'),
-      added('Translate it', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'A language counts as written only when the title, the lead and every heading are there; half a translation reads as a broken page rather than an untranslated one'),
-      added('Put a picture in it', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'Chosen from the images already in the project — there is no upload, and a file input that writes nowhere is a control that lies'),
-      added('Point it at a service', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'Draws the box at the foot of the article that leads into the request flow — the commercial point of the whole section'),
+      added('Write it in sections', '/admin/ratgeber/wohnungsabgabe-checkliste', 'A heading and its paragraphs, so every block is separately translatable — and no markdown in front of the office'),
+      added('Translate it', '/admin/ratgeber/wohnungsabgabe-checkliste', 'A language counts as written only when the title, the lead and every heading are there; half a translation reads as a broken page rather than an untranslated one'),
+      added('Put a picture in it', '/admin/ratgeber/wohnungsabgabe-checkliste', 'Chosen from the images already in the project — there is no upload, and a file input that writes nowhere is a control that lies'),
+      added('Point it at a service', '/admin/ratgeber/wohnungsabgabe-checkliste', 'Draws the box at the foot of the article that leads into the request flow — the commercial point of the whole section'),
     ],
     exits: [
       added('Published', '/ratgeber/wohnungsabgabe-checkliste', 'Into the index and the sitemap, at the next build'),
-      added('Withdrawn', '/admin/inhalte/ratgeber', '`publishedAt` is kept, so re-publishing gives you the same article rather than a new one'),
-      added('Deleted', '/admin/inhalte/ratgeber', 'For good, and deliberately with no archive: no invoice hangs off a piece of writing'),
+      added('Withdrawn', '/admin/ratgeber', '`publishedAt` is kept, so re-publishing gives you the same article rather than a new one'),
+      added('Deleted', '/admin/ratgeber', 'For good, and deliberately with no archive: no invoice hangs off a piece of writing'),
       open(
         'A visitor sees it',
         '/ratgeber is statically rendered like the rest of the marketing site, so an article published in the panel is on the website at the next build — the same boundary as §17.2b and §17.2c, said out loud in the publish confirm rather than implied',

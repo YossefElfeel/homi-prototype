@@ -21,9 +21,9 @@ const GAP = 16;
  * the `startsWith` guard beside it says so: when they disagreed the card fell
  * back to printing the lead *and then the whole quote*, so the opening
  * sentence appeared twice. That was survivable while the quotes were frozen in
- * a file and nobody could edit them. It is not now — /admin/inhalte makes the
- * quote editable, and the first person to fix a typo in one would have shipped
- * a duplicated sentence to the homepage with nothing to explain it.
+ * a file and nobody could edit them — but the two were only ever kept in step
+ * by hand, and the first person to reword a quote without noticing the second
+ * field would have shipped a duplicated sentence to the homepage.
  *
  * So the emphasis is derived. One string, no second copy to fall out of step.
  */
