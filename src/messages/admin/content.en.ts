@@ -452,6 +452,49 @@ export const adminContentEn: typeof adminContentDe = {
     looseEmptyTitle: 'Everything pairs up',
     looseEmptyBody: 'Every photo belongs to a before/after pair.',
   },
+  construction: {
+    title: 'Construction — portfolio',
+    lead: 'Which pictures stand on /construction, in which group and in which order. Unlike the customer gallery there is no consent attached here: these are our own photographs of our own work.',
+    viewPage: 'View the page',
+
+    groups: {
+      trockenbau: 'Drywall',
+      spanndecken: 'Stretch ceilings',
+      gewerbe: 'Commercial',
+      umgebung: 'Shell & grounds',
+    },
+    hiddenCount: '{n} hidden',
+
+    visible: 'Shown',
+    hidden: 'Hidden',
+    moveUp: 'Move earlier',
+    moveDown: 'Move later',
+    edit: 'Caption',
+    doneEditing: 'Done',
+    groupField: 'Group',
+    noAlt: 'No caption',
+
+    addAction: 'Add a picture',
+    addTitle: 'Add a picture',
+    addBody: 'Goes into «{group}», at the end.',
+    addFile: 'File',
+    addFileHint: 'Only files not used anywhere yet. There is no upload in this prototype.',
+    addFilePlaceholder: 'Choose a file',
+    addNoFiles: 'Every available file is already assigned to a group.',
+    addAlt: 'Caption',
+    addAltHint: 'What is in the picture. German is enough — the other languages fall back to it (§20.6).',
+    addDone: 'Picture added.',
+
+    remove: 'Remove',
+    removeTitle: 'Remove this picture?',
+    removeBody:
+      'It leaves the group. The file stays in the project and can be added again at any time — if it should only go temporarily, «Hide» is the shorter route.',
+    removeDone: 'Picture removed.',
+
+    emptyTitle: 'No pictures in this group',
+    emptyBody:
+      'The group only appears on /construction once it has a picture — a heading with nothing under it reads as a failed load.',
+  },
   reviews: {
     title: 'Reviews',
     lead: 'Every review is released by you before it appears on the website.',

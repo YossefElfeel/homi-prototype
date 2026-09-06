@@ -1370,6 +1370,30 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'construction',
+    en: 'Curating the construction portfolio',
+    actors: ['owner', 'visitor'],
+    entries: [
+      added('Open the portfolio', '/admin/construction', 'One tab per group, in the order the page renders them — so the screen and the page are the same shape'),
+      added('Read it', '/construction', 'Four sections, one per group'),
+    ],
+    actions: [
+      added('Take a picture down', '/admin/construction', 'The commonest edit to a portfolio is not adding — it is removing the one job the client would rather not see advertised, and putting it back six months later'),
+      added('Reorder within a group', '/admin/construction', 'Which ceiling leads the section is the whole of what a portfolio decides'),
+      added('Write the caption', '/admin/construction', 'Per language, and it is what a screen reader is given — a missing one is flagged on the card'),
+      added('Move it to another group', '/admin/construction', 'A picture filed under the wrong trade is the commonest thing to find and the hardest to fix in a file'),
+      added('Add one', '/admin/construction', 'From the files already in the project; there is no upload, and a file input that writes nowhere is a control that lies'),
+    ],
+    exits: [
+      added('On the page', '/construction', 'The grid reads the record and falls back to the file before hydration, so the server still renders the real page rather than a gap that fills in'),
+      added('Off the page', '/construction', 'A group whose pictures were all taken down renders nothing at all — an empty grid under a heading reads as a load that failed'),
+      open(
+        'A new photograph',
+        'The picker offers the files already under /public/construction and nothing else. A real portfolio needs an upload — storage, sizes, and who owns the picture of somebody else’s building — and that is a wave of its own',
+      ),
+    ],
+  },
+  {
     id: 'gallery',
     en: 'Putting a job in the gallery',
     actors: ['contractor', 'owner', 'customer', 'visitor'],

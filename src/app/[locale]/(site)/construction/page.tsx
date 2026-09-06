@@ -5,7 +5,7 @@ import { ArrowRight, Phone } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { getTheme } from '@/lib/theme-server';
-import { WORK_GROUPS, photosIn } from '@/content/bau';
+import { WORK_GROUPS } from '@/content/bau';
 import { WorkGrid } from '@/components/site/work-grid';
 import { Button } from '@/components/ui/button';
 import { Masthead } from '@/components/landing/Masthead';
@@ -59,7 +59,6 @@ export default async function ConstructionPage({
 
   const groups = WORK_GROUPS.map((group) => ({
     group,
-    photos: photosIn(group),
     title: t(`groups.${group}.title`),
     body: t(`groups.${group}.body`),
   }));
@@ -94,12 +93,12 @@ export default async function ConstructionPage({
           action={{ label: t('cta'), href: '/contact' }}
         />
 
-        {groups.map(({ group, photos, body }, i) => (
+        {groups.map(({ group, body }, i) => (
           <PageSection key={group} tone={i % 2 === 1 ? 'sunken' : undefined}>
             <SectionHead lines={d.raw(`groupLines.${group}`)} />
             <p className="mt-5 max-w-[var(--measure)] text-ink-secondary">{body}</p>
             <div className="mt-10">
-              <WorkGrid photos={photos} />
+              <WorkGrid group={group} />
             </div>
           </PageSection>
         ))}
@@ -122,12 +121,12 @@ export default async function ConstructionPage({
         />
       </Section>
 
-      {groups.map(({ group, photos, title, body }) => (
+      {groups.map(({ group, title, body }) => (
         <Section key={group}>
           <h2 className="subhead-type text-2xl">{title}</h2>
           <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{body}</p>
           <div className="mt-8">
-            <WorkGrid photos={photos} />
+            <WorkGrid group={group} />
           </div>
         </Section>
       ))}

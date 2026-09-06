@@ -13,6 +13,7 @@ import {
   History,
   Home,
   Images,
+  Layers,
   Inbox,
   KeyRound,
   LayoutDashboard,
@@ -95,6 +96,11 @@ const ICONS: Record<AdminPermission, LucideIcon> = {
   reviews: Star,
   /* Photographs, and the only row in the panel that is about pictures. */
   gallery: Images,
+  /* A trowel would be the obvious glyph and lucide has none. `Hammer` is
+     already the furniture-assembly service icon on the public side, which is a
+     different trade — `Building2` is the office-cleaning one. `Layers` is the
+     construction page's own subject: suspended ceilings, in section. */
+  construction: Layers,
   templates: Mail,
   applications: UserPlus,
   postings: Briefcase,

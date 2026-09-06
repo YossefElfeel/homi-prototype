@@ -457,6 +457,52 @@ export const adminContentDe = {
     looseEmptyTitle: 'Alles paart sich',
     looseEmptyBody: 'Jedes Foto gehört zu einem Vorher/Nachher-Paar.',
   },
+  /* Bildschirm 86 — die Bau-Referenzen, aus dem Büro. */
+  construction: {
+    title: 'Bau — Referenzen',
+    lead: 'Welche Bilder auf /construction stehen, in welcher Gruppe und in welcher Reihenfolge. Anders als bei den Kundenreferenzen hängt hier keine Einwilligung dran: das sind unsere eigenen Aufnahmen unserer eigenen Arbeiten.',
+    viewPage: 'Seite ansehen',
+
+    groups: {
+      trockenbau: 'Trockenbau',
+      spanndecken: 'Spanndecken',
+      gewerbe: 'Gewerbe',
+      umgebung: 'Rohbau & Umgebung',
+    },
+    hiddenCount: '{n} ausgeblendet',
+
+    visible: 'Sichtbar',
+    hidden: 'Ausgeblendet',
+    moveUp: 'Nach vorne',
+    moveDown: 'Nach hinten',
+    edit: 'Bildtext',
+    doneEditing: 'Fertig',
+    groupField: 'Gruppe',
+    /* Der Bildtext ist das, was eine Vorlesehilfe bekommt — fehlt er, hört
+       jemand an dieser Stelle gar nichts. */
+    noAlt: 'Kein Bildtext',
+
+    addAction: 'Bild hinzufügen',
+    addTitle: 'Bild hinzufügen',
+    addBody: 'Kommt in die Gruppe «{group}», ans Ende.',
+    addFile: 'Datei',
+    addFileHint: 'Nur Dateien, die noch nirgends verwendet werden. Ein Upload gibt es in diesem Prototyp nicht.',
+    addFilePlaceholder: 'Datei wählen',
+    addNoFiles: 'Alle vorhandenen Dateien sind bereits einer Gruppe zugeordnet.',
+    addAlt: 'Bildtext',
+    addAltHint: 'Was auf dem Bild zu sehen ist. Deutsch genügt — die anderen Sprachen fallen darauf zurück (§20.6).',
+    addDone: 'Bild hinzugefügt.',
+
+    remove: 'Entfernen',
+    removeTitle: 'Bild entfernen?',
+    removeBody:
+      'Das Bild verschwindet aus der Gruppe. Die Datei bleibt im Projekt und lässt sich jederzeit wieder hinzufügen — soll es nur vorübergehend weg, ist «Ausblenden» der kürzere Weg.',
+    removeDone: 'Bild entfernt.',
+
+    emptyTitle: 'Keine Bilder in dieser Gruppe',
+    emptyBody:
+      'Auf /construction erscheint diese Gruppe erst, wenn ein Bild darin steht — eine Überschrift ohne Bilder darunter liest sich wie ein Ladefehler.',
+  },
   reviews: {
     title: 'Bewertungen',
     lead: 'Jede Bewertung wird von Ihnen freigegeben, bevor sie auf der Website erscheint.',
