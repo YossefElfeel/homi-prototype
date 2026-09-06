@@ -17,6 +17,7 @@ import type {
   ID,
   Offer,
   Payment,
+  CustomerStatus,
   PropertyKind,
   RequestStatus,
   SavedPaymentMethod,
@@ -2777,17 +2778,21 @@ function baseData(now: Date): DataSet {
      calendar. */
   const books = financeHistory(now);
 
+  /* The archive, which had never had anything in it. See `archivedRecords`
+     for why three rows and why two of them carry invoices. */
+  const gone = archivedRecords(now);
+
   return {
     ...EMPTY,
-    customers: [...customers, ...extraCustomers(now)],
-    properties: [...properties, ...extraProperties()],
+    customers: [...customers, ...extraCustomers(now), ...gone.customers],
+    properties: [...properties, ...extraProperties(), ...gone.properties],
     requests: [...queue, ...quoteRequests, ...accountRequests, ...requests],
     offers: [...offers, ...quoteOffers, ...accountOffers],
     bookings: [...bookings, ...quoteBookings, ...accountBookings],
     events,
-    payments: [...payments, ...books.payments],
+    payments: [...payments, ...books.payments, ...gone.payments],
     subscriptions,
-    invoices: [...invoices, ...books.invoices],
+    invoices: [...invoices, ...books.invoices, ...gone.invoices],
     /* The year of receipts, then the hours booked against the jobs above.
        Appended rather than merged so the AUS numbering stays one run — the
        labour rows continue where `financeHistory` stopped, which is what
@@ -4404,6 +4409,230 @@ const EXTRA_PEOPLE: {
        the eight rather than being deleted. */
   { n: 12, first: 'Sandra', last: 'Kunz', lang: 'de', phone: '+41 44 261 55 09', since: 21, street: 'Seehaldenstrasse 12', postcode: '8132', city: 'Egg', kind: 'apartment', area: 64, rooms: 2.5, baths: 1, floor: 3, lift: false, effort: true },
 ];
+
+/**
+ * The archive — the tab nobody could ever see anything in.
+ *
+ * `/admin/kunden` has carried an «Archiv» tab since the wave that made
+ * archiving what «löschen» means for a customer, and **not one seeded customer
+ * had `archivedAt`**. So the tab opened on its empty state on every scenario,
+ * for ever, and the only way to put a row in it was to archive somebody off
+ * the working list — which destroys the list you were looking at to do it. A
+ * built feature whose populated state is unreachable without vandalising the
+ * demo is indistinguishable, to a reviewer, from a feature that does not work.
+ *
+ * The copy on the confirm step is the specification for what belongs here:
+ * «Der Datensatz bleibt **mit Rechnungen und Verlauf** bestehen und
+ * verschwindet nur aus der Arbeitsliste.» An archive of three empty shells
+ * would not have shown that, so two of the three carry settled invoices with
+ * payments behind them, and opening either proves the sentence.
+ *
+ * Three rows, three different reasons to be here — a fixture set earns its
+ * place by covering cases, not by having a length:
+ *
+ *  · **Moved away.** Two years of work, then out of the canton. The record
+ *    stays because the invoices do (§15), and it is the case the archive
+ *    exists for.
+ *  · **Nothing ever came of it.** A name taken down on the phone, one quote,
+ *    no answer. No history at all, which is the honest shape — the archive is
+ *    not only for old money, it is also how the working list stays a list of
+ *    people you actually work for.
+ *  · **The business closed.** Archived *and* `inactive`, because the two are
+ *    different axes and nothing else in the seed showed them together: the
+ *    status says the account is shut, the archive says it is off the desk.
+ *
+ * Deliberately not in `fresh`. That scenario is where every empty state lives,
+ * and «Archiv ist leer» is a true and reachable state on launch day.
+ */
+const ARCHIVED_PEOPLE: {
+  n: number;
+  first: string;
+  last: string;
+  lang: Locale;
+  phone: string;
+  /** Customer since, in days before the clock. */
+  since: number;
+  /** Archived this many days ago. Always after `since`. */
+  archivedDaysAgo: number;
+  status?: CustomerStatus;
+  why: string;
+  street: string;
+  postcode: string;
+  city: string;
+  kind: PropertyKind;
+  area: number;
+  rooms: number;
+  baths: number;
+  floor: number;
+  lift: boolean;
+}[] = [
+  {
+    n: 1,
+    first: 'Verena',
+    last: 'Lüthi',
+    lang: 'de',
+    phone: '+41 79 412 66 30',
+    since: 760,
+    archivedDaysAgo: 42,
+    why: 'Moved to Bern in the spring — no property left in the area. Invoices stay on file.',
+    street: 'Wiesenstrasse 34',
+    postcode: '8700',
+    city: 'Küsnacht',
+    kind: 'house',
+    area: 186,
+    rooms: 6.5,
+    baths: 2,
+    floor: 0,
+    lift: false,
+  },
+  {
+    n: 2,
+    first: 'Tobias',
+    last: 'Frei',
+    lang: 'de',
+    phone: '+41 78 330 21 47',
+    since: 210,
+    archivedDaysAgo: 118,
+    why: 'Took the quote and never came back. Two follow-up calls, no answer — off the working list.',
+    street: 'Goethestrasse 8',
+    postcode: '8712',
+    city: 'Stäfa',
+    kind: 'apartment',
+    area: 74,
+    rooms: 3,
+    baths: 1,
+    floor: 2,
+    lift: true,
+  },
+  {
+    n: 3,
+    first: 'Irene',
+    last: 'Studer',
+    lang: 'de',
+    phone: '+41 44 921 08 55',
+    since: 540,
+    archivedDaysAgo: 76,
+    /* Shut *and* archived. The status is about the account, the archive is
+       about the desk — and until this row nothing in the seed carried both, so
+       the record screen's two banners had never been seen together. */
+    status: 'inactive',
+    why: 'The practice closed at the end of the year. Account shut by the client; last invoice settled.',
+    street: 'Bahnhofstrasse 27',
+    postcode: '8708',
+    city: 'Männedorf',
+    kind: 'office',
+    area: 132,
+    rooms: 5,
+    baths: 2,
+    floor: 1,
+    lift: true,
+  },
+];
+
+/**
+ * The archived records, with the history the confirm step promises survives.
+ *
+ * References run RE-YYYY-0031..0033, which is the gap between the office
+ * contract's 0018–0029 and the rest of the seed's 0041–0062. Not an arbitrary
+ * choice: `nextInvoiceSeq` hands out the highest number ever seen plus one, so
+ * a reference above the range would make the next invoice raised in the app
+ * wear a number a customer is already holding — the collision `crm-test`
+ * exists to catch, and did catch once already.
+ */
+function archivedRecords(now: Date): {
+  customers: Customer[];
+  properties: Property[];
+  invoices: Invoice[];
+  payments: Payment[];
+} {
+  const customers: Customer[] = [];
+  const properties: Property[] = [];
+  const invoices: Invoice[] = [];
+  const payments: Payment[] = [];
+
+  for (const p of ARCHIVED_PEOPLE) {
+    const id = `cus_arc${p.n}`;
+
+    customers.push({
+      ...person(id, p.first, p.last, p.lang, now, p.since, p.phone),
+      status: p.status ?? 'active',
+      archivedAt: iso(days(now, -p.archivedDaysAgo)),
+      /* The reason, where the office actually writes reasons. Without it the
+         archive is three names and a date, and «warum ist die hier?» has no
+         answer on the screen that raises the question. */
+      internalNotes: p.why,
+      address: {
+        street: p.street,
+        postcode: p.postcode,
+        city: p.city,
+      },
+    });
+
+    properties.push({
+      id: `prp_arc${p.n}`,
+      customerId: id,
+      label: p.kind === 'office' ? 'Practice' : p.kind === 'house' ? 'House' : 'Flat',
+      street: p.street,
+      addressDetail: p.floor > 0 ? `Floor ${p.floor} — bell «${p.last}»` : undefined,
+      postcode: p.postcode,
+      city: p.city,
+      kind: p.kind,
+      area: p.area,
+      rooms: p.rooms,
+      bathrooms: p.baths,
+      floor: p.floor,
+      hasElevator: p.lift,
+      hasPets: false,
+      needsExtraEffort: false,
+      access: { method: 'customer-present', contactPhone: p.phone },
+    });
+  }
+
+  /* Only the two who were actually worked for. The middle row's whole point is
+     that nothing came of it, and giving it an invoice would delete the case it
+     is there to cover. */
+  const billed: { n: number; seq: number; label: string; amount: number; agedDays: number }[] = [
+    { n: 1, seq: 31, label: 'Move-out cleaning incl. handover guarantee', amount: 940, agedDays: 58 },
+    { n: 1, seq: 32, label: 'Window cleaning — 18 windows, inside and out', amount: 288, agedDays: 96 },
+    { n: 3, seq: 33, label: 'Office cleaning — final month of the contract', amount: 1_120, agedDays: 88 },
+  ];
+
+  for (const bill of billed) {
+    const issued = days(now, -bill.agedDays);
+    const paidAt = iso(days(now, -(bill.agedDays - 11)));
+    const reference = `RE-${zonedParts(issued).year}-${String(bill.seq).padStart(4, '0')}`;
+
+    invoices.push({
+      id: `inv_arc_${bill.seq}`,
+      reference,
+      customerId: `cus_arc${bill.n}`,
+      lines: [{ label: bill.label, quantity: 1, unitPrice: bill.amount }],
+      /* Settled, every one. An archived customer with an open bill is a real
+         situation and a different story — it is money the office is still
+         chasing from somebody they have taken off the list, and seeding it
+         here would put an «überfällig» row in the finance board belonging to
+         a person no screen shows by default. */
+      status: 'paid',
+      createdAt: iso(days(now, -(bill.agedDays + 1))),
+      issuedAt: iso(issued),
+      dueAt: iso(days(now, -(bill.agedDays - 30))),
+      paidAt,
+      qrReference: `21 00000 00003 13947 14300 ${String(9400 + bill.seq).padStart(5, '0')}`,
+    });
+
+    payments.push({
+      id: `pay_arc_${bill.seq}`,
+      invoiceId: `inv_arc_${bill.seq}`,
+      amount: bill.amount,
+      method: bill.n === 3 ? 'qr-bill' : 'card',
+      at: paidAt,
+      status: 'succeeded',
+      gatewayRef: `mock_ARC${reference.slice(-4)}`,
+    });
+  }
+
+  return { customers, properties, invoices, payments };
+}
 
 const extraCustomers = (now: Date): Customer[] =>
   EXTRA_PEOPLE.map((p) => person(`cus_m${p.n}`, p.first, p.last, p.lang, now, p.since, p.phone));

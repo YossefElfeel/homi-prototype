@@ -332,6 +332,7 @@ export const adminEn: typeof adminDe = {
     customerNone: 'No customer chosen yet',
     customerNew: 'Add a new customer',
     customerBlocked: 'blocked',
+    customerArchived: 'archived',
     customerEmptyTitle: 'No customers yet',
     customerEmptyBody:
       'A request always belongs to a person. Add the customer first, then come back here.',
@@ -827,6 +828,7 @@ export const adminEn: typeof adminDe = {
 
     customerLabel: 'Customer',
     customerPlaceholder: 'Pick a customer',
+    customerArchived: 'archived',
     customerNone: 'Not a customer yet — just a name and a number',
     propertyLabel: 'Property',
     propertyPlaceholder: 'Pick a property',
