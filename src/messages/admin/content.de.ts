@@ -521,6 +521,7 @@ export const adminContentDe = {
     groupField: 'Gruppe',
     /* Der Bildtext ist das, was eine Vorlesehilfe bekommt — fehlt er, hört
        jemand an dieser Stelle gar nichts. */
+    uploadedHere: 'Von diesem Gerät hochgeladen',
     noAlt: 'Kein Bildtext',
 
     addAction: 'Bild hinzufügen',

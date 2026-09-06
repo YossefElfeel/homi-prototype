@@ -510,6 +510,7 @@ export const adminContentEn: typeof adminContentDe = {
     edit: 'Caption',
     doneEditing: 'Done',
     groupField: 'Group',
+    uploadedHere: 'Uploaded from this device',
     noAlt: 'No caption',
 
     addAction: 'Add a picture',

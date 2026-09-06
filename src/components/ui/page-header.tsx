@@ -6,6 +6,35 @@ import { cn } from '@/lib/cn';
 export type Crumb = { label: string; href?: string };
 
 /**
+ * The way back, drawn once.
+ *
+ * `PageHeader` has carried this since it was written, and four detail screens
+ * — the booking, the customer, the property and the request — rolled their own
+ * with `variant="link"` instead: accent-coloured and underlined, against this
+ * one's quiet grey, on the four screens somebody spends the most time in. Two
+ * treatments for one control, and the header's own comment says it exists so
+ * there is *one* answer to where the back link goes.
+ *
+ * Exported so those four can use it without being rebuilt around `PageHeader`,
+ * which is a bigger change than a back link warrants.
+ */
+export function BackLink({ href, label, className }: { href: string; label: string; className?: string }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm text-ink-secondary transition-colors',
+        'hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+        className,
+      )}
+    >
+      <ArrowLeft className="size-4" aria-hidden />
+      {label}
+    </Link>
+  );
+}
+
+/**
  * Every dashboard screen opens the same way, so it stops being retyped.
  *
  * `display-type text-3xl` appeared 57 times across 52 files before this, and
@@ -69,15 +98,7 @@ export function PageHeader({
         </nav>
       )}
 
-      {back && (
-        <Link
-          href={back.href}
-          className="mb-3 inline-flex items-center gap-1.5 text-sm text-ink-secondary transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          {back.label}
-        </Link>
-      )}
+      {back && <BackLink href={back.href} label={back.label} />}
 
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
