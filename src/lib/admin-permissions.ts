@@ -90,6 +90,7 @@ export const AREAS: PanelArea[] = [
   { permission: 'analytics', group: 'finance', href: '/admin/finanzen' },
 
   { permission: 'catalogue', group: 'content', href: '/admin/leistungen' },
+  { permission: 'website', group: 'content', href: '/admin/inhalte' },
   { permission: 'addons', group: 'content', href: '/admin/zusatzleistungen' },
   { permission: 'coupons', group: 'content', href: '/admin/gutscheine' },
   { permission: 'reviews', group: 'content', href: '/admin/bewertungen' },
@@ -251,7 +252,7 @@ export const PRESETS: Record<PresetKey, AdminPermission[]> = {
     'keys',
   ],
   finance: ['invoices', 'expenses', 'workforce', 'analytics', 'customers'],
-  content: ['catalogue', 'addons', 'coupons', 'reviews', 'templates', 'postings'],
+  content: ['catalogue', 'website', 'addons', 'coupons', 'reviews', 'templates', 'postings'],
   /* Somebody who works from the field screens and needs to read their own week
      without being able to price it. */
   field: ['calendar', 'bookings'],

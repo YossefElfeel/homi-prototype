@@ -29,7 +29,6 @@ import {
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toolbar } from '@/components/ui/toolbar';
-import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
 import { deadlineFor, elapsed, overdueDays } from '@/lib/elapsed';
@@ -67,6 +66,7 @@ export default function RequestsPage() {
   const hydrated = useHydrated();
 
   const requests = useStore((s) => s.data.requests);
+  const regions = useStore((s) => s.regions);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
   const subscriptions = useStore((s) => s.data.subscriptions);
@@ -615,7 +615,7 @@ export default function RequestsPage() {
                   <option value="all">
                     {t('filterRegion')}: {t('filterAll')}
                   </option>
-                  {SERVED_REGIONS.map((r) => (
+                  {regions.map((r) => (
                     <option key={r.postcode} value={r.postcode}>
                       {r.name}
                     </option>

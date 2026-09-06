@@ -54,6 +54,7 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
   const hydrated = useHydrated();
 
   const postings = useStore((s) => s.data.postings);
+  const regions = useStore((s) => s.regions);
   const settings = useStore((s) => s.settings);
   const updatePosting = useStore((s) => s.updatePosting);
   /* A counter, not a boolean: two edits in quick succession have to read as
@@ -189,7 +190,7 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
             {settings.servedPostcodes.map((code) => (
               <Checkbox
                 key={code}
-                label={`${code} ${regionByPostcode(code)?.name ?? ''}`}
+                label={`${code} ${regionByPostcode(code, regions)?.name ?? ''}`}
                 checked={posting.regions.includes(code)}
                 onChange={(e) =>
                   patch({

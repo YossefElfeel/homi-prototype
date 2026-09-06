@@ -7,13 +7,12 @@ import { AlertTriangle, Info, Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Field, Input, Checkbox, NumberField } from '@/components/ui/field';
-import { Switch } from '@/components/ui/switch';
+import { RegionEditor } from '@/components/admin/region-editor';
 import { SignatureMark } from '@/components/ui/signature-mark';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import { PageHeader } from '@/components/ui/page-header';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SkeletonPage } from '@/components/ui/skeleton';
-import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ClosurePeriod } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -185,67 +184,7 @@ export default function AdminSettingsPage({
       >
       {tab === 'regions' && (
         <section className={cn('mt-8', CARD)}>
-          <h2 className="display-type text-xl">{t('regionsTitle')}</h2>
-          <p className="mt-2 max-w-[var(--measure)] text-ink-secondary">
-            {t('regionsLead')}
-          </p>
-
-          <ul className="mt-6 border-t border-line-subtle">
-            {SERVED_REGIONS.map((region) => {
-              const included = settings.servedPostcodes.includes(region.postcode);
-              return (
-                <li
-                  key={region.postcode}
-                  className="flex items-center justify-between gap-4 border-b border-line-subtle py-3 last:border-b-0"
-                >
-                  <span className="flex items-baseline gap-3">
-                    <span data-numeric className="text-ink-tertiary">
-                      {region.postcode}
-                    </span>
-                    <span id={`region-${region.postcode}`} className="font-medium">
-                      {region.name}
-                    </span>
-                  </span>
-                  {/*
-                    A switch, not a tick. Nothing on this screen is staged: the
-                    postcode leaves the service area the instant it is flipped
-                    and the quote engine reads the new list on the next request.
-                    A checkbox says a form is being filled in and a save button
-                    is waiting somewhere below — there is none, and the lead
-                    text says so.
-                  */}
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        'min-w-24 text-right text-sm',
-                        included ? 'text-ink-secondary' : 'text-ink-tertiary',
-                      )}
-                    >
-                      {included ? t('regionsIncluded') : t('regionsExcluded')}
-                    </span>
-                    <Switch
-                      aria-labelledby={`region-${region.postcode}`}
-                      checked={included}
-                      onCheckedChange={(next) =>
-                        updateSettings({
-                          servedPostcodes: next
-                            ? [...settings.servedPostcodes, region.postcode]
-                            : settings.servedPostcodes.filter(
-                                (p) => p !== region.postcode,
-                              ),
-                        })
-                      }
-                    />
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-
-          <p className="mt-6 flex max-w-[var(--measure)] items-start gap-2 text-sm text-ink-secondary">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {t('regionsZurichNote')}
-          </p>
+          <RegionEditor />
         </section>
       )}
 

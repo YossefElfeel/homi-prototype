@@ -89,6 +89,7 @@ export default function RequestDetailPage({
   const hydrated = useHydrated();
 
   const requests = useStore((s) => s.data.requests);
+  const regions = useStore((s) => s.regions);
   const offers = useStore((s) => s.data.offers);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
@@ -614,7 +615,8 @@ export default function RequestDetailPage({
                   {/* §5.1 rather than a silent number: the flow takes the
                       request and the travel is priced by hand on the quote —
                       so the person writing the quote has to be told. */}
-                  {checkCoverage(request.pickup.postcode, settings.servedPostcodes).state !==
+                  {checkCoverage(request.pickup.postcode, settings.servedPostcodes, regions)
+                    .state !==
                     'inside' && (
                     <p className="mt-3 text-xs text-status-warning-fg">{t('pickupOutside')}</p>
                   )}

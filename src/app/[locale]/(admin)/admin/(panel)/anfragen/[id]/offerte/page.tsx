@@ -73,6 +73,7 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
   const hydrated = useHydrated();
 
   const requests = useStore((s) => s.data.requests);
+  const regions = useStore((s) => s.regions);
   const offers = useStore((s) => s.data.offers);
   const customers = useStore((s) => s.data.customers);
   const properties = useStore((s) => s.data.properties);
@@ -477,7 +478,8 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                       {request.pickup.street}, {request.pickup.postcode}{' '}
                       {request.pickup.city}
                     </span>
-                    {checkCoverage(request.pickup.postcode, settings.servedPostcodes).state !==
+                    {checkCoverage(request.pickup.postcode, settings.servedPostcodes, regions)
+                      .state !==
                       'inside' && (
                       <span className="block text-xs text-status-warning-fg">
                         {rt('pickupOutside')}

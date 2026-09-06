@@ -1,13 +1,21 @@
 /**
  * Service area — spec §6.
  *
- * The eight postcodes map one-to-one onto the eight municipalities named in
- * the team brief. Worth stating plainly because it drives SEO: **the city of
+ * The eight postcodes below map one-to-one onto the eight municipalities named
+ * in the team brief. Worth stating plainly because it drives SEO: **the city of
  * Zurich is not in this list**, so the region pages target these eight and
  * never "Reinigung Zürich".
  *
  * Coordinates are municipality centroids, used only to estimate travel time
  * between two jobs (§5.3). They are not addresses.
+ *
+ * The list used to be the whole truth. It is now the *seed*: the store keeps a
+ * live `regions` array, the settings screen adds to it and removes from it,
+ * and every function here takes the list it should read. The reason is that
+ * "we now also clean in Zollikon" was, until this wave, a code change — the
+ * settings screen offered eight switches over a frozen array and no ninth row
+ * could ever exist. A business that grows by one municipality a year cannot
+ * have that be a deploy.
  */
 
 export interface ServedRegion {
@@ -18,6 +26,15 @@ export interface ServedRegion {
   lng: number;
 }
 
+/**
+ * The eight the business launched with.
+ *
+ * Still the default and still what the statically rendered marketing pages
+ * read — /gebiete and its eight children are built at deploy time, so an area
+ * added in the panel is served, quotable and bookable at once and gets its
+ * own page at the next build. Same boundary as §17.2b, named on
+ * /open-questions rather than hidden here.
+ */
 export const SERVED_REGIONS: ServedRegion[] = [
   { postcode: '8700', name: 'Küsnacht', slug: 'kuesnacht', lat: 47.3175, lng: 8.5844 },
   { postcode: '8706', name: 'Meilen', slug: 'meilen', lat: 47.2703, lng: 8.6437 },
@@ -48,22 +65,78 @@ export type CoverageResult =
  * address outside the area, and treating it as one would reject people
  * mid-keystroke.
  */
-export function checkCoverage(postcode: string, served: string[]): CoverageResult {
+export function checkCoverage(
+  postcode: string,
+  served: string[],
+  /* The live list, for anything reading the store. Defaulted to the seed so
+     the statically rendered pages — which have no store — keep working
+     unchanged rather than each growing a copy of this argument. */
+  regions: ServedRegion[] = SERVED_REGIONS,
+): CoverageResult {
   const trimmed = postcode.trim();
   if (!/^\d{4}$/.test(trimmed)) return { state: 'invalid' };
 
-  const region = SERVED_REGIONS.find((r) => r.postcode === trimmed);
+  const region = regions.find((r) => r.postcode === trimmed);
   if (region && served.includes(trimmed)) return { state: 'inside', region };
 
   return { state: 'outside', postcode: trimmed };
 }
 
-export function regionByPostcode(postcode: string) {
-  return SERVED_REGIONS.find((r) => r.postcode === postcode);
+export function regionByPostcode(postcode: string, regions: ServedRegion[] = SERVED_REGIONS) {
+  return regions.find((r) => r.postcode === postcode);
 }
 
-export function regionBySlug(slug: string) {
-  return SERVED_REGIONS.find((r) => r.slug === slug);
+export function regionBySlug(slug: string, regions: ServedRegion[] = SERVED_REGIONS) {
+  return regions.find((r) => r.slug === slug);
+}
+
+/**
+ * Why an area cannot be added under these details, or `null` if it can.
+ *
+ * The three that matter are all uniqueness, and all three are silent failures
+ * rather than crashes — which is what makes them worth a gate. A duplicate
+ * postcode makes `checkCoverage` answer with whichever row it hits first, so
+ * the same address is inside or outside the area depending on list order. A
+ * duplicate slug makes two municipalities share `/gebiete/<slug>`, and only
+ * one of them is reachable. An empty name puts a blank tile on the area index.
+ *
+ * Returns a message *key*, not a sentence: this runs in the store's language
+ * and is printed in the reader's.
+ */
+export type RegionProblem =
+  | 'postcodeFormat'
+  | 'postcodeTaken'
+  | 'nameRequired'
+  | 'slugTaken'
+  | 'coordinates';
+
+export function validateRegion(
+  candidate: ServedRegion,
+  regions: ServedRegion[],
+  /** The row being edited, which is allowed to keep its own postcode and slug. */
+  ignorePostcode?: string,
+): RegionProblem | null {
+  const others = regions.filter((r) => r.postcode !== ignorePostcode);
+
+  if (!/^\d{4}$/.test(candidate.postcode)) return 'postcodeFormat';
+  if (others.some((r) => r.postcode === candidate.postcode)) return 'postcodeTaken';
+  if (!candidate.name.trim()) return 'nameRequired';
+  if (!candidate.slug || others.some((r) => r.slug === candidate.slug)) return 'slugTaken';
+  /*
+   * Coordinates are required rather than optional, and this is the one
+   * validation that is about a number nobody sees. `travelMinutes` reads the
+   * distance between two jobs to reserve the gap between them, so an area at
+   * (0, 0) is 5000 km off the Gulf of Guinea: every job in it leaves the
+   * free-travel radius, goes to manual review, and the scheduler quietly
+   * stops offering slots. A missing pair of numbers would look like nothing
+   * at all on this screen and like a broken calendar on the next one.
+   */
+  if (!Number.isFinite(candidate.lat) || !Number.isFinite(candidate.lng)) return 'coordinates';
+  if (candidate.lat < 45.8 || candidate.lat > 47.9 || candidate.lng < 5.9 || candidate.lng > 10.6) {
+    return 'coordinates';
+  }
+
+  return null;
 }
 
 /** Great-circle distance in km. Good enough to bucket travel time. */

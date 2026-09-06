@@ -29,6 +29,10 @@ export const adminDe = {
       workforce: 'Arbeitszeit',
       analytics: 'Auswertung',
       catalogue: 'Leistungen',
+      /* Nicht «Inhalte». Die Gruppe darüber heisst schon «Inhalt», und zwei
+         Zeilen mit demselben Wort sagen nicht, dass die eine die Preise setzt
+         und die andere die Sätze schreibt. */
+      website: 'Website-Texte',
       addons: 'Zusatzleistungen',
       coupons: 'Gutscheine',
       reviews: 'Bewertungen',

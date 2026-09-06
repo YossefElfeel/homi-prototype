@@ -51,6 +51,7 @@ export default function AdminPostingsPage() {
   const now = useNow();
 
   const postings = useStore((s) => s.data.postings);
+  const regions = useStore((s) => s.regions);
   const applications = useStore((s) => s.data.applications);
   const createPosting = useStore((s) => s.createPosting);
   const updatePosting = useStore((s) => s.updatePosting);
@@ -73,14 +74,14 @@ export default function AdminPostingsPage() {
               p.title.de,
               /* The area is searchable by what it is called as well as by its
                  postcode: nobody looking for the Oberland jobs types 8634. */
-              ...p.regions.map((code) => `${code} ${regionByPostcode(code)?.name ?? ''}`),
+              ...p.regions.map((code) => `${code} ${regionByPostcode(code, regions)?.name ?? ''}`),
             ]
               .join(' ')
               .toLowerCase()
               .includes(needle)
           : true,
       );
-  }, [postings, status, kind, query, locale]);
+  }, [postings, status, kind, query, locale, regions]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 

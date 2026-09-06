@@ -76,12 +76,13 @@ export type Content = {
   testimonials: {
     eyebrow: string;
     headline: string;
+    /** The large figure above the cards. Copy, not a count — see §18a. */
+    count: string;
     rating: string;
     /** `{n}` is the card's own score. */
     starsLabel: string;
     items: {
       quote: string;
-      lead: string;
       name: string;
       country: string;
       avatar: string;
@@ -347,37 +348,42 @@ const en: Content = {
   testimonials: {
     eyebrow: "Testimonials",
     headline: "Driven by a performance mindset",
+    count: "160+",
     rating: "Based on 200+ reviews",
     starsLabel: "Rated {n} out of 5",
+    /*
+     * Three of the five cards here were not about Homivaro.
+     *
+     * They came in with the design build verbatim — the same import that makes
+     * this file a clone rather than an adaptation — and they are testimonials
+     * for a web agency: «impressed with the UI work delivered by Developios»,
+     * «Faraz was super responsive», an LMS, a Notion backend, customers in
+     * Saudi Arabia, the United States and Ghana. Rendered live on the homepage
+     * of a Swiss cleaning company, under a heading that says «Kundenstimmen»,
+     * with photographs and five stars beside them.
+     *
+     * Removed rather than rewritten. Inventing three plausible Swiss
+     * households would put fabricated praise on a live marketing page, which
+     * is a worse problem than the one it fixes. The two that were written for
+     * Homivaro stay, and the third is the one seeded review in the prototype
+     * that is actually published *with recorded consent* — `rev_published`,
+     * Giulia Ferrari's window clean in Meilen.
+     *
+     * What replaces them properly is on /open-questions: this block should
+     * read the store's `reviews`, which already models consent and moderation,
+     * instead of being a hand-kept array beside them.
+     */
     items: [
       {
         quote:
-          "I'm genuinely impressed with the UI work delivered by Developios. The interface feels modern, intuitive, and exceptionally well thought out. What stood out most is how they transformed complex functionality into a clean, user-friendly design without compromising the brand identity.",
-        lead: "I'm genuinely impressed with the UI work delivered by Developios.",
-        name: "Mahmoud Bizri",
-        country: "Saudi Arabia",
-        avatar: "/img/author-1.webp",
-      },
-      {
-        quote:
-          "They developed the front end and it looks great and looking forward to working on the back end! They did a great job on UI as well! Faraz and team are very good! Would recommend them for UI and LMS and Design! Continuing to work with them to develop everything so stay tuned!",
-        lead: "They developed the front end and it looks great and looking forward to working on the back end!",
-        name: "Rick Duran",
-        country: "United States",
-        avatar: "/img/author-2.webp",
-      },
-      {
-        quote:
-          "Faraz was super responsive from day one. He was supposed to integrate with a Notion backend but the Notion backend Fiver disappeared from the job but that did not phase Faraz. He kept going and made it work. I appreciate the responsiveness, the work and the professionalism.",
-        lead: "Faraz was super responsive from day one. He was supposed to integrate with a Notion backend but the Notion backend",
-        name: "Enyo kumashor",
-        country: "Ghana",
-        avatar: "/img/author-3.webp",
+          "Every window inside and out, frames included, and not a streak in the low sun. On the minute, both times.",
+        name: "Giulia Ferrari",
+        country: "Meilen",
+        avatar: "/img/review-1.webp",
       },
       {
         quote:
           "The quote arrived the same evening, itemised to the last line. The team turned up inside the arrival window and sent before and after photos before they left. Exactly what was promised, nothing added later.",
-        lead: "The quote arrived the same evening, itemised to the last line.",
         name: "Andrea Frei",
         country: "Küsnacht",
         avatar: "/img/review-2.webp",
@@ -385,10 +391,9 @@ const en: Content = {
       {
         quote:
           "We book the weekly plan for a family of five. Same two people every visit, so nothing has to be explained twice. Moving a visit takes one message and there is never a surcharge argument afterwards.",
-        lead: "We book the weekly plan for a family of five.",
         name: "Nicolas Weber",
         country: "Stäfa",
-        avatar: "/img/review-1.webp",
+        avatar: "/img/review-3.webp",
       },
     ],
   },
@@ -575,37 +580,24 @@ const de: Content = {
   testimonials: {
     eyebrow: "Kundenstimmen",
     headline: "Angetrieben von Leistungsdenken",
+    count: "160+",
     rating: "Basierend auf 200+ Bewertungen",
     starsLabel: "Mit {n} von 5 bewertet",
+    /* Siehe den Kommentar bei der englischen Fassung: drei der fünf Karten
+       waren Referenzen einer Webagentur und standen live auf der Startseite
+       einer Reinigungsfirma. Entfernt statt umgeschrieben — erfundene
+       Kundenstimmen wären das grössere Problem. */
     items: [
       {
         quote:
-          "Ich bin wirklich beeindruckt von der UI-Arbeit von Developios. Das Interface wirkt modern, intuitiv und aussergewöhnlich durchdacht. Besonders aufgefallen ist mir, wie sie komplexe Funktionalität in ein klares, benutzerfreundliches Design übersetzt haben, ohne die Markenidentität zu verwässern.",
-        lead: "Ich bin wirklich beeindruckt von der UI-Arbeit von Developios.",
-        name: "Mahmoud Bizri",
-        country: "Saudi-Arabien",
-        avatar: "/img/author-1.webp",
-      },
-      {
-        quote:
-          "Sie haben das Frontend entwickelt und es sieht grossartig aus. Ich freue mich auf die Arbeit am Backend! Auch beim UI haben sie hervorragende Arbeit geleistet. Faraz und sein Team sind sehr gut! Klare Empfehlung für UI, LMS und Design.",
-        lead: "Sie haben das Frontend entwickelt und es sieht grossartig aus.",
-        name: "Rick Duran",
-        country: "Vereinigte Staaten",
-        avatar: "/img/author-2.webp",
-      },
-      {
-        quote:
-          "Faraz hat vom ersten Tag an sehr schnell reagiert. Eigentlich sollte ein Notion-Backend angebunden werden, doch der zuständige Entwickler verschwand mitten im Projekt. Das hat Faraz nicht aus der Ruhe gebracht. Er hat weitergemacht und es zum Laufen gebracht.",
-        lead: "Faraz hat vom ersten Tag an sehr schnell reagiert.",
-        name: "Enyo kumashor",
-        country: "Ghana",
-        avatar: "/img/author-3.webp",
+          "Alle Fenster innen und aussen, Rahmen inklusive, und im tiefen Licht keine einzige Schliere. Beide Male auf die Minute.",
+        name: "Giulia Ferrari",
+        country: "Meilen",
+        avatar: "/img/review-1.webp",
       },
       {
         quote:
           "Die Offerte kam noch am selben Abend, bis zur letzten Position aufgeschlüsselt. Das Team kam innerhalb des Ankunftsfensters und schickte vor dem Gehen Fotos von vorher und nachher. Genau wie versprochen, ohne Nachträge.",
-        lead: "Die Offerte kam noch am selben Abend, bis zur letzten Position aufgeschlüsselt.",
         name: "Andrea Frei",
         country: "Küsnacht",
         avatar: "/img/review-2.webp",
@@ -613,10 +605,9 @@ const de: Content = {
       {
         quote:
           "Wir haben das wöchentliche Abo für eine fünfköpfige Familie. Immer dieselben zwei Personen, so muss nichts zweimal erklärt werden. Einen Termin zu verschieben kostet eine Nachricht, und es gibt nie eine Diskussion über Zuschläge.",
-        lead: "Wir haben das wöchentliche Abo für eine fünfköpfige Familie.",
         name: "Nicolas Weber",
         country: "Stäfa",
-        avatar: "/img/review-1.webp",
+        avatar: "/img/review-3.webp",
       },
     ],
   },

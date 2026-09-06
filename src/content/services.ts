@@ -382,12 +382,28 @@ const EN: ContentMap = {
 // ASSUMPTION §20.6: FR and IT fall back to German until translated.
 const BY_LOCALE: Record<Locale, ContentMap> = { de: DE, en: EN, fr: DE, it: DE };
 
+/**
+ * Empty rather than absent, for a service this file has never heard of.
+ *
+ * `Service.slug` stopped being `ServiceSlug` when the catalogue became
+ * something the owner can add to, so every caller here is handing over a
+ * string that may not be one of the seven. Returning `undefined` would make
+ * the very next line — `content.lead` — a crash on a live page, and the
+ * marketing route guards against that today only by accident: it looks the
+ * service up in the seed first and 404s before it gets here.
+ *
+ * The four empty blocks are also what the admin content screen reads for an
+ * added service. That is the same answer the website needs and the same answer
+ * the editor needs: there is no copy yet, and somebody has to write it.
+ */
+const NOTHING: ServiceContent = { lead: '', included: [], notIncluded: [], faq: [] };
+
 export function getServiceContent(
-  slug: ServiceSlug,
+  slug: string,
   locale: Locale,
   stressed = false,
 ): ServiceContent {
-  const content = BY_LOCALE[locale][slug];
+  const content = BY_LOCALE[locale][slug as ServiceSlug] ?? NOTHING;
   if (!stressed) return content;
 
   // Editorial content sits outside the message pipeline, so the German stress

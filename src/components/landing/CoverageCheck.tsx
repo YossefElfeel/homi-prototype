@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { EASE } from "@/components/landing/motion";
 import { checkCoverage, type CoverageResult } from "@/mock/engines/coverage";
-import { SEED_SETTINGS } from "@/mock/seed";
+import { useStore } from "@/mock/store";
 
 /**
  * The question people actually arrive on this page with.
@@ -27,12 +27,19 @@ import { SEED_SETTINGS } from "@/mock/seed";
  */
 export function CoverageCheck() {
   const t = useTranslations("site.display.regionsIndex");
+  /* The store, not the seed. The comment above promises this widget cannot
+     drift from the gate the request flow applies two clicks later, and the
+     moment the service area became editable a frozen import broke exactly
+     that promise. Nothing renders from it until the form is submitted, so
+     reading persisted state here costs no hydration gate. */
+  const settings = useStore((s) => s.settings);
+  const regions = useStore((s) => s.regions);
   const [value, setValue] = useState("");
   const [result, setResult] = useState<CoverageResult | null>(null);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setResult(checkCoverage(value, SEED_SETTINGS.servedPostcodes));
+    setResult(checkCoverage(value, settings.servedPostcodes, regions));
   }
 
   return (

@@ -6,6 +6,7 @@ import { Check, MapPin } from 'lucide-react';
 
 import { Field, Input } from '@/components/ui/field';
 import { checkCoverage, regionByPostcode } from '@/mock/engines/coverage';
+import { useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
 export interface AddressValue {
@@ -69,15 +70,21 @@ export function AddressFields({
      hand is still theirs, and the next postcode edit must not take it back. */
   const [nameOwned, setNameOwned] = useState(true);
 
-  const coverage = checkCoverage(value.postcode, served);
-  const region = regionByPostcode(value.postcode.trim());
+  /* The live list, not the seeded eight. This component both gates and
+     autofills, so reading a frozen array would make a municipality added in
+     the panel refuse its own addresses *and* leave the town blank — two
+     visible wrongs from one stale import. */
+  const regions = useStore((s) => s.regions);
+
+  const coverage = checkCoverage(value.postcode, served, regions);
+  const region = regionByPostcode(value.postcode.trim(), regions);
 
   function patch(next: Partial<AddressValue>) {
     onChange({ ...value, ...next });
   }
 
   function onPostcode(postcode: string) {
-    const match = regionByPostcode(postcode.trim());
+    const match = regionByPostcode(postcode.trim(), regions);
     patch({
       postcode,
       /* Only forward. Deleting a digit out of a served code does not blank the

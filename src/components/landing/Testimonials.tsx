@@ -12,6 +12,27 @@ import { useContent, useLocale } from "@/components/landing/use-landing-content"
 
 const GAP = 16;
 
+/**
+ * The opening sentence of a quote, set brighter than the rest.
+ *
+ * This used to be a second field on the record — `lead` — holding a copy of
+ * the quote's first clause, and the card rendered `lead` and then
+ * `quote.slice(lead.length)`. The two were only ever kept in step by hand, and
+ * the `startsWith` guard beside it says so: when they disagreed the card fell
+ * back to printing the lead *and then the whole quote*, so the opening
+ * sentence appeared twice. That was survivable while the quotes were frozen in
+ * a file and nobody could edit them. It is not now — /admin/inhalte makes the
+ * quote editable, and the first person to fix a typo in one would have shipped
+ * a duplicated sentence to the homepage with nothing to explain it.
+ *
+ * So the emphasis is derived. One string, no second copy to fall out of step.
+ */
+function opening(quote: string): [string, string] {
+  const end = quote.search(/[.!?](\s|$)/);
+  if (end === -1) return [quote, ''];
+  return [quote.slice(0, end + 1), quote.slice(end + 1).trim()];
+}
+
 export function Testimonials() {
   const t = useContent();
   const { locale } = useLocale();
@@ -39,8 +60,13 @@ export function Testimonials() {
       <div className="hv-container">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <Reveal>
+            {/* Was the literal «160+» — the biggest figure on the homepage,
+                typed into the component, so it was the one number on the page
+                nobody in the business could change and no screen could count.
+                It is copy now; whether it should be counted from the store's
+                published reviews is §18a on /open-questions. */}
             <p className="display-type text-ink-accent text-figure-1 leading-[0.72]">
-              160+
+              {t.testimonials.count}
             </p>
 
             <div className="mt-5 flex items-center gap-4">
@@ -151,10 +177,8 @@ export function Testimonials() {
                 />
 
                 <p className="mt-5 text-body leading-[1.62] text-ink-inverse/55 transition-colors duration-400 group-hover:text-ink-inverse/70">
-                  <span className="text-ink-inverse">{item.lead}</span>{" "}
-                  {item.quote.startsWith(item.lead)
-                    ? item.quote.slice(item.lead.length).trim()
-                    : item.quote}
+                  <span className="text-ink-inverse">{opening(item.quote)[0]}</span>{" "}
+                  {opening(item.quote)[1]}
                 </p>
                 <div className="mt-7 flex items-center gap-3">
                   <span className="block h-12 w-12 shrink-0 overflow-hidden rounded-full">

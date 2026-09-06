@@ -49,6 +49,9 @@ import type {
   SlotHold,
   WorkEntry,
   ISODate,
+  ContentEdit,
+  ContentKind,
+  ContentValue,
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
@@ -63,11 +66,12 @@ import {
 import { normaliseAddress } from '@/lib/contact-address';
 import { isCompleteLabour, memberName } from '@/lib/labour-facts';
 import { propertyUsage } from '@/lib/property-facts';
+import { regionUsage } from '@/lib/region-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
 import { RESET_LINK_HOURS } from '@/lib/user-facts';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
-import { checkCoverage } from './engines/coverage';
+import { SERVED_REGIONS, checkCoverage, type ServedRegion } from './engines/coverage';
 import {
   createHold,
   dayBlockReason,
@@ -331,8 +335,21 @@ Marco Brunner`;
    holds the badge «Änderung angefragt» with no note behind it, so the panel's
    new card opens on «Der Kunde hat nicht gesagt, was …» for a customer who did
    say. That reads as the new card being broken rather than the old data being
-   a wave behind, which is the one misreading this list exists to prevent. */
-const SCHEMA_VERSION = 32;
+   a wave behind, which is the one misreading this list exists to prevent.
+
+   33: the store grew two collections it never had — `regions`, the service
+   area that used to be a frozen array in the coverage engine, and `content`,
+   every website string somebody has rewritten. `merge` fills in a collection
+   that is *missing* from a stale blob, so both would in fact arrive on their
+   defaults and nothing would crash. The bump is for the half `merge` cannot
+   see: `settings.servedPostcodes` is present in any blob from 1 onwards and is
+   therefore kept whole, and it is now the list that decides which of the
+   *live* regions are switched on. A reviewer who had excluded a postcode
+   before this wave would open the new area editor to eight rows and one of
+   them off, with nothing on screen saying the switch came from a store two
+   waves old — which reads as the new screen having lost a row rather than as
+   stale data. */
+const SCHEMA_VERSION = 33;
 
 /**
  * §10 — the default payment term.
@@ -527,6 +544,19 @@ interface StoreState {
    * price list.
    */
   plans: Plan[];
+  /*
+   * The service area, and it is catalogue rather than scenario data for the
+   * same reason a plan is: which municipalities the company serves outlives
+   * any one dataset, and switching demo scenario must not quietly redraw the
+   * map. Seeded from `SERVED_REGIONS`; the settings screen adds to it.
+   */
+  regions: ServedRegion[];
+  /*
+   * Every website string somebody has rewritten — the diff over `src/messages`
+   * and `src/content`, never a copy of them. See `lib/content-registry.ts` for
+   * why only the changes are stored and how the two are put back together.
+   */
+  content: ContentEdit[];
   holds: SlotHold[];
   demo: DemoState;
   draft: RequestDraft;
@@ -1228,6 +1258,72 @@ interface StoreState {
    * from the seed and move at the next build.
    */
   setServices: (services: Service[]) => void;
+
+  /* ---- website content (screens 85, 85a) ----
+     Nothing wrote a word of the website before this. `src/messages` and
+     `src/content` were frozen imports, so the panel could change what a
+     service *cost* and not what its page *said* — and the comment at the top
+     of `content/services.ts` promising an admin screen «editable per language
+     (§17.2)» had been an intention since wave 1. */
+  /**
+   * One block of website copy, in one language.
+   *
+   * Autosaves per keystroke like every other text field in the panel, which is
+   * why the change-log entry coalesces — without it, rewriting a paragraph
+   * writes one Protokoll line per character.
+   *
+   * Writing a value identical to the shipped default still stores an edit. It
+   * is tempting to detect that and drop the record, and it would be wrong: the
+   * registry's defaults are what the *current build* ships, so "same as the
+   * file" is a fact about today's deploy rather than about the sentence. An
+   * owner who deliberately retypes the German to lock it against a future copy
+   * change has made a decision, and silently discarding it would undo it.
+   * `resetContent` is the way back, and it says what it does.
+   */
+  setContent: (input: {
+    key: string;
+    kind: ContentKind;
+    locale: Locale;
+    value: ContentValue;
+    /** Named in the Protokoll, so the log says which page moved. */
+    label: string;
+  }) => void;
+  /**
+   * Give a block its shipped text back.
+   *
+   * With a locale, only that language returns to the default and the others
+   * keep their edits — the case this exists for is an English translation that
+   * went wrong while the German is fine. Without one, the whole key goes.
+   */
+  resetContent: (key: string, locale?: Locale) => void;
+
+  /* ---- service area (screen 80) ----
+     `SERVED_REGIONS` was a frozen array of eight and the settings screen drew
+     eight switches over it. So the one thing a growing local business does —
+     start serving the next municipality along the lake — was a code change,
+     and the screen that looked like it managed the service area could only
+     ever turn parts of it off. */
+  /**
+   * A municipality the company now serves.
+   *
+   * Added *and* switched on in one write. Adding an area that is immediately
+   * excluded would be two steps to express one intention, and the row would
+   * appear greyed out, which reads as a failed save.
+   */
+  addRegion: (region: ServedRegion) => void;
+  updateRegion: (postcode: string, patch: Partial<ServedRegion>) => void;
+  /**
+   * Remove an area, and take its postcode out of the served list with it.
+   *
+   * Refused while anything points at it — see `regionUsage`. A postcode is not
+   * a foreign key here: properties store the four digits as text, so deleting
+   * the row does not orphan a reference, it makes every address in that town
+   * fail `checkCoverage` and read as out of area. That is a silent wrong
+   * answer on the request flow rather than an error anywhere, which is exactly
+   * the class of deletion that has to be stopped rather than cascaded.
+   */
+  removeRegion: (postcode: string) => boolean;
+
   /**
    * A service the owner wrote, rather than one the seed shipped.
    *
@@ -1435,6 +1531,8 @@ export const useStore = create<StoreState>()(
       services: SEED_SERVICES,
       addOns: SEED_ADDONS,
       plans: SEED_PLANS,
+      regions: SERVED_REGIONS,
+      content: [],
       holds: seedHolds(INITIAL_DATA, new Date()),
       demo: initialDemo(),
       draft: emptyDraft(),
@@ -1538,7 +1636,8 @@ export const useStore = create<StoreState>()(
          */
         const postcode =
           properties.find((p) => p.id === propertyId)?.postcode ?? draft.property.postcode;
-        if (checkCoverage(postcode, settings.servedPostcodes).state !== 'inside') return null;
+        if (checkCoverage(postcode, settings.servedPostcodes, get().regions).state !== 'inside')
+          return null;
 
         const reference = `A-${(2500 + data.requests.length).toString()}`;
         const request: ServiceRequest = {
@@ -1767,7 +1866,8 @@ export const useStore = create<StoreState>()(
          */
         if (
           !input.asDraft &&
-          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes).state !== 'inside'
+          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes, s.regions).state !==
+            'inside'
         ) {
           return null;
         }
@@ -1836,7 +1936,8 @@ export const useStore = create<StoreState>()(
            a request, so it is the moment the area has to hold. */
         const property = s.data.properties.find((p) => p.id === request.propertyId);
         if (
-          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes).state !== 'inside'
+          checkCoverage(property?.postcode ?? '', s.settings.servedPostcodes, s.regions).state !==
+            'inside'
         ) {
           return;
         }
@@ -4471,6 +4572,121 @@ export const useStore = create<StoreState>()(
         });
       },
 
+      setContent: ({ key, kind, locale, value, label }) => {
+        set((s) => {
+          const now = effectiveNow(s.demo.dateOverride).toISOString();
+          const existing = s.content.find((edit) => edit.key === key);
+          const next: ContentEdit = existing
+            ? { ...existing, kind, values: { ...existing.values, [locale]: value }, updatedAt: now }
+            : { key, kind, values: { [locale]: value }, updatedAt: now };
+
+          return {
+            content: existing
+              ? s.content.map((edit) => (edit.key === key ? next : edit))
+              : [...s.content, next],
+          };
+        });
+        get().logChange({
+          entity: 'content',
+          entityId: key,
+          summary: `Website text edited (${locale.toUpperCase()}): ${label}`,
+          coalesce: true,
+        });
+      },
+
+      resetContent: (key, locale) => {
+        const before = get().content.find((edit) => edit.key === key);
+        if (!before) return;
+
+        set((s) => ({
+          content: s.content.flatMap((edit) => {
+            if (edit.key !== key) return [edit];
+            if (!locale) return [];
+
+            const values = { ...edit.values };
+            delete values[locale];
+            /* An edit with no languages left is not an edit. Keeping the empty
+               husk would leave the key counted as changed on the index for
+               ever, which is the one number this screen exists to make
+               truthful. */
+            if (Object.keys(values).length === 0) return [];
+            return [{ ...edit, values }];
+          }),
+        }));
+
+        get().logChange({
+          entity: 'content',
+          entityId: key,
+          summary: locale
+            ? `Website text reset (${locale.toUpperCase()}): ${key}`
+            : `Website text reset: ${key}`,
+        });
+      },
+
+      addRegion: (region) => {
+        set((s) => ({
+          regions: [...s.regions, region],
+          settings: {
+            ...s.settings,
+            servedPostcodes: s.settings.servedPostcodes.includes(region.postcode)
+              ? s.settings.servedPostcodes
+              : [...s.settings.servedPostcodes, region.postcode],
+          },
+        }));
+        get().logChange({
+          entity: 'region',
+          entityId: region.postcode,
+          summary: `Service area added: ${region.name} (${region.postcode})`,
+        });
+      },
+
+      updateRegion: (postcode, patch) => {
+        set((s) => ({
+          regions: s.regions.map((r) => (r.postcode === postcode ? { ...r, ...patch } : r)),
+          /* A postcode that changes has to change in both places or the area
+             silently switches itself off: `servedPostcodes` is matched by the
+             four digits, and a row renamed from 8702 to 8703 would keep 8702
+             on the served list and answer «ausserhalb» for its own town. */
+          settings:
+            patch.postcode && patch.postcode !== postcode
+              ? {
+                  ...s.settings,
+                  servedPostcodes: s.settings.servedPostcodes.map((p) =>
+                    p === postcode ? patch.postcode! : p,
+                  ),
+                }
+              : s.settings,
+        }));
+        const next = get().regions.find((r) => r.postcode === (patch.postcode ?? postcode));
+        get().logChange({
+          entity: 'region',
+          entityId: next?.postcode ?? postcode,
+          summary: `Service area edited: ${next?.name ?? postcode}`,
+          coalesce: true,
+        });
+      },
+
+      removeRegion: (postcode) => {
+        const state = get();
+        const region = state.regions.find((r) => r.postcode === postcode);
+        if (!region) return false;
+        if (regionUsage(postcode, state.data).total > 0) return false;
+
+        set((s) => ({
+          regions: s.regions.filter((r) => r.postcode !== postcode),
+          settings: {
+            ...s.settings,
+            servedPostcodes: s.settings.servedPostcodes.filter((p) => p !== postcode),
+          },
+        }));
+        get().logChange({
+          entity: 'region',
+          entityId: postcode,
+          summary: `Service area removed: ${region.name} (${postcode})`,
+        });
+        return true;
+      },
+
       addTemplate: (template) => {
         set((s) => ({
           settings: {
@@ -4926,6 +5142,12 @@ export const useStore = create<StoreState>()(
           settings: SEED_SETTINGS,
           services: SEED_SERVICES,
           addOns: SEED_ADDONS,
+          regions: SERVED_REGIONS,
+          /* Reset means «wie ausgeliefert», and a rewritten homepage is the
+             most visible thing in the store. Leaving the edits behind would
+             make the button clear the data and keep the copy, which is the
+             one combination nobody asks for. */
+          content: [],
           holds: seedHolds(data, at),
           demo: initialDemo(),
           draft: emptyDraft(),
@@ -4964,6 +5186,17 @@ export const useStore = create<StoreState>()(
               ? saved.settings.messageTemplates
               : current.settings.messageTemplates,
           },
+          /* An empty area list is a store that cannot answer a postcode: every
+             address falls out of coverage and the request flow refuses the
+             whole canton. A blob that somehow saved `[]` is broken rather than
+             restrictive, so it is replaced rather than trusted. `content` gets
+             the opposite treatment — empty is its correct starting value, and
+             the guard is only against the field being the wrong *type*. */
+          regions:
+            Array.isArray(saved.regions) && saved.regions.length > 0
+              ? saved.regions
+              : current.regions,
+          content: Array.isArray(saved.content) ? saved.content : current.content,
           demo: { ...current.demo, ...(saved.demo ?? {}) },
           draft: { ...current.draft, ...(saved.draft ?? {}) },
           applicationDraft: {

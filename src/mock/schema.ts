@@ -1469,6 +1469,19 @@ export const ADMIN_PERMISSIONS = [
   'workforce',
   'analytics',
   'catalogue',
+  /*
+   * Every word on the website, which is a right of its own rather than a
+   * corner of `catalogue`.
+   *
+   * The two look adjacent — both sit under «Inhalt» and both are about
+   * services. They are not the same job. `catalogue` sets what a service costs
+   * and whether it is on sale, which is a pricing decision; `website` sets what
+   * its page says, which is writing. The office person who fixes a typo in the
+   * FAQ is not automatically the person allowed to put a service on sale at a
+   * new rate, and letting one imply the other would make proofreading a
+   * pricing right.
+   */
+  'website',
   'addons',
   'coupons',
   'reviews',
@@ -1698,4 +1711,68 @@ export interface Settings {
    * it and the language switcher expose it.
    */
   messageTemplates: MessageTemplate[];
+}
+
+/* ---- website content (§17.2a) ---------------------------------------- */
+
+/**
+ * What kind of thing a piece of website copy is.
+ *
+ * Not a formatting choice — an editor's contract. A `line` is a heading or a
+ * button and gets one input; a `text` is a paragraph and gets a box that
+ * grows; a `list` is the «was drin ist» block, where the unit is the bullet
+ * and reordering one is a real edit; `qa` is a FAQ, which is two fields that
+ * belong to each other and are meaningless apart. `headline` is this
+ * direction's two-colour display heading — see `lib/display-headline.ts` for
+ * why where it breaks and which half is red are writing decisions rather than
+ * a slice index, and therefore have to be editable.
+ *
+ * Modelling them as one «string» with newlines was the alternative, and it is
+ * how a bullet list becomes a paragraph with dashes in it the first time
+ * somebody edits it on a phone.
+ */
+export type ContentKind = 'line' | 'text' | 'list' | 'qa' | 'headline';
+
+/** A FAQ pair. Both halves or neither — a question with no answer is a bug. */
+export interface ContentQA {
+  q: string;
+  a: string;
+}
+
+/**
+ * One fragment of a display heading.
+ *
+ * Structurally the `HeadlineLine` of `lib/display-headline.ts`, restated here
+ * because the store may not import from the component layer. If the two ever
+ * disagree, `headlineLines()` is the one that filters at runtime and this is
+ * the one that gets fixed.
+ */
+export interface ContentHeadlinePart {
+  lead?: string;
+  accent?: string;
+}
+
+export type ContentValue = string | string[] | ContentQA[] | ContentHeadlinePart[];
+
+/**
+ * One piece of website copy the owner has changed.
+ *
+ * **Only changes are stored.** The dictionaries and the files under
+ * `src/content` stay the defaults, and this is the diff over them — which is
+ * what makes «zurücksetzen» a real action rather than a second copy of the
+ * original text, and what stops a store holding four thousand strings nobody
+ * has touched. `resolveContent` in `lib/content-registry.ts` is the only place
+ * the two are put back together.
+ *
+ * Per locale, not per key: German is the market language and the fallback for
+ * everything else (§20.6), so an owner who fixes a German sentence must not
+ * silently overwrite the English one — and the editor has to be able to show
+ * that the English is now the older text.
+ */
+export interface ContentEdit {
+  /** The registry key, e.g. `service.umzugsreinigung.included`. */
+  key: string;
+  kind: ContentKind;
+  values: Partial<Record<Locale, ContentValue>>;
+  updatedAt: ISODate;
 }

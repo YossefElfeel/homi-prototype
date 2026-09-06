@@ -214,13 +214,16 @@ export function SiteHeader({ theme }: { theme?: Theme }) {
 }
 
 function LocaleSwitcher({ onDark = false }: { onDark?: boolean }) {
+  const nav = useTranslations('nav');
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
 
   return (
     <label className="relative">
-      <span className="sr-only">Sprache</span>
+      {/* Was the literal «Sprache», so the only label on the language
+          switcher was in the language you might be trying to leave. */}
+      <span className="sr-only">{nav('language')}</span>
       <select
         value={locale}
         onChange={(e) => router.replace(pathname, { locale: e.target.value as Locale })}

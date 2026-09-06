@@ -35,6 +35,7 @@ export default function ConvertApplicantPage({
   const now = useNow();
 
   const applications = useStore((s) => s.data.applications);
+  const servedRegions = useStore((s) => s.regions);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const convertApplicant = useStore((s) => s.convertApplicant);
@@ -125,7 +126,7 @@ export default function ConvertApplicantPage({
             {settings.servedPostcodes.map((code) => (
               <Checkbox
                 key={code}
-                label={`${code} ${regionByPostcode(code)?.name ?? ''}`}
+                label={`${code} ${regionByPostcode(code, servedRegions)?.name ?? ''}`}
                 checked={regionValue.includes(code)}
                 onChange={(e) =>
                   setRegions(

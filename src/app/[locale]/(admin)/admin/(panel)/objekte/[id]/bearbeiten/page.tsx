@@ -41,6 +41,7 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
   const hydrated = useHydrated();
 
   const properties = useStore((s) => s.data.properties);
+  const regions = useStore((s) => s.regions);
   const customers = useStore((s) => s.data.customers);
   const settings = useStore((s) => s.settings);
   const updateProperty = useStore((s) => s.updateProperty);
@@ -98,8 +99,8 @@ export default function EditPropertyPage({ params }: { params: Promise<{ id: str
    * under.
    */
   const coverage = useMemo(
-    () => checkCoverage(draft.postcode, settings.servedPostcodes),
-    [draft.postcode, settings.servedPostcodes],
+    () => checkCoverage(draft.postcode, settings.servedPostcodes, regions),
+    [draft.postcode, settings.servedPostcodes, regions],
   );
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;

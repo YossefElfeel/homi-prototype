@@ -116,6 +116,7 @@ export default function NewRequestPage() {
   const hydrated = useHydrated();
 
   const customers = useStore((s) => s.data.customers);
+  const regions = useStore((s) => s.regions);
   const properties = useStore((s) => s.data.properties);
   const requests = useStore((s) => s.data.requests);
   const services = useStore((s) => s.services);
@@ -949,7 +950,7 @@ export default function NewRequestPage() {
 
                           {/* §5.1: taken, then priced by hand. The office is
                               the one writing that quote, so it is told here. */}
-                          {checkCoverage(pickup.postcode, settings.servedPostcodes).state ===
+                          {checkCoverage(pickup.postcode, settings.servedPostcodes, regions).state ===
                             'outside' && (
                             <p className="text-sm text-status-warning-fg">{t('pickupOutside')}</p>
                           )}
