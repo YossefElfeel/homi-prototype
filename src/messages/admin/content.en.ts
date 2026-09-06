@@ -457,12 +457,31 @@ export const adminContentEn: typeof adminContentDe = {
     lead: 'Which pictures stand on /construction, in which group and in which order. Unlike the customer gallery there is no consent attached here: these are our own photographs of our own work.',
     viewPage: 'View the page',
 
-    groups: {
-      trockenbau: 'Drywall',
-      spanndecken: 'Stretch ceilings',
-      gewerbe: 'Commercial',
-      umgebung: 'Shell & grounds',
-    },
+    sectionEdit: 'Edit section',
+    sectionHeadings: 'Headings for this section',
+    sectionHeadingsHint:
+      'The arrows on the right set the order on the page. German is enough — the other languages fall back to it (§20.6).',
+    sectionTitle: 'Heading',
+    sectionTitleHint: 'For the directions that set one colour.',
+    sectionLead: 'Display heading — dark',
+    sectionLeadHint: 'The first part, in navy.',
+    sectionAccent: 'Display heading — red',
+    sectionAccentHint: 'The second part. Leave empty for a single-colour line.',
+    sectionBody: 'Text under the heading',
+    sectionBodyHint: 'One paragraph. Sits between the heading and the pictures.',
+    sectionUp: 'Move section earlier',
+    sectionDown: 'Move section later',
+
+    sectionNew: 'New section',
+    sectionNewHint: 'The German title. Everything else afterwards.',
+    sectionAdd: 'Create section',
+    sectionAddDone: 'Section created — its headings are open.',
+
+    sectionRemove: 'Delete section',
+    sectionBlocked:
+      'This section still holds {n} pictures. Move them to another section first — deleting a heading is a labelling decision, deleting the work under it is not.',
+    sectionRemoveDone: 'Section deleted.',
+
     hiddenCount: '{n} hidden',
 
     visible: 'Shown',

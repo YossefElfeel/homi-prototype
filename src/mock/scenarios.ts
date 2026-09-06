@@ -20,6 +20,7 @@ import type {
   BlogBlock,
   BlogPost,
   ConstructionPhoto,
+  ConstructionSection,
   Enquiry,
   CustomerStatus,
   PropertyKind,
@@ -34,7 +35,13 @@ import type {
   Subscription,
   TeamMember,
 } from './schema';
-import { WORK_PHOTOS } from '@/content/bau';
+import { WORK_GROUPS, WORK_PHOTOS } from '@/content/bau';
+import { siteDe } from '@/messages/site/de';
+import { siteEn } from '@/messages/site/en';
+
+/** One half of a two-part display heading, or '' when that half is absent. */
+const headPart = (lines: { lead?: string; accent?: string }[], half: 'lead' | 'accent') =>
+  lines.find((l) => l[half] !== undefined)?.[half] ?? '';
 import { SERVICE_SLUGS } from './schema';
 import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
@@ -116,6 +123,14 @@ export interface DataSet {
    */
   construction: ConstructionPhoto[];
   /**
+   * The sections of /construction.
+   *
+   * Seeded from the dictionaries rather than retyped, so the page opens with
+   * exactly the four headings it shipped with and the message files stay the
+   * one place that wording was written.
+   */
+  constructionSections: ConstructionSection[];
+  /**
    * What the contact form sent.
    *
    * In the dataset rather than beside the catalogue: an enquiry is something
@@ -149,6 +164,7 @@ const EMPTY: DataSet = {
   applications: [],
   posts: [],
   construction: [],
+  constructionSections: [],
   enquiries: [],
 };
 
@@ -2926,6 +2942,22 @@ function baseData(now: Date): DataSet {
     ],
     reviews,
     posts: blogPosts(now),
+    constructionSections: WORK_GROUPS.map((group, i) => ({
+      id: group,
+      title: { de: siteDe.bau.groups[group].title, en: siteEn.bau.groups[group].title },
+      /* The two halves of the display heading, read out of the same arrays the
+         page renders — `[{ lead }, { accent }]`, always in that order. */
+      lead: {
+        de: headPart(siteDe.display.bau.groupLines[group], 'lead'),
+        en: headPart(siteEn.display.bau.groupLines[group], 'lead'),
+      },
+      accent: {
+        de: headPart(siteDe.display.bau.groupLines[group], 'accent'),
+        en: headPart(siteEn.display.bau.groupLines[group], 'accent'),
+      },
+      body: { de: siteDe.bau.groups[group].body, en: siteEn.bau.groups[group].body },
+      order: i,
+    })),
     construction: WORK_PHOTOS.map((photo, i) => ({
       id: `con_${photo.slug}`,
       slug: photo.slug,

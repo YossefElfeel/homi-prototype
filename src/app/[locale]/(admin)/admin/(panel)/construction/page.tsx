@@ -10,13 +10,13 @@ import { LOCALE_LABELS, routing, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog, useConfirmTarget, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Input, Select } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/cn';
-import { WORK_GROUPS } from '@/content/bau';
+
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ConstructionPhoto } from '@/mock/schema';
 import { AddConstructionDialog } from '@/components/admin/add-construction-dialog';
@@ -47,28 +47,47 @@ export default function AdminConstructionPage() {
   const dismissLabel = useDismissLabel();
 
   const photos = useStore((s) => s.data.construction);
+  const sections = useStore((s) => s.data.constructionSections);
+  const updateSection = useStore((s) => s.updateConstructionSection);
+  const moveSection = useStore((s) => s.moveConstructionSection);
+  const addSection = useStore((s) => s.addConstructionSection);
+  const removeSection = useStore((s) => s.removeConstructionSection);
   const setVisible = useStore((s) => s.setConstructionVisible);
   const updatePhoto = useStore((s) => s.updateConstructionPhoto);
   const movePhoto = useStore((s) => s.moveConstructionPhoto);
   const removePhoto = useStore((s) => s.removeConstructionPhoto);
 
-  const [group, setGroup] = useState<string>(WORK_GROUPS[0]);
+  const [group, setGroup] = useState<string>('');
+  const [editingSection, setEditingSection] = useState(false);
+  const [newSection, setNewSection] = useState('');
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const removing = useConfirmTarget<ConstructionPhoto>();
 
+  const ordered = useMemo(
+    () => sections.slice().sort((a, b) => a.order - b.order),
+    [sections],
+  );
+
+  /* The chosen tab, or the first section. Held as a *value* rather than an
+     index so removing a section cannot leave the panel pointing at a slot
+     that no longer exists. */
+  const current = ordered.find((sec) => sec.id === group) ?? ordered[0];
+
   const inGroup = useMemo(
     () =>
       photos
-        .filter((p) => p.group === group)
+        .filter((p) => p.group === current?.id)
         .slice()
         .sort((a, b) => a.order - b.order),
-    [photos, group],
+    [photos, current?.id],
   );
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
   const countIn = (id: string) => photos.filter((p) => p.group === id).length;
+  const nameOf = (sec: { title: Partial<Record<Locale, string>>; id: string }) =>
+    sec.title[locale] ?? sec.title.de ?? sec.id;
   const hiddenIn = (id: string) => photos.filter((p) => p.group === id && !p.visible).length;
 
   return (
@@ -89,6 +108,9 @@ export default function AdminConstructionPage() {
                 <ExternalLink className="size-3.5" aria-hidden />
               </a>
             </Button>
+            <Button variant="secondary" onClick={() => setEditingSection((v) => !v)}>
+              {t('sectionEdit')}
+            </Button>
             <Button onClick={() => setAdding(true)}>
               <Plus className="size-4" aria-hidden />
               {t('addAction')}
@@ -103,54 +125,210 @@ export default function AdminConstructionPage() {
         aria-label={t('title')}
         className="mt-8 flex flex-wrap gap-1 border-b border-line"
       >
-        {WORK_GROUPS.map((id) => (
+        {ordered.map((sec) => (
           <button
-            key={id}
+            key={sec.id}
             type="button"
             role="tab"
-            id={`con-tab-${id}`}
-            aria-selected={group === id}
+            id={`con-tab-${sec.id}`}
+            aria-selected={current?.id === sec.id}
             aria-controls="con-panel"
-            tabIndex={group === id ? 0 : -1}
+            tabIndex={current?.id === sec.id ? 0 : -1}
             onKeyDown={(e) => {
               const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
               if (delta === 0) return;
               e.preventDefault();
-              const all = WORK_GROUPS;
-              const next = all[(all.indexOf(id) + delta + all.length) % all.length]!;
-              setGroup(next);
-              document.getElementById(`con-tab-${next}`)?.focus();
+              const i = ordered.findIndex((x) => x.id === sec.id);
+              const next = ordered[(i + delta + ordered.length) % ordered.length]!;
+              setGroup(next.id);
+              document.getElementById(`con-tab-${next.id}`)?.focus();
             }}
-            onClick={() => setGroup(id)}
+            onClick={() => {
+              setGroup(sec.id);
+              setEditingSection(false);
+            }}
             className={cn(
               '-mb-px flex min-h-11 items-center gap-2 border-b-2 px-4 py-2 text-sm transition-colors',
-              group === id
+              current?.id === sec.id
                 ? 'border-accent font-medium text-ink'
                 : 'border-transparent text-ink-secondary hover:border-line-strong hover:text-ink',
             )}
           >
-            {t(`groups.${id}` as 'groups.trockenbau')}
+            {nameOf(sec)}
             <span
               data-numeric
               className={cn(
                 'rounded-full px-1.5 py-0.5 text-xs',
-                group === id ? 'bg-accent-subtle text-ink' : 'bg-sunken text-ink-tertiary',
+                current?.id === sec.id
+                  ? 'bg-accent-subtle text-ink'
+                  : 'bg-sunken text-ink-tertiary',
               )}
             >
-              {countIn(id)}
+              {countIn(sec.id)}
             </span>
             {/* A group with pictures taken down looks identical to one without,
                 and «warum sind da nur drei?» is the question that follows. */}
-            {hiddenIn(id) > 0 && (
+            {hiddenIn(sec.id) > 0 && (
               <span className="rounded-sm border border-status-warning-line bg-status-warning px-1.5 py-0.5 text-xs text-status-warning-fg">
-                {t('hiddenCount', { n: hiddenIn(id) })}
+                {t('hiddenCount', { n: hiddenIn(sec.id) })}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      <div id="con-panel" role="tabpanel" aria-labelledby={`con-tab-${group}`} tabIndex={0}>
+      {/* Adding a section is a heading with no pictures in it, so the control
+          sits with the tabs rather than in the grid below — it makes a tab,
+          not a card. */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <Field label={t('sectionNew')} hint={t('sectionNewHint')} className="max-w-xs flex-1">
+          {(props) => (
+            <Input
+              {...props}
+              value={newSection}
+              onChange={(e) => setNewSection(e.target.value)}
+            />
+          )}
+        </Field>
+        <Button
+          variant="secondary"
+          disabled={!newSection.trim()}
+          onClick={() => {
+            const id = addSection(newSection.trim());
+            setNewSection('');
+            setGroup(id);
+            setEditingSection(true);
+            toast.success(t('sectionAddDone'));
+          }}
+        >
+          {t('sectionAdd')}
+        </Button>
+      </div>
+
+      {current && editingSection && (
+        <div className="surface-card mt-4 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="display-type text-lg">{t('sectionHeadings')}</h2>
+            <span className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('sectionUp')}
+                disabled={ordered[0]?.id === current.id}
+                onClick={() => moveSection(current.id, -1)}
+              >
+                <ChevronUp className="size-4" aria-hidden />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('sectionDown')}
+                disabled={ordered[ordered.length - 1]?.id === current.id}
+                onClick={() => moveSection(current.id, 1)}
+              >
+                <ChevronDown className="size-4" aria-hidden />
+              </Button>
+            </span>
+          </div>
+
+          <p className="mt-2 max-w-[var(--measure)] text-sm text-ink-secondary">
+            {t('sectionHeadingsHint')}
+          </p>
+
+          <div className="mt-5 space-y-6">
+            {routing.locales.map((l) => (
+              <div key={l} className="space-y-3">
+                <p className="label-type text-ink-tertiary">{LOCALE_LABELS[l]}</p>
+                <Field label={t('sectionTitle')} hint={t('sectionTitleHint')}>
+                  {(props) => (
+                    <Input
+                      {...props}
+                      value={current.title[l] ?? ''}
+                      onChange={(e) =>
+                        updateSection(current.id, {
+                          title: { ...current.title, [l]: e.target.value },
+                        })
+                      }
+                    />
+                  )}
+                </Field>
+                {/* Two halves, because the display heading is two colours and
+                    which words are red is a writing decision — see
+                    `lib/display-headline.ts`. */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={t('sectionLead')} hint={t('sectionLeadHint')}>
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={current.lead[l] ?? ''}
+                        onChange={(e) =>
+                          updateSection(current.id, {
+                            lead: { ...current.lead, [l]: e.target.value },
+                          })
+                        }
+                      />
+                    )}
+                  </Field>
+                  <Field label={t('sectionAccent')} hint={t('sectionAccentHint')}>
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={current.accent[l] ?? ''}
+                        onChange={(e) =>
+                          updateSection(current.id, {
+                            accent: { ...current.accent, [l]: e.target.value },
+                          })
+                        }
+                      />
+                    )}
+                  </Field>
+                </div>
+                <Field label={t('sectionBody')} hint={t('sectionBodyHint')}>
+                  {(props) => (
+                    <Textarea
+                      {...props}
+                      rows={3}
+                      value={current.body[l] ?? ''}
+                      onChange={(e) =>
+                        updateSection(current.id, {
+                          body: { ...current.body, [l]: e.target.value },
+                        })
+                      }
+                    />
+                  )}
+                </Field>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line-subtle pt-4">
+            <Button variant="secondary" size="sm" onClick={() => setEditingSection(false)}>
+              {t('doneEditing')}
+            </Button>
+            {/* Refused while it holds pictures, and the message counts them.
+                Deleting a heading is a labelling decision; deleting the jobs it
+                labels is not, and one confirm cannot honestly ask both. */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ms-auto"
+              onClick={() => {
+                if (countIn(current.id) > 0) {
+                  toast.error(t('sectionBlocked', { n: countIn(current.id) }));
+                  return;
+                }
+                removeSection(current.id);
+                setEditingSection(false);
+                toast.success(t('sectionRemoveDone'));
+              }}
+            >
+              {t('sectionRemove')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div id="con-panel" role="tabpanel" aria-labelledby={`con-tab-${current?.id}`} tabIndex={0}>
         {inGroup.length === 0 ? (
           <EmptyState
             className="mt-6"
@@ -205,9 +383,9 @@ export default function AdminConstructionPage() {
                             value={photo.group}
                             onChange={(e) => updatePhoto(photo.id, { group: e.target.value })}
                           >
-                            {WORK_GROUPS.map((g) => (
-                              <option key={g} value={g}>
-                                {t(`groups.${g}` as 'groups.trockenbau')}
+                            {ordered.map((g) => (
+                              <option key={g.id} value={g.id}>
+                                {nameOf(g)}
                               </option>
                             ))}
                           </Select>
@@ -278,7 +456,12 @@ export default function AdminConstructionPage() {
         )}
       </div>
 
-      <AddConstructionDialog open={adding} onOpenChange={setAdding} group={group} now={now} />
+      <AddConstructionDialog
+        open={adding}
+        onOpenChange={setAdding}
+        group={current?.id ?? ''}
+        now={now}
+      />
 
       <ConfirmDialog
         open={removing.open}
