@@ -305,6 +305,15 @@ export const TONE_CLASSES: Record<StatusTone, string> = {
 };
 
 /** Every state a given entity can be in, in the order a human reads them. */
+/**
+ * Every entity that has states, derived from the map rather than listed.
+ *
+ * The message test enumerates it: a badge whose state has no translated word
+ * prints the raw key, and that is a class of bug the parity check cannot see
+ * because the key is built from a value at runtime.
+ */
+export const STATUS_ENTITIES = Object.keys(TONES) as StatusEntity[];
+
 export function statesOf(entity: StatusEntity): string[] {
   return Object.keys(TONES[entity]);
 }
