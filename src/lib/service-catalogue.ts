@@ -48,7 +48,7 @@ export function isOffered(service: Service) {
 /**
  * Whether «auf der Website ansehen» has anything to open.
  *
- * /leistungen/[slug] is pre-rendered from the seed catalogue, and its long-form
+ * /services/[slug] is pre-rendered from the seed catalogue, and its long-form
  * copy — the lead, the included list, the FAQ — is keyed in `content/services`
  * by the seven original slugs. So a service the owner adds is a real, bookable,
  * billable service with no marketing page behind it, and offering the link
@@ -72,21 +72,21 @@ export function hasPublicPage(service: Service) {
 /**
  * Where a catalogue row points on the public site, or `null` for nowhere.
  *
- * `/preise` linked every offered service to `/leistungen/<slug>` without
+ * `/pricing` linked every offered service to `/services/<slug>` without
  * asking whether that page exists — safe only while every offered service was
  * one of the seven with copy behind it. It is not any more: construction has
  * its own page in the nav, and a service the owner adds has no page at all.
  * The first would have got a second page about one trade, the second a 404.
  */
 export function publicHref(service: Service): string | null {
-  if (service.slug === 'bau') return '/bau';
-  return hasPublicPage(service) ? `/leistungen/${service.slug}` : null;
+  if (service.slug === 'bau') return '/construction';
+  return hasPublicPage(service) ? `/services/${service.slug}` : null;
 }
 
 /**
  * The message key for how a service bills.
  *
- * `/preise` decided this with `calc === 'perUnit' ? perUnit : hourly` — a
+ * `/pricing` decided this with `calc === 'perUnit' ? perUnit : hourly` — a
  * two-way ternary over a three-way union, so the one `flat` service in the
  * catalogue read «Nach Stunden». It was invisible while that service was a
  * draft and no draft reaches the website; the first active `flat` row is what

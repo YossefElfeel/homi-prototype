@@ -91,7 +91,7 @@ export function calendarDay(day: Date, source: CalendarSource): CalendarDay {
         start,
         end: addMinutes(start, booking.duration),
         tone: statusTone('booking', booking.status),
-        href: `/admin/buchungen/${booking.id}`,
+        href: `/admin/bookings/${booking.id}`,
         booking,
       };
     }),
@@ -103,7 +103,7 @@ export function calendarDay(day: Date, source: CalendarSource): CalendarDay {
         start,
         end: addMinutes(start, event.duration),
         tone: statusTone('calendarEvent', event.status),
-        href: `/admin/kalender/${event.id}`,
+        href: `/admin/calendar/${event.id}`,
         event,
       };
     }),

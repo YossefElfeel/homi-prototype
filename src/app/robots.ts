@@ -13,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin', '/konto', '/einsatz', '/offerte', '/passwort', '/anmelden'],
+      disallow: ['/admin', '/account', '/job', '/quote', '/password', '/sign-in'],
     },
     sitemap: 'https://homivaro.ch/sitemap.xml',
   };

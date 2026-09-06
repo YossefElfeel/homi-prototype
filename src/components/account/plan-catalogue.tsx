@@ -51,7 +51,7 @@ export type PlanView = 'side' | 'stacked';
  * made it a receipt rather than a dashboard. There was no answer on it to
  * "what else do you sell", "what would the bigger one give me", or "what does
  * mine actually include compared with the others" — all three were on the
- * marketing site, signed out, at `/abos`, and getting there meant leaving the
+ * marketing site, signed out, at `/plans`, and getting there meant leaving the
  * account.
  *
  * The comparison table is the marketing page's own, not a copy: the rows are

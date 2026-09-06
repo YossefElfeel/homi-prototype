@@ -12,7 +12,7 @@ export const adminCrmEn: typeof adminCrmDe = {
 
     overdueTitle: 'Past the promised time',
     overdueBody:
-      '/kontakt says we come back within {hours} hours. This one has been here longer.',
+      '/contact says we come back within {hours} hours. This one has been here longer.',
 
     markAnswered: 'Mark as answered',
     reopen: 'Reopen',
@@ -35,7 +35,7 @@ export const adminCrmEn: typeof adminCrmDe = {
 
     emptyTitle: 'No enquiries yet',
     emptyBody:
-      'As soon as somebody submits the form on /kontakt, the message is here — with a reference, so it can be found when they ring.',
+      'As soon as somebody submits the form on /contact, the message is here — with a reference, so it can be found when they ring.',
     tabEmptyTitle: 'Nothing in this tab',
     tabEmptyBody: 'Nothing here right now. The other tabs above lead on.',
   },
@@ -178,7 +178,7 @@ export const adminCrmEn: typeof adminCrmDe = {
     typeInvoice: 'Invoice',
 
     /* Screen 65 — payment methods.
-       The customer manages the same records under /konto/zahlungsmittel. On
+       The customer manages the same records under /account/zahlungsmittel. On
        the phone it is the owner who gets asked "which card do you have on
        file?" — and no panel screen carried the answer. */
     paymentTitle: 'Payment methods',
@@ -270,7 +270,7 @@ export const adminCrmEn: typeof adminCrmDe = {
     notFound: 'No such customer.',
   },
 
-  /* One address, read by /admin/objekte and by the edit screen. It was two
+  /* One address, read by /admin/properties and by the edit screen. It was two
      copies of the same four fields, and they had already drifted. */
   address: {
     street: 'Street and number',

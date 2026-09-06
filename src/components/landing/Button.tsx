@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 /**
  * Internal links go through next-intl so the locale prefix survives. The
  * design build was a single page and used bare anchors throughout; here a
- * bare `/preise` would drop a German visitor onto the English route.
+ * bare `/pricing` would drop a German visitor onto the English route.
  */
 const MotionLink = motion.create(Link);
 

@@ -39,7 +39,7 @@ import { doesFieldWork, fullName } from '@/lib/user-facts';
  * a roster that excluded him would make the common case — a job that is his —
  * unassignable.
  *
- * The same pair `/admin/kalender/neu` filters its own select on. It is spelled
+ * The same pair `/admin/calendar/new` filters its own select on. It is spelled
  * out there rather than calling this, which is one duplication too many the
  * day a third condition appears; see the note at the call site.
  */

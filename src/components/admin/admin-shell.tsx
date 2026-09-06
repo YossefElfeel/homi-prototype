@@ -230,7 +230,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       const visible = hits.filter((hit) => allowed.has(SEARCH_PERMISSION[hit.group]));
       const shown = groups.reduce((n, group) => n + group.items.length, 0);
       if (visible.length > shown) {
-        const href = `/admin/suche?q=${encodeURIComponent(query)}`;
+        const href = `/admin/search?q=${encodeURIComponent(query)}`;
         groups.push({
           key: 'all',
           label: appT('searchGroupAll'),
@@ -266,7 +266,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         action={
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild>
-              <Link href="/admin/anmelden">{t('gateSignIn')}</Link>
+              <Link href="/admin/sign-in">{t('gateSignIn')}</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/">{t('gateHome')}</Link>
@@ -303,7 +303,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 look at, and sending them to the marketing home page would read
                 as "there is nothing here for you". */}
             <Button asChild>
-              <Link href="/einsatz">{t('gateFieldView')}</Link>
+              <Link href="/job">{t('gateFieldView')}</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/">{t('gateHome')}</Link>
@@ -388,9 +388,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         id: request.id,
         title: request.reference,
         detail: customerLabel(data, request.customerId),
-        href: `/admin/anfragen/${request.id}`,
+        href: `/admin/requests/${request.id}`,
       }))}
-      notificationsHref={may('requests') ? '/admin/anfragen' : undefined}
+      notificationsHref={may('requests') ? '/admin/requests' : undefined}
       search={search}
     >
       {denied ? (

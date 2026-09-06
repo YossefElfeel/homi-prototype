@@ -148,7 +148,7 @@ export function emptyBlock(kind: BlogBlockKind): BlogBlock {
   if (kind === 'list' || kind === 'numbered') return { id, kind, items: {} };
   if (kind === 'image') return { id, kind };
   if (kind === 'heading') return { id, kind, text: {}, level: 2 };
-  if (kind === 'cta') return { id, kind, text: {}, label: {}, href: '/anfrage' };
+  if (kind === 'cta') return { id, kind, text: {}, label: {}, href: '/request' };
   return { id, kind, text: {} };
 }
 
@@ -236,7 +236,7 @@ export function applyMark(
   start: number,
   end: number,
   mark: 'bold' | 'italic' | 'link',
-  href = '/anfrage',
+  href = '/request',
 ): { value: string; caret: number } {
   const selected = value.slice(start, end);
   /* Nothing selected is not nothing to do: the writer pressed a formatting

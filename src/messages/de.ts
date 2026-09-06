@@ -238,7 +238,7 @@ export const de = {
 
   /* Das Formular, mit dem ein Zahlungsmittel hinterlegt wird — hier oben und
      nicht unter `account` oder `admin`, weil es beide Bildschirme betrifft: die
-     Kundin unter /konto/zahlungsmittel und der Inhaber auf dem Kundendatensatz.
+     Kundin unter /account/payment-methods und der Inhaber auf dem Kundendatensatz.
      Die Kartenfelder standen bisher nur in `admin.crm`, wo Bildschirm 45 nicht
      hinkam — und genau deshalb fragte 45 gar nichts ab. */
   paymentForm: {

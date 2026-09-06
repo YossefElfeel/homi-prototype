@@ -12,17 +12,17 @@ import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/cn';
 
 const NAV = [
-  { href: '/leistungen', key: 'services' },
-  { href: '/preise', key: 'pricing' },
-  { href: '/abos', key: 'packages' },
-  { href: '/referenzen', key: 'gallery' },
+  { href: '/services', key: 'services' },
+  { href: '/pricing', key: 'pricing' },
+  { href: '/plans', key: 'packages' },
+  { href: '/work', key: 'gallery' },
   /* Between the proof and the company. A Ratgeber is the third thing a
      visitor reads after what it costs and whether the work is any good, and
      filing it after «Kontakt» would put the one page written to be found by
      search at the end of a bar nobody scrolls. */
   { href: '/blog', key: 'blog' },
-  { href: '/ueber-uns', key: 'about' },
-  { href: '/kontakt', key: 'contact' },
+  { href: '/about', key: 'about' },
+  { href: '/contact', key: 'contact' },
 ] as const;
 
 /** Where the bar leaves the hero and becomes a floating one. */
@@ -139,10 +139,10 @@ export function SiteHeader({ theme }: { theme?: Theme }) {
 
           <LocaleSwitcher onDark={onDark} />
 
-          {/* Neither the header nor the footer linked to sign-in, so /anmelden
-              and /passwort formed an island you could only reach by URL. */}
+          {/* Neither the header nor the footer linked to sign-in, so /sign-in
+              and /password formed an island you could only reach by URL. */}
           <Link
-            href="/anmelden"
+            href="/sign-in"
             className={cn(
               'hidden rounded-[var(--radius-sm)] px-3 py-2 text-sm transition-colors sm:inline-flex',
               onDark ? 'text-ink-inverse/75 hover:text-ink-inverse' : 'text-ink-secondary hover:text-ink',
@@ -152,7 +152,7 @@ export function SiteHeader({ theme }: { theme?: Theme }) {
           </Link>
 
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/anfrage">{t('requestQuote')}</Link>
+            <Link href="/request">{t('requestQuote')}</Link>
           </Button>
 
           <button
@@ -200,7 +200,7 @@ export function SiteHeader({ theme }: { theme?: Theme }) {
 
             <div className="mt-8 space-y-3 border-t border-line-subtle pt-6">
               <Button asChild block size="lg">
-                <Link href="/anfrage" onClick={() => setOpen(false)}>
+                <Link href="/request" onClick={() => setOpen(false)}>
                   {t('requestQuote')}
                 </Link>
               </Button>

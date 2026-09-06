@@ -52,7 +52,7 @@ export function Plans({
    * One rail per service, each under the service's name. Off on the homepage —
    * that block is an invitation to the plans page, and a page-worth of
    * structure inside it would answer a question the visitor has not asked yet.
-   * On /abos it is the page.
+   * On /plans it is the page.
    */
   byService = false,
 }: {
@@ -78,7 +78,7 @@ export function Plans({
    * Flattening the groups put five cards in a three-column rail — the two
    * office plans wrapped onto a second row underneath the household ones with
    * nothing to say they were for a different thing, and the ribbon landed on
-   * VIP because VIP is now the middle of five. Both are the problem /abos was
+   * VIP because VIP is now the middle of five. Both are the problem /plans was
    * just restructured to fix, reappearing on the higher-traffic page.
    *
    * The first group is the lowest-ordered service carrying plans, which is the
@@ -109,7 +109,7 @@ export function Plans({
             transition={{ duration: 0.7, delay: 0.15 }}
           >
             {/*
-             * On /abos this pointed at /abos.
+             * On /plans this pointed at /abos.
              *
              * The button that says "compare plans" navigated to the page you
              * were already standing on: the click did nothing, and the one
@@ -118,7 +118,7 @@ export function Plans({
              * scrolls there now. On the homepage it still crosses to the page.
              */}
             <Button
-              href={byService ? "/abos#vergleich" : "/abos"}
+              href={byService ? "/abos#vergleich" : "/plans"}
               variant="red"
               size="md"
             >
@@ -385,7 +385,7 @@ function PlanCard({
       </motion.ul>
 
       <Button
-        href={`/anfrage?abo=${plan.id}`}
+        href={`/request?abo=${plan.id}`}
         variant={featured ? "red" : "navy"}
         surface={featured ? "inverse" : "page"}
         className="mt-9 w-full"

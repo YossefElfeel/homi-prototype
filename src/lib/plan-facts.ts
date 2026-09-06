@@ -100,7 +100,7 @@ export function sellablePlans(plans: Plan[]): Plan[] {
  * The plans a visitor can buy, grouped by the service they buy it for.
  *
  * A plan has always named a `serviceSlug` and no marketing screen has ever
- * shown it, so /abos read as three plans for the whole business when all three
+ * shown it, so /plans read as three plans for the whole business when all three
  * were regular household cleaning. Somebody asking about their office found
  * household rhythms, a household price, and no way to tell that none of it
  * applied to them.

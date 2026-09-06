@@ -159,7 +159,7 @@ export const adminContentEn: typeof adminContentDe = {
     lead: 'Nothing is written until you save below. Saved as a draft, the service stays internal until the price and the copy are settled.',
     back: 'All services',
     nameRequired: 'Without a German name there is neither a name nor a slug.',
-    slugPreview: 'The URL will be /leistungen/{slug}',
+    slugPreview: 'The URL will be /services/{slug}',
     saveDraft: 'Save as a draft',
     saveActive: 'Create and activate',
     createNote:
@@ -673,7 +673,7 @@ export const adminContentEn: typeof adminContentDe = {
     regionsFieldName: 'Municipality',
     regionsFieldNameHint: 'Appears on the region page and in the coverage check.',
     regionsFieldSlug: 'Page address',
-    regionsFieldSlugHint: 'Becomes /gebiete/{slug}. Derived from the name.',
+    regionsFieldSlugHint: 'Becomes /areas/{slug}. Derived from the name.',
     regionsFieldLat: 'Latitude',
     regionsFieldLng: 'Longitude',
     regionsCoordsHint:
@@ -687,7 +687,7 @@ export const adminContentEn: typeof adminContentDe = {
     regionsRemoveBody:
       'The municipality disappears from the list and from the coverage check. Properties and jobs already on file stay — they will sit in a town the company no longer lists as served.',
     regionsRemoveSeeded:
-      'This municipality has its own page at /gebiete/{slug}. It stays online until the next deploy, advertising a town the request flow will refuse from now on.',
+      'This municipality has its own page at /areas/{slug}. It stays online until the next deploy, advertising a town the request flow will refuse from now on.',
     regionsRemoveConfirm: 'Remove',
     regionsRemoveBlockedTitle: '«{name}» is still in use',
     regionsRemoveBlockedBody:
@@ -707,7 +707,7 @@ export const adminContentEn: typeof adminContentDe = {
     regionsRemoved: '«{name}» was removed.',
     regionsCount: '{n} municipalities, {on} switched on',
     regionsBuildNote:
-      'A new municipality counts immediately for requests, quotes and scheduling. Its own page under /gebiete arrives the next time the website is deployed.',
+      'A new municipality counts immediately for requests, quotes and scheduling. Its own page under /areas arrives the next time the website is deployed.',
 
     hoursTitle: 'Working hours',
     hoursDays: 'Working days',
@@ -872,7 +872,7 @@ export const adminContentEn: typeof adminContentDe = {
     fieldCtaTextHint: 'Optional. One sentence saying where the button goes.',
     fieldCtaLabel: 'Button label',
     fieldCtaHref: 'Target',
-    fieldCtaHrefHint: 'A path on this website, e.g. /anfrage or /abos.',
+    fieldCtaHrefHint: 'A path on this website, e.g. /request or /abos.',
     boardTitle: 'Blog',
     boardBody: '{n} articles, {drafts} of them drafts.',
     boardAction: 'Manage articles',

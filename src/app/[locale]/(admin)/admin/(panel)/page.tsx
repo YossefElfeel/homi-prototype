@@ -157,7 +157,7 @@ export default function AdminDashboard() {
             ? t('statWaitingHintLate', { n: late.length })
             : t('statWaitingHintOk')
         }
-        href="/admin/anfragen"
+        href="/admin/requests"
         linkLabel={t('statWaitingLink')}
       />
     ),
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
         value={today.length}
         icon={Sun}
         hint={todayStart ? t('statTodayHint', { time: todayStart }) : t('statTodayHintEmpty')}
-        href="/admin/kalender"
+        href="/admin/calendar"
         linkLabel={t('statTodayLink')}
       />
     ),
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
             ? t('statTomorrowHint', { time: tomorrowStart })
             : t('statTodayHintEmpty')
         }
-        href="/admin/kalender"
+        href="/admin/calendar"
         linkLabel={t('statTomorrowLink')}
       />
     ),
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
         value={renewals.length}
         icon={RefreshCw}
         hint={t('statRenewalsHint')}
-        href="/admin/abos"
+        href="/admin/subscriptions"
         linkLabel={t('statRenewalsLink')}
       />
     ),
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
         /*
           The one thing the owner does on this screen that is not reading it.
           Somebody phones while the start screen is open — which is most of the
-          day — and taking that down meant going to /admin/anfragen and finding
+          day — and taking that down meant going to /admin/requests and finding
           the button there. The screen listed five ways to *read* a request and
           no way to make one.
 
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
         actions={
           may('requests') ? (
             <Button asChild>
-              <Link href="/admin/anfragen/neu">
+              <Link href="/admin/requests/new">
                 <Plus className="size-4" aria-hidden />
                 {t('addRequest')}
               </Link>
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
           description={t('waitingLead', { hours: settings.responseTimeHours })}
           actions={
             <Button asChild variant="link">
-              <Link href="/admin/anfragen">
+              <Link href="/admin/requests">
                 {t('viewAll')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -302,7 +302,7 @@ export default function AdminDashboard() {
                         />
                       </span>
                       <RecordLink
-                        href={`/admin/anfragen/${request.id}`}
+                        href={`/admin/requests/${request.id}`}
                         numeric
                         className="text-2xs"
                       >
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
                       </span>
                     </span>
                     <Button asChild size="sm">
-                      <Link href={`/admin/anfragen/${request.id}`}>{t('reply')}</Link>
+                      <Link href={`/admin/requests/${request.id}`}>{t('reply')}</Link>
                     </Button>
                   </div>
                 </li>
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                   return (
                     <li key={job.id} className="border-b border-line-subtle last:border-0">
                       <Link
-                        href={`/admin/buchungen/${job.id}`}
+                        href={`/admin/bookings/${job.id}`}
                         className="flex gap-4 px-card py-row transition-colors hover:bg-sunken"
                       >
                         <span data-numeric className="w-24 shrink-0 text-sm">

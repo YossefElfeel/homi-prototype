@@ -24,7 +24,7 @@ import { statusTone, statesOf } from '../src/lib/status-registry.ts';
 import { de, en } from '../src/messages/index.ts';
 import type { Offer } from '../src/mock/schema.ts';
 
-/* The list's own filter menu — `/admin/offerten` keeps this list because a
+/* The list's own filter menu — `/admin/quotes` keeps this list because a
    quote is never `new`, `inReview` or cancelled. Copied rather than imported:
    the screen is a client component and this runs in node. */
 const OFFER_STATES = [

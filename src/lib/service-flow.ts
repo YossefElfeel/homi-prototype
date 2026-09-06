@@ -127,7 +127,7 @@ export function serviceNeeds(service: Service | undefined): ServiceNeeds {
  * Whether the add-ons step has anything to show.
  *
  * Asked of the live catalogue rather than answered from a list, because the
- * owner can attach an add-on to any service from /admin/leistungen — the day
+ * owner can attach an add-on to any service from /admin/services — the day
  * they attach one to window cleaning, the step has to come back on its own.
  */
 export function hasAddOns(addOns: AddOn[], serviceSlug: string | null) {

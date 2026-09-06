@@ -31,7 +31,7 @@ const REASONS = ['reasonCapacity', 'reasonScope', 'reasonOther'] as const;
  * there is one, an alternative: a short no beats silence, and silence is what
  * this whole system exists to replace.
  *
- * It used to be a page of its own at `/admin/anfragen/[id]/ablehnen`, which
+ * It used to be a page of its own at `/admin/requests/[id]/ablehnen`, which
  * made saying no cost a navigation away from the queue, a form, and a
  * navigation back. The decision is small and the queue is the context it is
  * made in — so it is a dialog, and the row it belongs to stays on screen

@@ -32,7 +32,7 @@ export const adminUsersDe = {
       subscriptions: 'Abos, Laufzeiten und Verlängerungen.',
       invoices: 'Rechnungen erstellen, freigeben und als bezahlt markieren.',
       expenses: 'Ausgaben erfassen und Belege ablegen.',
-      /* Steht unter /admin/ausgaben, ist aber ein Recht für sich: das Board
+      /* Steht unter /admin/expenses, ist aber ein Recht für sich: das Board
          sagt wer wie lange wo gearbeitet hat und was ihm noch zusteht — das
          ist eine Personalakte, keine Belegsammlung. */
       workforce: 'Wer wie lange gearbeitet hat, und was noch offen ist.',

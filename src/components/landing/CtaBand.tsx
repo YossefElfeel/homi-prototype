@@ -57,7 +57,7 @@ export function CtaBand() {
           className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
           {/* Both sit on the red band, so neither may wash red. */}
-          <Button href="/anfrage" variant="navy" surface="accent">
+          <Button href="/request" variant="navy" surface="accent">
             {t.actions.quote}
           </Button>
           <Button

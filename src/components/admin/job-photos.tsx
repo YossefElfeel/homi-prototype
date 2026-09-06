@@ -26,7 +26,7 @@ import type { Photo } from '@/mock/schema';
  * head.
  *
  * **Read-only on purpose.** §20.6 puts publishing consent with the customer,
- * and `/konto/anfragen/[id]` is the only place it can be withdrawn. A switch
+ * and `/account/requests/[id]` is the only place it can be withdrawn. A switch
  * here would let the office release a customer's home to the public site on
  * their behalf, which is the one thing that rule exists to prevent. The chip
  * reports where consent stands; it does not move it.

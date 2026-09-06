@@ -164,7 +164,7 @@ export const SEED_SERVICES: Service[] = [
    *
    * Being a draft, it reaches no customer: the website, the sitemap and the
    * request flow all ask `isOffered`, which only `active` satisfies. What it
-   * does reach is /admin/leistungen, where the owner can finish pricing it and
+   * does reach is /admin/services, where the owner can finish pricing it and
    * put it on sale — which is the flow this seed exists to demonstrate.
    */
   {
@@ -204,7 +204,7 @@ export const SEED_SERVICES: Service[] = [
    * price — and a plausible-looking number sitting there unused is how it ends
    * up printed by the next screen that forgets to ask.
    *
-   * Its marketing page is /bau, not /leistungen/bau: the portfolio *is* the
+   * Its marketing page is /construction, not /services/bau: the portfolio *is* the
    * page for this trade, and `publicHref` sends the catalogue row there.
    */
   {
@@ -796,7 +796,7 @@ export const SEED_PLANS: Plan[] = [
   /*
    * The office line, alive again and sold as two.
    *
-   * /abos showed three plans, all of them the same service, and never said so
+   * /plans showed three plans, all of them the same service, and never said so
    * — a business asking about their office read the household rhythms and the
    * household price and had no way to tell whether any of it applied to them.
    * One plan on its own does not fix that either: a single card has nothing to

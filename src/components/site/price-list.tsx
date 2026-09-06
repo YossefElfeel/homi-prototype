@@ -49,7 +49,7 @@ export async function PriceList({
       {services.map((service) => {
         const href = publicHref(service);
         /* A row with nowhere to go is still a row. It used to be a link to
-           /leistungen/<slug> regardless, which for a service the owner added
+           /services/<slug> regardless, which for a service the owner added
            is a 404 — so the row now renders as plain markup rather than
            promising a page that is not there. */
         const rowClass =

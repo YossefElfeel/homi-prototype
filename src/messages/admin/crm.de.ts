@@ -8,7 +8,7 @@ export const adminCrmDe = {
   /* Bildschirm 84 — was das Kontaktformular geschickt hat. */
   enquiries: {
     title: 'Kontaktanfragen',
-    lead: 'Was über das Formular auf /kontakt hereinkommt. Beantwortet wird per Mail oder Telefon — hier steht, was offen ist und was erledigt.',
+    lead: 'Was über das Formular auf /contact hereinkommt. Beantwortet wird per Mail oder Telefon — hier steht, was offen ist und was erledigt.',
     tabNew: 'Offen',
     tabAnswered: 'Beantwortet',
     tabDeleted: 'Gelöscht',
@@ -19,7 +19,7 @@ export const adminCrmDe = {
        ändert sich die zugesagte Antwortzeit, wandert diese Warnung mit. */
     overdueTitle: 'Über der zugesagten Zeit',
     overdueBody:
-      'Auf /kontakt steht, dass wir uns innerhalb von {hours} Stunden melden. Diese Anfrage liegt länger.',
+      'Auf /contact steht, dass wir uns innerhalb von {hours} Stunden melden. Diese Anfrage liegt länger.',
 
     markAnswered: 'Als beantwortet markieren',
     reopen: 'Wieder öffnen',
@@ -42,7 +42,7 @@ export const adminCrmDe = {
 
     emptyTitle: 'Noch keine Anfragen',
     emptyBody:
-      'Sobald jemand das Formular auf /kontakt abschickt, steht die Nachricht hier — mit Referenz, damit sie am Telefon auffindbar ist.',
+      'Sobald jemand das Formular auf /contact abschickt, steht die Nachricht hier — mit Referenz, damit sie am Telefon auffindbar ist.',
     tabEmptyTitle: 'Nichts in diesem Tab',
     tabEmptyBody: 'Hier ist gerade nichts. Die anderen Tabs oben führen weiter.',
   },
@@ -200,7 +200,7 @@ export const adminCrmDe = {
     typeInvoice: 'Rechnung',
 
     /* Screen 65 — Zahlungsmittel.
-       Der Kunde verwaltet dieselben Einträge unter /konto/zahlungsmittel. Am
+       Der Kunde verwaltet dieselben Einträge unter /account/zahlungsmittel. Am
        Telefon ist es aber der Inhaber, der gefragt wird «welche Karte liegt
        bei euch?» — und die Antwort stand auf keinem Panel-Bildschirm. */
     paymentTitle: 'Zahlungsmittel',
@@ -293,7 +293,7 @@ export const adminCrmDe = {
     notFound: 'Diesen Kunden gibt es nicht.',
   },
 
-  /* Die Adresse, einmal — von /admin/objekte und vom Bearbeiten-Screen
+  /* Die Adresse, einmal — von /admin/properties und vom Bearbeiten-Screen
      gemeinsam gelesen. Vorher zwei Kopien derselben vier Felder, die schon
      auseinandergelaufen waren. */
   address: {

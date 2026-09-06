@@ -159,7 +159,7 @@ export const adminContentDe = {
     lead: 'Nichts wird geschrieben, bis Sie unten speichern. Als Entwurf gespeichert bleibt die Leistung intern, bis Preis und Texte stehen.',
     back: 'Alle Leistungen',
     nameRequired: 'Ohne deutsche Bezeichnung gibt es keinen Namen und keinen Slug.',
-    slugPreview: 'URL wird: /leistungen/{slug}',
+    slugPreview: 'URL wird: /services/{slug}',
     saveDraft: 'Als Entwurf speichern',
     saveActive: 'Anlegen und aufschalten',
     createNote:
@@ -381,7 +381,7 @@ export const adminContentDe = {
   /* Bildschirm 85 — «Unsere Arbeiten», aus dem Büro. */
   gallery: {
     title: 'Referenzen',
-    lead: 'Welche Vorher/Nachher-Paare auf /referenzen erscheinen. Ein Paar ist ein Einsatz — freigegeben wird immer beides zusammen.',
+    lead: 'Welche Vorher/Nachher-Paare auf /work erscheinen. Ein Paar ist ein Einsatz — freigegeben wird immer beides zusammen.',
 
     /* §20.6 ist der ganze Rahmen dieses Bildschirms, also steht er oben und
        nicht als Beipackzettel an einem Schalter. */
@@ -428,7 +428,7 @@ export const adminContentDe = {
       'Sobald das Team bei einem Einsatz Vorher/Nachher-Bilder aufnimmt, stehen sie hier zur Freigabe bereit.',
     releasedEmptyTitle: 'Noch nichts freigegeben',
     releasedEmptyBody:
-      'Unter /referenzen steht derzeit nichts. Der Tab «Ohne Freigabe» zeigt, was bereitliegt.',
+      'Unter /work steht derzeit nichts. Der Tab «Ohne Freigabe» zeigt, was bereitliegt.',
     waitingEmptyTitle: 'Nichts offen',
     waitingEmptyBody: 'Für jedes Paar ist entschieden. Neue Einsätze landen hier.',
     looseEmptyTitle: 'Alles paart sich',
@@ -701,7 +701,7 @@ export const adminContentDe = {
     regionsFieldName: 'Gemeinde',
     regionsFieldNameHint: 'Steht auf der Gebietsseite und in der Adressprüfung.',
     regionsFieldSlug: 'Adresse der Seite',
-    regionsFieldSlugHint: 'Ergibt /gebiete/{slug}. Wird aus dem Namen gebildet.',
+    regionsFieldSlugHint: 'Ergibt /areas/{slug}. Wird aus dem Namen gebildet.',
     regionsFieldLat: 'Breitengrad',
     regionsFieldLng: 'Längengrad',
     /* Der einzige Hinweis auf diesem Bildschirm zu einer Zahl, die niemand
@@ -720,7 +720,7 @@ export const adminContentDe = {
     regionsRemoveBody:
       'Die Gemeinde verschwindet aus der Liste und aus der Adressprüfung. Bereits erfasste Objekte und Aufträge bleiben — sie liegen dann in einem Ort, den die Firma nicht mehr als Einsatzgebiet führt.',
     regionsRemoveSeeded:
-      'Diese Gemeinde hat eine eigene Seite unter /gebiete/{slug}. Die bleibt bis zum nächsten Aufschalten online und wirbt weiter für einen Ort, den die Anfragestrecke ab sofort ablehnt.',
+      'Diese Gemeinde hat eine eigene Seite unter /areas/{slug}. Die bleibt bis zum nächsten Aufschalten online und wirbt weiter für einen Ort, den die Anfragestrecke ab sofort ablehnt.',
     regionsRemoveConfirm: 'Entfernen',
     regionsRemoveBlockedTitle: '«{name}» wird noch verwendet',
     regionsRemoveBlockedBody:
@@ -740,7 +740,7 @@ export const adminContentDe = {
     regionsRemoved: '«{name}» wurde entfernt.',
     regionsCount: '{n} Gemeinden, {on} davon aktiv',
     regionsBuildNote:
-      'Neue Gemeinden gelten sofort für Anfragen, Offerten und Planung. Ihre eigene Seite unter /gebiete bekommen sie beim nächsten Aufschalten der Website.',
+      'Neue Gemeinden gelten sofort für Anfragen, Offerten und Planung. Ihre eigene Seite unter /areas bekommen sie beim nächsten Aufschalten der Website.',
 
     hoursTitle: 'Arbeitszeiten',
     hoursDays: 'Arbeitstage',
@@ -916,7 +916,7 @@ export const adminContentDe = {
     fieldCtaTextHint: 'Optional. Ein Satz, der erklärt, wohin der Knopf führt.',
     fieldCtaLabel: 'Knopfbeschriftung',
     fieldCtaHref: 'Ziel',
-    fieldCtaHrefHint: 'Ein Pfad auf dieser Website, z. B. /anfrage oder /abos.',
+    fieldCtaHrefHint: 'Ein Pfad auf dieser Website, z. B. /request oder /abos.',
     boardTitle: 'Blog',
     boardBody: '{n} Beiträge, davon {drafts} im Entwurf.',
     boardAction: 'Beiträge verwalten',

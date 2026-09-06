@@ -133,7 +133,7 @@ export function ServiceMosaic({
         const { span, column } = cells[i]!;
 
         /* Next flagged the first tile as the Largest Contentful Paint on
-           /leistungen and it was loading lazily. Only the first: marking all
+           /services and it was loading lazily. Only the first: marking all
            three would have them compete for the same early bandwidth. */
         const isLcp = i === 0 && Boolean(photo);
 
@@ -182,7 +182,7 @@ export function ServiceMosaic({
             ) : null}
 
             <Link
-              href={`/leistungen/${service.slug}`}
+              href={`/services/${service.slug}`}
               className="relative flex h-full flex-col justify-between p-7 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-line-focus"
             >
               {/* The icon stands in for the photograph, so it sits where the

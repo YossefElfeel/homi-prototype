@@ -30,7 +30,7 @@ export interface ServedRegion {
  * The eight the business launched with.
  *
  * Still the default and still what the statically rendered marketing pages
- * read — /gebiete and its eight children are built at deploy time, so an area
+ * read — /areas and its eight children are built at deploy time, so an area
  * added in the panel is served, quotable and bookable at once and gets its
  * own page at the next build. Same boundary as §17.2b, named on
  * /open-questions rather than hidden here.
@@ -97,7 +97,7 @@ export function regionBySlug(slug: string, regions: ServedRegion[] = SERVED_REGI
  * rather than crashes — which is what makes them worth a gate. A duplicate
  * postcode makes `checkCoverage` answer with whichever row it hits first, so
  * the same address is inside or outside the area depending on list order. A
- * duplicate slug makes two municipalities share `/gebiete/<slug>`, and only
+ * duplicate slug makes two municipalities share `/areas/<slug>`, and only
  * one of them is reachable. An empty name puts a blank tile on the area index.
  *
  * Returns a message *key*, not a sentence: this runs in the store's language

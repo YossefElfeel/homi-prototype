@@ -24,7 +24,7 @@
  *  · the console. `[data-scope='app']` re-binds --font-display to Geist —
  *    "a page title above a table is interface, not a headline". Every screen
  *    inside AppShell renders Geist, which is readable at any size. Confirmed
- *    empirically: /de/admin/anfragen renders zero Bebas elements.
+ *    empirically: /de/admin/requests renders zero Bebas elements.
  *
  *  · files that branch on the theme. `signature/cta-band.tsx` returns four
  *    different trees, and only one of them is Homivaro; the other three set

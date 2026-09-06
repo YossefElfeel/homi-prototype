@@ -86,7 +86,7 @@ export function TemplatePicker({
     return (
       <Alert tone="neutral" className={className}>
         {t('empty')}{' '}
-        <Link href="/admin/vorlagen" className="underline underline-offset-2">
+        <Link href="/admin/templates" className="underline underline-offset-2">
           {t('manage')}
         </Link>
       </Alert>
@@ -185,7 +185,7 @@ export function TemplatePicker({
               {t('editFirst')}
             </Button>
             <Button asChild size="sm" variant="ghost">
-              <Link href="/admin/vorlagen">
+              <Link href="/admin/templates">
                 <Settings2 className="size-4" aria-hidden />
                 {t('manage')}
               </Link>

@@ -57,7 +57,7 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
         id: c.id,
         title: `${c.firstName} ${c.lastName}`,
         detail: c.email,
-        href: `/admin/kunden/${c.id}`,
+        href: `/admin/customers/${c.id}`,
       });
     }
   }
@@ -72,7 +72,7 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
         id: p.id,
         title: p.label || p.street,
         detail: `${p.street}, ${p.postcode} ${p.city} · ${customerName(p.customerId)}`,
-        href: `/admin/objekte/${p.id}`,
+        href: `/admin/properties/${p.id}`,
       });
     }
   }
@@ -84,7 +84,7 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
         id: r.id,
         title: r.reference,
         detail: customerName(r.customerId),
-        href: `/admin/anfragen/${r.id}`,
+        href: `/admin/requests/${r.id}`,
       });
     }
   }
@@ -100,7 +100,7 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
         /* Screen 57's rows used to leave the panel entirely for the customer's
            own quote page, whose only exit is the marketing home page. The
            admin-side detail keeps the owner inside the console. */
-        href: `/admin/offerten/${o.id}`,
+        href: `/admin/quotes/${o.id}`,
       });
     }
   }
@@ -112,7 +112,7 @@ export function searchAll(data: DataSet, query: string): SearchHit[] {
         id: i.id,
         title: i.reference,
         detail: customerName(i.customerId),
-        href: `/admin/rechnungen/${i.id}`,
+        href: `/admin/invoices/${i.id}`,
       });
     }
   }

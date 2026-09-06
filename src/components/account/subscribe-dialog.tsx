@@ -44,7 +44,7 @@ export type SubscribeIntent = {
  * them into the request wizard, and the wizard is six steps of address, service
  * and preferred date — for somebody whose address is already on file, whose
  * service is fixed by the plan they picked, and whose card is already saved.
- * The upgrade links were worse: `/kontakt?abo=<id>`, a contact form that never
+ * The upgrade links were worse: `/contact?abo=<id>`, a contact form that never
  * read the parameter, so the plan they chose was lost on arrival and they had
  * to name it again to a person.
  *
@@ -253,7 +253,7 @@ function SubscribeForm({
               tone="warning"
               action={
                 <Button size="sm" asChild>
-                  <Link href="/konto/zahlungsmittel">
+                  <Link href="/account/payment-methods">
                     {t('addMethod')}
                     <ArrowRight className="size-4" aria-hidden />
                   </Link>

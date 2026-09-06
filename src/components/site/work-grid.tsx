@@ -52,7 +52,7 @@ export function WorkGrid({ photos }: { photos: WorkPhoto[] }) {
               className="group relative block aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
             >
               <Image
-                src={`/bau/${photo.slug}.jpg`}
+                src={`/construction/${photo.slug}.jpg`}
                 alt={altFor(photo, locale)}
                 fill
                 sizes="(min-width: 1024px) 33vw, 50vw"
@@ -86,7 +86,7 @@ export function WorkGrid({ photos }: { photos: WorkPhoto[] }) {
             {open && (
               <div className="relative mt-4 min-h-0 flex-1">
                 <Image
-                  src={`/bau/${open.slug}.jpg`}
+                  src={`/construction/${open.slug}.jpg`}
                   alt=""
                   fill
                   sizes="90vw"

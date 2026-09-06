@@ -59,7 +59,7 @@ export default async function HomePage({
    * seventeen routes, and nothing else did:
    *
    *   · the nav points at real pages instead of scrolling to anchors on this one
-   *   · "Request a quote" goes to /anfrage, the actual quote flow, rather than
+   *   · "Request a quote" goes to /request, the actual quote flow, rather than
    *     to the closing band, which is a red panel with a phone number on it
    *   · the language comes from the URL rather than from localStorage
    */
@@ -157,7 +157,7 @@ export default async function HomePage({
             align="start"
           />
           <Button asChild variant="secondary">
-            <Link href="/abos">
+            <Link href="/plans">
               {t('plans.cta')}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -183,7 +183,7 @@ export default async function HomePage({
               {SERVED_REGIONS.map((region) => (
                 <li key={region.slug} className="bg-page">
                   <Link
-                    href={`/gebiete/${region.slug}`}
+                    href={`/areas/${region.slug}`}
                     className="block p-4 transition-colors hover:bg-accent-subtle"
                   >
                     <span className="block font-medium">{region.name}</span>

@@ -96,10 +96,10 @@ export function Hero() {
             transition={{ duration: 0.8, ease: EASE, delay: 0.98 }}
             className="mt-8 flex flex-wrap items-center gap-4"
           >
-            <Button href="/anfrage" variant="red">
+            <Button href="/request" variant="red">
               {t.actions.quote}
             </Button>
-            <Button href="/preise" variant="white" arrow={false}>
+            <Button href="/pricing" variant="white" arrow={false}>
               {t.actions.pricing}
             </Button>
           </motion.div>
@@ -131,7 +131,7 @@ function HeroBadge() {
           <span className="text-ink-secondary">{t.hero.badge.line2}</span>
         </p>
         <Link
-          href="/leistungen"
+          href="/services"
           aria-label={t.actions.services}
           className="bg-inverse hover:bg-accent group grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-inverse transition-colors duration-300"
         >

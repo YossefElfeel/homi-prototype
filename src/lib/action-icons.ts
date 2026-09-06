@@ -95,7 +95,7 @@ export const ActionIcon = {
    *
    * The original note here said this pair did not belong: two ends of one axis
    * are a Switch in the row, not glyphs in a menu. That turned out to be right
-   * about the *list* and wrong about everywhere else. /admin/leistungen gives
+   * about the *list* and wrong about everywhere else. /admin/services gives
    * availability a column with a Switch in it — and the Switch does not apply
    * on the click, it opens the confirm, because publishing a price is not
    * something a control should promise is instant.

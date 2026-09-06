@@ -45,7 +45,7 @@ export interface HistoryEntry {
   detail: string;
   /**
    * The badge to draw. A quote has no registry of its own — it borrows the
-   * request's colours, which is what `/admin/offerten` already does, so `sent`
+   * request's colours, which is what `/admin/quotes` already does, so `sent`
    * has to answer to `offerSent` here too.
    */
   badge: { entity: StatusEntity; state: string };
@@ -119,7 +119,7 @@ export function customerHistory(customerId: ID, sources: HistorySources): Histor
       reference: r.reference,
       detail: serviceName(r.serviceSlug, services, locale),
       badge: { entity: 'request' as StatusEntity, state: r.status },
-      href: `/admin/anfragen/${r.id}`,
+      href: `/admin/requests/${r.id}`,
     })),
 
     ...offers
@@ -136,7 +136,7 @@ export function customerHistory(customerId: ID, sources: HistorySources): Histor
             entity: 'request' as StatusEntity,
             state: o.status === 'sent' ? 'offerSent' : o.status,
           },
-          href: `/admin/offerten/${o.id}`,
+          href: `/admin/quotes/${o.id}`,
         };
       }),
 
@@ -149,7 +149,7 @@ export function customerHistory(customerId: ID, sources: HistorySources): Histor
         reference: b.reference,
         detail: serviceName(b.serviceSlug, services, locale),
         badge: { entity: 'booking' as StatusEntity, state: b.status },
-        href: `/admin/buchungen/${b.id}`,
+        href: `/admin/bookings/${b.id}`,
       })),
 
     ...invoices
@@ -161,7 +161,7 @@ export function customerHistory(customerId: ID, sources: HistorySources): Histor
         reference: i.reference,
         detail: invoiceSubject(i, sources),
         badge: { entity: 'invoice' as StatusEntity, state: i.status },
-        href: `/admin/rechnungen/${i.id}`,
+        href: `/admin/invoices/${i.id}`,
         amount: invoiceTotal(i),
       })),
   ];
