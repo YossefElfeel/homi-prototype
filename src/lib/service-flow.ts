@@ -1,3 +1,4 @@
+import type { Locale } from '@/i18n/routing';
 import type { AddOn, Service } from '@/mock/schema';
 import type { PropertyKind } from '@/mock/schema';
 import { addOnsForService } from './addon-catalogue';
@@ -44,8 +45,16 @@ export interface ServiceNeeds {
   asksPets: boolean;
   /** §5.2 — one hour. Only ever added on an area-driven service. */
   asksCondition: boolean;
-  /** §5.1 — windows are counted, not measured. */
-  asksWindowCount: boolean;
+  /**
+   * §5.1 — the service is counted rather than measured.
+   *
+   * Was `asksCount`, and the name was the bug. It is set for every
+   * `perUnit` service, which is correct, and the form read a fixed «Wie viele
+   * Fenster?» beside it — so a second counted service asked the wrong
+   * question and priced the answer. What the question says now comes off the
+   * record (`Service.countLabel`).
+   */
+  asksCount: boolean;
   /** §5.1 — assembly is priced per piece. */
   asksFurniturePieces: boolean;
   /**
@@ -82,7 +91,7 @@ export function serviceNeeds(service: Service | undefined): ServiceNeeds {
       asksBathrooms: false,
       asksPets: false,
       asksCondition: false,
-      asksWindowCount: false,
+      asksCount: false,
       asksFurniturePieces: false,
       asksPickupAddress: false,
       vocabulary: 'home',
@@ -99,7 +108,7 @@ export function serviceNeeds(service: Service | undefined): ServiceNeeds {
     asksBathrooms: areaDriven,
     asksPets: areaDriven && !office,
     asksCondition: areaDriven,
-    asksWindowCount: service.calc === 'perUnit',
+    asksCount: service.calc === 'perUnit',
     /* Still the slug, because the 0.75h-per-piece rule in `estimateHours` is
        still the slug's. The day a second assembly service exists this becomes
        a field on the record; until then, inventing one here would put a
@@ -128,7 +137,7 @@ export function hasAddOns(addOns: AddOn[], serviceSlug: string | null) {
 /** The quantities a service needs before a price can be computed at all. */
 export interface EstimateInputs {
   area: number | null | undefined;
-  windowCount: number | null | undefined;
+  unitCount: number | null | undefined;
   furniturePieces: number | null | undefined;
 }
 
@@ -147,7 +156,7 @@ export function hasEnoughToPrice(service: Service | undefined, inputs: EstimateI
   if (!service) return false;
   const needs = serviceNeeds(service);
   if (needs.asksArea && !inputs.area) return false;
-  if (needs.asksWindowCount && !inputs.windowCount) return false;
+  if (needs.asksCount && !inputs.unitCount) return false;
   if (needs.asksFurniturePieces && !inputs.furniturePieces) return false;
   return true;
 }
@@ -180,4 +189,38 @@ export function durationFacts(service: Service, facts: SizeFacts) {
     hasPets: needs.asksPets ? Boolean(facts.hasPets) : false,
     needsExtraEffort: needs.asksCondition ? Boolean(facts.needsExtraEffort) : false,
   };
+}
+
+/**
+ * The words a counted service asks and reports in.
+ *
+ * The fallback is the old fixed wording, and it is deliberately the *window*
+ * wording: the one seeded `perUnit` service is window cleaning, so a record
+ * that predates `countLabel` keeps saying exactly what it said before. A
+ * service the owner adds has no fallback worth having — asking «Wie viele
+ * Fensterflügel?» about carpets is the bug this whole change exists to remove
+ * — so `countLabel` returns null there and the form says the record is
+ * unfinished instead of inventing a question.
+ */
+export function countWords(service: Service | undefined, locale: Locale) {
+  const pick = (field: Partial<Record<Locale, string>> | undefined) =>
+    field?.[locale] ?? field?.de ?? null;
+
+  return {
+    label: pick(service?.countLabel),
+    hint: pick(service?.countHint),
+    noun: pick(service?.countNoun),
+  };
+}
+
+/**
+ * Whether a counted service can actually be put in front of a customer.
+ *
+ * A `perUnit` service with no question is a priced thing nobody can be asked
+ * about — the request flow would draw a number box with no label over it. The
+ * catalogue screens refuse to publish one, which is the same shape of gate
+ * `servicesWithoutCopy` applies to a service with no page text.
+ */
+export function needsCountWords(service: Service): boolean {
+  return service.calc === 'perUnit' && !service.countLabel?.de?.trim();
 }

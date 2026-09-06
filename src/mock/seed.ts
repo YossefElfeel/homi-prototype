@@ -100,6 +100,18 @@ export const SEED_SERVICES: Service[] = [
       'Frames, glass and sills — billed per window.',
     ),
     calc: 'perUnit',
+    /* The wording the request flow used to hold as a fixed string. Moving it
+       onto the record is the whole point of the change: it is a fact about
+       window cleaning, not about the form. */
+    countLabel: {
+      de: 'Wie viele Fensterflügel?',
+      en: 'How many window sashes?',
+    },
+    countHint: {
+      de: 'Zählen Sie die Flügel, nicht die Räume. Fünf Flügel entsprechen einer halben Stunde.',
+      en: 'Count the sashes, not the rooms. Five sashes equal half an hour.',
+    },
+    countNoun: { de: 'Fensterflügel', en: 'Window sashes' },
     durationProfile: 'none',
     // Counted per window, but still billed by the hour: five windows are half
     // an hour (§5.1), so the rate here is the hourly rate like every other

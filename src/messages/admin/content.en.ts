@@ -38,6 +38,9 @@ export const adminContentEn: typeof adminContentDe = {
     /* The title names the service, not the act — the act is already on the
        button. What a reader of the confirm needs first is which of the eight
        rows this is about. */
+    countBlockedTitle: '«{name}» has no question yet',
+    countBlockedBody:
+      'The service bills by count, but nothing says what is being counted. Published, the request flow would show an unlabelled number box. Write the question under «Counted unit» and it can go on sale.',
     activateTitle: 'Activate “{name}”?',
     activateBody:
       'It becomes a choice in the request flow at the rate you have set, which is the rate customers are then quoted. The marketing pages are generated from the catalogue at build time and follow on the next deploy.',
@@ -96,6 +99,17 @@ export const adminContentEn: typeof adminContentDe = {
   },
 
   service: {
+    countTitle: 'Counted unit',
+    countCardHint:
+      'What the request flow asks when this service bills by count. Without it the flow shows a number box with no question over it.',
+    countLabelField: 'The question',
+    countLabelHint: 'For example «How many window sashes?». Sits above the number box.',
+    countHintField: 'The line underneath',
+    countHintHint: 'Where the business says what counts as one unit — the sentence that stops the argument at the door.',
+    countNounField: 'The unit, plural',
+    countNounHint: 'Printed on the summary, on the request and on the quote. «18» on its own answers nothing.',
+    countMissing:
+      'Without a question this service cannot be requested: the flow would show an unlabelled number box. Until it is written the service stays a draft.',
     back: 'All services',
     nameTitle: 'Name',
     nameHint: 'Appears on the website and in the quote, in the customer’s language.',

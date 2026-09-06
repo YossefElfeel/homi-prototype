@@ -12,7 +12,7 @@ import { Money, MoneyRange } from '@/components/ui/money';
 import { BookingStep } from '@/components/booking/booking-step';
 import { useEstimate } from '@/components/booking/use-estimate';
 import { useNow, useStore } from '@/mock/store';
-import { hasAddOns, serviceNeeds } from '@/lib/service-flow';
+import { countWords, hasAddOns, serviceNeeds } from '@/lib/service-flow';
 
 /**
  * Screen 22 — review and submit.
@@ -132,9 +132,9 @@ export default function ReviewStep() {
             mentioned the number — and it is the one answer they cannot check
             against the address or the date.
           */}
-          {needs.asksWindowCount && draft.windowCount && (
+          {needs.asksCount && draft.unitCount && (
             <span data-numeric className="block text-sm text-ink-tertiary">
-              {st('windowsSummary')}: {draft.windowCount}
+              {countWords(service, locale).noun ?? st('windowsSummary')}: {draft.unitCount}
             </span>
           )}
           {needs.asksFurniturePieces && draft.furniturePieces && (

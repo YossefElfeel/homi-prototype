@@ -19,7 +19,7 @@ import { Lifecycle } from '@/components/ui/lifecycle';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { areaLabel, figure } from '@/lib/property-size';
-import { serviceNeeds } from '@/lib/service-flow';
+import { countWords, serviceNeeds } from '@/lib/service-flow';
 import { quoteStages } from '@/lib/quote-lifecycle';
 import { requestBadgeState } from '@/lib/offer-label';
 import { isExpired } from '@/mock/engines/offers';
@@ -331,9 +331,9 @@ export default function AccountRequestPage({
                   they left something blank on a screen that never showed them
                   the field. The counts they *were* asked for take its place.
                 */}
-                {needs.asksWindowCount && request.windowCount != null && (
-                  <DetailRow label={st('windowsSummary')}>
-                    <span data-numeric>{request.windowCount}</span>
+                {needs.asksCount && request.unitCount != null && (
+                  <DetailRow label={countWords(service, locale).noun ?? st('windowsSummary')}>
+                    <span data-numeric>{request.unitCount}</span>
                   </DetailRow>
                 )}
                 {needs.asksFurniturePieces && request.furniturePieces != null && (

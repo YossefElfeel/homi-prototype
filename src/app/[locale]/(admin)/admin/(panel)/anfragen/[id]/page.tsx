@@ -169,7 +169,7 @@ export default function RequestDetailPage({
    */
   const duration = !hasEnoughToPrice(service, {
     area: property.area,
-    windowCount: request.windowCount,
+    unitCount: request.unitCount,
     furniturePieces: request.furniturePieces,
   })
     ? null
@@ -178,7 +178,7 @@ export default function RequestDetailPage({
           service,
           addOns: chosen,
           ...durationFacts(service, property),
-          windowCount: request.windowCount,
+          unitCount: request.unitCount,
           furniturePieces: request.furniturePieces,
         },
         settings,
@@ -187,7 +187,7 @@ export default function RequestDetailPage({
   const needs = serviceNeeds(service);
   const office = needs.vocabulary === 'office';
   /* Whether the hours came off a count rather than off the §5.2 matrix. */
-  const countPriced = needs.asksWindowCount || needs.asksFurniturePieces;
+  const countPriced = needs.asksCount || needs.asksFurniturePieces;
 
   const access = property.access;
 
@@ -508,9 +508,9 @@ export default function RequestDetailPage({
                   no floor area either, the row underneath it reads «—» and the
                   number that replaced it has to be visible.
                 */}
-                {request.windowCount != null && (
-                  <Row label={t('windowCount')}>
-                    <span data-numeric>{request.windowCount}</span>
+                {request.unitCount != null && (
+                  <Row label={t('unitCount')}>
+                    <span data-numeric>{request.unitCount}</span>
                   </Row>
                 )}
                 {request.furniturePieces != null && (

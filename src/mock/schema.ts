@@ -87,6 +87,37 @@ export interface Service {
    * the fact that there is no price is stated rather than encoded in a zero.
    */
   quotedIndividually?: boolean;
+  /**
+   * What the count question says, for a service billed `perUnit`.
+   *
+   * This was the bug that made the field necessary. `serviceNeeds` turns the
+   * count question on for **any** service whose `calc` is `perUnit` — which is
+   * right — and the label came from `booking.windowsLabel`, a fixed string
+   * reading «Wie viele Fenster?». So the moment an owner added a second
+   * counted service, the request flow asked how many *windows* a carpet clean
+   * needed. A wrong question is worse than a missing one: the visitor answers
+   * it, and the number is priced.
+   *
+   * Three fields rather than one because the count is read in three voices and
+   * they are not the same words:
+   *
+   *  · `countLabel` is the question on the form — «Wie viele Fenster?»
+   *  · `countHint` is the line under it, where the business says what counts
+   *    as one unit. «Ein Fenster ist Glas, Rahmen und Sims» is the sentence
+   *    that stops the argument at the door.
+   *  · `countNoun` is the plural on every screen that later *reports* the
+   *    number — the review step, the request record, the quote line. «18» on
+   *    its own is not an answer to anything.
+   *
+   * Meaningless on an hourly or flat service, and the editor only shows them
+   * for `perUnit`. Optional in the type because the seven seeded services
+   * predate the field and only one of them is counted — but `serviceNeeds`
+   * treats a counted service with no label as an incomplete record rather than
+   * falling back to the window wording, which is how the old bug worked.
+   */
+  countLabel?: Partial<Record<Locale, string>>;
+  countHint?: Partial<Record<Locale, string>>;
+  countNoun?: Partial<Record<Locale, string>>;
   /** Move-out cleaning carries the handover guarantee (§12). */
   handoverGuarantee: boolean;
   status: ServiceStatus;
@@ -311,7 +342,7 @@ export interface ServiceRequest {
   serviceSlug: string;
   addOnIds: ID[];
   /** Windows are billed per unit (§5.1: 0.5h per five windows). */
-  windowCount?: number;
+  unitCount?: number;
   furniturePieces?: number;
   /**
    * Where the furniture is collected from, when that is not `propertyId`.
@@ -374,7 +405,7 @@ export interface RequestDraft {
   propertyId: ID | null;
   property: PropertyInput;
   addOnIds: ID[];
-  windowCount: number | null;
+  unitCount: number | null;
   furniturePieces: number | null;
   /** Null until the visitor says the furniture is somewhere else. */
   pickup: PickupLocation | null;

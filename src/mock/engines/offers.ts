@@ -55,7 +55,7 @@ export function buildOfferLines({
        * which are priced from a count and never read the area at all.
        */
       ...durationFacts(service, property),
-      windowCount: request.windowCount,
+      unitCount: request.unitCount,
       furniturePieces: request.furniturePieces,
     },
     settings,

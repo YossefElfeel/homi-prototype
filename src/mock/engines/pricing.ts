@@ -72,7 +72,7 @@ export interface EstimateInput {
   hasPets: boolean;
   needsExtraEffort: boolean;
   /** Per-unit services. */
-  windowCount?: number;
+  unitCount?: number;
   furniturePieces?: number;
   /** Scheduling context — only known once a slot is chosen. */
   start?: Date;
@@ -158,8 +158,8 @@ export function estimateHours(input: EstimateInput, settings: Settings) {
   }
 
   // §5.1 — windows are counted, not measured: half an hour per five.
-  if (service.calc === 'perUnit' && input.windowCount) {
-    rows.push({ key: 'windows', hours: Math.ceil(input.windowCount / 5) * 0.5 });
+  if (service.calc === 'perUnit' && input.unitCount) {
+    rows.push({ key: 'windows', hours: Math.ceil(input.unitCount / 5) * 0.5 });
   }
 
   if (service.slug === 'moebelmontage' && input.furniturePieces) {
