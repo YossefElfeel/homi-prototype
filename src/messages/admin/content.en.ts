@@ -460,7 +460,7 @@ export const adminContentEn: typeof adminContentDe = {
     uploadFailed: 'The picture could not be saved. Try another one.',
     notAnImage: 'That is not an image file.',
     fromThisDevice: 'Uploaded from this device',
-    orFromProject: 'Or one from the project',
+    orChoose: 'Or one of the {n} pictures you already have',
     fromUrl: 'Paste an address from the web instead',
     urlLabel: 'Image address',
     urlHint:

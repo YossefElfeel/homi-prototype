@@ -89,6 +89,10 @@ export function AddConstructionDialog({
               label={t('addFile')}
               hint={t('addFileHint')}
               options={unused.map((u) => `/construction/${u}.jpg`)}
+              /* Everything already in a group — including uploads, which the
+                 picker offers from this browser's own library and cannot know
+                 are spoken for. */
+              exclude={photos.map((p) => p.src)}
               value={src}
               onChange={setSrc}
               /* An upload knows its own dimensions, so the grid gets the real

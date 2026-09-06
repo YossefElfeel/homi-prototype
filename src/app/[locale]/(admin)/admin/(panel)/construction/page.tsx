@@ -108,16 +108,6 @@ export default function AdminConstructionPage() {
                 <ExternalLink className="size-3.5" aria-hidden />
               </a>
             </Button>
-            <Button variant="secondary" onClick={() => setEditingSection((v) => !v)}>
-              {t('sectionEdit')}
-            </Button>
-            {/* Beside the button that edits one, because they are the same
-                subject. It was a labelled text field sitting between the tabs
-                and the grid — a permanent form for something done a few times
-                a year, in the middle of the screen that is used every week. */}
-            <Button variant="secondary" onClick={() => setAddingSection(true)}>
-              {t('sectionNew')}
-            </Button>
             <Button onClick={() => setAdding(true)}>
               <Plus className="size-4" aria-hidden />
               {t('addAction')}
@@ -126,12 +116,16 @@ export default function AdminConstructionPage() {
         }
       />
 
-      {/* One tab per group, in the order the page renders them. */}
-      <div
-        role="tablist"
-        aria-label={t('title')}
-        className="mt-8 flex flex-wrap gap-1 border-b border-line"
-      >
+      {/*
+        The section controls sit on the tab strip, not in the page header.
+        Four buttons up there overflowed the row and wrapped under the lead,
+        which is what made them look adrift — but the placement was wrong
+        before it was ugly: «Abschnitt bearbeiten» and «Neuer Abschnitt» act on
+        a *section*, and the tab strip is what a section is on this screen. The
+        header keeps what belongs to the page.
+      */}
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line">
+        <div role="tablist" aria-label={t('title')} className="flex flex-wrap gap-1">
         {ordered.map((sec) => (
           <button
             key={sec.id}
@@ -181,7 +175,20 @@ export default function AdminConstructionPage() {
               </span>
             )}
           </button>
-        ))}
+          ))}
+        </div>
+
+        {/* Ghost buttons, so the strip still reads as tabs. Two filled ones
+            here would compete with the tab that is actually selected. */}
+        <div className="flex shrink-0 items-center gap-1 pb-2">
+          <Button variant="ghost" size="sm" onClick={() => setEditingSection((v) => !v)}>
+            {t('sectionEdit')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setAddingSection(true)}>
+            <Plus className="size-4" aria-hidden />
+            {t('sectionNew')}
+          </Button>
+        </div>
       </div>
 
       {current && editingSection && (

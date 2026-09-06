@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { Photo, isRemote } from '@/components/ui/photo';
-import { isUploaded, putImage } from '@/lib/image-store';
+import { isUploaded, listImages, putImage } from '@/lib/image-store';
 import { cn } from '@/lib/cn';
 
 /**
@@ -33,6 +33,7 @@ export function ImagePicker({
   label,
   hint,
   options,
+  exclude,
   value,
   onChange,
   onUploaded,
@@ -40,6 +41,14 @@ export function ImagePicker({
   label: string;
   hint?: string;
   options: string[];
+  /**
+   * Pictures already spoken for.
+   *
+   * The construction portfolio renders every group, so the same picture in two
+   * of them appears twice on one page with nothing to tell the copies apart.
+   * The caller knows what is in use; the picker only knows what exists.
+   */
+  exclude?: string[];
   value: string;
   onChange: (src: string) => void;
   /** Uploads know their own dimensions; the caller usually wants them. */
@@ -51,6 +60,26 @@ export function ImagePicker({
   const [busy, setBusy] = useState(false);
   const [showUrl, setShowUrl] = useState(() => isRemote(value));
 
+  /* What this browser is already holding. Read once on mount and after each
+     upload — an upload is the only thing that changes it, and re-reading
+     IndexedDB on every render of a dialog would be a query per keystroke in
+     the caption field next to it. */
+  const [library, setLibrary] = useState<string[]>([]);
+  const refresh = useCallback(() => {
+    listImages()
+      .then(setLibrary)
+      .catch(() => setLibrary([]));
+  }, []);
+  useEffect(refresh, [refresh]);
+
+  /* Uploads first — they are this office's own pictures, and the four files
+     the project ships are the fallback. Deduplicated because the current value
+     may be an upload that is also in the library. */
+  const choices = useMemo(() => {
+    const taken = new Set((exclude ?? []).filter((src) => src !== value));
+    return Array.from(new Set([...library, ...options])).filter((src) => !taken.has(src));
+  }, [library, options, exclude, value]);
+
   async function take(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -61,6 +90,7 @@ export function ImagePicker({
     try {
       const stored = await putImage(file);
       onChange(stored.src);
+      refresh();
       onUploaded?.({ width: stored.width, height: stored.height });
     } catch {
       /* Quota, a private window with IndexedDB disabled, a file the decoder
@@ -126,17 +156,32 @@ export function ImagePicker({
         <p className="mt-1.5 text-sm text-ink-tertiary">{t('fromDeviceHint')}</p>
       </div>
 
-      {options.length > 0 && (
+      {choices.length > 0 && (
         <div className="mt-5">
-          <p className="label-type text-ink-tertiary">{t('orFromProject')}</p>
-          <ul className="mt-2 grid grid-cols-2 gap-3">
-            {options.map((src) => {
+          <p className="label-type text-ink-tertiary">
+            {t('orChoose', { n: choices.length })}
+          </p>
+          {/*
+            Capped and scrollable, because this list has no natural size any
+            more. Four project files fitted a dialog; the pictures this browser
+            has been given do not, and they only ever grow. A grid that keeps
+            growing pushes the upload button and the caption field off the
+            bottom of the screen — the two controls the dialog exists for.
+          */}
+          <ul className="mt-2 grid max-h-80 grid-cols-2 gap-3 overflow-y-auto pe-1">
+            {choices.map((src) => {
               const chosen = src === value;
               return (
                 <li key={src}>
                   <button
                     type="button"
                     aria-pressed={chosen}
+                    /* Scrolled to on open, so re-opening a dialog does not
+                       start at the top of a list whose chosen picture is
+                       twenty rows down. */
+                    ref={(node) => {
+                      if (chosen) node?.scrollIntoView({ block: 'nearest' });
+                    }}
                     onClick={() => onChange(src)}
                     className={cn(
                       'relative block w-full overflow-hidden rounded-[var(--radius-sm)] transition-shadow',
