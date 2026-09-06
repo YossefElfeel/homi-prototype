@@ -2740,6 +2740,27 @@ function baseData(now: Date): DataSet {
       publishConsent: true,
     },
     {
+      /*
+       * In the bin, so the third tab has something in it.
+       *
+       * Exactly the failure the customer archive had until wave 90: a tab
+       * whose populated state can only be reached by binning a review off the
+       * working list — which destroys the list somebody is looking at to do
+       * it. This one is a duplicate: the same household wrote twice about the
+       * same job, which is the commonest honest reason to delete something
+       * that is not an erasure request.
+       */
+      id: 'rev_binned',
+      bookingId: 'bkg_acc_h4',
+      customerId: 'cus_2',
+      rating: 5,
+      text: 'Everything spotless, and they were done sooner than the quote said. (Sent this twice by mistake — sorry!)',
+      status: 'hidden',
+      submittedAt: iso(days(now, -6)),
+      publishConsent: true,
+      deletedAt: iso(days(now, -5)),
+    },
+    {
       /* The one card on the screen whose «Veröffentlichen» is enabled on
          arrival. Without it every publish button in the queue is greyed out
          and the screen's primary action looks broken rather than gated. */

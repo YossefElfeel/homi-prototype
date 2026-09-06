@@ -1289,6 +1289,23 @@ export interface Review {
    * this prototype it was the only one carrying legal weight.
    */
   publishConsent: boolean;
+  /**
+   * In the bin, and recoverable.
+   *
+   * «Löschen» used to be a real, immediate erasure, and the comment on
+   * `deleteReview` argued for it well: §20.6 obliges the office to remove a
+   * review when the person who wrote it withdraws consent, and an erasure that
+   * files the text under a different heading is not an erasure.
+   *
+   * That argument is right about *that* case and was being applied to a second
+   * one it does not fit. Most deletions are not erasure requests — they are the
+   * office taking down something abusive, or off-topic, or posted twice — and
+   * for those, an undo is what stops a moderation queue being a place where one
+   * mis-click is final. So there are two actions now, and they are not the same
+   * word: this flag is the bin, and `eraseReview` is the one that cannot be
+   * undone and says so.
+   */
+  deletedAt?: ISODate;
 }
 
 export type PhotoSource = 'customer' | 'owner' | 'field';

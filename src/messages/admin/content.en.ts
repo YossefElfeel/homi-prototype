@@ -407,12 +407,25 @@ export const adminContentEn: typeof adminContentDe = {
     editReply: 'Edit the reply',
     published: 'Review published.',
     rejected: 'Review not published.',
+    tabPublished: 'On the website',
+    tabUnpublished: 'Not published',
+    tabDeleted: 'Deleted',
+
+    restoreFromBin: 'Restore',
+    restoreDone: 'The review from {name} is back.',
+    erase: 'Erase for good',
+    eraseConfirmTitle: 'Erase for good — with no way back?',
+    eraseConfirmBody:
+      'This is the case §20.6 requires this button for: the person who wrote it has withdrawn their consent. The text and the reply are deleted and cannot be recovered. The change log keeps the fact that it was erased, never what it said.',
+    eraseDone: 'Review erased for good.',
+    deletedNote: 'Deleted on {date}',
+
     delete: 'Delete',
-    deleteConfirmTitle: 'Delete this review for good?',
+    deleteConfirmTitle: 'Delete this review?',
     deleteConfirmBody:
-      'The review by {name} ({stars} stars) will be deleted — the text and the reply with it. This cannot be undone. The log records that a review was deleted, not what it said.',
+      'The review from {name} ({stars} stars) leaves the website at once and moves to the «Deleted» tab. It can be brought back from there.',
     deleteInstead:
-      'If it only has to come off the website for a while, «Hide» is the way: the review is kept and can go back up at any time.',
+      'If it should only go temporarily, «Hide» does the same without taking it out of the working list.',
     deleteDone: 'The review by {name} has been deleted.',
     replySaved: 'Reply saved.',
     noConsentTitle: 'No consent given',
