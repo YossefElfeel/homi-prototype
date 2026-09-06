@@ -1012,6 +1012,16 @@ const SPECS: SurfaceSpec[] = [
   { id: 'page.bau', group: 'pages', scope: 'site', href: '/bau', extra: bauFields },
   { id: 'page.careers', group: 'pages', scope: 'site', href: '/jobs', extra: careersFields },
   {
+    /* The section's own furniture — its heading, its lead, «Weiterlesen», the
+       reading-time line and the empty state. The *articles* are records and
+       live on their own screen; this is the page they sit on. */
+    id: 'page.blog',
+    group: 'pages',
+    scope: 'site',
+    href: '/ratgeber',
+    roots: ['site.blog'],
+  },
+  {
     id: 'page.thanks',
     group: 'pages',
     scope: 'site',

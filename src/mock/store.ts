@@ -49,6 +49,8 @@ import type {
   SlotHold,
   WorkEntry,
   ISODate,
+  BlogPost,
+  BlogStatus,
   ContentEdit,
   ContentKind,
   ContentValue,
@@ -348,8 +350,16 @@ Marco Brunner`;
    before this wave would open the new area editor to eight rows and one of
    them off, with nothing on screen saying the switch came from a store two
    waves old — which reads as the new screen having lost a row rather than as
-   stale data. */
-const SCHEMA_VERSION = 33;
+   stale data.
+
+   34: `DataSet` gained `posts` — the Ratgeber — and three seeded customers
+   gained `archivedAt`. `merge` fills a *missing* collection, so a stale blob
+   would arrive with no articles at all and /ratgeber would render its empty
+   state on a build that ships five. The archive is the same shape of problem
+   read the other way: `customers` is present in every blob since 1, so it is
+   kept whole and the archive tab would open empty on exactly the wave that
+   exists to fill it. */
+const SCHEMA_VERSION = 34;
 
 /**
  * §10 — the default payment term.
@@ -1258,6 +1268,32 @@ interface StoreState {
    * from the seed and move at the next build.
    */
   setServices: (services: Service[]) => void;
+
+  /* ---- the Ratgeber (§17.3) ----
+     The website had no way to say anything that was not a price. A cleaning
+     company's cheapest marketing is answering, in public, the questions it
+     answers on the phone twenty times a week — and there was nowhere to put
+     an answer. */
+  /**
+   * A new article, as a draft.
+   *
+   * Never published on creation, and that is not caution for its own sake: the
+   * record starts with an empty title, and «aufschalten» on an untitled post
+   * would put a blank card on the index. The list's confirm step is where
+   * publishing happens, once there is something to publish.
+   */
+  createPost: (now: Date) => { id: ID; slug: string };
+  updatePost: (id: ID, patch: Partial<BlogPost>) => void;
+  /**
+   * Publish or withdraw.
+   *
+   * `publishedAt` is stamped once and then left alone. A post pulled back to a
+   * draft and put out again is the same article — resetting the date would
+   * push it to the top of the index as though it were new, and would lose the
+   * only record of when it first went out.
+   */
+  setPostStatus: (id: ID, status: BlogStatus, now: Date) => void;
+  deletePost: (id: ID) => void;
 
   /* ---- website content (screens 85, 85a) ----
      Nothing wrote a word of the website before this. `src/messages` and
@@ -4572,6 +4608,103 @@ export const useStore = create<StoreState>()(
         });
       },
 
+      createPost: (now) => {
+        const id = `post_${now.getTime().toString(36)}`;
+        const slug = uniquePostSlug('neuer-beitrag', get().data.posts);
+        const post: BlogPost = {
+          id,
+          slug,
+          title: {},
+          excerpt: {},
+          /* The owner, because the panel does not know who is typing — the
+             demo bar's «current member» is a review control, not a session.
+             The editor offers the author as a field, which is where the real
+             answer comes from. */
+          authorId: 'tm_owner',
+          status: 'draft',
+          updatedAt: now.toISOString(),
+          sections: [],
+        };
+        set((s) => ({ data: { ...s.data, posts: [post, ...s.data.posts] } }));
+        get().logChange({
+          entity: 'post',
+          entityId: id,
+          summary: 'Ratgeber article created',
+        });
+        return { id, slug };
+      },
+
+      updatePost: (id, patch) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            posts: s.data.posts.map((post) =>
+              post.id === id
+                ? {
+                    ...post,
+                    ...patch,
+                    /* Kept unique here rather than in the editor, so a slug
+                       typed in one tab cannot collide with one saved in
+                       another between keystroke and write. */
+                    slug: patch.slug
+                      ? uniquePostSlug(patch.slug, s.data.posts, id)
+                      : post.slug,
+                    updatedAt: effectiveNow(s.demo.dateOverride).toISOString(),
+                  }
+                : post,
+            ),
+          },
+        }));
+        const next = get().data.posts.find((post) => post.id === id);
+        get().logChange({
+          entity: 'post',
+          entityId: id,
+          summary: `Ratgeber article edited: ${next?.title.de || next?.slug || id}`,
+          coalesce: true,
+        });
+      },
+
+      setPostStatus: (id, status, now) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            posts: s.data.posts.map((post) =>
+              post.id === id
+                ? {
+                    ...post,
+                    status,
+                    publishedAt:
+                      status === 'published' && !post.publishedAt
+                        ? now.toISOString()
+                        : post.publishedAt,
+                    updatedAt: now.toISOString(),
+                  }
+                : post,
+            ),
+          },
+        }));
+        const next = get().data.posts.find((post) => post.id === id);
+        get().logChange({
+          entity: 'post',
+          entityId: id,
+          summary: `Ratgeber article ${status === 'published' ? 'published' : 'withdrawn'}: ${
+            next?.title.de || next?.slug || id
+          }`,
+        });
+      },
+
+      deletePost: (id) => {
+        const post = get().data.posts.find((p) => p.id === id);
+        set((s) => ({
+          data: { ...s.data, posts: s.data.posts.filter((p) => p.id !== id) },
+        }));
+        get().logChange({
+          entity: 'post',
+          entityId: id,
+          summary: `Ratgeber article deleted: ${post?.title.de || post?.slug || id}`,
+        });
+      },
+
       setContent: ({ key, kind, locale, value, label }) => {
         set((s) => {
           const now = effectiveNow(s.demo.dateOverride).toISOString();
@@ -5208,6 +5341,23 @@ export const useStore = create<StoreState>()(
     },
   ),
 );
+
+/**
+ * `slug`, `slug-2`, `slug-3` — never a collision under /ratgeber.
+ *
+ * The catalogue's `uniqueSlug` takes services; this takes posts, and the two
+ * namespaces are separate on purpose — an article about window cleaning and
+ * the window cleaning service are allowed to share a name, because they do not
+ * share a URL.
+ */
+function uniquePostSlug(base: string, posts: BlogPost[], ignoreId?: string): string {
+  const cleaned = slugify(base) || 'beitrag';
+  const taken = new Set(posts.filter((p) => p.id !== ignoreId).map((p) => p.slug));
+  if (!taken.has(cleaned)) return cleaned;
+  let n = 2;
+  while (taken.has(`${cleaned}-${n}`)) n += 1;
+  return `${cleaned}-${n}`;
+}
 
 function effectiveNow(override: string | null) {
   return override ? new Date(override) : new Date();

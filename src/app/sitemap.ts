@@ -4,6 +4,8 @@ import { routing, TRANSLATED_LOCALES } from '@/i18n/routing';
 import { SERVED_REGIONS } from '@/mock/engines/coverage';
 import { LEGAL_SLUGS } from '@/content/legal';
 import { SEED_SERVICES } from '@/mock/seed';
+import { buildScenario } from '@/mock/scenarios';
+import { publishedPosts } from '@/lib/blog';
 import { isOffered } from '@/lib/service-catalogue';
 
 const ORIGIN = 'https://homivaro.ch';
@@ -26,6 +28,12 @@ const ORIGIN = 'https://homivaro.ch';
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const services = SEED_SERVICES.filter(isOffered).sort((a, b) => a.order - b.order);
+  /* Generated, like the services and the regions above — a Ratgeber whose
+     articles are not in the sitemap is a Ratgeber written for nobody, since
+     search is the only reason the section exists. Drafts are absent because
+     `publishedPosts` filters them, which is the same rule the route itself
+     applies rather than a second one written here. */
+  const posts = publishedPosts(buildScenario('demo', new Date()).posts);
 
   const paths: { path: string; priority: number; frequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
     { path: '', priority: 1, frequency: 'weekly' },
@@ -44,6 +52,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       frequency: 'monthly' as const,
     })),
     { path: '/referenzen', priority: 0.6, frequency: 'weekly' },
+    { path: '/ratgeber', priority: 0.7, frequency: 'weekly' },
+    ...posts.map((post) => ({
+      path: `/ratgeber/${post.slug}`,
+      priority: 0.6,
+      frequency: 'yearly' as const,
+    })),
     { path: '/ueber-uns', priority: 0.6, frequency: 'yearly' },
     { path: '/kontakt', priority: 0.7, frequency: 'yearly' },
     { path: '/jobs', priority: 0.5, frequency: 'weekly' },

@@ -16,6 +16,7 @@ export const en: Messages = {
 
   nav: {
     home: 'Home',
+    blog: 'Guides',
     language: 'Language',
     services: 'Services',
     pricing: 'Pricing',
