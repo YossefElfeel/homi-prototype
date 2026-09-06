@@ -52,6 +52,7 @@ import type {
   BlogPost,
   BlogStatus,
   ConstructionPhoto,
+  ConstructionSection,
   EnquiryStatus,
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
@@ -359,7 +360,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 41;
+const SCHEMA_VERSION = 42;
 
 /**
  * §10 — the default payment term.
@@ -1326,6 +1327,18 @@ interface StoreState {
      Twenty-two photographs in a file. Which ones a construction firm leads
      with, in what order, and what each is called are decisions the business
      makes and changes — and they were a developer's to make. */
+  updateConstructionSection: (id: string, patch: Partial<ConstructionSection>) => void;
+  moveConstructionSection: (id: string, direction: -1 | 1) => void;
+  addConstructionSection: (title: string) => string;
+  /**
+   * Remove a section, and only ever an empty one.
+   *
+   * A section still holding photographs cannot go, and the screen says how
+   * many rather than offering to take them with it. The pictures are the
+   * work — deleting a heading is a labelling decision and deleting the job it
+   * labels is not, and one confirm cannot honestly ask both.
+   */
+  removeConstructionSection: (id: string) => boolean;
   setConstructionVisible: (id: ID, visible: boolean) => void;
   updateConstructionPhoto: (id: ID, patch: Partial<ConstructionPhoto>) => void;
   /** Within its own group. The page reads each group in `order`. */
@@ -4809,6 +4822,104 @@ export const useStore = create<StoreState>()(
             ? `Work released to the gallery (${bookingId})`
             : `Work withdrawn from the gallery (${bookingId})`,
         });
+      },
+
+      updateConstructionSection: (id, patch) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            constructionSections: s.data.constructionSections.map((sec) =>
+              sec.id === id ? { ...sec, ...patch } : sec,
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: `Construction section edited (${id})`,
+          coalesce: true,
+        });
+      },
+
+      moveConstructionSection: (id, direction) => {
+        set((s) => {
+          const ordered = s.data.constructionSections
+            .slice()
+            .sort((a, b) => a.order - b.order);
+          const index = ordered.findIndex((sec) => sec.id === id);
+          const target = index + direction;
+          if (index === -1 || target < 0 || target >= ordered.length) return {};
+
+          const moved = [...ordered];
+          const [taken] = moved.splice(index, 1);
+          if (!taken) return {};
+          moved.splice(target, 0, taken);
+
+          const positions = new Map(moved.map((sec, i) => [sec.id, i]));
+          return {
+            data: {
+              ...s.data,
+              constructionSections: s.data.constructionSections.map((sec) => ({
+                ...sec,
+                order: positions.get(sec.id) ?? sec.order,
+              })),
+            },
+          };
+        });
+      },
+
+      addConstructionSection: (title) => {
+        /* The id doubles as the value every photo's `group` holds, so it is
+           derived from the title once and then never moves — renaming the
+           heading later must not orphan the pictures under it. */
+        const base = slugify(title) || 'abschnitt';
+        const taken = new Set(get().data.constructionSections.map((sec) => sec.id));
+        let id = base;
+        let n = 2;
+        while (taken.has(id)) id = `${base}-${n++}`;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            constructionSections: [
+              ...s.data.constructionSections,
+              {
+                id,
+                title: { de: title },
+                /* The display heading starts as the whole title in navy with
+                   no red half. Splitting somebody's words for them would put
+                   the accent on an arbitrary syllable — which half is red is a
+                   writing decision, and the editor is where it gets made. */
+                lead: { de: title },
+                accent: {},
+                body: {},
+                order: s.data.constructionSections.length,
+              },
+            ],
+          },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: `Construction section added (${id})`,
+        });
+        return id;
+      },
+
+      removeConstructionSection: (id) => {
+        if (get().data.construction.some((p) => p.group === id)) return false;
+        set((s) => ({
+          data: {
+            ...s.data,
+            constructionSections: s.data.constructionSections.filter((sec) => sec.id !== id),
+          },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: `Construction section removed (${id})`,
+        });
+        return true;
       },
 
       setConstructionVisible: (id, visible) => {

@@ -1812,6 +1812,37 @@ export interface Settings {
  * come in and what each one is called are decisions the business makes and
  * changes — and they were a developer's to make.
  */
+/**
+ * One section of /construction — its headings, its order, its identity.
+ *
+ * The four groups were a `const` union in `content/bau.ts` and their headings
+ * were six message keys apiece. So the page had exactly four sections for
+ * ever: a firm that takes on a fifth trade could add photographs to it and had
+ * nowhere to put the section, and the heading over «Spanndecken» was a
+ * developer's sentence.
+ *
+ * Three heading fields and not one, because this direction sets a display
+ * heading in two colours and the plain themes set one in a single colour, and
+ * they are genuinely different sentences: the section titled «Spanndecken»
+ * carries the display heading «Bedruckte Spanndecken.» Deriving either from
+ * the other was tried on paper and breaks on exactly that row — which is the
+ * argument `lib/display-headline.ts` already makes about where a line breaks
+ * and which half is red being writing decisions rather than slice indexes.
+ */
+export interface ConstructionSection {
+  /** Also the value a photo's `group` holds. Stable once photos point at it. */
+  id: string;
+  /** The plain heading, for the themes that set one colour. */
+  title: Partial<Record<Locale, string>>;
+  /** The navy half of the display heading. */
+  lead: Partial<Record<Locale, string>>;
+  /** The red half. */
+  accent: Partial<Record<Locale, string>>;
+  /** The paragraph under the heading. */
+  body: Partial<Record<Locale, string>>;
+  order: number;
+}
+
 export interface ConstructionPhoto {
   id: ID;
   /** The file under /public/construction, without the extension. */

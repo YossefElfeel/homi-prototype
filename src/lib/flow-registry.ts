@@ -1383,6 +1383,9 @@ export const FLOWS: Flow[] = [
       added('Write the caption', '/admin/construction', 'Per language, and it is what a screen reader is given — a missing one is flagged on the card'),
       added('Move it to another group', '/admin/construction', 'A picture filed under the wrong trade is the commonest thing to find and the hardest to fix in a file'),
       added('Add one', '/admin/construction', 'From the files already in the project; there is no upload, and a file input that writes nowhere is a control that lies'),
+      added('Rewrite a section heading', '/admin/construction', 'Three fields per language: the plain heading, and the two halves of the two-colour display heading — which words are red is a writing decision, not formatting'),
+      added('Reorder the sections', '/admin/construction', 'The arrows set the order the page renders them in'),
+      added('Add or remove a section', '/admin/construction', 'A section still holding pictures is refused with the count: deleting a heading is a labelling decision, deleting the work under it is not'),
     ],
     exits: [
       added('On the page', '/construction', 'The grid reads the record and falls back to the file before hydration, so the server still renders the real page rather than a gap that fills in'),

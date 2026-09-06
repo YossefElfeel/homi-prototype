@@ -463,12 +463,33 @@ export const adminContentDe = {
     lead: 'Welche Bilder auf /construction stehen, in welcher Gruppe und in welcher Reihenfolge. Anders als bei den Kundenreferenzen hängt hier keine Einwilligung dran: das sind unsere eigenen Aufnahmen unserer eigenen Arbeiten.',
     viewPage: 'Seite ansehen',
 
-    groups: {
-      trockenbau: 'Trockenbau',
-      spanndecken: 'Spanndecken',
-      gewerbe: 'Gewerbe',
-      umgebung: 'Rohbau & Umgebung',
-    },
+    sectionEdit: 'Abschnitt bearbeiten',
+    sectionHeadings: 'Überschriften dieses Abschnitts',
+    sectionHeadingsHint:
+      'Die Reihenfolge der Pfeile rechts ist die Reihenfolge auf der Seite. Deutsch genügt — die anderen Sprachen fallen darauf zurück (§20.6).',
+    sectionTitle: 'Überschrift',
+    sectionTitleHint: 'Für die Richtungen, die einfarbig setzen.',
+    /* Zwei Hälften, weil die grosse Überschrift zweifarbig ist — welche Wörter
+       rot sind, ist eine Schreibentscheidung und keine Formatierung. */
+    sectionLead: 'Grosse Überschrift — dunkel',
+    sectionLeadHint: 'Der erste Teil, in Navy.',
+    sectionAccent: 'Grosse Überschrift — rot',
+    sectionAccentHint: 'Der zweite Teil. Leer lassen, wenn die Zeile einfarbig bleiben soll.',
+    sectionBody: 'Text unter der Überschrift',
+    sectionBodyHint: 'Ein Absatz. Steht zwischen Überschrift und Bildern.',
+    sectionUp: 'Abschnitt nach vorne',
+    sectionDown: 'Abschnitt nach hinten',
+
+    sectionNew: 'Neuer Abschnitt',
+    sectionNewHint: 'Der Titel auf Deutsch. Alles Weitere danach.',
+    sectionAdd: 'Abschnitt anlegen',
+    sectionAddDone: 'Abschnitt angelegt — Überschriften stehen offen.',
+
+    sectionRemove: 'Abschnitt löschen',
+    sectionBlocked:
+      'Der Abschnitt hält noch {n} Bilder. Verschieben Sie sie zuerst in einen anderen Abschnitt — eine Überschrift zu löschen ist eine Beschriftungsfrage, die Arbeiten darunter zu löschen ist keine.',
+    sectionRemoveDone: 'Abschnitt gelöscht.',
+
     hiddenCount: '{n} ausgeblendet',
 
     visible: 'Sichtbar',

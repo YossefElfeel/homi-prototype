@@ -5,11 +5,10 @@ import { ArrowRight, Phone } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { getTheme } from '@/lib/theme-server';
-import { WORK_GROUPS } from '@/content/bau';
-import { WorkGrid } from '@/components/site/work-grid';
+import { ConstructionSections } from '@/components/site/construction-sections';
 import { Button } from '@/components/ui/button';
 import { Masthead } from '@/components/landing/Masthead';
-import { PageSection, SectionHead } from '@/components/landing/PageSection';
+import { PageSection } from '@/components/landing/PageSection';
 import { Section, SectionHeading } from '@/components/signature/section-heading';
 
 export function generateStaticParams() {
@@ -53,15 +52,11 @@ export default async function ConstructionPage({
 
   const theme = await getTheme();
   const t = await getTranslations('site.bau');
+  /* The page masthead only — the section headings moved onto the record. */
   const d = await getTranslations('site.display.bau');
   const brand = await getTranslations('brand');
   const hv = theme === 'homivaro';
 
-  const groups = WORK_GROUPS.map((group) => ({
-    group,
-    title: t(`groups.${group}.title`),
-    body: t(`groups.${group}.body`),
-  }));
 
   const close = (
     <div className="mx-auto max-w-[var(--measure)] text-center">
@@ -93,15 +88,7 @@ export default async function ConstructionPage({
           action={{ label: t('cta'), href: '/contact' }}
         />
 
-        {groups.map(({ group, body }, i) => (
-          <PageSection key={group} tone={i % 2 === 1 ? 'sunken' : undefined}>
-            <SectionHead lines={d.raw(`groupLines.${group}`)} />
-            <p className="mt-5 max-w-[var(--measure)] text-ink-secondary">{body}</p>
-            <div className="mt-10">
-              <WorkGrid group={group} />
-            </div>
-          </PageSection>
-        ))}
+        <ConstructionSections theme={theme} />
 
         <PageSection>{close}</PageSection>
       </>
@@ -121,15 +108,7 @@ export default async function ConstructionPage({
         />
       </Section>
 
-      {groups.map(({ group, title, body }) => (
-        <Section key={group}>
-          <h2 className="subhead-type text-2xl">{title}</h2>
-          <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{body}</p>
-          <div className="mt-8">
-            <WorkGrid group={group} />
-          </div>
-        </Section>
-      ))}
+      <ConstructionSections theme={theme} />
 
       <Section>{close}</Section>
     </>
