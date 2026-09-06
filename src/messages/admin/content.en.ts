@@ -391,11 +391,9 @@ export const adminContentEn: typeof adminContentDe = {
     publish: 'Publish',
     republish: 'Publish again',
     reject: 'Do not publish',
-    replyLabel: 'Your reply',
-    replyHint: 'Appears under the review.',
     negativeTitle: 'Critical review',
     negativeBody:
-      'This one is not published automatically. Reply first — an answered critical review does less damage than a deleted one.',
+      'This review is not published automatically. Call them first — an answered critical review does less damage than a deleted one, and that conversation no longer happens on this screen.',
     emptyTitle: 'No reviews yet',
     emptyBody:
       'Customers are asked for a review once payment completes. Until then the website shows the promise instead of stars.',
@@ -403,8 +401,6 @@ export const adminContentEn: typeof adminContentDe = {
     restored: 'The review is awaiting release again.',
     hide: 'Hide',
     hiddenDone: 'The review is no longer on the website.',
-    replyAction: 'Reply',
-    editReply: 'Edit the reply',
     published: 'Review published.',
     rejected: 'Review not published.',
     tabPublished: 'On the website',
@@ -427,7 +423,6 @@ export const adminContentEn: typeof adminContentDe = {
     deleteInstead:
       'If it should only go temporarily, «Hide» does the same without taking it out of the working list.',
     deleteDone: 'The review by {name} has been deleted.',
-    replySaved: 'Reply saved.',
     noConsentTitle: 'No consent given',
     noConsentBody:
       'This customer did not agree to publication. The review stays internal — that is not a judgement call (§20.6).',

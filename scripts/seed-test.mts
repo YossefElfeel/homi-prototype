@@ -401,9 +401,14 @@ for (const clock of CLOCKS) {
         `${tag} a review that publishes in one click exists`,
         d.reviews.some((r) => r.status === 'pending' && r.publishConsent && r.rating > 3),
       );
+      /* The reply is gone from the product, so «awaiting a reply» is not a
+         state any more. What still has to exist is the critical review itself:
+         it is the card the moderation screen warns on, and §17.2's argument —
+         that an answered one-star does less damage than a deleted one — is
+         still the reason the warning is there. */
       check(
-        `${tag} a critical review awaiting a reply exists`,
-        d.reviews.some((r) => r.status === 'pending' && r.rating <= 3 && !r.ownerReply),
+        `${tag} a critical review awaiting a decision exists`,
+        d.reviews.some((r) => r.status === 'pending' && r.rating <= 3),
       );
       check(
         `${tag} a review nobody consented to publishing exists`,

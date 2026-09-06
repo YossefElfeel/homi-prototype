@@ -1148,7 +1148,6 @@ interface StoreState {
   /* Was the three statuses written out by hand, which is how `hidden` could be
      added to the union in `schema.ts` and still be unwritable from anywhere. */
   setReviewStatus: (id: ID, status: ReviewStatus) => void;
-  replyToReview: (id: ID, reply: string) => void;
   /**
    * Gone, not archived — the same position the applicant screen takes, and for
    * the same law. A review is somebody else's words about their own household;
@@ -4384,13 +4383,6 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      replyToReview: (id, ownerReply) =>
-        set((s) => ({
-          data: {
-            ...s.data,
-            reviews: s.data.reviews.map((r) => (r.id === id ? { ...r, ownerReply } : r)),
-          },
-        })),
 
       deleteReview: (id, now) => {
         const review = get().data.reviews.find((r) => r.id === id);

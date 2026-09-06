@@ -2713,7 +2713,6 @@ function baseData(now: Date): DataSet {
       text: 'Every window inside and out, frames included, and not a streak in the low sun. On the minute, both times.',
       status: 'published',
       submittedAt: iso(days(now, -6)),
-      ownerReply: 'Thank you, Ms Ferrari — until next time.',
       publishConsent: true,
     },
     {
@@ -2735,8 +2734,6 @@ function baseData(now: Date): DataSet {
       text: 'The office clean has run reliably for months. Ms Kovač in particular thinks ahead — she tells us what needs reordering before it runs out.',
       status: 'hidden',
       submittedAt: iso(days(now, -11)),
-      ownerReply:
-        'Thank you, Ms Bachmann. We will pass that on, and we will come back to you about the supplies directly.',
       publishConsent: true,
     },
     {
@@ -6601,7 +6598,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       text: 'Very thorough, and everything we agreed was exactly right.',
       status: 'published',
       submittedAt: iso(days(now, -5)),
-      ownerReply: 'Thank you, Ms Keller — until next time.',
       publishConsent: true,
     },
     {
@@ -6622,8 +6618,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       text: 'Nobody turned up and we were charged anyway.',
       status: 'rejected',
       submittedAt: iso(days(now, -3)),
-      ownerReply:
-        'The appointment was confirmed, nobody was there for 20 minutes, and that is documented with a photo and a timestamp. The fee is set out in §8 of our terms.',
       publishConsent: true,
     },
     {
@@ -6640,7 +6634,6 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       text: 'End-of-tenancy clean, spotless, keys handed back the same day. The agency found nothing to object to.',
       status: 'hidden',
       submittedAt: iso(days(now, -44)),
-      ownerReply: 'Thank you very much, Ms Marchand — all the best.',
       publishConsent: true,
     },
   ];
@@ -6991,7 +6984,6 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           text: 'The final clean passed the handover first time. Exactly what was promised.',
           status: 'published',
           submittedAt: iso(days(now, -3)),
-          ownerReply: 'Thank you, Mr Steiner — and all the best in the new flat.',
           publishConsent: true,
         },
         {
@@ -7029,8 +7021,6 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
           text: 'The cleaning itself was fine. The rest was a farce — the managing agent had never passed the appointment on, and the neighbour on the third floor would not let anyone use the lift.',
           status: 'rejected',
           submittedAt: iso(days(now, -5)),
-          ownerReply:
-            'Thank you for telling us, Mr Schoch. We have taken the point about the managing agent: from now on the confirmation goes to you in writing as well.',
           publishConsent: true,
         },
         {

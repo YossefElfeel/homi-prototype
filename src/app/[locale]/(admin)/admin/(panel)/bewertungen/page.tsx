@@ -15,7 +15,7 @@ import {
   useDismissLabel,
 } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Field, Select, Textarea } from '@/components/ui/field';
+import { Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -98,7 +98,6 @@ export default function AdminReviewsPage() {
   const reviews = useStore((s) => s.data.reviews);
   const customers = useStore((s) => s.data.customers);
   const setReviewStatus = useStore((s) => s.setReviewStatus);
-  const replyToReview = useStore((s) => s.replyToReview);
   const deleteReview = useStore((s) => s.deleteReview);
   const restoreReview = useStore((s) => s.restoreReview);
   const eraseReview = useStore((s) => s.eraseReview);
@@ -107,8 +106,6 @@ export default function AdminReviewsPage() {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('unpublished');
   const [state, setState] = useState<StateFilter>('all');
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [openReplies, setOpenReplies] = useState<Record<string, boolean>>({});
   const deleting = useConfirmTarget<Review>();
   const erasing = useConfirmTarget<Review>();
 
@@ -135,7 +132,7 @@ export default function AdminReviewsPage() {
          * reply is in here too, because the other half of that call is "what
          * did we already write back".
          */
-        return [r.text, r.ownerReply, customer?.firstName, customer?.lastName]
+        return [r.text, customer?.firstName, customer?.lastName]
           .join(' ')
           .toLowerCase()
           .includes(q);
@@ -162,8 +159,6 @@ export default function AdminReviewsPage() {
   /* Was silent: the card re-rendered in a different group and that was the
      only feedback that anything had happened. */
   const setStatus = (review: Review, status: ReviewStatus) => {
-    const reply = drafts[review.id];
-    if (reply?.trim()) replyToReview(review.id, reply);
     setReviewStatus(review.id, status);
     toast.success(
       status === 'published'
@@ -216,7 +211,20 @@ export default function AdminReviewsPage() {
             reviews with withdrawn ones and, once there was a bin, with deleted
             ones too.
           */}
-          <div role="tablist" aria-label={t('title')} className="flex flex-wrap gap-1">
+          {/*
+            Underlined, not tinted pills.
+            The first cut used the settings screen's pill style and sat it
+            directly on top of the search bar, so three tinted buttons above a
+            row of filter controls read as more filters — which is exactly what
+            they are not. A bottom rule with the active tab sitting on it is the
+            oldest tab affordance there is, and it is the one that says «these
+            switch the list» rather than «these narrow it».
+          */}
+          <div
+            role="tablist"
+            aria-label={t('title')}
+            className="flex flex-wrap gap-1 border-b border-line"
+          >
             {TABS.map((id) => {
               const count = reviews.filter((r) =>
                 id === 'deleted'
@@ -251,14 +259,22 @@ export default function AdminReviewsPage() {
                     setState('all');
                   }}
                   className={cn(
-                    'flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-sm transition-colors',
+                    '-mb-px flex min-h-11 items-center gap-2 border-b-2 px-4 py-2 text-sm transition-colors',
                     tab === id
-                      ? 'bg-accent-subtle font-medium text-ink'
-                      : 'text-ink-secondary hover:bg-sunken',
+                      ? 'border-accent font-medium text-ink'
+                      : 'border-transparent text-ink-secondary hover:border-line-strong hover:text-ink',
                   )}
                 >
                   {t(`tab${id.charAt(0).toUpperCase()}${id.slice(1)}` as 'tabPublished')}
-                  <span data-numeric className="text-ink-tertiary">
+                  {/* The count in a chip, so the tab reads «Gelöscht · 1»
+                      rather than as two words that might both be labels. */}
+                  <span
+                    data-numeric
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-xs',
+                      tab === id ? 'bg-accent-subtle text-ink' : 'bg-sunken text-ink-tertiary',
+                    )}
+                  >
                     {count}
                   </span>
                 </button>
@@ -267,6 +283,7 @@ export default function AdminReviewsPage() {
           </div>
 
           <Toolbar
+            className="mt-6"
             search={{
               value: query,
               onChange: setQuery,
@@ -320,28 +337,11 @@ export default function AdminReviewsPage() {
             <ul className="space-y-3">
               {visible.map((review) => {
                 const critical = review.rating <= CRITICAL_AT;
-                /* The two states from which the next step is publishing. Both
-                   need the reply box for the same reason: a critical review
-                   cannot go up without an answer, and a hidden one that
-                   arrived there without a reply would otherwise show a
-                   permanently disabled button and no way to enable it. */
+                /* The two states from which the next step is publishing. A
+                   hidden review is one somebody has already read and taken
+                   down, so it goes back up rather than back into the queue. */
                 const beforePublic =
                   review.status === 'pending' || review.status === 'hidden';
-                const reply = drafts[review.id] ?? review.ownerReply ?? '';
-                /*
-                 * Closed unless there is a reason to open it.
-                 *
-                 * The editor is the tallest thing on a card by some way — a
-                 * label, a hint and three rows — and it was on every pending
-                 * card whether or not anybody meant to answer, so four reviews
-                 * filled a screen and a half. It opens on the click, and it
-                 * opens by itself for the one case where the card cannot be
-                 * cleared without it: a critical review with no answer yet,
-                 * whose publish button is disabled until there is one.
-                 */
-                const replyOpen =
-                  openReplies[review.id] ??
-                  (beforePublic && critical && !review.ownerReply);
 
                 return (
                   <li key={review.id} className="surface-card p-5">
@@ -377,26 +377,11 @@ export default function AdminReviewsPage() {
                       {review.text}
                     </p>
 
-                    {/* The reply the office already wrote, wherever the review
-                        has come to rest. It used to be shown only under a
-                        published one, so taking a review down hid the answer
-                        as well — including from the person deciding whether to
-                        put it back. */}
-                    {!replyOpen && review.ownerReply ? (
-                      <div className="mt-3 border-l-2 border-rule ps-3">
-                        <p className="label-type text-ink-tertiary">{t('replyLabel')}</p>
-                        <p className="mt-1 text-sm text-ink-secondary">
-                          {review.ownerReply}
-                        </p>
-                      </div>
-                    ) : null}
-
                     {/* Was a hand-written copy of `Alert` — the component that
-                        exists so a warning is the same amber everywhere. Also
-                        on a hidden card now: a critical review can reach that
-                        state without a reply, and there its publish button is
-                        disabled with no visible reason unless this says what
-                        the missing thing is. */}
+                        exists so a warning is the same amber everywhere. It no
+                        longer explains a disabled button; it flags the review
+                        the owner has to deal with first, which is what §17.2
+                        asked for in the first place. */}
                     {critical && beforePublic && (
                       <Alert tone="warning" className="mt-3" title={t('negativeTitle')}>
                         {t('negativeBody')}
@@ -409,47 +394,24 @@ export default function AdminReviewsPage() {
                       </Alert>
                     )}
 
-                    {beforePublic && replyOpen && (
-                      <Field label={t('replyLabel')} hint={t('replyHint')} className="mt-4">
-                        {(props) => (
-                          <Textarea
-                            rows={2}
-                            value={reply}
-                            onChange={(e) =>
-                              setDrafts({ ...drafts, [review.id]: e.target.value })
-                            }
-                            {...props}
-                          />
-                        )}
-                      </Field>
-                    )}
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {beforePublic && (
                         <Button
                           size="sm"
                           onClick={() => setStatus(review, 'published')}
-                          /* Two gates, and they are different in kind: a
-                             critical review needs a reply first (owner's
-                             judgement), a review with no recorded consent
-                             cannot be published at all (§20.6). */
-                          disabled={!review.publishConsent || (critical && !reply.trim())}
+                          /* One gate now, and it is the one that is not a
+                             matter of judgement: §20.6 refuses a review with
+                             no recorded consent. The second gate used to be
+                             «a critical review needs an answer first», and it
+                             went with the reply box — see /open-questions
+                             §17.2d for what that costs. */
+                          disabled={!review.publishConsent}
                         >
                           {review.status === 'hidden' ? t('republish') : t('publish')}
                         </Button>
                       )}
 
-                      {beforePublic && !replyOpen && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            setOpenReplies({ ...openReplies, [review.id]: true })
-                          }
-                        >
-                          {review.ownerReply ? t('editReply') : t('replyAction')}
-                        </Button>
-                      )}
 
                       {/* Off the website, and still a released review. This was
                           «Zurückziehen» and it sent the card back to «Wartet

@@ -312,6 +312,14 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§17.2d',
+    question: 'How does the business answer a one-star review now?',
+    decision:
+      'OPEN, and it is a gap this wave opened deliberately. The moderation screen used to carry an owner reply, and that reply was load-bearing: a critical review (three stars or fewer) could not be published until one had been written, which is how the argument in §17.2 — an answered one-star does less damage than a deleted one — was enforced rather than merely stated. The reply is gone at the business’s request, and with it that gate: the only thing now standing between a critical review and the website is somebody reading it. The warning on the card stays and now says to ring the customer, which is what the office would do anyway and is very likely better than a public reply written in a text box. What nobody has decided is whether the *website* should show an answer at all. Three ways out. Reinstate the reply as a public field, which is what most review platforms do and what the removal just rejected. Keep it private — a note on the review that never renders — which preserves the record of «we dealt with this» without a public exchange. Or accept that the answer lives in a phone call and nowhere in the product, which is honest and leaves a visitor reading an unanswered one-star with no sign that anything happened. The seed still carries a critical review awaiting a decision, so whichever is chosen has a card to be tried on.',
+    screens: '78',
+    state: 'open',
+  },
+  {
     ref: '§17.2b',
     question: 'Does an add-on the owner adds herself reach the marketing site?',
     decision:

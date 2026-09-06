@@ -396,11 +396,9 @@ export const adminContentDe = {
     publish: 'Veröffentlichen',
     republish: 'Wieder veröffentlichen',
     reject: 'Nicht veröffentlichen',
-    replyLabel: 'Ihre Antwort',
-    replyHint: 'Erscheint unter der Bewertung.',
     negativeTitle: 'Kritische Bewertung',
     negativeBody:
-      'Diese Bewertung wird nicht automatisch veröffentlicht. Antworten Sie zuerst — eine beantwortete kritische Bewertung schadet weniger als eine gelöschte.',
+      'Diese Bewertung wird nicht automatisch veröffentlicht. Rufen Sie zuerst an — eine beantwortete kritische Bewertung schadet weniger als eine gelöschte, und das Gespräch findet nicht mehr hier statt.',
     emptyTitle: 'Noch keine Bewertungen',
     emptyBody:
       'Nach abgeschlossener Zahlung wird die Kundschaft um eine Bewertung gebeten. Bis dahin zeigt die Website das Versprechen statt Sterne.',
@@ -413,17 +411,8 @@ export const adminContentDe = {
        niemand gelesen hat. Sie war gelesen, freigegeben und beantwortet. */
     hide: 'Ausblenden',
     hiddenDone: 'Bewertung ist nicht mehr auf der Website.',
-    /* Das Antwortfeld ist das höchste Element auf einer Karte. Es öffnet sich
-       auf Klick — und von selbst nur dort, wo ohne Antwort nicht
-       veröffentlicht werden darf. */
-    replyAction: 'Antworten',
-    editReply: 'Antwort bearbeiten',
     published: 'Bewertung veröffentlicht.',
     rejected: 'Bewertung nicht veröffentlicht.',
-    /* Drei Tabs, weil «steht das auf der Website?» drei Antworten hat. Der
-       Status-Filter darunter beantwortet die feinere Frage innerhalb des
-       Tabs — beides in ein Bedienelement zu falten hiess, dass die grobe
-       Frage gar nicht mehr beantwortbar war. */
     tabPublished: 'Auf der Website',
     tabUnpublished: 'Nicht veröffentlicht',
     tabDeleted: 'Gelöscht',
@@ -451,7 +440,6 @@ export const adminContentDe = {
       'Das ist der Fall, für den §20.6 diesen Knopf verlangt: Die Person, die das geschrieben hat, hat ihre Einwilligung zurückgezogen. Text und Antwort werden gelöscht und lassen sich nicht wiederherstellen. Im Protokoll bleibt vermerkt, dass gelöscht wurde, nicht was drinstand.',
     eraseDone: 'Bewertung endgültig gelöscht.',
     deletedNote: 'Gelöscht am {date}',
-    replySaved: 'Antwort gespeichert.',
     noConsentTitle: 'Keine Einwilligung',
     noConsentBody:
       'Diese Kundin oder dieser Kunde hat der Veröffentlichung nicht zugestimmt. Die Bewertung bleibt intern — das ist keine Ermessensfrage (§20.6).',
