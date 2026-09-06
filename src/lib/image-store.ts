@@ -120,6 +120,26 @@ export async function putImage(file: File): Promise<StoredImage> {
   return stored;
 }
 
+/**
+ * Every picture this browser is holding, newest first.
+ *
+ * The picker needs it for two reasons that turn out to be the same one. An
+ * upload was only ever the *current* value, so choosing the same photograph
+ * for a second record meant uploading it a second time — and a file uploaded
+ * into a dialog somebody then cancelled stayed in IndexedDB with nothing
+ * pointing at it, invisible and unreclaimable. Listing them makes the first
+ * case work and turns the second from a leak into a picture you can pick.
+ *
+ * Ids carry their creation time, so sorting the keys sorts by age.
+ */
+export async function listImages(): Promise<string[]> {
+  const keys = await withStore<IDBValidKey[]>('readonly', (store) => store.getAllKeys());
+  return keys
+    .map(String)
+    .sort((a, b) => b.localeCompare(a))
+    .map(uploadKey);
+}
+
 export async function getImage(src: string): Promise<Blob | undefined> {
   if (!isUploaded(src)) return undefined;
   return withStore('readonly', (store) => store.get(src.slice(PREFIX.length)));

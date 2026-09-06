@@ -467,7 +467,7 @@ export const adminContentDe = {
     uploadFailed: 'Das Bild konnte nicht gespeichert werden. Versuchen Sie ein anderes.',
     notAnImage: 'Das ist keine Bilddatei.',
     fromThisDevice: 'Von diesem Gerät hochgeladen',
-    orFromProject: 'Oder eines aus dem Projekt',
+    orChoose: 'Oder eines der {n} vorhandenen Bilder',
     fromUrl: 'Stattdessen eine Adresse aus dem Netz einfügen',
     urlLabel: 'Bildadresse',
     urlHint:
