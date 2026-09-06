@@ -12,6 +12,7 @@ import {
   FileText,
   History,
   Home,
+  Images,
   Inbox,
   KeyRound,
   LayoutDashboard,
@@ -92,6 +93,8 @@ const ICONS: Record<AdminPermission, LucideIcon> = {
   addons: Sparkles,
   coupons: Percent,
   reviews: Star,
+  /* Photographs, and the only row in the panel that is about pictures. */
+  gallery: Images,
   templates: Mail,
   applications: UserPlus,
   postings: Briefcase,

@@ -683,6 +683,14 @@ export const TRACKS: Track[] = [
       done('83', 'Änderungsprotokoll', 'Change log', '/admin/protokoll', ['empty']),
       done('84', 'Suche', 'Unified search', '/admin/suche', ['idle', 'empty']),
       done(
+        '85',
+        'Referenzen',
+        'Our work',
+        '/admin/referenzen',
+        ['released', 'awaiting release', 'photos that cannot pair'],
+        '§20.6 — `publishConsent` had exactly one writer before this, and it was the customer',
+      ),
+      done(
         '84',
         'Kontaktanfragen',
         'Contact enquiries',

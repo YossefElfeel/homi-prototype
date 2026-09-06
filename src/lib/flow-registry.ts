@@ -1370,6 +1370,28 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'gallery',
+    en: 'Putting a job in the gallery',
+    actors: ['contractor', 'owner', 'customer', 'visitor'],
+    entries: [
+      added('The crew photographs the job', '/einsatz/bkg_3/check', 'A before and an after on one booking — a context shot never pairs, and a gallery built from loose photos would put a picture of a damaged worktop on the marketing site'),
+      added('The pair waits for a decision', '/admin/referenzen', 'The «Ohne Freigabe» tab, which is where a job sits until somebody asks'),
+    ],
+    actions: [
+      added('Release it', '/admin/referenzen', 'Both halves at once — the pair is what the customer agreed to, and releasing one is a photograph published without permission'),
+      added('Withdraw it', '/admin/referenzen', 'Off the site at once; the pictures stay on the job'),
+      added('The customer withdraws consent', '/konto/anfragen/req_3', 'The other writer, and the one §20.6 is actually about'),
+    ],
+    exits: [
+      added('On /referenzen', '/referenzen', 'Filtered by the same rule the panel applies — `lib/gallery` is the one place that knows what a work is'),
+      added('Never shown', '/admin/referenzen', 'The «Kein Paar» tab says which of the two honest reasons applies'),
+      open(
+        'Consent is asserted, not recorded',
+        'The switch says written consent exists and the confirm says so out loud, but the app holds no document, no date and no signature — §20.6 wants the record. Where that lives is a question about how the business actually collects it: a tick on the job sheet the customer signs, a line in the contract, or a separate form',
+      ),
+    ],
+  },
+  {
     id: 'enquiry',
     en: 'Answering a contact enquiry',
     actors: ['visitor', 'owner'],
