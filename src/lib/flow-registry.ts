@@ -1534,7 +1534,8 @@ export const FLOWS: Flow[] = [
       added('Reorder within a group', '/admin/construction', 'Which ceiling leads the section is the whole of what a portfolio decides'),
       added('Write the caption', '/admin/construction', 'Per language, and it is what a screen reader is given — a missing one is flagged on the card'),
       added('Move it to another group', '/admin/construction', 'A picture filed under the wrong trade is the commonest thing to find and the hardest to fix in a file'),
-      added('Add one', '/admin/construction', 'From the files already in the project; there is no upload, and a file input that writes nowhere is a control that lies'),
+      added('Add one from this machine', '/admin/construction', 'A file from the computer somebody is sitting at, scaled to 1600 px and kept in IndexedDB — `localStorage` holds the rest of the store and one phone photograph would have taken the whole dataset with it'),
+      added('Or one already in the project', '/admin/construction', 'The twenty-two the prototype ships, and anything uploaded earlier — an upload is reusable rather than being spent on the record it was made for'),
       added('Rewrite a section heading', '/admin/construction', 'Three fields per language: the plain heading, and the two halves of the two-colour display heading — which words are red is a writing decision, not formatting'),
       added('Reorder the sections', '/admin/construction', 'The arrows set the order the page renders them in'),
       added('Add or remove a section', '/admin/construction', 'A section still holding pictures is refused with the count: deleting a heading is a labelling decision, deleting the work under it is not'),
@@ -1542,9 +1543,14 @@ export const FLOWS: Flow[] = [
     exits: [
       added('On the page', '/construction', 'The grid reads the record and falls back to the file before hydration, so the server still renders the real page rather than a gap that fills in'),
       added('Off the page', '/construction', 'A group whose pictures were all taken down renders nothing at all — an empty grid under a heading reads as a load that failed'),
+      added(
+        'A photograph that was never in the project',
+        '/admin/construction',
+        'The picker takes a file from the machine, shrinks it to 1600 px and keeps it in IndexedDB. What it cannot do is put it anywhere else: the pictures live in this browser, so another computer sees the seeded twenty-two and nothing that was added here',
+      ),
       open(
-        'A new photograph',
-        'The picker offers the files already under /public/construction and nothing else. A real portfolio needs an upload — storage, sizes, and who owns the picture of somebody else’s building — and that is a wave of its own',
+        'A picture that survives the browser',
+        'An upload is real and it is local. Storage that outlives one machine is the thing a server is for, and it brings the questions this prototype has no answer to — where the file lives, what it costs, and who owns the photograph of somebody else\u2019s building',
       ),
     ],
   },
@@ -1611,7 +1617,7 @@ export const FLOWS: Flow[] = [
     actions: [
       added('Write it in sections', '/admin/blog/wohnungsabgabe-checkliste', 'A heading and its paragraphs, so every block is separately translatable — and no markdown in front of the office'),
       added('Translate it', '/admin/blog/wohnungsabgabe-checkliste', 'A language counts as written only when the title, the lead and every heading are there; half a translation reads as a broken page rather than an untranslated one'),
-      added('Put a picture in it', '/admin/blog/wohnungsabgabe-checkliste', 'Chosen from the images already in the project — there is no upload, and a file input that writes nowhere is a control that lies'),
+      added('Put a picture in it', '/admin/blog/wohnungsabgabe-checkliste', 'From this machine, from the project, or from an address — the same picker the portfolio screens use'),
       added('Point it at a service', '/admin/blog/wohnungsabgabe-checkliste', 'Draws the box at the foot of the article that leads into the request flow — the commercial point of the whole section'),
     ],
     exits: [

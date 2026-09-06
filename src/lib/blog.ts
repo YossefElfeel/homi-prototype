@@ -155,11 +155,14 @@ export function emptyBlock(kind: BlogBlockKind): BlogBlock {
 /**
  * The pictures a post may use.
  *
- * A fixed list of what is already in `/public/img`, because there is no upload
- * in this prototype and a file input that writes nowhere is a control that
- * lies. Naming them here rather than reading the directory keeps the choice a
- * decision — the avatars and the logo are in that folder too, and neither
+ * The files the project ships, named here rather than read from the directory
+ * — a browser cannot list a folder, and naming them keeps the choice a
+ * decision: the avatars and the logo are in `/public/img` too, and neither
  * belongs in the middle of an article.
+ *
+ * Not the whole list the editor offers. `ImagePicker` adds whatever has been
+ * uploaded from the machine, which is where the pictures of real work come
+ * from.
  */
 export const BLOG_IMAGES: string[] = [
   '/img/hero.webp',

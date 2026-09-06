@@ -1850,8 +1850,9 @@ export interface ConstructionPhoto {
    *
    * It held a bare filename and the render sites built the path around it,
    * which was tidy while every picture was a file we shipped. It is not any
-   * more: the office can paste a link, and there is no upload here to make
-   * that unnecessary. A full `src` is the only shape that can say both.
+   * more: it may be a file uploaded from the office's own machine, kept in
+   * IndexedDB under an `idb:` key, or an address somewhere else entirely. A
+   * full `src` is the only shape that can say all three.
    */
   src: string;
   group: string;
@@ -2009,7 +2010,10 @@ export interface BlogBlock {
   text?: Partial<Record<Locale, string>>;
   /** `list` and `numbered` — one entry per bullet. */
   items?: Partial<Record<Locale, string[]>>;
-  /** `image`. A path into /public/img; there is no upload in this prototype. */
+  /**
+   * `image`. A path in the project, an `idb:` key for a file uploaded from the
+   * machine, or an address — whatever `ImagePicker` returned.
+   */
   image?: string;
   imageAlt?: Partial<Record<Locale, string>>;
   /** `heading` — h2 by default, h3 for a sub-point. Never h1: the title is. */

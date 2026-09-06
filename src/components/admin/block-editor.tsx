@@ -18,6 +18,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { cn } from '@/lib/cn';
 import { BLOG_BLOCK_KINDS, BLOG_IMAGES, applyMark, emptyBlock, listFor } from '@/lib/blog';
+import { ImagePicker } from '@/components/admin/image-picker';
 import type { BlogBlock, BlogBlockKind } from '@/mock/schema';
 
 /**
@@ -227,23 +228,17 @@ function BlockCard({
         )}
 
         {block.kind === 'image' && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t('fieldImage')} hint={t('fieldImageHint')}>
-              {(props) => (
-                <Select
-                  {...props}
-                  value={block.image ?? ''}
-                  onChange={(e) => onPatch({ image: e.target.value || undefined })}
-                >
-                  <option value="">{t('imageNone')}</option>
-                  {BLOG_IMAGES.map((src) => (
-                    <option key={src} value={src}>
-                      {src}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
+          <div className="space-y-4">
+            {/* The same picker the portfolio screens use — a file from this
+                machine, one already in the project, or an address. A dropdown
+                of paths made choosing a picture into choose, look, go back. */}
+            <ImagePicker
+              label={t('fieldImage')}
+              hint={t('fieldImageHint')}
+              options={BLOG_IMAGES}
+              value={block.image ?? ''}
+              onChange={(src) => onPatch({ image: src || undefined })}
+            />
             {block.image && (
               <Field label={t('fieldImageAlt')} hint={t('fieldAltHint')}>
                 {(props) => (

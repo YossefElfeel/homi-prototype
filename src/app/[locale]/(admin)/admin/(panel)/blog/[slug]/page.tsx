@@ -16,6 +16,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { cn } from '@/lib/cn';
 import { BlockEditor } from '@/components/admin/block-editor';
 import { BLOG_IMAGES, isPublished, missingLocales } from '@/lib/blog';
+import { ImagePicker } from '@/components/admin/image-picker';
 import { isOffered } from '@/lib/service-catalogue';
 import { useHydrated, useStore } from '@/mock/store';
 
@@ -211,25 +212,18 @@ export default function EditPostPage({ params }: { params: Promise<{ slug: strin
         <Card className="mt-5">
           <CardHeader title={t('coverTitle')} />
           <CardBody className="space-y-5">
-            {/* A menu of what is already in /public/img, not a file input.
-                There is no upload in this prototype, and a control that takes
-                a file and writes nowhere is worse than no control. */}
-            <Field label={t('fieldCover')} hint={t('fieldCoverHint')}>
-              {(props) => (
-                <Select
-                  {...props}
-                  value={post.cover ?? ''}
-                  onChange={(e) => updatePost(post.id, { cover: e.target.value || undefined })}
-                >
-                  <option value="">{t('imageNone')}</option>
-                  {BLOG_IMAGES.map((src) => (
-                    <option key={src} value={src}>
-                      {src}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
+            {/* The same picker the portfolio screens use — a file from this
+                machine, one already in the project, or an address. It was a
+                menu of paths here for one wave longer than it should have
+                been: the upload shipped next door and this editor was left
+                behind, still claiming in its own comment that none existed. */}
+            <ImagePicker
+              label={t('fieldCover')}
+              hint={t('fieldCoverHint')}
+              options={BLOG_IMAGES}
+              value={post.cover ?? ''}
+              onChange={(src) => updatePost(post.id, { cover: src || undefined })}
+            />
             {post.cover && (
               <Field label={t('fieldCoverAlt')} hint={t('fieldAltHint')}>
                 {(props) => (

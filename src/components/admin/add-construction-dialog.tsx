@@ -24,9 +24,11 @@ import { useStore } from '@/mock/store';
  *
  * Read from the seeded portfolio rather than from the directory, because a
  * browser cannot list a folder — and hard-coding a second list of filenames
- * would be a list to keep in step with the first. It is the same honest limit
- * as the blog's image picker: there is no upload in this prototype, and a file
- * input that writes nowhere is a control that lies.
+ * would be a list to keep in step with the first.
+ *
+ * These are only the files the project *ships*. The picker adds what this
+ * browser has been given since — see `image-store` — so the list somebody
+ * chooses from is longer than this one from the first upload onwards.
  */
 const AVAILABLE = WORK_PHOTOS.map((p) => p.slug);
 
