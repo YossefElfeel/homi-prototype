@@ -10,10 +10,11 @@ import { getTheme } from '@/lib/theme-server';
 import { buildScenario } from '@/mock/scenarios';
 import { SEED_SERVICES } from '@/mock/seed';
 import { isOffered } from '@/lib/service-catalogue';
-import { listFor, publishedPosts, readingMinutes, textFor } from '@/lib/blog';
+import { publishedPosts, readingMinutes, textFor } from '@/lib/blog';
 import { Button } from '@/components/ui/button';
 import { Section } from '@/components/signature/section-heading';
 import { CtaBand } from '@/components/signature/cta-band';
+import { ArticleBody } from '@/components/site/article-body';
 import { getFormatter } from '@/i18n/format-server';
 
 const DATA = buildScenario('demo', new Date());
@@ -49,9 +50,10 @@ export async function generateMetadata({
 /**
  * Screen R2 — one article.
  *
- * Sections rather than a body of markdown, so every heading and every
- * paragraph is a field somebody in the office can edit and translate. See
- * `BlogSection` for why that shape was chosen over a rich-text editor.
+ * Blocks rather than a body of markdown or one rich-text blob, so every
+ * heading, paragraph and list carries its own text per language. See
+ * `BlogBlock` for why that shape was chosen over a WYSIWYG surface, and
+ * `ArticleBody` for the one place that switches on the kind.
  *
  * The link at the foot is the point of the whole Ratgeber commercially: an
  * article about handing back a flat ends on the service that does it. It is
@@ -96,7 +98,7 @@ export default async function RatgeberPostPage({
               <ChevronRight className="size-3.5" aria-hidden />
               <li>
                 <Link
-                  href="/ratgeber"
+                  href="/blog"
                   className="inline-flex items-center py-1 transition-colors hover:text-ink"
                 >
                   {nav('blog')}
@@ -115,7 +117,7 @@ export default async function RatgeberPostPage({
         <article className="mx-auto max-w-[68ch]">
           <h1 className="display-type text-display-4">{textFor(post.title, locale)}</h1>
 
-          {/* Who wrote it and when, on one line. A Ratgeber whose articles are
+          {/* Who wrote it and when, on one line. A blog whose articles are
               unsigned and undated reads as filler — the byline is what makes
               «wir rufen wirklich an» a person's claim rather than a slogan. */}
           <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-secondary">
@@ -151,25 +153,7 @@ export default async function RatgeberPostPage({
             />
           )}
 
-          {post.sections.map((section) => (
-            <section key={section.id} className="mt-12">
-              <h2 className="subhead-type text-2xl">{textFor(section.heading, locale)}</h2>
-              {listFor(section.paragraphs, locale).map((paragraph, i) => (
-                <p key={i} className="mt-4 text-ink-secondary">
-                  {paragraph}
-                </p>
-              ))}
-              {section.image && (
-                <Image
-                  src={section.image}
-                  alt={textFor(section.imageAlt, locale)}
-                  width={1360}
-                  height={850}
-                  className="mt-6 w-full rounded-[var(--radius-lg)] object-cover"
-                />
-              )}
-            </section>
-          ))}
+          <ArticleBody blocks={post.blocks} locale={locale} />
 
           {service && (
             <aside className="mt-14 rounded-[var(--radius-lg)] bg-sunken p-6 sm:p-8">
@@ -202,7 +186,7 @@ export default async function RatgeberPostPage({
             {more.map((other) => (
               <li key={other.id} className="surface-card">
                 <Link
-                  href={`/ratgeber/${other.slug}`}
+                  href={`/blog/${other.slug}`}
                   className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
                 >
                   <span data-numeric className="text-sm text-ink-tertiary">

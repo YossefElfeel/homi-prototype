@@ -24,7 +24,7 @@ export const adminEn: typeof adminDe = {
       workforce: 'Workforce',
       analytics: 'Analytics',
       catalogue: 'Services',
-      blog: 'Guides',
+      blog: 'Blog',
       addons: 'Add-ons',
       coupons: 'Coupons',
       reviews: 'Reviews',

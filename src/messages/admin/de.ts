@@ -29,7 +29,7 @@ export const adminDe = {
       workforce: 'Arbeitszeit',
       analytics: 'Auswertung',
       catalogue: 'Leistungen',
-      blog: 'Ratgeber',
+      blog: 'Blog',
       addons: 'Zusatzleistungen',
       coupons: 'Gutscheine',
       reviews: 'Bewertungen',

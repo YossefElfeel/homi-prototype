@@ -352,12 +352,12 @@ Marco Brunner`;
 
    34: `DataSet` gained `posts` — the Ratgeber — and three seeded customers
    gained `archivedAt`. `merge` fills a *missing* collection, so a stale blob
-   would arrive with no articles at all and /ratgeber would render its empty
+   would arrive with no articles at all and /blog would render its empty
    state on a build that ships five. The archive is the same shape of problem
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 36;
+const SCHEMA_VERSION = 37;
 
 /**
  * §10 — the default payment term.
@@ -4640,7 +4640,7 @@ export const useStore = create<StoreState>()(
           authorId: 'tm_owner',
           status: 'draft',
           updatedAt: now.toISOString(),
-          sections: [],
+          blocks: [],
         };
         set((s) => ({ data: { ...s.data, posts: [post, ...s.data.posts] } }));
         get().logChange({
@@ -5302,7 +5302,7 @@ export const useStore = create<StoreState>()(
 );
 
 /**
- * `slug`, `slug-2`, `slug-3` — never a collision under /ratgeber.
+ * `slug`, `slug-2`, `slug-3` — never a collision under /blog.
  *
  * The catalogue's `uniqueSlug` takes services; this takes posts, and the two
  * namespaces are separate on purpose — an article about window cleaning and

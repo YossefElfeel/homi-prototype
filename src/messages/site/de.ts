@@ -381,17 +381,17 @@ export const siteDe = {
   },
 
   /*
-   * Der Ratgeber (§17.3).
+   * Der Blog (§17.3).
    *
-   * «Ratgeber» und nicht «Blog»: Leute suchen «Umzugsreinigung Checkliste»,
+   * «Blog» und nicht «Blog»: Leute suchen «Umzugsreinigung Checkliste»,
    * niemand sucht «Homivaro Blog». Der Name der Rubrik ist hier eine
    * SEO-Entscheidung und keine Geschmacksfrage.
    */
   blog: {
-    metaTitle: 'Ratgeber',
+    metaTitle: 'Blog',
     metaDescription:
       'Was wir am Telefon zwanzigmal die Woche beantworten — aufgeschrieben: Wohnungsabgabe, Schlüssel, Reinigungsrhythmus, Fenster.',
-    title: 'Ratgeber',
+    title: 'Blog',
     lead: 'Was wir am Telefon ohnehin erklären, hier zum Nachlesen. Ohne Verkaufsgespräch.',
     lines: [{ lead: 'Was wir am Telefon' }, { accent: 'sowieso erklären.' }],
     gridLines: [{ lead: 'Alle' }, { accent: 'Beiträge' }],

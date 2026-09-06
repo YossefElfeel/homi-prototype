@@ -111,7 +111,7 @@ export default function AdminRatgeberPage() {
 
   function create() {
     const { slug } = createPost(now);
-    router.push(`/admin/ratgeber/${slug}`);
+    router.push(`/admin/blog/${slug}`);
   }
 
   function confirmPending() {
@@ -140,7 +140,7 @@ export default function AdminRatgeberPage() {
       cell: (post) => (
         <span className="flex flex-col">
           <span className="font-medium">{nameOf(post)}</span>
-          <span className="font-mono text-xs text-ink-tertiary">/ratgeber/{post.slug}</span>
+          <span className="font-mono text-xs text-ink-tertiary">/blog/{post.slug}</span>
         </span>
       ),
     },
@@ -285,11 +285,11 @@ export default function AdminRatgeberPage() {
         openLabel={t('rowEdit')}
         rowActions={(post) => (
           <RowActions>
-            <RowAction href={`/admin/ratgeber/${post.slug}`} label={t('rowEdit')}>
+            <RowAction href={`/admin/blog/${post.slug}`} label={t('rowEdit')}>
               <ActionIcon.edit aria-hidden />
             </RowAction>
             {isPublished(post) && (
-              <RowAction external href={`/ratgeber/${post.slug}`} label={t('rowView')}>
+              <RowAction external href={`/blog/${post.slug}`} label={t('rowView')}>
                 <ActionIcon.customerView aria-hidden />
               </RowAction>
             )}
