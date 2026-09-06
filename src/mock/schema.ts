@@ -1713,6 +1713,83 @@ export interface Settings {
   messageTemplates: MessageTemplate[];
 }
 
+
+/* ---- the Ratgeber (§17.3) -------------------------------------------- */
+
+/**
+ * A post is either being written or it is on the website. Two states, and no
+ * third.
+ *
+ * The temptation is an `archived` beside them, mirroring the customer record.
+ * It would be a state nothing can usefully do: a post taken off the site is
+ * simply not published any more, and the difference between "never published"
+ * and "published once and withdrawn" is `publishedAt`, which is a date rather
+ * than a status. A third badge colour for a distinction already carried by a
+ * field is the exact shape of lie `status-registry.ts` exists to prevent.
+ */
+export type BlogStatus = 'draft' | 'published';
+
+/**
+ * One block of an article — a heading, its paragraphs, and optionally a
+ * picture.
+ *
+ * Sections rather than one body of markdown, and the reason is who writes
+ * them. Markdown puts syntax in front of the office, and a mistyped heading or
+ * a broken list is invisible until the page is built — on a statically
+ * rendered site that means invisible until the next deploy. A section is also
+ * the unit that gets *translated*: German and English can differ in how many
+ * paragraphs a point takes, and they cannot differ in how many sections the
+ * article has, which is the constraint that keeps the two versions the same
+ * article.
+ *
+ * The image is a path into `/public/img`, picked from what is already there.
+ * There is no upload in this prototype and inventing a file input that writes
+ * nowhere would be a control that lies.
+ */
+export interface BlogSection {
+  id: string;
+  heading: Partial<Record<Locale, string>>;
+  paragraphs: Partial<Record<Locale, string[]>>;
+  image?: string;
+  imageAlt?: Partial<Record<Locale, string>>;
+}
+
+export interface BlogPost {
+  id: ID;
+  /** The URL segment under /ratgeber. Unique, derived from the German title. */
+  slug: string;
+  title: Partial<Record<Locale, string>>;
+  /** The line under the title on the index, and the meta description. */
+  excerpt: Partial<Record<Locale, string>>;
+  cover?: string;
+  coverAlt?: Partial<Record<Locale, string>>;
+  /**
+   * The team member whose name goes on it.
+   *
+   * An id rather than a typed name, so a post written by somebody who later
+   * leaves does not keep a name the users screen has retired — and so «wer hat
+   * das geschrieben» is answerable from the record rather than from a string.
+   */
+  authorId: ID;
+  status: BlogStatus;
+  /**
+   * When it first went out. Kept when a post is pulled back to draft, because
+   * "published in March, withdrawn in May" is a fact about the article and
+   * clearing it would make a re-published post look new.
+   */
+  publishedAt?: ISODate;
+  updatedAt: ISODate;
+  sections: BlogSection[];
+  /**
+   * The service this article is about, for the link at the foot of it.
+   *
+   * Optional: a piece about what to ask a cleaning company before hiring one
+   * is not about a product. Where it is set, the post carries a way into the
+   * request flow, which is the whole commercial point of a Ratgeber.
+   */
+  serviceSlug?: string;
+}
+
 /* ---- website content (§17.2a) ---------------------------------------- */
 
 /**

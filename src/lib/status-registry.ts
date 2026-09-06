@@ -27,6 +27,7 @@ export type StatusEntity =
   | 'service'
   | 'addOn'
   | 'coupon'
+  | 'blogPost'
   | 'user';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
@@ -222,6 +223,16 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   addOn: {
     active: 'success',
     inactive: 'neutral',
+  },
+  /*
+   * The same two tones as a service, and on purpose: «Entwurf» is unfinished
+   * work in both places and «aufgeschaltet» is the thing customers can see. A
+   * reader who has learned the catalogue's badge has learned this one, which
+   * is the entire argument for a registry over a colour per screen.
+   */
+  blogPost: {
+    draft: 'warning',
+    published: 'success',
   },
   /*
    * §9.4. The coupon list drew its own badge — one ternary, `success` for

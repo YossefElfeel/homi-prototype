@@ -16,6 +16,11 @@ const NAV = [
   { href: '/preise', key: 'pricing' },
   { href: '/abos', key: 'packages' },
   { href: '/referenzen', key: 'gallery' },
+  /* Between the proof and the company. A Ratgeber is the third thing a
+     visitor reads after what it costs and whether the work is any good, and
+     filing it after «Kontakt» would put the one page written to be found by
+     search at the end of a bar nobody scrolls. */
+  { href: '/ratgeber', key: 'blog' },
   { href: '/ueber-uns', key: 'about' },
   { href: '/kontakt', key: 'contact' },
 ] as const;

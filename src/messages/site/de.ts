@@ -380,6 +380,34 @@ export const siteDe = {
       'Platzhalter. Die verbindlichen Angaben (Sitz, UID, Rechtsform, Handelsregister) müssen vor einem echten Launch eingesetzt werden.',
   },
 
+  /*
+   * Der Ratgeber (§17.3).
+   *
+   * «Ratgeber» und nicht «Blog»: Leute suchen «Umzugsreinigung Checkliste»,
+   * niemand sucht «Homivaro Blog». Der Name der Rubrik ist hier eine
+   * SEO-Entscheidung und keine Geschmacksfrage.
+   */
+  blog: {
+    metaTitle: 'Ratgeber',
+    metaDescription:
+      'Was wir am Telefon zwanzigmal die Woche beantworten — aufgeschrieben: Wohnungsabgabe, Schlüssel, Reinigungsrhythmus, Fenster.',
+    title: 'Ratgeber',
+    lead: 'Was wir am Telefon ohnehin erklären, hier zum Nachlesen. Ohne Verkaufsgespräch.',
+    lines: [{ lead: 'Was wir am Telefon' }, { accent: 'sowieso erklären.' }],
+    gridLines: [{ lead: 'Alle' }, { accent: 'Beiträge' }],
+    readMore: 'Weiterlesen',
+    readingTime: '{minutes} Min. Lesezeit',
+    byline: 'Von {name}',
+    moreTitle: 'Weitere Beiträge',
+    serviceTitle: 'Passende Leistung: {service}',
+    serviceCta: 'Offerte anfragen',
+    serviceRead: 'Leistung ansehen',
+    /* Der Zustand am ersten Tag, und er ist erreichbar: das Szenario
+       «Tag 1 — alles leer» sät keine Beiträge. */
+    emptyTitle: 'Noch keine Beiträge',
+    emptyBody:
+      'Hier entstehen Antworten auf die Fragen, die uns am häufigsten gestellt werden. Bis dahin: rufen Sie an, wir erklären es Ihnen direkt.',
+  },
   thanks: {
     meta: { title: 'Danke' },
     title: 'Danke — das ist bei uns angekommen.',

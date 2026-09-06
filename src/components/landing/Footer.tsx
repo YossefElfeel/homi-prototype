@@ -38,6 +38,7 @@ const COMPANY_ROUTES = [
   "/preise",
   "/abos",
   "/gebiete",
+  "/ratgeber",
   "/jobs",
   "/kontakt",
 ];

@@ -358,6 +358,25 @@ export const siteEn: typeof siteDe = {
       'Placeholder. The binding details (registered office, UID, legal form, commercial register) must be filled in before any real launch.',
   },
 
+  blog: {
+    metaTitle: 'Guides',
+    metaDescription:
+      'What we answer on the phone twenty times a week, written down: handing back a flat, keys, cleaning rhythm, windows.',
+    title: 'Guides',
+    lead: 'What we explain on the phone anyway, here to read. No sales pitch.',
+    lines: [{ lead: 'What we explain' }, { accent: 'on the phone anyway.' }],
+    gridLines: [{ lead: 'All' }, { accent: 'articles' }],
+    readMore: 'Read on',
+    readingTime: '{minutes} min read',
+    byline: 'By {name}',
+    moreTitle: 'More articles',
+    serviceTitle: 'The service for this: {service}',
+    serviceCta: 'Request a quote',
+    serviceRead: 'See the service',
+    emptyTitle: 'Nothing written yet',
+    emptyBody:
+      'This is where the answers to our most common questions will go. Until then: call us and we will explain it directly.',
+  },
   thanks: {
     meta: { title: 'Thank you' },
     title: 'Thank you — that reached us.',

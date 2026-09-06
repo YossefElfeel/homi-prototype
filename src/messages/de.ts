@@ -15,6 +15,7 @@ export const de = {
 
   nav: {
     home: 'Start',
+    blog: 'Ratgeber',
     language: 'Sprache',
     services: 'Leistungen',
     pricing: 'Preise',

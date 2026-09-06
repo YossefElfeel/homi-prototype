@@ -17,6 +17,7 @@ import type {
   ID,
   Offer,
   Payment,
+  BlogPost,
   CustomerStatus,
   PropertyKind,
   RequestStatus,
@@ -91,6 +92,17 @@ export interface DataSet {
   team: TeamMember[];
   postings: JobPosting[];
   applications: Application[];
+  /**
+   * The Ratgeber.
+   *
+   * In the dataset rather than beside `services` and `plans`, and the
+   * difference is what launch day looks like. A cleaning company cannot open
+   * without a price list, so the catalogue is configuration and survives a
+   * scenario switch. It can very easily open without having written anything —
+   * so articles accumulate the way reviews do, and `fresh` has none, which is
+   * what makes the Ratgeber's empty state a state somebody can actually reach.
+   */
+  posts: BlogPost[];
 }
 
 const EMPTY: DataSet = {
@@ -115,6 +127,7 @@ const EMPTY: DataSet = {
   team: [],
   postings: [],
   applications: [],
+  posts: [],
 };
 
 const iso = (d: Date) => d.toISOString();
@@ -2802,6 +2815,7 @@ function baseData(now: Date): DataSet {
       ...labourCosts(now, [...bookings, ...quoteBookings, ...accountBookings], books.expenses.length),
     ],
     reviews,
+    posts: blogPosts(now),
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for
        one-off jobs — which is exactly the pair the screen's TWINT-blocked
@@ -5328,6 +5342,319 @@ function accountHistory(
     openedAt: createdAt,
     respondedAt: iso(days(now, -(input.agedDays - 1))),
   };
+}
+
+/**
+ * The Ratgeber, as five articles.
+ *
+ * A blog fixture is easy to fake badly — five lorem headlines prove the list
+ * renders and nothing else. These are written the way the brief writes: the
+ * one about handing over a key exists because §-one names «who is coming into
+ * my home» as the market's biggest objection, and the move-out checklist is
+ * the article the business would actually be found by, because «Wohnungsabgabe
+ * Checkliste» is what people type into a search box at eleven at night three
+ * days before they move.
+ *
+ * Four published and one draft. The draft is not padding — it is the only way
+ * the admin list's second state, its filter and the «aufschalten» confirm are
+ * reachable without a reviewer having to write an article first.
+ */
+function blogPosts(now: Date): BlogPost[] {
+  const at = (daysAgo: number) => iso(days(now, -daysAgo));
+
+  return [
+    {
+      id: 'post_abgabe',
+      slug: 'wohnungsabgabe-checkliste',
+      title: {
+        de: 'Wohnungsabgabe: die Punkte, an denen es wirklich scheitert',
+        en: 'Handing back a flat: where it actually goes wrong',
+      },
+      excerpt: {
+        de: 'Die Verwaltung beanstandet selten den Boden. Sie beanstandet den Backofen, die Storen und den Kühlschrank — und zwar in dieser Reihenfolge.',
+        en: 'The agency rarely objects to the floor. It objects to the oven, the blinds and the fridge — in that order.',
+      },
+      cover: '/img/service-2.webp',
+      coverAlt: {
+        de: 'Leere Wohnung am Abgabetag, Fenster geputzt',
+        en: 'An empty flat on handover day, windows cleaned',
+      },
+      authorId: 'tm_owner',
+      status: 'published',
+      publishedAt: at(34),
+      updatedAt: at(34),
+      serviceSlug: 'umzugsreinigung',
+      sections: [
+        {
+          id: 'reihenfolge',
+          heading: {
+            de: 'Die Reihenfolge ist nicht egal',
+            en: 'The order matters',
+          },
+          paragraphs: {
+            de: [
+              'Eine Abnahme dauert zwanzig Minuten und läuft fast immer gleich ab: Küche, Bad, Fenster, Nebenräume. Wer in dieser Reihenfolge putzt, putzt in der Reihenfolge, in der kontrolliert wird — und merkt rechtzeitig, wenn der Backofen länger braucht als gedacht.',
+              'Der häufigste Fehler ist, mit den Böden anzufangen. Sie sind das Sichtbarste und das Letzte, was gemacht werden sollte: jeder weitere Handgriff im Raum bringt wieder Staub darauf.',
+            ],
+            en: [
+              'A handover takes twenty minutes and nearly always runs the same way: kitchen, bathroom, windows, storage. Clean in that order and you clean in the order it will be inspected — and you find out in time that the oven needs longer than you thought.',
+              'The commonest mistake is starting with the floors. They are the most visible thing and the last thing that should be done: every further job in the room puts dust back on them.',
+            ],
+          },
+        },
+        {
+          id: 'backofen',
+          heading: {
+            de: 'Der Backofen entscheidet die Abnahme',
+            en: 'The oven decides the handover',
+          },
+          paragraphs: {
+            de: [
+              'Eingebrannte Rückstände auf dem Blech und an der Türinnenseite sind der mit Abstand häufigste Grund für eine Nachreinigung. Sie lassen sich nicht wegwischen — sie brauchen Zeit zum Einweichen, und die hat man am Abgabetag nicht mehr.',
+              'Wer selbst putzt: zwei Tage vorher einweichen lassen, nicht zwei Stunden. Wer uns bucht: der Backofen ist bei der Umzugsreinigung immer dabei, inklusive Blech, Rost und Dampfabzugsfilter.',
+            ],
+            en: [
+              'Burnt-on residue on the tray and the inside of the door is by far the commonest reason for a re-clean. It cannot be wiped off — it needs time to soak, and on handover day there is none left.',
+              'If you are cleaning it yourself: start soaking two days before, not two hours. If you book us: the oven is always part of a move-out clean, including the tray, the shelf and the extractor filter.',
+            ],
+          },
+          image: '/img/service-1.webp',
+          imageAlt: {
+            de: 'Küche nach der Reinigung, Geräte offen zur Kontrolle',
+            en: 'A kitchen after cleaning, appliances open for inspection',
+          },
+        },
+        {
+          id: 'leer',
+          heading: {
+            de: 'Leer heisst leer',
+            en: 'Empty means empty',
+          },
+          paragraphs: {
+            de: [
+              'Eine Umzugsreinigung in einer halb geräumten Wohnung ist keine Umzugsreinigung. Hinter dem Schrank, der noch steht, wird nicht geputzt — und genau dort schaut die Verwaltung hin.',
+              'Deshalb gilt unsere Abnahmegarantie nur, wenn die Wohnung bei unserem Einsatz leer ist und zwischen Reinigung und Abnahme leer bleibt. Das ist keine Formalität: es ist die einzige Voraussetzung, unter der wir für das Ergebnis geradestehen können.',
+            ],
+            en: [
+              'A move-out clean in a half-emptied flat is not a move-out clean. Nobody cleans behind the wardrobe that is still standing there — and that is exactly where the agency looks.',
+              'So our handover guarantee applies only if the flat is empty when we work and stays empty between the clean and the inspection. That is not a formality: it is the one condition under which we can stand behind the result.',
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'post_schluessel',
+      slug: 'schluessel-abgeben',
+      title: {
+        de: 'Den Schlüssel abgeben, ohne ein ungutes Gefühl',
+        en: 'Handing over a key without an uneasy feeling',
+      },
+      excerpt: {
+        de: 'Die häufigste Frage am Telefon ist nicht der Preis. Sie lautet: wer kommt zu mir nach Hause, und was passiert mit meinem Schlüssel?',
+        en: 'The commonest question on the phone is not the price. It is: who is coming into my home, and what happens to my key?',
+      },
+      cover: '/img/hero.webp',
+      coverAlt: {
+        de: 'Schlüssel wird an der Wohnungstür übergeben',
+        en: 'A key changing hands at a flat door',
+      },
+      authorId: 'tm_owner',
+      status: 'published',
+      publishedAt: at(58),
+      updatedAt: at(52),
+      sections: [
+        {
+          id: 'wer',
+          heading: { de: 'Immer dieselbe Person', en: 'The same person every time' },
+          paragraphs: {
+            de: [
+              'Wir vermitteln niemanden weiter. Bei Ihnen arbeitet dieselbe Person, und wenn sie einmal ausfällt, sagen wir Ihnen, wer stattdessen kommt — vorher, nicht an der Tür.',
+              'Jede Person im Team hat eine gültige Arbeitsbewilligung, und wir rufen zwei frühere Auftraggeber an, bevor jemand allein zu einer Kundin fährt. Nicht als Formalität — wir rufen wirklich an.',
+            ],
+            en: [
+              'We do not pass anybody on. The same person works at your home, and if they are ever off we tell you who is coming instead — beforehand, not at the door.',
+              'Everybody on the team holds a valid work permit, and we call two former employers before anyone drives to a customer alone. Not as a formality — we actually call.',
+            ],
+          },
+        },
+        {
+          id: 'protokoll',
+          heading: { de: 'Der Schlüssel wird protokolliert', en: 'The key is logged' },
+          paragraphs: {
+            de: [
+              'Wenn Sie uns einen Schlüssel hinterlegen, wird die Übergabe mit Datum, Person und Ort erfasst — und die Rückgabe genauso. Sie sehen beides in Ihrem Konto.',
+              'Ein- und Austrittszeit werden bei jedem Einsatz festgehalten, auch wenn Sie nicht zu Hause sind. Sie können also nachlesen, wie lange wir da waren, ohne jemanden fragen zu müssen.',
+            ],
+            en: [
+              'If you leave us a key, the handover is recorded with the date, the person and the place — and so is the return. You can see both in your account.',
+              'Arrival and departure are logged on every job, including the ones you are not home for. So you can read how long we were there without having to ask anybody.',
+            ],
+          },
+        },
+        {
+          id: 'alternativen',
+          heading: { de: 'Und wenn Sie das nicht wollen', en: 'And if you would rather not' },
+          paragraphs: {
+            de: [
+              'Ein Schlüsselkasten am Eingang ist die häufigste Lösung: der Code liegt bei uns verschlüsselt und ist nur am Einsatztag sichtbar. Oder Sie sind da — auch das ist eine ganz normale Wahl, und sie kostet nichts extra.',
+            ],
+            en: [
+              'A key box by the entrance is the commonest arrangement: the code is held encrypted and is only visible on the day of the job. Or you are simply there — that is a perfectly normal choice too, and it costs nothing extra.',
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'post_rhythmus',
+      slug: 'wie-oft-reinigen',
+      title: {
+        de: 'Wie oft muss eigentlich geputzt werden?',
+        en: 'How often does a home actually need cleaning?',
+      },
+      excerpt: {
+        de: 'Die ehrliche Antwort hängt an drei Dingen — und an keinem davon, das Ihnen jemand am Telefon verkaufen möchte.',
+        en: 'The honest answer depends on three things — none of which is what somebody wants to sell you on the phone.',
+      },
+      cover: '/img/service-1.webp',
+      coverAlt: {
+        de: 'Wohnzimmer nach der wöchentlichen Reinigung',
+        en: 'A living room after the weekly clean',
+      },
+      authorId: 'tm_marta',
+      status: 'published',
+      publishedAt: at(88),
+      updatedAt: at(88),
+      serviceSlug: 'unterhaltsreinigung',
+      sections: [
+        {
+          id: 'faktoren',
+          heading: { de: 'Drei Dinge, sonst nichts', en: 'Three things, and nothing else' },
+          paragraphs: {
+            de: [
+              'Wie viele Menschen im Haushalt leben, ob Tiere dabei sind, und wie viel Fläche auf diese Menschen kommt. Alles andere — Bodenbelag, Stockwerk, Alter der Küche — verändert den Aufwand pro Einsatz, nicht den Rhythmus.',
+              'Für zwei bis drei Personen ohne Tiere ist alle zwei Wochen in den allermeisten Fällen richtig. Wöchentlich lohnt sich ab vier Personen, bei Hunden oder Katzen, oder wenn im Haushalt jemand von zu Hause aus arbeitet.',
+            ],
+            en: [
+              'How many people live there, whether there are animals, and how much floor area those people have between them. Everything else — flooring, storey, the age of the kitchen — changes the effort per visit, not the rhythm.',
+              'For two or three people without animals, every two weeks is right in the great majority of cases. Weekly starts to earn its place from four people, with dogs or cats, or when somebody in the household works from home.',
+            ],
+          },
+        },
+        {
+          id: 'ehrlich',
+          heading: { de: 'Nach dem ersten Einsatz sagen wir es Ihnen', en: 'We will tell you after the first visit' },
+          paragraphs: {
+            de: [
+              'Wir sehen nach zwei Stunden, ob der gewählte Rhythmus stimmt. Wenn er zu eng ist, sagen wir das — ein Abo, das öfter kommt als nötig, hält kein Jahr, und wir hätten lieber die Kundin behalten als den Termin.',
+            ],
+            en: [
+              'Two hours in, we can see whether the rhythm you picked is right. If it is too tight we say so — a plan that comes more often than it needs to does not last a year, and we would rather keep the customer than the appointment.',
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'post_fenster',
+      slug: 'fenster-ohne-streifen',
+      title: {
+        de: 'Warum Fenster im Gegenlicht streifig werden',
+        en: 'Why windows streak in low sun',
+      },
+      excerpt: {
+        de: 'Nicht das Mittel ist schuld und auch nicht das Tuch. Es ist die Reihenfolge und die Tageszeit.',
+        en: 'It is not the product and it is not the cloth. It is the order of work and the time of day.',
+      },
+      authorId: 'tm_yusuf',
+      status: 'published',
+      publishedAt: at(120),
+      updatedAt: at(120),
+      serviceSlug: 'fensterreinigung',
+      sections: [
+        {
+          id: 'sonne',
+          heading: { de: 'Nie in der Sonne', en: 'Never in direct sun' },
+          paragraphs: {
+            de: [
+              'Auf einer besonnten Scheibe trocknet das Wasser schneller, als man es abziehen kann. Was bleibt, ist genau das Muster, das man wegputzen wollte. Wir arbeiten deshalb an der Wetterseite immer dann, wenn sie im Schatten liegt — was in der Praxis heisst, dass wir bei einem Haus zweimal um das Gebäude gehen.',
+            ],
+            en: [
+              'On a sunlit pane the water dries faster than you can pull it off. What is left is exactly the pattern you were trying to remove. So we work each side of a building while it is in shade — which in practice means walking around the house twice.',
+            ],
+          },
+        },
+        {
+          id: 'rahmen',
+          heading: { de: 'Der Rahmen zuerst, sonst zweimal', en: 'Frames first, or you do it twice' },
+          paragraphs: {
+            de: [
+              'Im Rahmen und in der Dichtung sitzt der Schmutz, der beim Abziehen wieder auf das saubere Glas läuft. Wer das Glas zuerst macht, macht es zweimal.',
+              'Deshalb rechnen wir Fenster nach Stück und nicht nach Stunde: ein Fenster ist Glas, Rahmen und Sims, und das ist eine Einheit, die man zählen kann. Sie wissen den Preis, bevor wir kommen.',
+            ],
+            en: [
+              'The dirt that runs back onto clean glass sits in the frame and the seal. Do the glass first and you do it twice.',
+              'That is why we price windows by the unit rather than by the hour: a window is glass, frame and sill, and that is something you can count. You know the price before we arrive.',
+            ],
+          },
+        },
+      ],
+    },
+    {
+      /*
+       * The draft, and the reason it is here rather than a fifth published
+       * piece: without it nothing on /admin/inhalte/ratgeber can be seen in
+       * its unpublished state — not the badge, not the status filter, not the
+       * «aufschalten» confirm — unless a reviewer writes an article first.
+       */
+      id: 'post_montage',
+      slug: 'moebelmontage-vorbereiten',
+      title: {
+        de: 'Möbelmontage: was vorher schon dastehen sollte',
+        en: 'Furniture assembly: what should already be there',
+      },
+      excerpt: {
+        de: 'Zwanzig Minuten Vorbereitung sparen eine Stunde Montagezeit. Und die Stunde zahlen Sie.',
+        en: 'Twenty minutes of preparation saves an hour of assembly. And the hour is the one you pay for.',
+      },
+      cover: '/img/service-3.webp',
+      coverAlt: {
+        de: 'Verpackte Möbelteile in einem leeren Raum',
+        en: 'Packed furniture parts in an empty room',
+      },
+      authorId: 'tm_owner',
+      status: 'draft',
+      updatedAt: at(4),
+      serviceSlug: 'moebelmontage',
+      sections: [
+        {
+          id: 'auspacken',
+          heading: { de: 'Ausgepackt, nicht aufgestapelt', en: 'Unpacked, not stacked' },
+          paragraphs: {
+            de: [
+              'Die Teile sollten im Zimmer liegen, in dem das Möbel stehen wird — nicht im Flur und nicht übereinander. Ein Schrank, der zweimal getragen wird, kostet zweimal.',
+            ],
+            en: [
+              'The parts should be lying in the room the furniture is going to stand in — not in the hall, and not stacked. A wardrobe carried twice costs twice.',
+            ],
+          },
+        },
+        {
+          id: 'wand',
+          heading: { de: 'Sagen Sie uns, was für eine Wand es ist', en: 'Tell us what kind of wall it is' },
+          paragraphs: {
+            de: [
+              'Gipskarton, Backstein und Beton brauchen drei verschiedene Dübel. Wir haben alle drei dabei — aber in eine Fliesenwand bohren wir nur nach Absprache, weil eine gesprungene Fliese sich nicht rückgängig machen lässt.',
+            ],
+            en: [
+              'Plasterboard, brick and concrete need three different fixings. We carry all three — but we only drill into tile by prior agreement, because a cracked tile cannot be undone.',
+            ],
+          },
+        },
+      ],
+    },
+  ];
 }
 
 function withAllStates(data: DataSet, now: Date): DataSet {

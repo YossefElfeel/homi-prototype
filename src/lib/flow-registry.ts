@@ -1422,6 +1422,35 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'ratgeber',
+    en: 'Writing a guide',
+    actors: ['owner', 'visitor'],
+    entries: [
+      added('Write a new one', '/admin/inhalte/ratgeber', 'Created as a draft, always — «aufschalten» on an untitled post would put a blank card on the index'),
+      added('Pick up a draft', '/admin/inhalte/ratgeber', 'Drafts sort to the top: the list is a desk, not an archive'),
+      added('Read one', '/ratgeber', 'The section a visitor finds through search rather than through the menu'),
+    ],
+    actions: [
+      added('Write it in sections', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'A heading and its paragraphs, so every block is separately translatable — and no markdown in front of the office'),
+      added('Translate it', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'A language counts as written only when the title, the lead and every heading are there; half a translation reads as a broken page rather than an untranslated one'),
+      added('Put a picture in it', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'Chosen from the images already in the project — there is no upload, and a file input that writes nowhere is a control that lies'),
+      added('Point it at a service', '/admin/inhalte/ratgeber/wohnungsabgabe-checkliste', 'Draws the box at the foot of the article that leads into the request flow — the commercial point of the whole section'),
+    ],
+    exits: [
+      added('Published', '/ratgeber/wohnungsabgabe-checkliste', 'Into the index and the sitemap, at the next build'),
+      added('Withdrawn', '/admin/inhalte/ratgeber', '`publishedAt` is kept, so re-publishing gives you the same article rather than a new one'),
+      added('Deleted', '/admin/inhalte/ratgeber', 'For good, and deliberately with no archive: no invoice hangs off a piece of writing'),
+      open(
+        'A visitor sees it',
+        '/ratgeber is statically rendered like the rest of the marketing site, so an article published in the panel is on the website at the next build — the same boundary as §17.2b and §17.2c, said out loud in the publish confirm rather than implied',
+      ),
+      open(
+        'Somebody outside the office writes one',
+        'The «website» right covers the homepage, the legal pages and the Ratgeber together. A freelance writer who should be able to draft an article and nothing else has no shape in the matrix — that is a fourth permission, and whether the business wants one is a question about how it actually commissions writing',
+      ),
+    ],
+  },
+  {
     id: 'area',
     en: 'Changing the service area',
     actors: ['owner'],

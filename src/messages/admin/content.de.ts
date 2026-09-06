@@ -774,6 +774,7 @@ export const adminContentDe = {
         bau: 'Bau',
         careers: 'Jobs & Bewerbung',
         thanks: 'Danke-Seite',
+        blog: 'Ratgeber',
         legalFrame: 'Rechtliches — Rahmen',
       },
       flow: {
@@ -1017,6 +1018,104 @@ export const adminContentDe = {
       'Diese Wörter stehen nicht auf einer Seite, sondern überall: Knöpfe, Statusbezeichnungen, Fehlermeldungen. Ein Wort hier ändert jeden Bildschirm, der es verwendet.',
   },
 
+  /* Bildschirme R3 und R4 — der Ratgeber, aus dem Büro. */
+  blog: {
+    title: 'Ratgeber',
+    lead: 'Beiträge schreiben, übersetzen und aufschalten. Der Ratgeber ist die einzige Seite der Website, auf der etwas steht, das kein Preis ist.',
+    back: 'Zurück zu den Website-Texten',
+    backToList: 'Zurück zum Ratgeber',
+    createAction: 'Beitrag anlegen',
+    untitled: 'Ohne Titel',
+
+    search: 'Beitrag suchen',
+    searchPlaceholder: 'Titel, Einleitung oder Adresse',
+    filterStatus: 'Status',
+    filterAll: 'alle',
+    status: {
+      draft: 'Entwurf',
+      published: 'Aufgeschaltet',
+    },
+
+    colTitle: 'Beitrag',
+    colAuthor: 'Von',
+    colReading: 'Lesezeit',
+    colLanguages: 'Sprachen',
+    colDate: 'Datum',
+    colStatus: 'Status',
+    translationGap: '{n} Sprachen fehlen',
+
+    rowEdit: 'Bearbeiten',
+    rowView: 'Auf der Website ansehen',
+    rowPublish: 'Aufschalten',
+    rowWithdraw: 'Zurückziehen',
+    rowDelete: 'Löschen',
+
+    /* Der Titel nennt den Beitrag, nicht die Handlung — die steht schon auf
+       dem Knopf. Wer die Rückfrage liest, muss vor allem wissen, welcher der
+       Beiträge gemeint ist. */
+    publishTitle: '«{name}» aufschalten?',
+    publishBody:
+      'Der Beitrag erscheint im Ratgeber und in der Sitemap. Beides passiert beim nächsten Aufschalten der Website — nicht sofort.',
+    publishConfirm: 'Aufschalten',
+    publishDone: '«{name}» ist aufgeschaltet.',
+    withdrawTitle: '«{name}» zurückziehen?',
+    withdrawBody:
+      'Der Beitrag wird wieder zum Entwurf. Das Veröffentlichungsdatum bleibt stehen — wer ihn später wieder aufschaltet, bekommt keinen neuen Beitrag, sondern denselben.',
+    withdrawConfirm: 'Zurückziehen',
+    withdrawDone: '«{name}» ist wieder ein Entwurf.',
+    deleteTitle: '«{name}» löschen?',
+    deleteBody:
+      'Der Beitrag wird endgültig entfernt. Anders als bei einem Kunden gibt es hier kein Archiv: an einem Text hängt keine Rechnung, also gibt es nichts, was ihn überleben müsste.',
+    deleteConfirm: 'Löschen',
+    deleteDone: '«{name}» wurde gelöscht.',
+
+    emptyTitle: 'Noch keine Beiträge',
+    emptyBody:
+      'Der Ratgeber ist das günstigste Marketing, das eine Reinigungsfirma hat: die Fragen beantworten, die ohnehin zwanzigmal die Woche am Telefon gestellt werden.',
+    searchEmptyTitle: 'Kein Beitrag gefunden',
+    searchEmptyBody: 'Für «{query}» gibt es keinen Beitrag.',
+
+    /* ---- R4 ---- */
+    editorLead: 'Alles speichert beim Tippen. Aufgeschaltet wird in der Liste — das ist die eine Entscheidung, die kein Tastendruck treffen soll.',
+    localeTab: 'Sprache',
+    gapShort: 'fehlt',
+    basicsTitle: 'Der Beitrag',
+    fieldTitle: 'Titel',
+    fieldExcerpt: 'Einleitung',
+    fieldExcerptHint:
+      'Steht auf der Übersicht unter dem Titel und ist die Beschreibung für Suchmaschinen.',
+    fieldSlug: 'Adresse der Seite',
+    fieldSlugHint: 'Ergibt /ratgeber/{slug}. Gilt für alle Sprachen — vier URLs für einen Text teilen den Suchwert durch vier.',
+    fieldAuthor: 'Verfasst von',
+    fieldAuthorHint: 'Der Name steht unter dem Titel. Ein Beitrag ohne Namen liest sich wie Füllmaterial.',
+    fieldService: 'Passende Leistung',
+    fieldServiceHint: 'Setzt den Kasten am Ende des Beitrags, der zur Anfrage führt. Ohne Auswahl gibt es keinen.',
+    serviceNone: 'Keine',
+    coverTitle: 'Bild',
+    fieldCover: 'Titelbild',
+    fieldCoverHint: 'Aus den vorhandenen Bildern. Ein Upload gibt es in diesem Prototyp nicht.',
+    fieldCoverAlt: 'Bildbeschreibung',
+    fieldAltHint: 'Was auf dem Bild zu sehen ist — für alle, die es nicht sehen.',
+    imageNone: 'Kein Bild',
+    fieldImage: 'Bild im Abschnitt',
+    fieldImageAlt: 'Bildbeschreibung',
+    sectionsTitle: 'Abschnitte',
+    addSection: 'Abschnitt hinzufügen',
+    removeSection: 'Abschnitt entfernen',
+    moveUp: 'Nach oben',
+    moveDown: 'Nach unten',
+    sectionUntitled: 'Abschnitt {n}',
+    sectionsEmpty:
+      'Noch kein Abschnitt. Ein Beitrag besteht aus Abschnitten mit je einer Überschrift — so bleibt jeder Block einzeln übersetzbar.',
+    fieldHeading: 'Überschrift',
+    fieldParagraphs: 'Text',
+    fieldParagraphsHint: 'Eine Leerzeile trennt zwei Absätze.',
+
+    /* Der Weg vom Textbrett hierher. */
+    boardTitle: 'Ratgeber',
+    boardBody: '{n} Beiträge, davon {drafts} im Entwurf.',
+    boardAction: 'Beiträge verwalten',
+  },
   changelog: {
     title: 'Änderungsprotokoll',
     lead: 'Wer was wann geändert hat.',

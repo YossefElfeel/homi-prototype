@@ -69,6 +69,7 @@ const GROUP_LABEL: Record<ContentGroup, string> = {
  */
 export default function WebsiteContentPage() {
   const t = useTranslations('admin.website');
+  const blogT = useTranslations('admin.blog');
   const appT = useTranslations('app');
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
@@ -76,6 +77,7 @@ export default function WebsiteContentPage() {
 
   const services = useStore((s) => s.services);
   const content = useStore((s) => s.content);
+  const posts = useStore((s) => s.data.posts);
 
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
@@ -246,6 +248,29 @@ export default function WebsiteContentPage() {
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
         {t('staticNote')}
       </p>
+
+      {/*
+        The Ratgeber is the one part of the website that is *records* rather
+        than fields, so it cannot be a row in the table below — a table of
+        surfaces has nowhere to put "and there are nine of these, and you can
+        write a tenth". It gets a card instead, above the board, because
+        writing an article is the thing somebody comes to this screen to do
+        most often after fixing a sentence.
+      */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-sm)] border border-line-subtle p-5">
+        <div>
+          <h2 className="font-medium">{blogT('boardTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-secondary">
+            {blogT('boardBody', {
+              n: posts.length,
+              drafts: posts.filter((post) => post.status === 'draft').length,
+            })}
+          </p>
+        </div>
+        <Button asChild variant="secondary">
+          <Link href="/admin/inhalte/ratgeber">{blogT('boardAction')}</Link>
+        </Button>
+      </div>
 
       {/*
         The one warning on this screen that is about the product rather than
