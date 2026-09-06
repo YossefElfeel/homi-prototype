@@ -453,8 +453,15 @@ export const adminContentEn: typeof adminContentDe = {
     looseEmptyBody: 'Every photo belongs to a before/after pair.',
   },
   imagePicker: {
-    fromUrl: 'Image from the web',
-    fromProject: 'Images in the project',
+    fromDevice: 'Choose from your computer',
+    fromDeviceHint:
+      'Scaled to 1600 px on upload and kept in this browser — there is no server here that could hold it otherwise.',
+    uploading: 'Processing …',
+    uploadFailed: 'The picture could not be saved. Try another one.',
+    notAnImage: 'That is not an image file.',
+    fromThisDevice: 'Uploaded from this device',
+    orFromProject: 'Or one from the project',
+    fromUrl: 'Paste an address from the web instead',
     urlLabel: 'Image address',
     urlHint:
       'The full address, with https. Images from elsewhere are embedded as they are — without the size optimisation files in the project get.',

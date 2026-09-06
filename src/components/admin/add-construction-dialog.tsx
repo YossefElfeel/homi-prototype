@@ -48,6 +48,7 @@ export function AddConstructionDialog({
   const addPhoto = useStore((s) => s.addConstructionPhoto);
 
   const [src, setSrc] = useState('');
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const [alt, setAlt] = useState<Partial<Record<Locale, string>>>({});
 
   /* Only files nothing is using yet. Offering one twice would put the same
@@ -62,10 +63,11 @@ export function AddConstructionDialog({
 
   function submit() {
     if (!complete) return;
-    addPhoto({ src, group, alt }, now);
+    addPhoto({ src, group, alt, ...(size ?? {}) }, now);
     toast.success(t('addDone'));
     onOpenChange(false);
     setSrc('');
+    setSize(null);
     setAlt({});
   }
 
@@ -89,6 +91,9 @@ export function AddConstructionDialog({
               options={unused.map((u) => `/construction/${u}.jpg`)}
               value={src}
               onChange={setSrc}
+              /* An upload knows its own dimensions, so the grid gets the real
+                 shape rather than the square this used to assume. */
+              onUploaded={setSize}
             />
 
             {/* German is required and the rest are not — §20.6 makes it the
