@@ -140,14 +140,27 @@ export default function AdminGalleryPage() {
               {t('remove')}
             </Button>
           )}
-          {work.customerId && (
+          {/* Both ends of what a reference *is*. The card carried the customer
+              and not the job — and the job is the half that answers the
+              questions somebody actually opens this screen with: when was it,
+              who did it, how long did it take. A reference with no way back to
+              the work it shows is a picture with a name attached. */}
+          <span className="ms-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             <Link
-              href={`/admin/customers/${work.customerId}`}
-              className="ms-auto text-sm text-ink-accent hover:underline"
+              href={`/admin/bookings/${work.bookingId}`}
+              className="text-ink-accent hover:underline"
             >
-              {t('openCustomer')}
+              {t('openBooking')}
             </Link>
-          )}
+            {work.customerId && (
+              <Link
+                href={`/admin/customers/${work.customerId}`}
+                className="text-ink-accent hover:underline"
+              >
+                {t('openCustomer')}
+              </Link>
+            )}
+          </span>
         </div>
       </li>
     );

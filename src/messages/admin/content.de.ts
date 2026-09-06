@@ -424,6 +424,7 @@ export const adminContentDe = {
     release: 'Freigeben',
     withdraw: 'Zurückziehen',
     viewOnSite: 'Auf der Website ansehen',
+    openBooking: 'Einsatz öffnen',
     openCustomer: 'Kundendatensatz öffnen',
 
     releaseTitle: 'Auf die Website stellen?',

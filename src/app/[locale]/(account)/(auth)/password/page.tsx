@@ -19,9 +19,9 @@ import { Field, Input } from '@/components/ui/field';
 export default function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ von?: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
-  const { von } = use(searchParams);
+  const { from: von } = use(searchParams);
   // Reached from admin sign-in as well, which has no reset screen of its own.
   const backHref = von === 'admin' ? '/admin/sign-in' : '/sign-in';
   const t = useTranslations('account.reset');

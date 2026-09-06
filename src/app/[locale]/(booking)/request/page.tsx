@@ -20,10 +20,11 @@ export default async function BookingIndex({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ leistung?: string; abo?: string; plz?: string }>;
+  searchParams: Promise<{ service?: string; plan?: string; postcode?: string }>;
 }) {
   const { locale } = await params;
-  const { leistung, abo, plz } = await searchParams;
+  /* English URL keys, local names unchanged — see the step page. */
+  const { service: leistung, plan: abo, postcode: plz } = await searchParams;
 
   const query = new URLSearchParams();
   if (leistung) query.set('leistung', leistung);
