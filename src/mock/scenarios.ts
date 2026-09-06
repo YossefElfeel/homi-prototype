@@ -867,6 +867,53 @@ function baseData(now: Date): DataSet {
       ],
     },
     {
+      /*
+       * A finished job nobody photographed.
+       *
+       * Every other completed job in this scenario has a before and an after,
+       * which made «Referenz hinzufügen» impossible to reach: the dialog only
+       * offers finished jobs without a pair, so it opened on «every finished
+       * job already has one» and the whole add flow was unreachable without
+       * switching scenario. That is the same failure the empty archive and the
+       * empty review bin had.
+       *
+       * It is also the commonest real case. The crew photographs what it
+       * remembers to photograph, and a grundreinigung booked over the phone
+       * for a regular customer is exactly the one that gets done and written
+       * up with no pictures at all.
+       */
+      id: 'bkg_11',
+      reference: 'B-1059',
+      customerId: 'cus_m5',
+      propertyId: 'prp_m5',
+      serviceSlug: 'grundreinigung',
+      start: iso(at(pastOpenDay(now, -12), 8)),
+      duration: 300,
+      arrivalWindow: 60,
+      assigneeId: 'tm_marta',
+      status: 'completed',
+      photoIds: [],
+      checkInAt: iso(at(pastOpenDay(now, -12), 8, 5)),
+      checkOutAt: iso(at(pastOpenDay(now, -12), 13, 20)),
+      work: [
+        {
+          id: 'wrk_seed_5',
+          memberId: 'tm_marta',
+          minutes: 315,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -12), 13, 20)),
+        },
+      ],
+      history: [
+        { at: iso(days(now, -24)), kind: 'created', label: 'Booked' },
+        {
+          at: iso(at(pastOpenDay(now, -12), 13, 20)),
+          kind: 'checkOut',
+          label: 'Checked out · 5 h 15 worked',
+        },
+      ],
+    },
+    {
       id: 'bkg_10',
       reference: 'B-1055',
       customerId: 'cus_m7',

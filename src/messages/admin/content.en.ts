@@ -393,6 +393,29 @@ export const adminContentEn: typeof adminContentDe = {
     unknownCustomer: 'No customer linked',
     unknownService: 'No service',
 
+    addAction: 'Add a reference',
+    addTitle: 'Add a reference',
+    addBody:
+      'Photos otherwise come from the crew through the job screens. This adds a piece of work by hand — for pictures that arrived by mail or sit on somebody’s phone.',
+    addBooking: 'Which job is this from?',
+    addBookingHint:
+      'Only finished jobs without a reference. The job supplies the service and the date — without one it would be a stock photo.',
+    addBookingPlaceholder: 'Choose a job',
+    addNote: 'Note',
+    addNoteHint: 'Optional. Shown under the pair, internal only.',
+    addSameImage: 'Before and after cannot be the same picture.',
+    addConsentNote:
+      'Created as a draft and not shown on the website. Releasing it is a separate step with its own confirmation.',
+    addNoCandidates:
+      'Every finished job already has a reference. New jobs appear here once they are done.',
+    addDone: 'Reference created — not released yet.',
+
+    remove: 'Remove',
+    removeTitle: 'Remove this reference?',
+    removeBody:
+      'Both pictures are deleted. This only covers references created in the office — crew photos belong to the job record and stay.',
+    removeDone: 'Reference removed.',
+
     release: 'Release',
     withdraw: 'Withdraw',
     viewOnSite: 'View on the website',

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info, Plus } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -18,6 +18,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
 import { isReleased, pairWorks, unpairablePhotos, type Work } from '@/lib/gallery';
 import { useHydrated, useStore } from '@/mock/store';
+import { AddWorkDialog } from '@/components/admin/add-work-dialog';
 
 type Tab = 'released' | 'waiting' | 'unpairable';
 const TABS: Tab[] = ['released', 'waiting', 'unpairable'];
@@ -52,9 +53,12 @@ export default function AdminGalleryPage() {
   const customers = useStore((s) => s.data.customers);
   const services = useStore((s) => s.services);
   const setWorkReleased = useStore((s) => s.setWorkReleased);
+  const removeWork = useStore((s) => s.removeWork);
 
   const [tab, setTab] = useState<Tab>('released');
   const releasing = useConfirmTarget<Work>();
+  const removing = useConfirmTarget<Work>();
+  const [adding, setAdding] = useState(false);
 
   const works = useMemo(() => pairWorks(photos, bookings), [photos, bookings]);
   const loose = useMemo(() => unpairablePhotos(photos), [photos]);
@@ -128,6 +132,14 @@ export default function AdminGalleryPage() {
               </a>
             </Button>
           )}
+          {/* Only what the office added. A crew photograph is evidence hung
+              off a check-in, and removing it from a gallery screen would take
+              away the record of what the job looked like on arrival. */}
+          {work.before.source === 'owner' && (
+            <Button variant="ghost" size="sm" onClick={() => removing.ask(work)}>
+              {t('remove')}
+            </Button>
+          )}
           {work.customerId && (
             <Link
               href={`/admin/customers/${work.customerId}`}
@@ -143,7 +155,16 @@ export default function AdminGalleryPage() {
 
   return (
     <div>
-      <PageHeader title={t('title')} lead={t('lead')} />
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        actions={
+          <Button onClick={() => setAdding(true)}>
+            <Plus className="size-4" aria-hidden />
+            {t('addAction')}
+          </Button>
+        }
+      />
 
       {/* §20.6 is the whole frame for this screen, so it is stated once at the
           top rather than implied by a switch. */}
@@ -157,6 +178,7 @@ export default function AdminGalleryPage() {
           headingLevel={2}
           title={t('emptyTitle')}
           body={t('emptyBody')}
+          action={<Button onClick={() => setAdding(true)}>{t('addAction')}</Button>}
         />
       ) : (
         <>
@@ -257,6 +279,25 @@ export default function AdminGalleryPage() {
           </div>
         </>
       )}
+
+      <AddWorkDialog open={adding} onOpenChange={setAdding} />
+
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={t('removeTitle')}
+        body={t('removeBody')}
+        action={t('remove')}
+        dismiss={dismissLabel}
+        tone="danger"
+        onConfirm={() => {
+          const work = removing.target;
+          if (!work) return;
+          removing.dismiss();
+          removeWork(work.bookingId);
+          toast.success(t('removeDone'));
+        }}
+      />
 
       <ConfirmDialog
         open={releasing.open}
