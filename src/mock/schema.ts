@@ -1845,8 +1845,15 @@ export interface ConstructionSection {
 
 export interface ConstructionPhoto {
   id: ID;
-  /** The file under /public/construction, without the extension. */
-  slug: string;
+  /**
+   * Where the picture is — a path in this project, or a URL somewhere else.
+   *
+   * It held a bare filename and the render sites built the path around it,
+   * which was tidy while every picture was a file we shipped. It is not any
+   * more: the office can paste a link, and there is no upload here to make
+   * that unnecessary. A full `src` is the only shape that can say both.
+   */
+  src: string;
   group: string;
   /** Intrinsic size. Phone photographs, so they vary — see `content/bau.ts`. */
   width: number;

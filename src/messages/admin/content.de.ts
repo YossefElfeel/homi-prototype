@@ -458,6 +458,14 @@ export const adminContentDe = {
     looseEmptyBody: 'Jedes Foto gehört zu einem Vorher/Nachher-Paar.',
   },
   /* Bildschirm 86 — die Bau-Referenzen, aus dem Büro. */
+  /* Bildauswahl — dieselben zwei Hälften überall, wo ein Bild gewählt wird. */
+  imagePicker: {
+    fromUrl: 'Bild aus dem Netz',
+    fromProject: 'Bilder im Projekt',
+    urlLabel: 'Bildadresse',
+    urlHint:
+      'Vollständige Adresse, mit https. Bilder von aussen werden unverändert eingebunden — ohne die Grössenoptimierung, die Dateien im Projekt bekommen.',
+  },
   construction: {
     title: 'Bau — Referenzen',
     lead: 'Welche Bilder auf /construction stehen, in welcher Gruppe und in welcher Reihenfolge. Anders als bei den Kundenreferenzen hängt hier keine Einwilligung dran: das sind unsere eigenen Aufnahmen unserer eigenen Arbeiten.',
@@ -481,7 +489,11 @@ export const adminContentDe = {
     sectionDown: 'Abschnitt nach hinten',
 
     sectionNew: 'Neuer Abschnitt',
-    sectionNewHint: 'Der Titel auf Deutsch. Alles Weitere danach.',
+    sectionNewTitle: 'Neuen Abschnitt anlegen',
+    sectionNewBody:
+      'Ein Abschnitt ist eine Überschrift mit Bildern darunter. Auf /construction erscheint er, sobald das erste Bild drin steht.',
+    sectionNewHint: 'Auf Deutsch. Die grosse Überschrift und der Text kommen gleich danach.',
+    sectionDuplicate: 'Ein Abschnitt mit diesem Titel gibt es schon — zwei gleich benannte Reiter kann niemand auseinanderhalten.',
     sectionAdd: 'Abschnitt anlegen',
     sectionAddDone: 'Abschnitt angelegt — Überschriften stehen offen.',
 
@@ -507,7 +519,7 @@ export const adminContentDe = {
     addTitle: 'Bild hinzufügen',
     addBody: 'Kommt in die Gruppe «{group}», ans Ende.',
     addFile: 'Datei',
-    addFileHint: 'Nur Dateien, die noch nirgends verwendet werden. Ein Upload gibt es in diesem Prototyp nicht.',
+    addFileHint: 'Dateien, die noch nirgends verwendet werden — oder eine Adresse aus dem Netz. Ein Upload gibt es in diesem Prototyp nicht.',
     addFilePlaceholder: 'Datei wählen',
     addNoFiles: 'Alle vorhandenen Dateien sind bereits einer Gruppe zugeordnet.',
     addAlt: 'Bildtext',

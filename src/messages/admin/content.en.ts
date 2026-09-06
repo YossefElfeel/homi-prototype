@@ -452,6 +452,13 @@ export const adminContentEn: typeof adminContentDe = {
     looseEmptyTitle: 'Everything pairs up',
     looseEmptyBody: 'Every photo belongs to a before/after pair.',
   },
+  imagePicker: {
+    fromUrl: 'Image from the web',
+    fromProject: 'Images in the project',
+    urlLabel: 'Image address',
+    urlHint:
+      'The full address, with https. Images from elsewhere are embedded as they are — without the size optimisation files in the project get.',
+  },
   construction: {
     title: 'Construction — portfolio',
     lead: 'Which pictures stand on /construction, in which group and in which order. Unlike the customer gallery there is no consent attached here: these are our own photographs of our own work.',
@@ -473,7 +480,11 @@ export const adminContentEn: typeof adminContentDe = {
     sectionDown: 'Move section later',
 
     sectionNew: 'New section',
-    sectionNewHint: 'The German title. Everything else afterwards.',
+    sectionNewTitle: 'Create a section',
+    sectionNewBody:
+      'A section is a heading with pictures under it. It appears on /construction as soon as the first picture is in it.',
+    sectionNewHint: 'In German. The display heading and the paragraph come straight afterwards.',
+    sectionDuplicate: 'A section with this title already exists — two tabs with the same name cannot be told apart.',
     sectionAdd: 'Create section',
     sectionAddDone: 'Section created — its headings are open.',
 
@@ -497,7 +508,7 @@ export const adminContentEn: typeof adminContentDe = {
     addTitle: 'Add a picture',
     addBody: 'Goes into «{group}», at the end.',
     addFile: 'File',
-    addFileHint: 'Only files not used anywhere yet. There is no upload in this prototype.',
+    addFileHint: 'Files not used anywhere yet — or an address from the web. There is no upload in this prototype.',
     addFilePlaceholder: 'Choose a file',
     addNoFiles: 'Every available file is already assigned to a group.',
     addAlt: 'Caption',

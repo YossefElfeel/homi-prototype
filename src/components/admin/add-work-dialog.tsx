@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, Input, Select } from '@/components/ui/field';
 import { BLOG_IMAGES } from '@/lib/blog';
-import { cn } from '@/lib/cn';
+import { ImagePicker } from '@/components/admin/image-picker';
 import { useNow, useStore } from '@/mock/store';
 
 /**
@@ -147,40 +146,22 @@ export function AddWorkDialog({
               )}
             </Field>
 
-            {/* Two pickers with a live preview under each. Choosing a picture
-                from a list of paths and finding out what it was after saving
-                is how the wrong image ends up on the marketing site. */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              {(
-                [
-                  ['before', before, setBefore],
-                  ['after', after, setAfter],
-                ] as const
-              ).map(([half, value, set]) => (
-                <Field key={half} label={t(half)}>
-                  {(props) => (
-                    <div className="space-y-2">
-                      <Select {...props} value={value} onChange={(e) => set(e.target.value)}>
-                        {BLOG_IMAGES.map((src) => (
-                          <option key={src} value={src}>
-                            {src}
-                          </option>
-                        ))}
-                      </Select>
-                      <Image
-                        src={value}
-                        alt=""
-                        width={320}
-                        height={240}
-                        className={cn(
-                          'aspect-[4/3] w-full rounded-[var(--radius-sm)] object-cover',
-                          before === after && 'opacity-50',
-                        )}
-                      />
-                    </div>
-                  )}
-                </Field>
-              ))}
+            {/* Thumbnails, not paths. Choosing the right one of four from a
+                list of «/img/service-1.webp» meant choose, look, go back and
+                choose again — twice over for a pair. */}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <ImagePicker
+                label={t('before')}
+                options={BLOG_IMAGES}
+                value={before}
+                onChange={setBefore}
+              />
+              <ImagePicker
+                label={t('after')}
+                options={BLOG_IMAGES}
+                value={after}
+                onChange={setAfter}
+              />
             </div>
 
             {before === after && (

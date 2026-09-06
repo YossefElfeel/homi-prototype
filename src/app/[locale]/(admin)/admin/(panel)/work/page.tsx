@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
+import { Photo } from '@/components/ui/photo';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ExternalLink, Info, Plus } from 'lucide-react';
@@ -98,7 +98,7 @@ export default function AdminGalleryPage() {
         <div className="mt-4 grid grid-cols-2 gap-3">
           {(['before', 'after'] as const).map((half) => (
             <figure key={half} className="overflow-hidden rounded-[var(--radius-sm)] bg-sunken">
-              <Image
+              <Photo
                 src={work[half].src}
                 alt=""
                 width={480}
@@ -234,7 +234,7 @@ export default function AdminGalleryPage() {
                 <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {loose.map(({ photo, reason }) => (
                     <li key={photo.id} className="surface-card overflow-hidden">
-                      <Image
+                      <Photo
                         src={photo.src}
                         alt=""
                         width={480}

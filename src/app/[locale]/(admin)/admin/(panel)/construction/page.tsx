@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
+import { Photo } from '@/components/ui/photo';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/cn';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { ConstructionPhoto } from '@/mock/schema';
 import { AddConstructionDialog } from '@/components/admin/add-construction-dialog';
+import { AddSectionDialog } from '@/components/admin/add-section-dialog';
 
 /**
  * Screen 86 — the construction portfolio, from the office.
@@ -50,7 +51,6 @@ export default function AdminConstructionPage() {
   const sections = useStore((s) => s.data.constructionSections);
   const updateSection = useStore((s) => s.updateConstructionSection);
   const moveSection = useStore((s) => s.moveConstructionSection);
-  const addSection = useStore((s) => s.addConstructionSection);
   const removeSection = useStore((s) => s.removeConstructionSection);
   const setVisible = useStore((s) => s.setConstructionVisible);
   const updatePhoto = useStore((s) => s.updateConstructionPhoto);
@@ -59,7 +59,7 @@ export default function AdminConstructionPage() {
 
   const [group, setGroup] = useState<string>('');
   const [editingSection, setEditingSection] = useState(false);
-  const [newSection, setNewSection] = useState('');
+  const [addingSection, setAddingSection] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const removing = useConfirmTarget<ConstructionPhoto>();
@@ -110,6 +110,13 @@ export default function AdminConstructionPage() {
             </Button>
             <Button variant="secondary" onClick={() => setEditingSection((v) => !v)}>
               {t('sectionEdit')}
+            </Button>
+            {/* Beside the button that edits one, because they are the same
+                subject. It was a labelled text field sitting between the tabs
+                and the grid — a permanent form for something done a few times
+                a year, in the middle of the screen that is used every week. */}
+            <Button variant="secondary" onClick={() => setAddingSection(true)}>
+              {t('sectionNew')}
             </Button>
             <Button onClick={() => setAdding(true)}>
               <Plus className="size-4" aria-hidden />
@@ -175,34 +182,6 @@ export default function AdminConstructionPage() {
             )}
           </button>
         ))}
-      </div>
-
-      {/* Adding a section is a heading with no pictures in it, so the control
-          sits with the tabs rather than in the grid below — it makes a tab,
-          not a card. */}
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <Field label={t('sectionNew')} hint={t('sectionNewHint')} className="max-w-xs flex-1">
-          {(props) => (
-            <Input
-              {...props}
-              value={newSection}
-              onChange={(e) => setNewSection(e.target.value)}
-            />
-          )}
-        </Field>
-        <Button
-          variant="secondary"
-          disabled={!newSection.trim()}
-          onClick={() => {
-            const id = addSection(newSection.trim());
-            setNewSection('');
-            setGroup(id);
-            setEditingSection(true);
-            toast.success(t('sectionAddDone'));
-          }}
-        >
-          {t('sectionAdd')}
-        </Button>
       </div>
 
       {current && editingSection && (
@@ -345,8 +324,8 @@ export default function AdminConstructionPage() {
                 key={photo.id}
                 className={cn('surface-card overflow-hidden', !photo.visible && 'opacity-60')}
               >
-                <Image
-                  src={`/construction/${photo.slug}.jpg`}
+                <Photo
+                  src={photo.src}
                   alt=""
                   width={480}
                   height={360}
@@ -354,7 +333,7 @@ export default function AdminConstructionPage() {
                 />
 
                 <div className="p-4">
-                  <p className="font-mono text-xs text-ink-tertiary">{photo.slug}</p>
+                  <p className="truncate font-mono text-xs text-ink-tertiary">{photo.src}</p>
 
                   {/* The caption is what a screen reader is given, so it is
                       edited here rather than hidden behind a detail screen —
@@ -455,6 +434,17 @@ export default function AdminConstructionPage() {
           </ul>
         )}
       </div>
+
+      <AddSectionDialog
+        open={addingSection}
+        onOpenChange={setAddingSection}
+        onCreated={(id) => {
+          setGroup(id);
+          /* Straight into the editor: a section is a heading, and the one
+             just made has only the German title on it. */
+          setEditingSection(true);
+        }}
+      />
 
       <AddConstructionDialog
         open={adding}
