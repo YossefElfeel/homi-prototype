@@ -24,10 +24,7 @@ export const adminEn: typeof adminDe = {
       workforce: 'Workforce',
       analytics: 'Analytics',
       catalogue: 'Services',
-      /* Not «Content». The group above is already called that, and two rows
-         sharing the word do not say that one sets prices and the other writes
-         sentences. */
-      website: 'Website text',
+      blog: 'Guides',
       addons: 'Add-ons',
       coupons: 'Coupons',
       reviews: 'Reviews',

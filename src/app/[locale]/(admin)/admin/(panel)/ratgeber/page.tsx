@@ -43,11 +43,14 @@ type Pending = { kind: 'publish' | 'withdraw' | 'delete'; post: BlogPost } | nul
 /**
  * Screen R3 — the Ratgeber, from the office.
  *
- * It sits under /admin/inhalte rather than as its own sidebar row, and that is
- * a permission decision as much as a filing one: `permissionForPath` takes the
- * longest matching prefix, so everything below the content route inherits the
- * `website` right. Whoever may rewrite the homepage may write an article, and
- * nobody had to be given a second switch to do it.
+ * Its own sidebar row under «Inhalt», and its own right.
+ *
+ * For one wave it lived under a website-text editor and inherited that
+ * screen's permission. The editor is gone — the marketing copy is static and a
+ * developer's to change, because the pages are built at deploy time and an
+ * editor over them could never reach a visitor any sooner. What survived is
+ * the half that is a *record*: an article has an author, a status, a
+ * publication date and a life of its own.
  *
  * The list is the only place publishing happens. The editor next door
  * autosaves every keystroke, which is right for prose and would be wrong for
@@ -108,7 +111,7 @@ export default function AdminRatgeberPage() {
 
   function create() {
     const { slug } = createPost(now);
-    router.push(`/admin/inhalte/ratgeber/${slug}`);
+    router.push(`/admin/ratgeber/${slug}`);
   }
 
   function confirmPending() {
@@ -230,7 +233,6 @@ export default function AdminRatgeberPage() {
       <PageHeader
         title={t('title')}
         lead={t('lead')}
-        back={{ href: '/admin/inhalte', label: t('back') }}
         actions={
           <Button onClick={create}>
             <Plus className="size-4" aria-hidden />
@@ -283,7 +285,7 @@ export default function AdminRatgeberPage() {
         openLabel={t('rowEdit')}
         rowActions={(post) => (
           <RowActions>
-            <RowAction href={`/admin/inhalte/ratgeber/${post.slug}`} label={t('rowEdit')}>
+            <RowAction href={`/admin/ratgeber/${post.slug}`} label={t('rowEdit')}>
               <ActionIcon.edit aria-hidden />
             </RowAction>
             {isPublished(post) && (

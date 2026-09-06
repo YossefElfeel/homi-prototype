@@ -283,17 +283,17 @@ const ENTRIES: Entry[] = [
     ref: '§17.2a',
     question: 'What does a service the owner adds herself look like on the website?',
     decision:
-      'HALF ANSWERED, and the half that moved is the one the business had to pick. The long copy is now part of the record: /admin/inhalte gives every service in the catalogue — seeded or added, active or draft — its lead paragraph, its included list, its «was nicht dazugehört» block and its FAQ, editable per language, and `content/services.ts` is the default rather than the whole truth. That is the first of the two exits this entry named, chosen because the second one («an added service never gets a marketing page») is defensible for a call-out fee and wrong for «Teppichreinigung». What is still open is the route, not the copy: /leistungen/[slug] is pre-rendered from the seed, so a slug the owner invents has nowhere to put the text until the site is rebuilt — the same deploy boundary as §17.2b. The screen says so in its own lead rather than implying otherwise, and it warns by name about any service that is on sale with a blank lead paragraph, which is a page the site could not build even after a rebuild. The icon is unchanged and still falls back to a neutral glyph.',
-    screens: '2, 73, 73a, 74, W1, W2',
+      'OPEN, and the prototype ships the honest half. The catalogue can be added to, and a new service reaches the site with everything the seven seeded ones have except two things the code holds rather than the record: its icon and its long-form page copy. The icon falls back to a neutral glyph. The copy — the lead paragraph, the included list, the «what is not included» block, the FAQ — lives in `content/services.ts`, keyed by the seven slugs, which is why an added service is publishable but has no page of its own: /leistungen/[slug] renders only what is offered *and* seeded. An admin editor for that copy was built and then removed on purpose, which settles half the question: the marketing pages are statically rendered, so an editor over them could never put a word in front of a visitor before the next deploy, and it was a large screen delivering nothing a developer could not do faster in the file. What remains genuinely open is the other half — whether an added service should get a marketing page at all, which is defensible for a call-out fee and wrong for «Teppichreinigung». Until that is answered the seeded draft is the demonstration: it can be priced, activated, booked and billed, and it is not linked from the marketing site.',
+    screens: '2, 73, 73a, 74',
     state: 'open',
   },
   {
-    ref: '§17.2c',
-    question: 'Should the marketing site read the edited copy, or wait for the next deploy?',
+    ref: '§17.3',
+    question: 'Which parts of the website belong in the panel at all?',
     decision:
-      'DECIDED for now, and deliberately reversible. The panel writes every edit to the store immediately and the marketing pages go on rendering from `src/content` and `src/messages` until the site is rebuilt — so the request flow, the quote builder and the panel follow at once and the homepage does not. It is the same boundary §17.2b draws for add-ons, and it is stated in the first paragraph of the content screen rather than in a footnote, because a CMS that says nothing is taken for one that publishes. The export button exists for exactly this gap: the office writes, downloads a JSON keyed by the same registry keys, and a developer applies it. The alternative is real and costs more than it looks — every editable block becomes a client component reading the store, which moves ten marketing pages off static rendering for copy that changes a few times a year. `PlanCards` is the precedent that it works; whether it is worth it for the whole site is a decision about the site.',
-    screens: '1, 2, 3, 9, W1',
-    state: 'open',
+      'ANSWERED, by building the wrong version first and removing it. A content screen covering every string in `src/messages` and `src/content` — 36 places, some 4,700 blocks, filed by page and editable per language — shipped and was deleted a wave later. The reason it failed is not that it was badly built; it is that the marketing pages are rendered at deploy time, so nothing typed into it could reach a visitor sooner than a developer editing the file, and it asked the office to maintain a second copy of every sentence in the product for that. What stayed is the half that is a **record** rather than a string: the Ratgeber, where an article has an author, a status, a publication date and a life of its own, and the service area, where a municipality drives the coverage gate and the scheduler. The rule this leaves behind is worth stating, because the next request will sound the same: the panel manages records; prose that the site renders stays in files.',
+    screens: 'R3, R4, 80',
+    state: 'decided',
   },
   {
     ref: '§18a',

@@ -5604,7 +5604,7 @@ function blogPosts(now: Date): BlogPost[] {
     {
       /*
        * The draft, and the reason it is here rather than a fifth published
-       * piece: without it nothing on /admin/inhalte/ratgeber can be seen in
+       * piece: without it nothing on /admin/ratgeber can be seen in
        * its unpublished state — not the badge, not the status filter, not the
        * «aufschalten» confirm — unless a reviewer writes an article first.
        */

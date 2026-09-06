@@ -83,9 +83,8 @@ const ICONS: Record<AdminPermission, LucideIcon> = {
   catalogue: Tags,
   /* A pen, not a document. `Tags` above it is the catalogue and `FileText` is
      already the quote list — the row underneath «Leistungen» is the one where
-     you *write*, and the glyph is the only thing in the sidebar that says the
-     difference between setting a price and rewriting a page. */
-  website: PenLine,
+     you *write*. */
+  blog: PenLine,
   addons: Sparkles,
   coupons: Percent,
   reviews: Star,
