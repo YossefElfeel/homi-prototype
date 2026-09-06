@@ -6,7 +6,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { altFor, type WorkPhoto } from '@/content/bau';
+import { altFor, photosIn, type WorkPhoto } from '@/content/bau';
+import { useHydrated, useStore } from '@/mock/store';
 import type { Locale } from '@/i18n/routing';
 
 /**
@@ -24,7 +25,33 @@ import type { Locale } from '@/i18n/routing';
  * the work (a cove edge, a bevel, a joint) is small in the frame and lost at
  * grid size.
  */
-export function WorkGrid({ photos }: { photos: WorkPhoto[] }) {
+export function WorkGrid({ group }: { group: string }) {
+  /*
+   * The live portfolio, seed-first.
+   *
+   * The office decides which pictures lead and in what order (§22), so this
+   * reads the record rather than the file — the same way `Gallery` reads the
+   * consented photos next door. Before hydration it falls back to the file, so
+   * the server renders the real page instead of a gap that fills in: these are
+   * twenty-two images above the fold on the one page that is entirely
+   * photographs.
+   */
+  const hydrated = useHydrated();
+  const stored = useStore((s) => s.data.construction);
+
+  const photos: WorkPhoto[] = hydrated
+    ? stored
+        .filter((p) => p.group === group && p.visible)
+        .sort((a, b) => a.order - b.order)
+        .map((p) => ({
+          slug: p.slug,
+          group: p.group as WorkPhoto['group'],
+          width: p.width,
+          height: p.height,
+          alt: { de: p.alt.de ?? '', en: p.alt.en ?? '' },
+        }))
+    : photosIn(group as WorkPhoto['group']);
+
   const t = useTranslations('site.bau');
   const locale = useLocale() as Locale;
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -36,6 +63,11 @@ export function WorkGrid({ photos }: { photos: WorkPhoto[] }) {
   );
 
   const open = openIndex === null ? null : photos[openIndex];
+
+  /* A group whose pictures were all taken down renders nothing — the section
+     heading above it is the page's, and an empty grid under a heading reads as
+     a load that failed. */
+  if (photos.length === 0) return null;
 
   return (
     <>

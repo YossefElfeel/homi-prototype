@@ -683,6 +683,14 @@ export const TRACKS: Track[] = [
       done('83', 'Änderungsprotokoll', 'Change log', '/admin/changelog', ['empty']),
       done('84', 'Suche', 'Unified search', '/admin/search', ['idle', 'empty']),
       done(
+        '86',
+        'Bau — Referenzen',
+        'Construction — portfolio',
+        '/admin/construction',
+        ['four groups', 'a hidden picture', 'a group emptied', 'caption missing'],
+        'The portfolio was twenty-two rows in a file; which pictures lead and in what order is a decision the business makes',
+      ),
+      done(
         '85',
         'Referenzen',
         'Our work',

@@ -1556,6 +1556,14 @@ export const ADMIN_PERMISSIONS = [
    * a publisher.
    */
   'gallery',
+  /*
+   * The construction portfolio, and a separate right from `gallery` for the
+   * same reason the records are separate: one is customer work under a consent
+   * gate, the other is the company's own photographs of its own jobs. They are
+   * granted to different people — releasing a customer's kitchen is a legal
+   * decision, choosing which ceiling leads the trade page is a marketing one.
+   */
+  'construction',
   'templates',
   'applications',
   'postings',
@@ -1785,6 +1793,45 @@ export interface Settings {
 }
 
 
+
+/* ---- the construction portfolio (§22) --------------------------------- */
+
+/**
+ * One photograph on /construction.
+ *
+ * A record of its own, and **not** a `Photo`, which is the distinction
+ * `content/bau.ts` argued for before any of this was manageable: a `Photo` is
+ * customer work, joined to a booking and gated on §20.6 consent, and the whole
+ * subject of that gate is that a customer may switch a picture off. These are
+ * the company photographing its own jobs. Nobody's consent is involved, and
+ * folding them into `Photo` would put twenty-two rows into a gallery whose
+ * every control asks a question that does not apply to them.
+ *
+ * What *was* wrong is that the argument stopped at "so they stay in a file".
+ * Which twenty-two pictures a construction firm leads with, what order they
+ * come in and what each one is called are decisions the business makes and
+ * changes — and they were a developer's to make.
+ */
+export interface ConstructionPhoto {
+  id: ID;
+  /** The file under /public/construction, without the extension. */
+  slug: string;
+  group: string;
+  /** Intrinsic size. Phone photographs, so they vary — see `content/bau.ts`. */
+  width: number;
+  height: number;
+  alt: Partial<Record<Locale, string>>;
+  /**
+   * Off the page without being deleted.
+   *
+   * The commonest edit to a portfolio is not adding — it is taking down the
+   * one job the client would rather not see advertised, and putting it back
+   * six months later.
+   */
+  visible: boolean;
+  /** Position within its group. The page reads groups in order. */
+  order: number;
+}
 
 /* ---- what the contact form sends (§8) --------------------------------- */
 

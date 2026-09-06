@@ -35,6 +35,7 @@ export const adminDe = {
       coupons: 'Gutscheine',
       reviews: 'Bewertungen',
       gallery: 'Referenzen',
+      construction: 'Bau',
       templates: 'Vorlagen',
       applications: 'Bewerbungen',
       postings: 'Stellen',

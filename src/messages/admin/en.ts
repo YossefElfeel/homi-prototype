@@ -30,6 +30,7 @@ export const adminEn: typeof adminDe = {
       coupons: 'Coupons',
       reviews: 'Reviews',
       gallery: 'Our work',
+      construction: 'Construction',
       templates: 'Templates',
       applications: 'Applications',
       postings: 'Jobs',

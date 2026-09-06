@@ -19,6 +19,7 @@ import type {
   Payment,
   BlogBlock,
   BlogPost,
+  ConstructionPhoto,
   Enquiry,
   CustomerStatus,
   PropertyKind,
@@ -33,6 +34,7 @@ import type {
   Subscription,
   TeamMember,
 } from './schema';
+import { WORK_PHOTOS } from '@/content/bau';
 import { SERVICE_SLUGS } from './schema';
 import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
@@ -106,6 +108,14 @@ export interface DataSet {
    */
   posts: BlogPost[];
   /**
+   * The construction portfolio.
+   *
+   * Seeded from `content/bau.ts` rather than retyped, so the page keeps
+   * exactly the twenty-two pictures it shipped with and the file stays the one
+   * place their dimensions and original captions are written down.
+   */
+  construction: ConstructionPhoto[];
+  /**
    * What the contact form sent.
    *
    * In the dataset rather than beside the catalogue: an enquiry is something
@@ -138,6 +148,7 @@ const EMPTY: DataSet = {
   postings: [],
   applications: [],
   posts: [],
+  construction: [],
   enquiries: [],
 };
 
@@ -2915,6 +2926,16 @@ function baseData(now: Date): DataSet {
     ],
     reviews,
     posts: blogPosts(now),
+    construction: WORK_PHOTOS.map((photo, i) => ({
+      id: `con_${photo.slug}`,
+      slug: photo.slug,
+      group: photo.group,
+      width: photo.width,
+      height: photo.height,
+      alt: photo.alt,
+      visible: true,
+      order: i,
+    })),
     enquiries: enquiries(now),
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for

@@ -51,6 +51,7 @@ import type {
   ISODate,
   BlogPost,
   BlogStatus,
+  ConstructionPhoto,
   EnquiryStatus,
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
@@ -358,7 +359,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 40;
+const SCHEMA_VERSION = 41;
 
 /**
  * §10 — the default payment term.
@@ -1320,6 +1321,20 @@ interface StoreState {
     now: Date,
   ) => void;
   removeWork: (bookingId: ID) => void;
+
+  /* ---- the construction portfolio (§22) ----
+     Twenty-two photographs in a file. Which ones a construction firm leads
+     with, in what order, and what each is called are decisions the business
+     makes and changes — and they were a developer's to make. */
+  setConstructionVisible: (id: ID, visible: boolean) => void;
+  updateConstructionPhoto: (id: ID, patch: Partial<ConstructionPhoto>) => void;
+  /** Within its own group. The page reads each group in `order`. */
+  moveConstructionPhoto: (id: ID, direction: -1 | 1) => void;
+  addConstructionPhoto: (
+    input: { slug: string; group: string; alt: Partial<Record<Locale, string>> },
+    now: Date,
+  ) => void;
+  removeConstructionPhoto: (id: ID) => void;
 
   /* ---- contact enquiries (§8) ----
      The form validated six fields, showed a spinner and pushed to /thank-you —
@@ -4793,6 +4808,120 @@ export const useStore = create<StoreState>()(
           summary: released
             ? `Work released to the gallery (${bookingId})`
             : `Work withdrawn from the gallery (${bookingId})`,
+        });
+      },
+
+      setConstructionVisible: (id, visible) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            construction: s.data.construction.map((p) =>
+              p.id === id ? { ...p, visible } : p,
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: visible ? `Construction photo shown (${id})` : `Construction photo hidden (${id})`,
+        });
+      },
+
+      updateConstructionPhoto: (id, patch) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            construction: s.data.construction.map((p) =>
+              p.id === id ? { ...p, ...patch } : p,
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: `Construction photo edited (${id})`,
+          coalesce: true,
+        });
+      },
+
+      moveConstructionPhoto: (id, direction) => {
+        set((s) => {
+          const photo = s.data.construction.find((p) => p.id === id);
+          if (!photo) return {};
+
+          /* Reordered *within the group*, because that is the only order the
+             page reads — /construction renders one section per group. Sorting
+             the whole array would let a picture move to a position no screen
+             can show it in. */
+          const siblings = s.data.construction
+            .filter((p) => p.group === photo.group)
+            .sort((a, b) => a.order - b.order);
+          const index = siblings.findIndex((p) => p.id === id);
+          const target = index + direction;
+          if (target < 0 || target >= siblings.length) return {};
+
+          const moved = [...siblings];
+          const [taken] = moved.splice(index, 1);
+          if (!taken) return {};
+          moved.splice(target, 0, taken);
+
+          const positions = new Map(moved.map((p, i) => [p.id, i]));
+          return {
+            data: {
+              ...s.data,
+              construction: s.data.construction.map((p) =>
+                positions.has(p.id) ? { ...p, order: positions.get(p.id)! } : p,
+              ),
+            },
+          };
+        });
+      },
+
+      addConstructionPhoto: ({ slug, group, alt }, now) => {
+        set((s) => {
+          const last = s.data.construction
+            .filter((p) => p.group === group)
+            .reduce((max, p) => Math.max(max, p.order), -1);
+          return {
+            data: {
+              ...s.data,
+              construction: [
+                ...s.data.construction,
+                {
+                  id: `con_${now.getTime().toString(36)}`,
+                  slug,
+                  group,
+                  /* The file's own size is not knowable from here — these are
+                     phone photographs and the seeded ones vary from 720×540 to
+                     1600×1600. A square is the safest assumption for a picture
+                     nobody has measured, and the grid crops rather than
+                     stretches, so a wrong guess costs framing and never a
+                     distorted image. */
+                  width: 1200,
+                  height: 1200,
+                  alt,
+                  visible: true,
+                  order: last + 1,
+                },
+              ],
+            },
+          };
+        });
+        get().logChange({
+          entity: 'construction',
+          entityId: slug,
+          summary: `Construction photo added (${slug})`,
+        });
+      },
+
+      removeConstructionPhoto: (id) => {
+        set((s) => ({
+          data: { ...s.data, construction: s.data.construction.filter((p) => p.id !== id) },
+        }));
+        get().logChange({
+          entity: 'construction',
+          entityId: id,
+          summary: `Construction photo removed (${id})`,
         });
       },
 
