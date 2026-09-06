@@ -28,6 +28,7 @@ export type StatusEntity =
   | 'addOn'
   | 'coupon'
   | 'blogPost'
+  | 'enquiry'
   | 'user';
 
 const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
@@ -233,6 +234,17 @@ const TONES: Record<StatusEntity, Record<string, StatusTone>> = {
   blogPost: {
     draft: 'warning',
     published: 'success',
+  },
+  /*
+   * `new` is `progress` and not `warning`, and the difference matters on a
+   * board somebody opens twenty times a day: amber is «etwas stimmt nicht»,
+   * and an unanswered enquiry that arrived four minutes ago is not a problem —
+   * it is the normal state of a working inbox. It becomes one when it is old,
+   * and the list says so with the age rather than by recolouring the badge.
+   */
+  enquiry: {
+    new: 'progress',
+    answered: 'success',
   },
   /*
    * §9.4. The coupon list drew its own badge — one ternary, `success` for

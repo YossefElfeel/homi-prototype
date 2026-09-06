@@ -378,6 +378,7 @@ export const siteEn: typeof siteDe = {
       'This is where the answers to our most common questions will go. Until then: call us and we will explain it directly.',
   },
   thanks: {
+    reference: 'Your reference:',
     meta: { title: 'Thank you' },
     title: 'Thank you — that reached us.',
     lead: 'We will be in touch within 24 hours.',

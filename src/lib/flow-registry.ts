@@ -1370,6 +1370,35 @@ export const FLOWS: Flow[] = [
     ],
   },
   {
+    id: 'enquiry',
+    en: 'Answering a contact enquiry',
+    actors: ['visitor', 'owner'],
+    entries: [
+      added('Somebody fills in the form', '/kontakt', 'Six fields, one of them a consent tick that §20.6 requires before anything is stored'),
+      added('It lands in the inbox', '/admin/kontaktanfragen', 'Oldest first in the open tab — an inbox is a queue, and the one about to break the promise on /kontakt is the one that has waited longest'),
+    ],
+    actions: [
+      added('Read it', '/admin/kontaktanfragen', 'Cards, not a table: the message is the record, and a truncated cell would hide the only thing worth reading'),
+      added('Reply', '/admin/kontaktanfragen', 'By mail or phone, through the links on the card. The answer happens outside this app and an outbox that sends nothing would be worse than saying so'),
+      added('Mark it answered', '/admin/kontaktanfragen', 'Records who and when, so «wer hat da geantwortet?» has an answer'),
+      added('Turn it into a customer', '/admin/kunden/cus_1', 'The commercial exit. Not automatic — one of the five seeded enquiries is a supplier'),
+      added('Delete it', '/admin/kontaktanfragen', 'Into the bin, recoverable — the rule a review already follows'),
+    ],
+    exits: [
+      added('Answered', '/admin/kontaktanfragen', 'Off the open queue, with the name and date on the record'),
+      added('A customer record', '/admin/kunden/cus_1', 'The enquiry links to it and stops being something to answer'),
+      added('Binned', '/admin/kontaktanfragen', 'Restorable from the third tab; spam is the honest reason'),
+      open(
+        'The visitor hears back',
+        'Nothing in the app sends the reply — the office answers by mail or telephone, and marking the enquiry answered records that they did rather than doing it. An outbox is a wave of its own, and the templates screen already holds the texts it would use',
+      ),
+      open(
+        'The enquiry becomes a request',
+        'A lead that says «Umzugsreinigung Ende Monat» is one step from a quote, and the only exit today is a customer record somebody then has to take a request from by hand. Whether the inbox should open the request wizard pre-filled is a question about how the office actually works',
+      ),
+    ],
+  },
+  {
     id: 'blog',
     en: 'Writing a blog post',
     actors: ['owner', 'visitor'],

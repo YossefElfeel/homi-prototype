@@ -18,6 +18,7 @@ export const adminDe = {
       calendar: 'Kalender',
       customers: 'Kunden',
       messages: 'Nachrichten',
+      enquiries: 'Kontaktanfragen',
       properties: 'Objekte',
       keys: 'Schlüssel',
       subscriptions: 'Abos',

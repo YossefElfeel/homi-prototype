@@ -19,6 +19,7 @@ import type {
   Payment,
   BlogBlock,
   BlogPost,
+  Enquiry,
   CustomerStatus,
   PropertyKind,
   RequestStatus,
@@ -104,6 +105,14 @@ export interface DataSet {
    * what makes the Ratgeber's empty state a state somebody can actually reach.
    */
   posts: BlogPost[];
+  /**
+   * What the contact form sent.
+   *
+   * In the dataset rather than beside the catalogue: an enquiry is something
+   * that happened on a day, like a request or a review, and `fresh` has none
+   * because launch day has none.
+   */
+  enquiries: Enquiry[];
 }
 
 const EMPTY: DataSet = {
@@ -129,6 +138,7 @@ const EMPTY: DataSet = {
   postings: [],
   applications: [],
   posts: [],
+  enquiries: [],
 };
 
 const iso = (d: Date) => d.toISOString();
@@ -2835,6 +2845,7 @@ function baseData(now: Date): DataSet {
     ],
     reviews,
     posts: blogPosts(now),
+    enquiries: enquiries(now),
     /* Screen 45 used to fake these in component state. cus_2 is the demo
        account, so it carries the card the plan charges plus a TWINT for
        one-off jobs — which is exactly the pair the screen's TWINT-blocked
@@ -5378,6 +5389,100 @@ function accountHistory(
  * the admin list's second state, its filter and the «aufschalten» confirm are
  * reachable without a reviewer having to write an article first.
  */
+/**
+ * The contact inbox, seeded.
+ *
+ * Five, and each one is a case rather than a row: a lead worth converting, one
+ * already answered, one that is neither — a supplier — one that has aged past
+ * the 24 hours the site promises, and one in the bin. Without the last two the
+ * inbox never shows the state it exists to make visible, which is «das liegt
+ * seit vorgestern hier».
+ *
+ * `fresh` seeds none: launch day has no post.
+ */
+function enquiries(now: Date): Enquiry[] {
+  const at = (hoursAgo: number) => iso(new Date(now.getTime() - hoursAgo * 3_600_000));
+
+  return [
+    {
+      id: 'enq_1',
+      reference: `KA-${zonedParts(now).year}-0001`,
+      name: 'Barbara Lehmann',
+      email: 'b.lehmann@example.ch',
+      phone: '+41 79 884 21 07',
+      subject: 'Umzugsreinigung Ende Monat',
+      message:
+        'Guten Tag, wir geben unsere 4.5-Zimmer-Wohnung in Männedorf per Ende Monat ab. Die Abnahme ist am 29. um 14 Uhr. Ist das noch machbar, und was kostet das ungefähr? Freundliche Grüsse, B. Lehmann',
+      consent: true,
+      /* Two hours old and unanswered — inside the promised window, which is
+         the normal state of a working inbox rather than a problem. */
+      receivedAt: at(2),
+      status: 'new',
+    },
+    {
+      id: 'enq_2',
+      reference: `KA-${zonedParts(now).year}-0002`,
+      name: 'Tomas Achermann',
+      email: 'tomas.achermann@example.ch',
+      subject: 'Büroreinigung — Offerte',
+      message:
+        'Wir suchen für unser Büro in Stäfa (ca. 140 m², 8 Arbeitsplätze) eine wöchentliche Reinigung ab dem neuen Quartal. Können Sie eine Offerte schicken?',
+      consent: true,
+      /* Older than the 24 hours /kontakt promises. The list marks it, because
+         a promise nobody can see being broken is one nobody fixes. */
+      receivedAt: at(31),
+      status: 'new',
+    },
+    {
+      id: 'enq_3',
+      reference: `KA-${zonedParts(now).year}-0003`,
+      name: 'Sibylle Graf',
+      email: 'sibylle.graf@example.ch',
+      phone: '+41 76 233 65 19',
+      message:
+        'Kommen Sie auch nach Rüti? Ich habe gesehen, dass Sie acht Gemeinden anfahren, meine steht nicht dabei.',
+      consent: true,
+      receivedAt: at(52),
+      status: 'answered',
+      answeredBy: 'tm_owner',
+      answeredAt: at(50),
+    },
+    {
+      id: 'enq_4',
+      reference: `KA-${zonedParts(now).year}-0004`,
+      name: 'Hygiene Center Zürich AG',
+      email: 'verkauf@example.ch',
+      subject: 'Neue Konditionen 2026',
+      message:
+        'Sehr geehrte Damen und Herren, gerne stellen wir Ihnen unsere neuen Grossgebinde-Konditionen vor. Dürfen wir einen Termin vorschlagen?',
+      consent: true,
+      /* Not every message through the contact form is a customer. The «zu
+         Kunde machen» button on this one would create a supplier in the CRM,
+         which is why the action is a decision on the record rather than
+         something that happens on read. */
+      receivedAt: at(78),
+      status: 'answered',
+      answeredBy: 'tm_owner',
+      answeredAt: at(74),
+    },
+    {
+      id: 'enq_5',
+      reference: `KA-${zonedParts(now).year}-0005`,
+      name: 'crypto deals',
+      email: 'noreply@example.com',
+      subject: 'Increase your revenue 10x',
+      message: 'Dear owner, we can put your business on the first page of Google. Reply for details.',
+      consent: true,
+      receivedAt: at(96),
+      status: 'new',
+      /* In the bin, so the third tab has something in it — the same lesson as
+         the customer archive and the review bin. Spam is the honest reason an
+         enquiry gets deleted without ever being answered. */
+      deletedAt: at(95),
+    },
+  ];
+}
+
 function blogPosts(now: Date): BlogPost[] {
   const at = (daysAgo: number) => iso(days(now, -daysAgo));
 

@@ -13,6 +13,7 @@ export const adminEn: typeof adminDe = {
       calendar: 'Calendar',
       customers: 'Customers',
       messages: 'Messages',
+      enquiries: 'Contact enquiries',
       properties: 'Properties',
       keys: 'Keys',
       subscriptions: 'Plans',

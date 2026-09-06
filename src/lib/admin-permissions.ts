@@ -76,6 +76,7 @@ export const AREAS: PanelArea[] = [
 
   { permission: 'customers', group: 'customers', href: '/admin/kunden' },
   { permission: 'messages', group: 'customers', href: '/admin/nachrichten' },
+  { permission: 'enquiries', group: 'customers', href: '/admin/kontaktanfragen' },
   { permission: 'properties', group: 'customers', href: '/admin/objekte' },
   { permission: 'keys', group: 'customers', href: '/admin/schluessel' },
   { permission: 'subscriptions', group: 'customers', href: '/admin/abos' },
@@ -242,6 +243,7 @@ export const PRESETS: Record<PresetKey, AdminPermission[]> = {
      opened, so the screen says which two and why instead. */
   full: GRANTABLE_PERMISSIONS,
   operations: [
+    'enquiries',
     'requests',
     'offers',
     'bookings',

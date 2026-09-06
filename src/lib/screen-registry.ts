@@ -683,6 +683,14 @@ export const TRACKS: Track[] = [
       done('83', 'Änderungsprotokoll', 'Change log', '/admin/protokoll', ['empty']),
       done('84', 'Suche', 'Unified search', '/admin/suche', ['idle', 'empty']),
       done(
+        '84',
+        'Kontaktanfragen',
+        'Contact enquiries',
+        '/admin/kontaktanfragen',
+        ['open', 'answered', 'deleted', 'past the promised response time'],
+        'What /kontakt sends. Until this wave the form validated six fields and threw the message away',
+      ),
+      done(
         'R3',
         'Blog verwalten',
         'Manage the blog',
