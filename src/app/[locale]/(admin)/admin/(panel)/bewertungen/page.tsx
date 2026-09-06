@@ -23,7 +23,7 @@ import { Toolbar } from '@/components/ui/toolbar';
 import { CustomerLink } from '@/components/ui/record-link';
 import { ActionIcon } from '@/lib/action-icons';
 import { statesOf } from '@/lib/status-registry';
-import { useHydrated, useStore } from '@/mock/store';
+import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Review, ReviewStatus } from '@/mock/schema';
 import { cn } from '@/lib/cn';
 
@@ -31,6 +31,19 @@ import { cn } from '@/lib/cn';
 const CRITICAL_AT = 3;
 
 type StateFilter = 'all' | ReviewStatus;
+
+/**
+ * The three answers to "what is on the website?", which is the question this
+ * screen exists for.
+ *
+ * The status filter underneath still exists and still does something
+ * different: it separates «Wartet auf Freigabe» from «Zurückgezogen» *within*
+ * the unpublished tab. The tab is the coarse question the owner arrives with;
+ * the filter is the fine one they reach for once they are inside it.
+ */
+type Tab = 'published' | 'unpublished' | 'deleted';
+
+const TABS: Tab[] = ['published', 'unpublished', 'deleted'];
 
 function Stars({ rating, label }: { rating: number; label: string }) {
   return (
@@ -87,18 +100,28 @@ export default function AdminReviewsPage() {
   const setReviewStatus = useStore((s) => s.setReviewStatus);
   const replyToReview = useStore((s) => s.replyToReview);
   const deleteReview = useStore((s) => s.deleteReview);
+  const restoreReview = useStore((s) => s.restoreReview);
+  const eraseReview = useStore((s) => s.eraseReview);
+  const now = useNow();
 
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<Tab>('unpublished');
   const [state, setState] = useState<StateFilter>('all');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [openReplies, setOpenReplies] = useState<Record<string, boolean>>({});
   const deleting = useConfirmTarget<Review>();
+  const erasing = useConfirmTarget<Review>();
 
   const order = statesOf('review');
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return reviews
+      .filter((r) => {
+        if (tab === 'deleted') return Boolean(r.deletedAt);
+        if (r.deletedAt) return false;
+        return tab === 'published' ? r.status === 'published' : r.status !== 'published';
+      })
       .filter((r) => (state === 'all' ? true : r.status === state))
       .filter((r) => {
         if (!q) return true;
@@ -125,7 +148,7 @@ export default function AdminReviewsPage() {
         const byState = order.indexOf(a.status) - order.indexOf(b.status);
         return byState !== 0 ? byState : (a.submittedAt < b.submittedAt ? 1 : -1);
       });
-  }, [reviews, customers, state, query, order]);
+  }, [reviews, customers, tab, state, query, order]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -157,7 +180,7 @@ export default function AdminReviewsPage() {
     const review = deleting.target;
     if (!review) return;
     deleting.dismiss();
-    deleteReview(review.id);
+    deleteReview(review.id, now);
     toast.success(t('deleteDone', { name: customerName(review.customerId) }));
   }
 
@@ -183,6 +206,66 @@ export default function AdminReviewsPage() {
         />
       ) : (
         <>
+          {/*
+            Tabs, not a fourth value in the status filter.
+            «Ist das auf der Website?» is the question the owner opens this
+            screen with, and it has three answers. The status filter answers a
+            narrower one — whether an unpublished review is waiting for a
+            decision or was taken down after one — and folding both into one
+            control made the coarse question unanswerable: «alle» mixed live
+            reviews with withdrawn ones and, once there was a bin, with deleted
+            ones too.
+          */}
+          <div role="tablist" aria-label={t('title')} className="flex flex-wrap gap-1">
+            {TABS.map((id) => {
+              const count = reviews.filter((r) =>
+                id === 'deleted'
+                  ? Boolean(r.deletedAt)
+                  : !r.deletedAt &&
+                    (id === 'published' ? r.status === 'published' : r.status !== 'published'),
+              ).length;
+
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`reviews-tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="reviews-panel"
+                  tabIndex={tab === id ? 0 : -1}
+                  onKeyDown={(e) => {
+                    const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+                    if (delta === 0) return;
+                    e.preventDefault();
+                    const next = TABS[(TABS.indexOf(id) + delta + TABS.length) % TABS.length]!;
+                    setTab(next);
+                    setState('all');
+                    document.getElementById(`reviews-tab-${next}`)?.focus();
+                  }}
+                  onClick={() => {
+                    setTab(id);
+                    /* The status filter is scoped to the tab it was set in.
+                       Carrying «Zurückgezogen» into the published tab would
+                       leave an empty list under a tab that has rows in it. */
+                    setState('all');
+                  }}
+                  className={cn(
+                    'flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-sm transition-colors',
+                    tab === id
+                      ? 'bg-accent-subtle font-medium text-ink'
+                      : 'text-ink-secondary hover:bg-sunken',
+                  )}
+                >
+                  {t(`tab${id.charAt(0).toUpperCase()}${id.slice(1)}` as 'tabPublished')}
+                  <span data-numeric className="text-ink-tertiary">
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <Toolbar
             search={{
               value: query,
@@ -395,6 +478,40 @@ export default function AdminReviewsPage() {
                         </Button>
                       )}
 
+                      {/*
+                        A binned review carries these two and nothing else.
+                        Offering «Veröffentlichen» on a card in the bin would
+                        be two decisions in one click — take it out, and put it
+                        on the website — and the second is the one that needs
+                        somebody to have read it again.
+                      */}
+                      {review.deletedAt && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              restoreReview(review.id);
+                              toast.success(
+                                t('restoreDone', { name: customerName(review.customerId) }),
+                              );
+                            }}
+                          >
+                            <RotateCcw className="size-4" aria-hidden />
+                            {t('restoreFromBin')}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ms-auto"
+                            onClick={() => erasing.ask(review)}
+                          >
+                            <ActionIcon.delete className="size-4" aria-hidden />
+                            {t('erase')}
+                          </Button>
+                        </>
+                      )}
+
                       {/* This state had no control at all: a review refused by
                           a mis-click was refused for good. */}
                       {review.status === 'rejected' && (
@@ -412,15 +529,17 @@ export default function AdminReviewsPage() {
                           card. Deleting is the only action here that is not a
                           change of mind — see the dialog for why it is offered
                           at all. */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="ms-auto"
-                        onClick={() => deleting.ask(review)}
-                      >
-                        <ActionIcon.delete className="size-4" aria-hidden />
-                        {t('delete')}
-                      </Button>
+                      {!review.deletedAt && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ms-auto"
+                          onClick={() => deleting.ask(review)}
+                        >
+                          <ActionIcon.delete className="size-4" aria-hidden />
+                          {t('delete')}
+                        </Button>
+                      )}
                     </div>
                   </li>
                 );
@@ -429,6 +548,29 @@ export default function AdminReviewsPage() {
           )}
         </>
       )}
+
+      {/*
+        The one action on this screen with no undo, and the only one that
+        should have none: §20.6 obliges the office to remove a review when the
+        person who wrote it withdraws consent, and a bin it can be pulled back
+        out of does not answer that.
+      */}
+      <ConfirmDialog
+        open={erasing.open}
+        onOpenChange={(open) => !open && erasing.dismiss()}
+        title={t('eraseConfirmTitle')}
+        body={t('eraseConfirmBody')}
+        action={t('erase')}
+        dismiss={dismissLabel}
+        tone="danger"
+        onConfirm={() => {
+          const review = erasing.target;
+          if (!review) return;
+          erasing.dismiss();
+          eraseReview(review.id);
+          toast.success(t('eraseDone'));
+        }}
+      />
 
       <ConfirmDialog
         open={deleting.open}

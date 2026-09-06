@@ -357,7 +357,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 35;
+const SCHEMA_VERSION = 36;
 
 /**
  * §10 — the default payment term.
@@ -1161,7 +1161,25 @@ interface StoreState {
    * rather than out of localStorage by hand: the entry records that a review
    * was removed and by whom, and carries no word of what it said.
    */
-  deleteReview: (id: ID) => void;
+  /**
+   * Into the bin. Recoverable, and the review leaves the website at once.
+   *
+   * Named `deleteReview` still because it is what the «Löschen» button does
+   * and renaming it would only move the confusion. What changed is that it no
+   * longer destroys anything — see `Review.deletedAt`.
+   */
+  deleteReview: (id: ID, now: Date) => void;
+  restoreReview: (id: ID) => void;
+  /**
+   * Gone, for an erasure request under §20.6.
+   *
+   * The one action in the moderation screen with no undo, and the only one
+   * that should have none: the person who wrote the review has asked for it to
+   * stop existing, and a bin it can be pulled back out of does not answer
+   * that. The Protokoll keeps the rating and the fact, never the text —
+   * quoting it would keep the review in the app under a different heading.
+   */
+  eraseReview: (id: ID) => void;
 
   /** Screen 88 — the no-access report, including whether the wait was shown. */
   recordNoAccess: (
@@ -4374,12 +4392,27 @@ export const useStore = create<StoreState>()(
           },
         })),
 
-      deleteReview: (id) => {
+      deleteReview: (id, now) => {
         const review = get().data.reviews.find((r) => r.id === id);
         if (!review) return;
 
         set((s) => ({
-          data: { ...s.data, reviews: s.data.reviews.filter((r) => r.id !== id) },
+          data: {
+            ...s.data,
+            reviews: s.data.reviews.map((r) =>
+              r.id === id
+                ? {
+                    ...r,
+                    deletedAt: now.toISOString(),
+                    /* Off the website in the same write. A binned review that
+                       kept `published` would go on being rendered by the
+                       gallery — the bin has to mean gone *from the site*
+                       immediately, or the undo is the only thing it does. */
+                    status: r.status === 'published' ? 'hidden' : r.status,
+                  }
+                : r,
+            ),
+          },
         }));
         /* The rating and nothing else. A log entry quoting the text would keep
            the deleted review in the app under a different heading, which is
@@ -4397,6 +4430,44 @@ export const useStore = create<StoreState>()(
        * local state and never persisted, so the one piece of evidence behind a
        * charge was gone the moment the screen unmounted.
        */
+      restoreReview: (id) => {
+        const review = get().data.reviews.find((r) => r.id === id);
+        if (!review) return;
+        set((s) => ({
+          data: {
+            ...s.data,
+            reviews: s.data.reviews.map((r) =>
+              r.id === id ? { ...r, deletedAt: undefined } : r,
+            ),
+          },
+        }));
+        /* Back to where it was, not back to the queue. It returns as `hidden`
+           if it was published when it was binned — a review the owner has
+           already read must not reappear under «Wartet auf Freigabe», which is
+           the heading for ones nobody has looked at. */
+        get().logChange({
+          entity: 'review',
+          entityId: id,
+          summary: `Review restored (${review.rating}★)`,
+        });
+      },
+
+      eraseReview: (id) => {
+        const review = get().data.reviews.find((r) => r.id === id);
+        if (!review) return;
+        set((s) => ({
+          data: { ...s.data, reviews: s.data.reviews.filter((r) => r.id !== id) },
+        }));
+        /* The rating and nothing else. A log entry quoting the text would keep
+           the erased review in the app under a different heading, which is the
+           one outcome an erasure request cannot end in. */
+        get().logChange({
+          entity: 'review',
+          entityId: id,
+          summary: `Review erased on request (${review.rating}★)`,
+        });
+      },
+
       recordNoAccess: (bookingId, { reason, note, photo }, now) =>
         set((s) => {
           const booking = s.data.bookings.find((b) => b.id === bookingId);

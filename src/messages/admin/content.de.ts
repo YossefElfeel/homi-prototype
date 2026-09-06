@@ -420,16 +420,37 @@ export const adminContentDe = {
     editReply: 'Antwort bearbeiten',
     published: 'Bewertung veröffentlicht.',
     rejected: 'Bewertung nicht veröffentlicht.',
+    /* Drei Tabs, weil «steht das auf der Website?» drei Antworten hat. Der
+       Status-Filter darunter beantwortet die feinere Frage innerhalb des
+       Tabs — beides in ein Bedienelement zu falten hiess, dass die grobe
+       Frage gar nicht mehr beantwortbar war. */
+    tabPublished: 'Auf der Website',
+    tabUnpublished: 'Nicht veröffentlicht',
+    tabDeleted: 'Gelöscht',
+
     delete: 'Löschen',
-    deleteConfirmTitle: 'Bewertung endgültig löschen?',
+    deleteConfirmTitle: 'Bewertung löschen?',
     /* Nennt beim Namen, was verschwindet. Es sind die Worte einer anderen
        Person — die Rückfrage darf nicht klingen, als ginge es um eine Zeile
        in einer Tabelle. */
     deleteConfirmBody:
-      'Die Bewertung von {name} ({stars} Sterne) wird gelöscht — Text und Antwort. Das lässt sich nicht rückgängig machen. Im Protokoll bleibt vermerkt, dass gelöscht wurde, nicht was drinstand.',
+      'Die Bewertung von {name} ({stars} Sterne) verschwindet sofort von der Website und wandert in den Tab «Gelöscht». Von dort lässt sie sich zurückholen.',
     deleteInstead:
-      'Soll sie nur vorübergehend von der Website verschwinden, ist «Ausblenden» der richtige Weg: die Bewertung bleibt erhalten und kann jederzeit zurück.',
+      'Soll sie nur vorübergehend weg, tut «Ausblenden» dasselbe, ohne sie aus der Arbeitsliste zu nehmen.',
     deleteDone: 'Bewertung von {name} gelöscht.',
+
+    restoreFromBin: 'Zurückholen',
+    /* Kommt als «Ausgeblendet» zurück, nicht als «Wartet auf Freigabe»: eine
+       Bewertung, welche die Geschäftsleitung schon gelesen hat, darf nicht
+       wieder unter der Überschrift für ungelesene landen. */
+    restoreDone: 'Bewertung von {name} ist zurück.',
+
+    erase: 'Endgültig löschen',
+    eraseConfirmTitle: 'Endgültig löschen — ohne Weg zurück?',
+    eraseConfirmBody:
+      'Das ist der Fall, für den §20.6 diesen Knopf verlangt: Die Person, die das geschrieben hat, hat ihre Einwilligung zurückgezogen. Text und Antwort werden gelöscht und lassen sich nicht wiederherstellen. Im Protokoll bleibt vermerkt, dass gelöscht wurde, nicht was drinstand.',
+    eraseDone: 'Bewertung endgültig gelöscht.',
+    deletedNote: 'Gelöscht am {date}',
     replySaved: 'Antwort gespeichert.',
     noConsentTitle: 'Keine Einwilligung',
     noConsentBody:
