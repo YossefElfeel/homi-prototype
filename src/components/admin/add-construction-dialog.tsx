@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -15,8 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Field, Input, Select } from '@/components/ui/field';
+import { Field, Input } from '@/components/ui/field';
 import { WORK_PHOTOS } from '@/content/bau';
+import { ImagePicker } from '@/components/admin/image-picker';
 import { useStore } from '@/mock/store';
 
 /**
@@ -47,25 +47,25 @@ export function AddConstructionDialog({
   const photos = useStore((s) => s.data.construction);
   const addPhoto = useStore((s) => s.addConstructionPhoto);
 
-  const [slug, setSlug] = useState('');
+  const [src, setSrc] = useState('');
   const [alt, setAlt] = useState<Partial<Record<Locale, string>>>({});
 
   /* Only files nothing is using yet. Offering one twice would put the same
      picture in two groups, and the page renders every group — so it would
      appear twice on one screen with no way to tell the copies apart. */
   const unused = useMemo(() => {
-    const taken = new Set(photos.map((p) => p.slug));
-    return AVAILABLE.filter((s) => !taken.has(s));
+    const taken = new Set(photos.map((p) => p.src));
+    return AVAILABLE.filter((s) => !taken.has(`/construction/${s}.jpg`));
   }, [photos]);
 
-  const complete = Boolean(slug && alt.de?.trim());
+  const complete = Boolean(src && alt.de?.trim());
 
   function submit() {
     if (!complete) return;
-    addPhoto({ slug, group, alt }, now);
+    addPhoto({ src, group, alt }, now);
     toast.success(t('addDone'));
     onOpenChange(false);
-    setSlug('');
+    setSrc('');
     setAlt({});
   }
 
@@ -83,28 +83,13 @@ export function AddConstructionDialog({
           <p className="text-ink-secondary">{t('addNoFiles')}</p>
         ) : (
           <div className="space-y-5">
-            <Field label={t('addFile')} hint={t('addFileHint')}>
-              {(props) => (
-                <Select {...props} value={slug} onChange={(e) => setSlug(e.target.value)}>
-                  <option value="">{t('addFilePlaceholder')}</option>
-                  {unused.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-
-            {slug && (
-              <Image
-                src={`/construction/${slug}.jpg`}
-                alt=""
-                width={480}
-                height={360}
-                className="aspect-[4/3] w-full rounded-[var(--radius-sm)] object-cover"
-              />
-            )}
+            <ImagePicker
+              label={t('addFile')}
+              hint={t('addFileHint')}
+              options={unused.map((u) => `/construction/${u}.jpg`)}
+              value={src}
+              onChange={setSrc}
+            />
 
             {/* German is required and the rest are not — §20.6 makes it the
                 fallback for every other locale, so one caption is what stands

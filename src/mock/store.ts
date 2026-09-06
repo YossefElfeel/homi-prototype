@@ -360,7 +360,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 42;
+const SCHEMA_VERSION = 43;
 
 /**
  * §10 — the default payment term.
@@ -1344,7 +1344,7 @@ interface StoreState {
   /** Within its own group. The page reads each group in `order`. */
   moveConstructionPhoto: (id: ID, direction: -1 | 1) => void;
   addConstructionPhoto: (
-    input: { slug: string; group: string; alt: Partial<Record<Locale, string>> },
+    input: { src: string; group: string; alt: Partial<Record<Locale, string>> },
     now: Date,
   ) => void;
   removeConstructionPhoto: (id: ID) => void;
@@ -4988,7 +4988,7 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      addConstructionPhoto: ({ slug, group, alt }, now) => {
+      addConstructionPhoto: ({ src, group, alt }, now) => {
         set((s) => {
           const last = s.data.construction
             .filter((p) => p.group === group)
@@ -5000,7 +5000,7 @@ export const useStore = create<StoreState>()(
                 ...s.data.construction,
                 {
                   id: `con_${now.getTime().toString(36)}`,
-                  slug,
+                  src,
                   group,
                   /* The file's own size is not knowable from here — these are
                      phone photographs and the seeded ones vary from 720×540 to
@@ -5020,8 +5020,8 @@ export const useStore = create<StoreState>()(
         });
         get().logChange({
           entity: 'construction',
-          entityId: slug,
-          summary: `Construction photo added (${slug})`,
+          entityId: src,
+          summary: `Construction photo added (${src})`,
         });
       },
 

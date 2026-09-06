@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import Image from 'next/image';
+import { PhotoFill } from '@/components/ui/photo';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { altFor, photosIn, type WorkPhoto } from '@/content/bau';
+import { photosIn, type WorkPhoto } from '@/content/bau';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Locale } from '@/i18n/routing';
 
@@ -25,6 +25,14 @@ import type { Locale } from '@/i18n/routing';
  * the work (a cove edge, a bevel, a joint) is small in the frame and lost at
  * grid size.
  */
+/** What the grid needs, whichever side it came from. */
+interface Shown {
+  src: string;
+  width: number;
+  height: number;
+  alt: { de: string; en: string };
+}
+
 export function WorkGrid({ group }: { group: string }) {
   /*
    * The live portfolio, seed-first.
@@ -39,18 +47,22 @@ export function WorkGrid({ group }: { group: string }) {
   const hydrated = useHydrated();
   const stored = useStore((s) => s.data.construction);
 
-  const photos: WorkPhoto[] = hydrated
+  const photos: Shown[] = hydrated
     ? stored
         .filter((p) => p.group === group && p.visible)
         .sort((a, b) => a.order - b.order)
         .map((p) => ({
-          slug: p.slug,
-          group: p.group as WorkPhoto['group'],
+          src: p.src,
           width: p.width,
           height: p.height,
           alt: { de: p.alt.de ?? '', en: p.alt.en ?? '' },
         }))
-    : photosIn(group as WorkPhoto['group']);
+    : photosIn(group as WorkPhoto['group']).map((p) => ({
+        src: `/construction/${p.slug}.jpg`,
+        width: p.width,
+        height: p.height,
+        alt: p.alt,
+      }));
 
   const t = useTranslations('site.bau');
   const locale = useLocale() as Locale;
@@ -77,16 +89,15 @@ export function WorkGrid({ group }: { group: string }) {
           heights that read as a broken layout rather than a portfolio. */}
       <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {photos.map((photo, i) => (
-          <li key={photo.slug}>
+          <li key={photo.src}>
             <button
               type="button"
               onClick={() => setOpenIndex(i)}
               className="group relative block aspect-square w-full overflow-hidden rounded-[var(--radius-lg)] bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
             >
-              <Image
-                src={`/construction/${photo.slug}.jpg`}
-                alt={altFor(photo, locale)}
-                fill
+              <PhotoFill
+                src={photo.src}
+                alt={locale === 'en' ? photo.alt.en : photo.alt.de}
                 sizes="(min-width: 1024px) 33vw, 50vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               />
@@ -105,7 +116,7 @@ export function WorkGrid({ group }: { group: string }) {
                   they cannot name — writing it twice would have let the two
                   drift apart. */}
               <Dialog.Title className="max-w-[var(--measure)] text-sm text-ink-secondary">
-                {open ? altFor(open, locale) : ''}
+                {open ? (locale === 'en' ? open.alt.en : open.alt.de) : ''}
               </Dialog.Title>
               <Dialog.Close
                 aria-label={t('close')}
@@ -117,11 +128,10 @@ export function WorkGrid({ group }: { group: string }) {
 
             {open && (
               <div className="relative mt-4 min-h-0 flex-1">
-                <Image
-                  src={`/construction/${open.slug}.jpg`}
+                <PhotoFill
+                  src={open.src}
                   alt=""
-                  fill
-                  sizes="90vw"
+                    sizes="90vw"
                   className="object-contain"
                 />
               </div>

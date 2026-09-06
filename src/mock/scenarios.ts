@@ -2960,7 +2960,7 @@ function baseData(now: Date): DataSet {
     })),
     construction: WORK_PHOTOS.map((photo, i) => ({
       id: `con_${photo.slug}`,
-      slug: photo.slug,
+      src: `/construction/${photo.slug}.jpg`,
       group: photo.group,
       width: photo.width,
       height: photo.height,

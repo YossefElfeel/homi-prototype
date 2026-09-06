@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { PhotoFill } from '@/components/ui/photo';
 import { useId, useState } from 'react';
 
 import { cn } from '@/lib/cn';
@@ -56,10 +56,9 @@ export function BeforeAfter({
         className,
       )}
     >
-      <Image
+      <PhotoFill
         src={afterSrc}
         alt={alt}
-        fill
         sizes={sizes}
         priority={priority}
         className="object-cover"
@@ -76,7 +75,7 @@ export function BeforeAfter({
         className="hv-unclean absolute inset-0"
         style={{ clipPath: `inset(0 ${100 - at}% 0 0)` }}
       >
-        <Image src={beforeSrc} alt="" fill sizes={sizes} className="object-cover" />
+        <PhotoFill src={beforeSrc} alt="" sizes={sizes} className="object-cover" />
       </div>
 
       <span
