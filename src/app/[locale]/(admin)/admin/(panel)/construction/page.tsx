@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react';
 import { Photo } from '@/components/ui/photo';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react';
+
+import { ActionIcon } from '@/lib/action-icons';
 
 import { LOCALE_LABELS, routing, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
@@ -340,11 +342,12 @@ export default function AdminConstructionPage() {
                 />
 
                 <div className="p-4">
-                  <p className="truncate font-mono text-xs text-ink-tertiary">{photo.src}</p>
-
-                  {/* The caption is what a screen reader is given, so it is
-                      edited here rather than hidden behind a detail screen —
-                      and per language, because it is a sentence. */}
+                  {/* The caption first, the file path under it. It was the
+                      other way round — a mono file name at the top of every
+                      card, which is the one line on it nobody is reading, over
+                      the sentence that is the whole point of the record: what
+                      a screen reader is given, and the only description of the
+                      picture anybody will ever write. */}
                   {editing === photo.id ? (
                     <div className="mt-3 space-y-3">
                       {routing.locales.map((l) => (
@@ -377,16 +380,24 @@ export default function AdminConstructionPage() {
                           </Select>
                         )}
                       </Field>
-                      <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
-                        {t('doneEditing')}
-                      </Button>
                     </div>
                   ) : (
-                    <p className="mt-2 text-sm text-ink-secondary">
-                      {photo.alt[locale] ?? photo.alt.de ?? (
-                        <span className="text-status-warning-fg">{t('noAlt')}</span>
+                    <>
+                      {photo.alt[locale] ?? photo.alt.de ? (
+                        <p className="text-ink">{photo.alt[locale] ?? photo.alt.de}</p>
+                      ) : (
+                        /* A missing caption is a picture a screen reader
+                           announces as nothing at all, so it is stated rather
+                           than left as an empty line. */
+                        <p className="inline-flex items-center gap-1.5 rounded-sm border border-status-warning-line bg-status-warning px-2 py-1 text-sm text-status-warning-fg">
+                          <AlertTriangle className="size-3.5" aria-hidden />
+                          {t('noAlt')}
+                        </p>
                       )}
-                    </p>
+                      <p className="mt-1.5 truncate font-mono text-xs text-ink-tertiary">
+                        {photo.src.startsWith('idb:') ? t('uploadedHere') : photo.src}
+                      </p>
+                    </>
                   )}
 
                   <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -423,16 +434,35 @@ export default function AdminConstructionPage() {
                     </span>
                   </div>
 
-                  <div className="mt-2 flex gap-2">
+                  {/*
+                    Two `ghost` buttons side by side read as body text: no
+                    border, no ground, ink at label weight — the only thing
+                    saying «control» was the cursor. And a destructive action
+                    carried exactly the weight of a benign one, sitting right
+                    beside it.
+                    So: the caption edit is a real bordered button, because it
+                    is the thing somebody comes to this card to do; removing is
+                    pushed to the far end, marked with the same trash glyph the
+                    rest of the panel deletes with, and tinted danger on hover
+                    rather than shouting in red at rest.
+                  */}
+                  <div className="mt-3 flex items-center gap-2 border-t border-line-subtle pt-3">
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setEditing(editing === photo.id ? null : photo.id)}
                     >
-                      {t('edit')}
+                      <ActionIcon.edit className="size-4" aria-hidden />
+                      {editing === photo.id ? t('doneEditing') : t('edit')}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removing.ask(photo)}>
-                      {t('remove')}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="ms-auto text-ink-tertiary hover:bg-status-danger hover:text-status-danger-fg"
+                      aria-label={t('remove')}
+                      onClick={() => removing.ask(photo)}
+                    >
+                      <ActionIcon.delete className="size-4" aria-hidden />
                     </Button>
                   </div>
                 </div>

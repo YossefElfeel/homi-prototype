@@ -4,7 +4,6 @@ import { use, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
 import {
-  ArrowLeft,
   Building2,
   CalendarClock,
   FileText,
@@ -27,6 +26,7 @@ import { RejectRequestDialog } from '@/components/admin/reject-request-dialog';
 import { RevisionRequest } from '@/components/admin/revision-request';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/page-header';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Money } from '@/components/ui/money';
@@ -317,12 +317,7 @@ export default function RequestDetailPage({
 
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/requests">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <BackLink href="/admin/requests" label={t('back')} />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

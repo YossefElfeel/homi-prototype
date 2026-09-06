@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import {
   AlertTriangle,
-  ArrowLeft,
   Building2,
   CalendarClock,
   Check,
@@ -21,6 +20,7 @@ import {
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/page-header';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { CollapsibleSection, SectionGroup } from '@/components/ui/collapsible-section';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -301,12 +301,7 @@ export default function BookingDetailPage({
           Now that bookings have a list, sending everyone who arrives from it
           back to a timeline view is a dead end — the list is the place you
           came from and the place the next row is. */}
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/bookings">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <BackLink href="/admin/bookings" label={t('back')} />
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 data-numeric className="display-type text-3xl">

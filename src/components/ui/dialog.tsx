@@ -48,16 +48,29 @@ export function DialogContent({
         data-hv="dialog"
         className={cn(
           'fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-          'max-h-[calc(100dvh-2rem)] overflow-y-auto',
-          'rounded-[var(--radius-lg)] border border-line-subtle bg-card p-6 shadow-[var(--shadow-lg)]',
+          /*
+           * The box does not scroll; the body inside it does.
+           *
+           * It used to be one scrolling box with the close button positioned
+           * absolutely inside — and an absolutely positioned child of a
+           * scrolling container scrolls with the content. So on any dialog
+           * taller than the viewport, the × left the screen: the picture
+           * picker, whose whole grid is tall by design, put its own way out
+           * beyond reach. Escape still worked, and nothing on screen said so.
+           */
+          'flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden',
+          'rounded-[var(--radius-lg)] border border-line-subtle bg-card shadow-[var(--shadow-lg)]',
           className,
         )}
         {...props}
       >
-        {children}
+        <div className="overflow-y-auto p-6">{children}</div>
         {showClose && (
           <DialogPrimitive.Close
-            className="absolute top-4 right-4 inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
+            /* 44px, like every other target in the panel — it was 32, which is
+               the smallest thing to hit on a screen that opens over the top of
+               everything else. */
+            className="absolute top-3 right-3 inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] text-ink-tertiary transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
             aria-label={closeLabel}
           >
             <X className="size-4" aria-hidden />

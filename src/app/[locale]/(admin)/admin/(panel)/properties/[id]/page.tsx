@@ -3,12 +3,13 @@
 import { use } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFormatter } from '@/i18n/format';
-import { ArrowLeft, KeyRound, Lock, Pencil, ShieldAlert } from 'lucide-react';
+import { KeyRound, Lock, Pencil, ShieldAlert } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { zoneOf } from '@/lib/property-facts';
 import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/page-header';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { SecretValue } from '@/components/ui/secret-value';
@@ -87,12 +88,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/properties">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <BackLink href="/admin/properties" label={t('back')} />
 
       {/* The record could be read and not corrected — the only writable field
           on it was the standing note. The list gained an edit action, and the

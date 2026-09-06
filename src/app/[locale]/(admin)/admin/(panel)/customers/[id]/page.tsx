@@ -6,7 +6,6 @@ import { useFormatter } from '@/i18n/format';
 import {
   Archive,
   ArchiveRestore,
-  ArrowLeft,
   ArrowRight,
   Ban,
   Lock,
@@ -35,6 +34,7 @@ import {
 } from '@/lib/payment-methods';
 import { PaymentMethodFields } from '@/components/payment/method-fields';
 import { Button } from '@/components/ui/button';
+import { BackLink } from '@/components/ui/page-header';
 import { Alert } from '@/components/ui/alert';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -301,12 +301,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <Button asChild variant="link" className="mb-6">
-        <Link href="/admin/customers">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('back')}
-        </Link>
-      </Button>
+      <BackLink href="/admin/customers" label={t('back')} />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="display-type text-3xl">{name}</h1>
