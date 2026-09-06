@@ -1,28 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, Link2 } from 'lucide-react';
+import { Check, Loader2, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { Photo, isRemote } from '@/components/ui/photo';
+import { isUploaded, putImage } from '@/lib/image-store';
 import { cn } from '@/lib/cn';
 
 /**
- * Choosing a picture by looking at it.
+ * Choosing a picture.
  *
- * This was a `<select>` of file paths — «/img/hero.webp», «/img/service-1.webp»
- * — with the preview only appearing after the choice was made. So picking the
- * right one of four meant choosing, looking, going back and choosing again, and
- * the two dropdowns for a before-and-after pair made that four round trips for
- * one decision. A grid of thumbnails is the same information in the form the
- * decision is actually made in.
+ * Two rewrites, and both complaints were the same complaint. First it was a
+ * `<select>` of file paths, so picking the right one of four meant choose,
+ * look, go back, choose again. Then it was a grid — but two of them side by
+ * side inside a dialog, which left each tile about sixty pixels across: the
+ * information was there and still nobody could see it.
  *
- * The URL field is the second half of the same complaint: the project's four
- * files are not the pictures a real portfolio is made of, and there is no
- * upload here. Pasting a link is the honest way in until there is one — and
- * `Photo` renders a remote picture without the optimizer, because pointing the
- * optimizer at an arbitrary host would make this app an open image proxy.
+ * So the tiles are large, the grid is two columns wide rather than four, and
+ * the pickers stack instead of sitting beside each other. A picture chooser
+ * that cannot be looked at is a dropdown with extra steps.
+ *
+ * The order of the three sources is the second fix. Uploading from the machine
+ * you are sitting at is what somebody means by "add a picture"; the four files
+ * in the project are a fallback, and a URL is the rare case. They used to be
+ * ranked the other way round, with a red link offering the web at the top.
  */
 export function ImagePicker({
   label,
@@ -30,35 +35,142 @@ export function ImagePicker({
   options,
   value,
   onChange,
+  onUploaded,
 }: {
   label: string;
   hint?: string;
   options: string[];
   value: string;
   onChange: (src: string) => void;
+  /** Uploads know their own dimensions; the caller usually wants them. */
+  onUploaded?: (size: { width: number; height: number }) => void;
 }) {
   const t = useTranslations('admin.imagePicker');
-  /* Opens on whichever half the current value came from, so re-opening a
-     dialog with a pasted URL in it does not look like the URL was lost. */
-  const [external, setExternal] = useState(() => isRemote(value));
+  const inputId = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [showUrl, setShowUrl] = useState(() => isRemote(value));
+
+  async function take(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('notAnImage'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const stored = await putImage(file);
+      onChange(stored.src);
+      onUploaded?.({ width: stored.width, height: stored.height });
+    } catch {
+      /* Quota, a private window with IndexedDB disabled, a file the decoder
+         refuses. The office cannot act on which, so the message says the one
+         thing that helps: it did not go in, try another. */
+      toast.error(t('uploadFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="label-type text-ink-secondary">{label}</p>
-        <button
-          type="button"
-          onClick={() => setExternal((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-accent hover:underline"
-        >
-          <Link2 className="size-3.5" aria-hidden />
-          {external ? t('fromProject') : t('fromUrl')}
-        </button>
-      </div>
+      <p className="label-type text-ink-secondary">{label}</p>
       {hint && <p className="mt-1 text-sm text-ink-tertiary">{hint}</p>}
 
-      {external ? (
-        <div className="mt-3 space-y-3">
+      {/* The current choice, large, whatever it came from. The old picker
+          showed the selection only as a ring on a thumbnail — on four photos of
+          similar rooms that is not something you can check. */}
+      {value && (
+        <div className="mt-3 overflow-hidden rounded-[var(--radius-sm)] border border-line">
+          <Photo
+            src={value}
+            alt=""
+            width={640}
+            height={480}
+            className="aspect-[4/3] w-full bg-sunken object-cover"
+          />
+          <p className="truncate border-t border-line-subtle px-3 py-2 font-mono text-xs text-ink-tertiary">
+            {isUploaded(value) ? t('fromThisDevice') : value}
+          </p>
+        </div>
+      )}
+
+      {/* First, because it is what «add a picture» means. */}
+      <div className="mt-3">
+        <input
+          ref={input}
+          id={inputId}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={(e) => {
+            void take(e.target.files?.[0]);
+            /* Cleared so choosing the same file twice still fires a change —
+               otherwise a retry after a failure silently does nothing. */
+            e.target.value = '';
+          }}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Upload className="size-4" aria-hidden />
+          )}
+          {busy ? t('uploading') : t('fromDevice')}
+        </Button>
+        <p className="mt-1.5 text-sm text-ink-tertiary">{t('fromDeviceHint')}</p>
+      </div>
+
+      {options.length > 0 && (
+        <div className="mt-5">
+          <p className="label-type text-ink-tertiary">{t('orFromProject')}</p>
+          <ul className="mt-2 grid grid-cols-2 gap-3">
+            {options.map((src) => {
+              const chosen = src === value;
+              return (
+                <li key={src}>
+                  <button
+                    type="button"
+                    aria-pressed={chosen}
+                    onClick={() => onChange(src)}
+                    className={cn(
+                      'relative block w-full overflow-hidden rounded-[var(--radius-sm)] transition-shadow',
+                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
+                      chosen
+                        ? 'ring-2 ring-accent ring-offset-2 ring-offset-page'
+                        : 'ring-1 ring-line hover:ring-line-strong',
+                    )}
+                  >
+                    <Photo
+                      src={src}
+                      alt=""
+                      width={320}
+                      height={240}
+                      className="aspect-[4/3] w-full bg-sunken object-cover"
+                    />
+                    {chosen && (
+                      <span className="absolute end-2 top-2 grid size-6 place-items-center rounded-full bg-accent text-on-accent">
+                        <Check className="size-3.5" aria-hidden />
+                      </span>
+                    )}
+                    <span className="sr-only">{src}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Last, and quiet. It is the rare case, and it was the loudest control
+          on the panel. */}
+      <div className="mt-4">
+        {showUrl ? (
           <Field label={t('urlLabel')} hint={t('urlHint')}>
             {(props) => (
               <Input
@@ -71,59 +183,16 @@ export function ImagePicker({
               />
             )}
           </Field>
-
-          {/* Shown as soon as it could be a picture, so a typo in a link is
-              visible here rather than on the website. */}
-          {isRemote(value) && (
-            <Photo
-              src={value}
-              alt=""
-              width={480}
-              height={360}
-              className="aspect-[4/3] w-full rounded-[var(--radius-sm)] object-cover"
-            />
-          )}
-        </div>
-      ) : (
-        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {options.map((src) => {
-            const chosen = src === value;
-            return (
-              <li key={src}>
-                <button
-                  type="button"
-                  aria-pressed={chosen}
-                  onClick={() => onChange(src)}
-                  className={cn(
-                    'relative block w-full overflow-hidden rounded-[var(--radius-sm)] transition-shadow',
-                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus',
-                    chosen
-                      ? 'ring-2 ring-accent ring-offset-2 ring-offset-page'
-                      : 'ring-1 ring-line hover:ring-line-strong',
-                  )}
-                >
-                  <Photo
-                    src={src}
-                    alt=""
-                    width={240}
-                    height={180}
-                    className="aspect-[4/3] w-full object-cover"
-                  />
-                  {/* A tick as well as the ring. On four thumbnails of the same
-                      room the ring alone is easy to lose, and this is the one
-                      control whose whole job is to say which one is chosen. */}
-                  {chosen && (
-                    <span className="absolute end-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-accent text-on-accent">
-                      <Check className="size-3" aria-hidden />
-                    </span>
-                  )}
-                  <span className="sr-only">{src}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowUrl(true)}
+            className="text-sm text-ink-tertiary underline-offset-2 hover:text-ink hover:underline"
+          >
+            {t('fromUrl')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

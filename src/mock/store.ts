@@ -72,6 +72,7 @@ import { regionUsage } from '@/lib/region-facts';
 import { serviceUsage, slugify, uniqueSlug } from '@/lib/service-catalogue';
 import { addOnUsage, uniqueAddOnSlug } from '@/lib/addon-catalogue';
 import { RESET_LINK_HOURS } from '@/lib/user-facts';
+import { deleteImage } from '@/lib/image-store';
 import { buildScenario, seedHolds, type DataSet, type ScenarioName } from './scenarios';
 import { SERVED_REGIONS, checkCoverage, type ServedRegion } from './engines/coverage';
 import {
@@ -1344,7 +1345,14 @@ interface StoreState {
   /** Within its own group. The page reads each group in `order`. */
   moveConstructionPhoto: (id: ID, direction: -1 | 1) => void;
   addConstructionPhoto: (
-    input: { src: string; group: string; alt: Partial<Record<Locale, string>> },
+    input: {
+      src: string;
+      group: string;
+      alt: Partial<Record<Locale, string>>;
+      /** Known for an upload, unknown for a pasted URL. */
+      width?: number;
+      height?: number;
+    },
     now: Date,
   ) => void;
   removeConstructionPhoto: (id: ID) => void;
@@ -4780,6 +4788,12 @@ export const useStore = create<StoreState>()(
       },
 
       removeWork: (bookingId) => {
+        /* Same rule as a construction picture: an uploaded file the office
+           added has nothing else pointing at it once the pair is gone. */
+        for (const p of get().data.photos) {
+          if (p.bookingId === bookingId && p.source === 'owner') void deleteImage(p.src);
+        }
+
         set((s) => ({
           data: {
             ...s.data,
@@ -4988,7 +5002,7 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      addConstructionPhoto: ({ src, group, alt }, now) => {
+      addConstructionPhoto: ({ src, group, alt, width, height }, now) => {
         set((s) => {
           const last = s.data.construction
             .filter((p) => p.group === group)
@@ -5002,14 +5016,15 @@ export const useStore = create<StoreState>()(
                   id: `con_${now.getTime().toString(36)}`,
                   src,
                   group,
-                  /* The file's own size is not knowable from here — these are
-                     phone photographs and the seeded ones vary from 720×540 to
-                     1600×1600. A square is the safest assumption for a picture
-                     nobody has measured, and the grid crops rather than
-                     stretches, so a wrong guess costs framing and never a
+                  /* Measured where it can be — an upload is decoded on the way
+                     in, so its real shape is known. A pasted URL is not: the
+                     app never fetches it, which is the whole point of rendering
+                     a remote picture without the optimizer. The square is the
+                     safest guess for the unmeasured case, and the grid crops
+                     rather than stretches, so it costs framing and never a
                      distorted image. */
-                  width: 1200,
-                  height: 1200,
+                  width: width ?? 1200,
+                  height: height ?? 1200,
                   alt,
                   visible: true,
                   order: last + 1,
@@ -5026,6 +5041,12 @@ export const useStore = create<StoreState>()(
       },
 
       removeConstructionPhoto: (id) => {
+        /* The bytes go with the record. A browser store that only ever grows
+           is the same quota problem `image-store` exists to avoid, arriving
+           more slowly — and nothing else will ever reference this file. */
+        const photo = get().data.construction.find((p) => p.id === id);
+        if (photo) void deleteImage(photo.src);
+
         set((s) => ({
           data: { ...s.data, construction: s.data.construction.filter((p) => p.id !== id) },
         }));

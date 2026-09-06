@@ -460,8 +460,15 @@ export const adminContentDe = {
   /* Bildschirm 86 — die Bau-Referenzen, aus dem Büro. */
   /* Bildauswahl — dieselben zwei Hälften überall, wo ein Bild gewählt wird. */
   imagePicker: {
-    fromUrl: 'Bild aus dem Netz',
-    fromProject: 'Bilder im Projekt',
+    fromDevice: 'Vom Computer wählen',
+    fromDeviceHint:
+      'Wird beim Hochladen auf 1600 px verkleinert und im Browser gespeichert — es gibt keinen Server, der sie sonst behalten könnte.',
+    uploading: 'Wird verarbeitet …',
+    uploadFailed: 'Das Bild konnte nicht gespeichert werden. Versuchen Sie ein anderes.',
+    notAnImage: 'Das ist keine Bilddatei.',
+    fromThisDevice: 'Von diesem Gerät hochgeladen',
+    orFromProject: 'Oder eines aus dem Projekt',
+    fromUrl: 'Stattdessen eine Adresse aus dem Netz einfügen',
     urlLabel: 'Bildadresse',
     urlHint:
       'Vollständige Adresse, mit https. Bilder von aussen werden unverändert eingebunden — ohne die Grössenoptimierung, die Dateien im Projekt bekommen.',

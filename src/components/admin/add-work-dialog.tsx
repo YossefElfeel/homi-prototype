@@ -149,7 +149,7 @@ export function AddWorkDialog({
             {/* Thumbnails, not paths. Choosing the right one of four from a
                 list of «/img/service-1.webp» meant choose, look, go back and
                 choose again — twice over for a pair. */}
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-6">
               <ImagePicker
                 label={t('before')}
                 options={BLOG_IMAGES}
