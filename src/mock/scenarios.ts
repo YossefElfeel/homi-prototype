@@ -5493,6 +5493,16 @@ function enquiries(now: Date): Enquiry[] {
       status: 'answered',
       answeredBy: 'tm_owner',
       answeredAt: at(50),
+      /* The words, not only the fact. Without one seeded reply the block that
+         shows them is unreachable until somebody writes one — the same gap as
+         the empty archive and the empty bin. */
+      replies: [
+        {
+          at: at(50),
+          by: 'tm_owner',
+          body: 'Guten Tag Frau Graf, Rüti liegt leider ausserhalb unseres Einsatzgebiets — wir fahren acht Gemeinden am rechten Seeufer an. Sollten Sie im Gebiet umziehen, melden Sie sich gerne wieder.',
+        },
+      ],
     },
     {
       id: 'enq_4',

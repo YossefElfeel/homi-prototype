@@ -1839,6 +1839,19 @@ export interface Enquiry {
   /** Who dealt with it, so «wer hat da geantwortet?» has an answer. */
   answeredBy?: ID;
   answeredAt?: ISODate;
+  /**
+   * What was written back, kept on the enquiry.
+   *
+   * The screen used to record *that* somebody answered and never *what* they
+   * said, which is the half that matters when the person rings a week later
+   * and gets whoever picks up. A reply here is not an email — nothing in this
+   * app sends one, and pretending otherwise would be an outbox that delivers
+   * to nobody. It is the office's own record of the answer, the same way the
+   * change log is a record of a decision.
+   */
+  replies?: { at: ISODate; by: ID; body: string }[];
+  /** The request this enquiry turned into, once it did. */
+  requestId?: ID;
   /** In the bin, recoverable — same rule as a review. */
   deletedAt?: ISODate;
   /**

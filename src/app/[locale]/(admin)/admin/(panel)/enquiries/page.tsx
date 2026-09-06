@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog, useConfirmTarget, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Field, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -44,6 +45,7 @@ const TABS: Tab[] = ['new', 'answered', 'deleted'];
 export default function AdminEnquiriesPage() {
   const t = useTranslations('admin.enquiries');
   const appT = useTranslations('app');
+  const actionsT = useTranslations('actions');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -58,10 +60,15 @@ export default function AdminEnquiriesPage() {
   const deleteEnquiry = useStore((s) => s.deleteEnquiry);
   const restoreEnquiry = useStore((s) => s.restoreEnquiry);
   const convertEnquiry = useStore((s) => s.convertEnquiry);
+  const replyToEnquiry = useStore((s) => s.replyToEnquiry);
 
   const [tab, setTab] = useState<Tab>('new');
   const [query, setQuery] = useState('');
   const deleting = useConfirmTarget<Enquiry>();
+  /* Closed unless somebody means to write. The box is the tallest thing on
+     a card, and on every open enquiry at once it turns a queue of five into
+     a screen and a half of empty textareas. */
+  const [replying, setReplying] = useState<Record<string, string>>({});
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -251,6 +258,43 @@ export default function AdminEnquiriesPage() {
                         </p>
                       )}
 
+                      {/* What was written back, on the card. The screen
+                          recorded *that* somebody answered and never what they
+                          said — which is the half that matters when the person
+                          rings a week later and gets whoever picks up. */}
+                      {(enquiry.replies ?? []).map((reply, i) => {
+                        const author = team.find((m) => m.id === reply.by);
+                        return (
+                          <div key={i} className="mt-3 border-l-2 border-rule ps-3">
+                            <p className="label-type text-ink-tertiary">
+                              {t('replyBy', {
+                                name: author ? `${author.firstName} ${author.lastName}` : '—',
+                                date: format.dateTime(new Date(reply.at), 'short'),
+                              })}
+                            </p>
+                            <p className="mt-1 whitespace-pre-line text-sm text-ink-secondary">
+                              {reply.body}
+                            </p>
+                          </div>
+                        );
+                      })}
+
+                      {replying[enquiry.id] !== undefined && (
+                        <Field label={t('replyLabel')} hint={t('replyHint')} className="mt-4">
+                          {(props) => (
+                            <Textarea
+                              {...props}
+                              rows={4}
+                              autoFocus
+                              value={replying[enquiry.id] ?? ''}
+                              onChange={(e) =>
+                                setReplying({ ...replying, [enquiry.id]: e.target.value })
+                              }
+                            />
+                          )}
+                        </Field>
+                      )}
+
                       {enquiry.customerId && (
                         <p className="mt-3 text-sm">
                           <Link
@@ -258,6 +302,17 @@ export default function AdminEnquiriesPage() {
                             className="text-ink-accent hover:underline"
                           >
                             {t('becameCustomer')}
+                          </Link>
+                        </p>
+                      )}
+
+                      {enquiry.requestId && (
+                        <p className="mt-1 text-sm">
+                          <Link
+                            href={`/admin/requests/${enquiry.requestId}`}
+                            className="text-ink-accent hover:underline"
+                          >
+                            {t('becameRequest')}
                           </Link>
                         </p>
                       )}
@@ -277,8 +332,51 @@ export default function AdminEnquiriesPage() {
                           </Button>
                         ) : (
                           <>
+                            {/*
+                              Replying *is* answering, so it is one action.
+                              Two steps for one intention was the old shape:
+                              type nothing, press «als beantwortet markieren»,
+                              and the record kept who and when but not a word.
+                            */}
+                            {replying[enquiry.id] !== undefined ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  disabled={!replying[enquiry.id]?.trim()}
+                                  onClick={() => {
+                                    replyToEnquiry(enquiry.id, replying[enquiry.id] ?? '', now);
+                                    const next = { ...replying };
+                                    delete next[enquiry.id];
+                                    setReplying(next);
+                                    toast.success(t('replyDone', { ref: enquiry.reference }));
+                                  }}
+                                >
+                                  {t('replySend')}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const next = { ...replying };
+                                    delete next[enquiry.id];
+                                    setReplying(next);
+                                  }}
+                                >
+                                  {actionsT('cancel')}
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => setReplying({ ...replying, [enquiry.id]: '' })}
+                              >
+                                {t('reply')}
+                              </Button>
+                            )}
+
                             {enquiry.status === 'new' ? (
                               <Button
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => {
                                   setEnquiryStatus(enquiry.id, 'answered', now);
@@ -297,6 +395,21 @@ export default function AdminEnquiriesPage() {
                                 }}
                               >
                                 {t('reopen')}
+                              </Button>
+                            )}
+
+                            {/*
+                              The exit the inbox is actually for. «Umzugs-
+                              reinigung Ende Monat» is one step from a quote,
+                              and until now the only route was: make a
+                              customer, then retype the request from a message
+                              on another screen.
+                            */}
+                            {!enquiry.requestId && (
+                              <Button asChild variant="secondary" size="sm">
+                                <Link href={`/admin/requests/new?enquiry=${enquiry.id}`}>
+                                  {t('toRequest')}
+                                </Link>
                               </Button>
                             )}
 

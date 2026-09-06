@@ -21,6 +21,15 @@ export const adminCrmDe = {
     overdueBody:
       'Auf /contact steht, dass wir uns innerhalb von {hours} Stunden melden. Diese Anfrage liegt länger.',
 
+    reply: 'Antworten',
+    replyLabel: 'Ihre Antwort',
+    replyHint:
+      'Wird beim Datensatz festgehalten. Verschickt wird sie nicht — das passiert per Mail oder Telefon, wie bisher. Gibt es schon einen Kundendatensatz, landet sie zusätzlich im Nachrichtenverlauf.',
+    replySend: 'Antwort festhalten',
+    replyBy: '{name} · {date}',
+    replyDone: '{ref} ist beantwortet.',
+    toRequest: 'Anfrage daraus machen',
+    becameRequest: 'Daraus wurde eine Anfrage — öffnen',
     markAnswered: 'Als beantwortet markieren',
     reopen: 'Wieder öffnen',
     convert: 'Zu Kunde machen',
