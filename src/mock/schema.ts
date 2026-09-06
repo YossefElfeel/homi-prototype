@@ -1279,7 +1279,6 @@ export interface Review {
   text: string;
   status: ReviewStatus;
   submittedAt: ISODate;
-  ownerReply?: string;
   /**
    * §20.6 — publishing needs recorded consent.
    *

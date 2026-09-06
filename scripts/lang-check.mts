@@ -63,7 +63,6 @@ for (const name of SCENARIOS) {
   }
   for (const r of d.reviews) {
     check('review', r.text ?? '', `${tag} ${r.id}`);
-    check('review reply', r.ownerReply ?? '', `${tag} ${r.id}`);
   }
   for (const i of d.invoices) {
     for (const line of i.lines) check('invoice line', line.label, `${tag} ${i.reference}`);
