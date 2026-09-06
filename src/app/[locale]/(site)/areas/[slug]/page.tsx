@@ -71,7 +71,7 @@ export default async function RegionPage({
         <Masthead
           lines={[{ lead: d('leadWord') }, { accent: region.name }]}
           lead={t('lead', { region: region.name })}
-          action={{ label: t('cta', { region: region.name }), href: `/request?plz=${region.postcode}` }}
+          action={{ label: t('cta', { region: region.name }), href: `/request?postcode=${region.postcode}` }}
           stats={[
             { label: t('postcodeLabel'), value: region.postcode },
             { label: t('travelLabel'), value: t('travelValue') },
@@ -148,7 +148,7 @@ export default async function RegionPage({
         </dl>
 
         <Button asChild size="lg" className="mt-10">
-          <Link href={`/request?plz=${region.postcode}`}>
+          <Link href={`/request?postcode=${region.postcode}`}>
             {t('cta', { region: region.name })}
             <ArrowRight className="size-4" aria-hidden />
           </Link>

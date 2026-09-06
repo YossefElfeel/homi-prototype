@@ -473,7 +473,7 @@ export const TRACKS: Track[] = [
         '68a',
         'Schlüssel zurückgeben',
         'Return a key',
-        '/admin/keys?zurueckgeben=key_1',
+        '/admin/keys?returnKey=key_1',
         ['a key still held'],
         'A dialog over the register rather than a page of its own — the handover is recorded standing at the row it is about. The link opens the same dialog, and only on a key that is actually still held',
       ),

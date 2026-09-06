@@ -21,10 +21,10 @@ export async function generateMetadata({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ stelle?: string }>;
+  searchParams: Promise<{ posting?: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const { stelle } = await searchParams;
+  const { posting: stelle } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'careers.form' });
   const posting = PUBLISHED.find((p) => p.slug === stelle);
 
@@ -41,7 +41,7 @@ export async function generateMetadata({
 /**
  * Screens C3 and C4 — one route, two steps.
  *
- * `?stelle=` carries the role across from the posting. Without it the form is
+ * `?posting=` carries the role across from the posting. Without it the form is
  * a speculative application, which is the same form minus one line of context.
  *
  * The page rendered as a bare `…` until the store rehydrated: no heading, no
@@ -54,10 +54,10 @@ export default async function ApplicationPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ stelle?: string }>;
+  searchParams: Promise<{ posting?: string }>;
 }) {
   const { locale } = await params;
-  const { stelle } = await searchParams;
+  const { posting: stelle } = await searchParams;
   setRequestLocale(locale);
 
   const theme = await getTheme();

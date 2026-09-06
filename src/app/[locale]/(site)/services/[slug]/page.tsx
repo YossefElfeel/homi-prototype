@@ -115,7 +115,7 @@ export default async function ServicePage({
     <Masthead
       lines={[{ lead: service.name[locale as Locale] }]}
       lead={content.lead}
-      action={{ label: t('cta'), href: `/request?leistung=${service.slug}` }}
+      action={{ label: t('cta'), href: `/request?service=${service.slug}` }}
       image={photo ? { src: photo, alt: service.name[locale as Locale] } : undefined}
       stats={[
         {
@@ -187,7 +187,7 @@ export default async function ServicePage({
 
             <div className="mt-9">
               <Button asChild size="lg">
-                <Link href={`/request?leistung=${service.slug}`}>
+                <Link href={`/request?service=${service.slug}`}>
                   {t('cta')}
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>

@@ -97,10 +97,10 @@ export default function AdminLoginPage() {
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
             />
-            {/* Used to link to this very page. `?von=admin` sends the reset
+            {/* Used to link to this very page. `?from=admin` sends the reset
                 screen's back-link here rather than into customer sign-in. */}
             <Link
-              href="/password?von=admin"
+              href="/password?from=admin"
               className="text-sm text-ink-secondary underline decoration-from-font underline-offset-4"
             >
               {t('forgot')}

@@ -385,7 +385,7 @@ function PlanCard({
       </motion.ul>
 
       <Button
-        href={`/request?abo=${plan.id}`}
+        href={`/request?plan=${plan.id}`}
         variant={featured ? "red" : "navy"}
         surface={featured ? "inverse" : "page"}
         className="mt-9 w-full"

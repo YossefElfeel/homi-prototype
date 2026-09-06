@@ -143,7 +143,7 @@ export function JobPostingDetail({ slug }: { slug: string }) {
             </dl>
 
             <Button asChild className="mt-6 w-full">
-              <Link href={`/jobs/apply?stelle=${posting.slug}`}>
+              <Link href={`/jobs/apply?posting=${posting.slug}`}>
                 {t('apply')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>

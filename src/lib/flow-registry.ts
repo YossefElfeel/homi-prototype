@@ -137,6 +137,8 @@ export const FLOWS: Flow[] = [
         '/request/property',
         'Picking a saved property skipped every check. `Property.area` is optional — the office can file an address from a phone call — so a deep clean could be requested with no area at all, and the quote builder prices that at `areaTier(0)`, the cheapest bracket on the sheet',
       ),
+      ok('Pick a slot', '/request/slot', 'Live availability — the picker reads the same engine the office schedules from, so a slot offered here is a slot that exists'),
+      ok('Attach photographs', '/request/photos', 'What the office would otherwise ask for on the telephone, and the thing that makes a quote possible without a visit'),
       ok('Record the access method', '/request/access', 'Four methods, codes masked'),
       ok('The draft survives a reload', '/request', '30 days, §20.1'),
       added(
@@ -338,6 +340,7 @@ export const FLOWS: Flow[] = [
       ),
       added('Add a property', '/admin/properties', 'Outside a request — for addresses we know'),
       ok('Automatically, out of a request', '/request/contact'),
+      ok('Hand a key back', '/admin/keys?returnKey=key_1', 'Deep-linked from the key’s own row, so the confirm opens on the right key rather than asking somebody to find it again in a list of sixteen'),
       added(
         'Take in a key',
         '/admin/keys',
@@ -621,7 +624,7 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Book somebody’s hours to a job',
-        '/admin/expenses/new?kategorie=arbeitszeit',
+        '/admin/expenses/new?category=arbeitszeit',
         'Wages were one lump a month with a person’s name typed into the supplier box — no job, no hours, no rate — so the largest cost in a cleaning company was the one nothing could be asked about. «Wie viele Stunden hat Marta im März gemacht» was a phone call, and «was hat dieser Umzug an Leuten gekostet» had no answer at all: the job knew its price, the month knew its payroll, and nothing joined the two. «Arbeitszeit» is one person on one job and carries the four facts that make it a record — who worked, how long, whose money settled it, who carries it. «Löhne» stays, for the payout that really does have nothing behind it',
       ),
       added(
@@ -678,6 +681,7 @@ export const FLOWS: Flow[] = [
         '/admin/invoices',
         'The lists were readable and never portable, so the hand-off to the bookkeeper was a screenshot or a phone call. Both download what the filters left, not everything in the store — an export that ignores the toolbar above it is only discovered to be wrong after the file is opened. CSV rather than the app’s own PDF writer, which is one page and does not paginate: the rows that fell off the bottom would go silently',
       ),
+      ok('Open one cost', '/admin/expenses/exp_1', 'Where a receipt, a supplier and a payment method are read rather than counted'),
       added(
         'Settle a cost, and say how',
         '/admin/expenses',
@@ -832,7 +836,7 @@ export const FLOWS: Flow[] = [
       added(
         'Moved up a plan',
         '/account/plan',
-        'The old exit was a row of links to /contact?abo=<id> — a contact form that never read the parameter, so the plan the customer picked was lost on arrival. It is the same subscription now: new package, term restarted, visits reset, and an invoice carrying the credit as its own line. The credit is the unused visits at what they paid per visit on the old plan — arithmetic off their own receipt, not a rate we chose, but §21.7 is still open on whether the business credits them at all',
+        'The old exit was a row of links to /contact?plan=<id> — a contact form that never read the parameter, so the plan the customer picked was lost on arrival. It is the same subscription now: new package, term restarted, visits reset, and an invoice carrying the credit as its own line. The credit is the unused visits at what they paid per visit on the old plan — arithmetic off their own receipt, not a rate we chose, but §21.7 is still open on whether the business credits them at all',
       ),
       open(
         'Move down a plan',
@@ -1277,10 +1281,13 @@ export const FLOWS: Flow[] = [
     actors: ['applicant', 'owner'],
     entries: [
       ok('Application', '/jobs/apply', 'The work permit is the first question'),
+      ok('A posting', '/jobs/reinigungskraft-teilzeit', 'What the role actually is, before anybody fills in a form'),
       ok('Speculative application', '/jobs', 'When no position is open'),
       ok('Create a job', '/admin/postings'),
+      ok('Edit a posting', '/admin/postings/reinigungskraft-teilzeit', 'Closing one stops it taking applications without deleting the ones it already took'),
     ],
     actions: [
+      ok('Sent, with a reference', '/jobs/apply/sent', 'The number the status page asks for'),
       ok('Check the status', '/jobs/status'),
       ok(
         'Review, reject, delete',
@@ -1366,6 +1373,151 @@ export const FLOWS: Flow[] = [
       open(
         'Reassigning a deactivated person’s future jobs',
         'Deactivating warns that N jobs are still assigned and links to the calendar, but does not move them. Whether those should be unassigned automatically, held for the same person, or refused until reassigned is a decision about a customer’s Tuesday, not about an account',
+      ),
+    ],
+  },
+  {
+    /*
+     * The customer looking after their own account.
+     *
+     * Eight screens under /account and no flow. `crm` is the office reading the
+     * same records from the other side, which is a different journey with
+     * different exits — the customer cannot see another customer, cannot price
+     * anything, and is the only actor who can withdraw consent for a
+     * photograph. The board had the office's half and not theirs.
+     */
+    id: 'account',
+    en: 'A customer looking after their own account',
+    actors: ['customer'],
+    entries: [
+      ok('The dashboard', '/account', 'What is happening now — the next visit, anything owed, anything waiting on them'),
+      ok('Their requests', '/account/requests', 'Every request they have sent, with what became of it'),
+      ok('Their quotes', '/account/quotes', 'Including the expired ones, because «why can I not accept this» is a question the list has to answer'),
+    ],
+    actions: [
+      ok('Accept or decline a quote', '/quote/off_1', 'The one screen where a customer commits money'),
+      ok('Edit one property', '/account/properties/prp_2', 'Size and access are what a quote is priced from, so they are the customer’s to correct'),
+      ok('Look after their properties', '/account/properties', 'Address, size, access — the facts a quote is priced from'),
+      ok('Change how they are reached', '/account/profile', 'Operational mail is not optional and the screen says so rather than offering a switch that does nothing'),
+      ok('Pay an invoice', '/account/invoices', 'Card, TWINT or the QR bill'),
+      ok('Manage the plan', '/account/plan', 'Skip a visit, pause, or cancel inside the cooling-off window'),
+      ok('Withdraw consent for a photograph', '/account/requests/req_3', 'The customer is the only actor who can, and it empties the public gallery entry the same moment'),
+      ok('Write to the office', '/account/messages', 'One thread per reference, so a question about an invoice is not filed with a question about a booking'),
+    ],
+    exits: [
+      ok('A booked job', '/account/requests/req_acc_h4', 'The request that became work, with its date and its crew'),
+      ok('A review left', '/account/review', 'Only for jobs that are finished, and only once'),
+      ok('The plan ended', '/account/plan', 'Inside the window it is refunded; outside it runs to the end of the term'),
+      open(
+        'Closing the account',
+        'Section 15 lets a customer close their own, and `status: inactive` is the state it produces — but nothing on /account writes it. It is the one thing on this list where the customer half is missing and the office half works: the panel can archive them, they cannot leave. What that should do to an open plan is the question underneath it',
+      ),
+    ],
+  },
+  {
+    /*
+     * The funnel, and it was the one flow nobody had written down.
+     *
+     * Eleven marketing screens were reachable from the board only as *screens*
+     * — /services, /pricing, /areas/<slug>, the legal pages, the 404. `/flows`
+     * asks a different question than `/screens` does: not "does it exist" but
+     * "can you get in, act, and get out". For the marketing site that question
+     * is the whole business case, because every request the company ever gets
+     * starts on one of these pages.
+     */
+    id: 'visit',
+    en: 'A visitor arriving and asking for a price',
+    actors: ['visitor'],
+    entries: [
+      ok('The home page', '/', 'Where the coverage check sits, so the first question a visitor has — «do you come to me?» — is answered above the fold'),
+      ok('A service page', '/services/umzugsreinigung', 'The seven pages search sends people to. Each one carries the «what is not included» block the brief refuses to let anybody cut'),
+      ok('A municipality page', '/areas/kuesnacht', '§6 makes these eight the entire local search surface — and deliberately not Zurich'),
+      ok('A guide', '/blog/wohnungsabgabe-checkliste', 'The other half of search: somebody typing «Wohnungsabgabe Checkliste» at eleven at night, three days before they move'),
+      ok('Somebody pasted a link', '/pricing', 'Every page carries the same header, so no page is a place you can only arrive at'),
+    ],
+    actions: [
+      ok('Check the postcode', '/', 'A gate, not a label — an address outside the eight is refused where it is typed, not three screens later'),
+      ok('Compare the plans', '/plans', 'The tiles read from the store, so a plan the office retires stops being advertised'),
+      ok('Read what a job costs', '/pricing', 'One hourly rate, and the surcharges named as their own lines rather than folded into a total'),
+      ok('Look at the work', '/work', 'Before and after, and only where §20.6 consent was recorded — which is why the page can be empty'),
+      ok('Read who they are dealing with', '/about', 'One person, one area — the page the whole trust argument rests on'),
+      ok('Read the small print', '/legal/agb', 'German only, deliberately: a machine-translated contract is worse than none'),
+    ],
+    exits: [
+      ok('Into the request flow', '/request/service', 'The one conversion this site is built for'),
+      ok('A message sent, and confirmed', '/thank-you', 'With a reference to quote, because a promise nobody can chase is not one'),
+      ok('A message instead', '/contact', 'For the people who will not fill in a nine-step wizard, which is most of them on a phone'),
+      ok('A wrong URL', '/diese-seite-gibt-es-nicht', 'The designed 404, with the ways back on it — not the framework’s bare page'),
+      open(
+        'Leaving and coming back',
+        'Nothing is remembered between visits except the request draft, which is keyed to this browser. A visitor who read three service pages on Tuesday arrives on Thursday to the same site as a stranger. Whether that is worth a cookie is a question about what the business wants to know about people who have not asked for anything yet',
+      ),
+    ],
+  },
+  {
+    /*
+     * Getting in, which had four screens and no flow.
+     *
+     * It is the one journey where every unhappy path is a support call: a link
+     * that expired, an account nobody activated, a password reset that went to
+     * an address the person no longer reads. The board carried none of them.
+     */
+    id: 'auth',
+    en: 'Getting into an account',
+    actors: ['customer', 'owner', 'contractor'],
+    entries: [
+      ok('Ask for a link', '/sign-in', '§13 — a magic link rather than a password, because a cleaning customer signs in twice a year and a password they set in March is a password they have forgotten by June'),
+      ok('Activate a new account', '/activate-account', 'The account the office created for somebody it took a request from over the telephone'),
+      ok('Set a password', '/password', 'The path for the accounts that do have one — the team'),
+      ok('The panel has its own door', '/admin/sign-in', 'Outside the gated area, so it is the one admin screen a signed-out person can open'),
+    ],
+    actions: [
+      ok('Switch who you are', '/', 'The demo bar’s role control, which is what stands in for signing in at all — this prototype has no session'),
+      ok('Reach a gated screen', '/account/requests', 'Every screen under /account and /admin refuses a reader in the wrong role, and says which role it wants'),
+    ],
+    exits: [
+      ok('Into the account', '/account', 'The dashboard the link lands on'),
+      ok('Into the panel', '/admin', 'For the roles that may open it'),
+      ok('Refused, with a reason', '/admin/customers', 'The access gate names the right that is missing rather than saying «no»'),
+      open(
+        'The link actually arrives',
+        'No email leaves this app — the sign-in screen says a link was sent and the demo bar is what actually changes who you are. Everything downstream of that is real: the roles, the gates and the per-right refusals. What is missing is the delivery, and it is missing everywhere the product sends mail',
+      ),
+      open(
+        'A link that expired',
+        '`issuePasswordReset` stamps a link with `RESET_LINK_HOURS` and the users screen shows when it runs out, but no screen consumes one — so «this link has expired» is a state the record can express and nobody can reach. It needs the sign-in screen to take a token, which needs the mail that carries it',
+      ),
+    ],
+  },
+  {
+    /*
+     * The Protokoll, which every other flow writes to and none of them read.
+     *
+     * `logChange` is called from forty places. Until this entry the board had
+     * no row for the screen that answers the question all of them exist to
+     * answer: «since when has Saturday cost 25%, and who decided that?»
+     */
+    id: 'changelog',
+    en: 'Finding out what changed',
+    actors: ['owner'],
+    entries: [
+      ok('Open the log', '/admin/changelog', 'Every price, rule, catalogue and content change lands here'),
+      ok('From a person', '/admin/users', 'A team member’s record links into the log filtered to what they did'),
+      ok('Search the whole panel', '/admin/search', 'The command palette reaches the record itself rather than the log entry about it'),
+    ],
+    actions: [
+      ok('Filter by who', '/admin/changelog', 'The question is nearly always about a person, not a date'),
+      ok('Read what a settings change was', '/admin/settings', 'Autosaving screens coalesce their entries, so changing «25» to «30» is one line rather than three'),
+    ],
+    exits: [
+      ok('The answer, with a date and a name', '/admin/changelog'),
+      open(
+        'Undo',
+        'The log says what happened and never puts it back. Reversing a settings change is retyping the old number, which is why the entry records the field rather than the value — a log that implied undo and did not have it would be worse than one that plainly does not',
+      ),
+      open(
+        'What a deleted record said',
+        'An erasure keeps the fact and never the text — a review erased under §20.6 leaves «Review erased on request (1★)» and nothing else. That is the point, and it means the log cannot answer «what did it say» for exactly the records somebody most often asks about',
       ),
     ],
   },

@@ -41,9 +41,9 @@ export default function KeyLogPage({
    * step nothing can link to — /screens and /flows both point at it. Same
    * arrangement as `?action=reject` on a request.
    */
-  searchParams: Promise<{ zurueckgeben?: string }>;
+  searchParams: Promise<{ returnKey?: string }>;
 }) {
-  const { zurueckgeben } = use(searchParams);
+  const { returnKey } = use(searchParams);
   const t = useTranslations('admin.keys');
   const appT = useTranslations('app');
   const statusT = useTranslations('status.key');
@@ -66,7 +66,7 @@ export default function KeyLogPage({
   const [formCustomer, setFormCustomer] = useState('');
   const [status, setStatus] = useState<'all' | KeyStatus>('all');
   const [query, setQuery] = useState('');
-  const [returning, setReturning] = useState<string | null>(zurueckgeben ?? null);
+  const [returning, setReturning] = useState<string | null>(returnKey ?? null);
 
   const customerName = useMemo(() => {
     const byId = new Map(customers.map((c) => [c.id, `${c.lastName}, ${c.firstName}`]));

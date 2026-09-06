@@ -419,6 +419,7 @@ export const adminContentEn: typeof adminContentDe = {
     release: 'Release',
     withdraw: 'Withdraw',
     viewOnSite: 'View on the website',
+    openBooking: 'Open the job',
     openCustomer: 'Open the customer record',
 
     releaseTitle: 'Put this on the website?',

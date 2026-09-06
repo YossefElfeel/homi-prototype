@@ -43,7 +43,7 @@ import type { Plan, Subscription } from '@/mock/schema';
  * offer, what would the bigger one give me, how does mine compare — was
  * answered only on the marketing site, signed out, and both controls that
  * pointed that way left the account. "Change plan" pointed at
- * `/contact?abo=<id>`, a contact form that never read the parameter, so the
+ * `/contact?plan=<id>`, a contact form that never read the parameter, so the
  * package the customer picked was lost on arrival.
  *
  * So the screen is two halves now. Above: the packages held, one card per

@@ -157,7 +157,7 @@ function Rail({ plans: shown, compact }: { plans: Plan[]; compact: boolean }) {
 
             <div className="mt-7 flex-1" />
             <Button asChild block variant={featured ? 'primary' : 'secondary'}>
-              <Link href={`/request?abo=${plan.id}`}>{t('cta')}</Link>
+              <Link href={`/request?plan=${plan.id}`}>{t('cta')}</Link>
             </Button>
           </li>
         );

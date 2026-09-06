@@ -19,9 +19,11 @@ import { cn } from '@/lib/cn';
 export default function ServiceStep({
   searchParams,
 }: {
-  searchParams: Promise<{ leistung?: string; abo?: string; plz?: string }>;
+  searchParams: Promise<{ service?: string; plan?: string; postcode?: string }>;
 }) {
-  const { leistung, abo, plz } = use(searchParams);
+  /* The URL keys are English like every other part of the address; the
+     local names are left alone so the rest of the file does not move. */
+  const { service: leistung, plan: abo, postcode: plz } = use(searchParams);
   const t = useTranslations('booking.service');
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();

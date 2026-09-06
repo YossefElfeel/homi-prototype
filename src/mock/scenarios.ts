@@ -5751,7 +5751,7 @@ function blogPosts(now: Date): BlogPost[] {
           'Wir übernehmen die Abgabe inklusive Backofen, Storen und Kühlschrank — mit schriftlicher Abnahmegarantie.',
           'We take on the handover including the oven, the blinds and the fridge — with a written guarantee.',
           ['Offerte anfragen', 'Request a quote'],
-          '/request?leistung=umzugsreinigung',
+          '/request?service=umzugsreinigung',
         ),
       ],
     },
