@@ -457,8 +457,6 @@ export const adminContentEn: typeof adminContentDe = {
     lead: 'Every review is released by you before it appears on the website.',
     search: 'Search',
     searchPlaceholder: 'Text, reply or name',
-    filterState: 'State',
-    filterAll: 'All',
     filterEmptyTitle: 'No review matches',
     filterEmptyBody:
       'Nothing survives this search and this state. The reviews are there — just not these.',
@@ -479,8 +477,6 @@ export const adminContentEn: typeof adminContentDe = {
     hiddenDone: 'The review is no longer on the website.',
     published: 'Review published.',
     rejected: 'Review not published.',
-    tabPublished: 'On the website',
-    tabUnpublished: 'Not published',
     tabDeleted: 'Deleted',
 
     restoreFromBin: 'Restore',

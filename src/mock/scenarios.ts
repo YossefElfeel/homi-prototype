@@ -2796,6 +2796,29 @@ function baseData(now: Date): DataSet {
     },
     {
       /*
+       * Refused, so the «Abgelehnt» tab is not empty on arrival.
+       *
+       * It is reachable without this — one click on «Ablehnen» in the queue —
+       * but that means changing the demo to see a state, which is the thing
+       * every other tab on this screen was seeded to avoid. A review the
+       * office declined to publish is also a perfectly ordinary record: this
+       * one names a competitor, which is the commonest honest reason.
+       */
+      id: 'rev_rejected',
+      /* Not `bkg_3`: that is the demo account's last unreviewed job, and
+         taking it away leaves the customer-side «Bewertung abgeben» flow with
+         no reachable entry. `seed-test` caught that too — three invariants on
+         one seeded row, which is the argument for the test in one line. */
+      bookingId: 'bkg_11',
+      customerId: 'cus_m5',
+      rating: 4,
+      text: 'Fenster gut gemacht. Preislich fand ich Blitzblank Meilen aber deutlich günstiger.',
+      status: 'rejected',
+      submittedAt: iso(days(now, -10)),
+      publishConsent: true,
+    },
+    {
+      /*
        * In the bin, so the third tab has something in it.
        *
        * Exactly the failure the customer archive had until wave 90: a tab

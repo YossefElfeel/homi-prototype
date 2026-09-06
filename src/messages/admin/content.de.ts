@@ -465,8 +465,6 @@ export const adminContentDe = {
        würde. */
     search: 'Suchen',
     searchPlaceholder: 'Text, Antwort oder Name',
-    filterState: 'Status',
-    filterAll: 'Alle',
     filterEmptyTitle: 'Keine Bewertung passt dazu',
     filterEmptyBody:
       'Mit dieser Suche und diesem Status bleibt nichts übrig. Die Bewertungen sind da — nur nicht diese.',
@@ -492,8 +490,6 @@ export const adminContentDe = {
     hiddenDone: 'Bewertung ist nicht mehr auf der Website.',
     published: 'Bewertung veröffentlicht.',
     rejected: 'Bewertung nicht veröffentlicht.',
-    tabPublished: 'Auf der Website',
-    tabUnpublished: 'Nicht veröffentlicht',
     tabDeleted: 'Gelöscht',
 
     delete: 'Löschen',
