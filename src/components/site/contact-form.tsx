@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea, Checkbox } from '@/components/ui/field';
+import { useNow, useStore } from '@/mock/store';
 
 type State = 'idle' | 'sending';
 type Errors = Partial<Record<'name' | 'email' | 'message' | 'consent', string>>;
@@ -24,6 +25,8 @@ export function ContactForm() {
   const t = useTranslations('site.contact');
   const form = useTranslations('form');
   const router = useRouter();
+  const now = useNow();
+  const submitEnquiry = useStore((st) => st.submitEnquiry);
   const [state, setState] = useState<State>('idle');
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState(false);
@@ -55,8 +58,28 @@ export function ContactForm() {
     }
 
     setState('sending');
-    // Mock only — no request leaves the browser.
-    window.setTimeout(() => router.push('/danke'), 900);
+    /*
+     * The message is written down now.
+     *
+     * This was `setTimeout(() => router.push('/danke'))` with a comment saying
+     * no request leaves the browser — true, and it left the office with
+     * nothing. /danke tells the visitor we answer within 24 hours, so the form
+     * was making a promise about a message that existed for 900ms in a closure
+     * and then did not exist at all. The reference goes into the URL because
+     * a promise you cannot quote back is not one somebody can chase.
+     */
+    const { reference } = submitEnquiry(
+      {
+        name: String(data.get('name') ?? ''),
+        email: String(data.get('email') ?? ''),
+        phone: String(data.get('phone') ?? ''),
+        subject: String(data.get('subject') ?? ''),
+        message: String(data.get('message') ?? ''),
+        consent: Boolean(data.get('consent')),
+      },
+      now,
+    );
+    window.setTimeout(() => router.push(`/danke?ref=${reference}`), 600);
   }
 
   function revalidate(event: React.FormEvent<HTMLFormElement>) {

@@ -5,6 +5,47 @@
  * anyone would review it.
  */
 export const adminCrmDe = {
+  /* Bildschirm 84 — was das Kontaktformular geschickt hat. */
+  enquiries: {
+    title: 'Kontaktanfragen',
+    lead: 'Was über das Formular auf /kontakt hereinkommt. Beantwortet wird per Mail oder Telefon — hier steht, was offen ist und was erledigt.',
+    tabNew: 'Offen',
+    tabAnswered: 'Beantwortet',
+    tabDeleted: 'Gelöscht',
+    search: 'Anfrage suchen',
+    searchPlaceholder: 'Name, E-Mail, Betreff oder Referenz',
+
+    /* Die Zahl kommt aus den Einstellungen, nicht aus einer Konstante hier:
+       ändert sich die zugesagte Antwortzeit, wandert diese Warnung mit. */
+    overdueTitle: 'Über der zugesagten Zeit',
+    overdueBody:
+      'Auf /kontakt steht, dass wir uns innerhalb von {hours} Stunden melden. Diese Anfrage liegt länger.',
+
+    markAnswered: 'Als beantwortet markieren',
+    reopen: 'Wieder öffnen',
+    convert: 'Zu Kunde machen',
+    delete: 'Löschen',
+    restore: 'Zurückholen',
+
+    answeredBy: 'Beantwortet von {name} am {date}',
+    becameCustomer: 'Daraus wurde ein Kundendatensatz — öffnen',
+
+    answeredDone: '{ref} ist beantwortet.',
+    reopenDone: '{ref} ist wieder offen.',
+    convertDone: 'Kundendatensatz für {name} angelegt.',
+    deleteDone: '{ref} ist gelöscht.',
+    restoreDone: '{ref} ist zurück.',
+
+    deleteTitle: 'Anfrage löschen?',
+    deleteBody:
+      'Die Anfrage wandert in den Tab «Gelöscht» und lässt sich von dort zurückholen. Für Werbepost ist das der übliche Weg.',
+
+    emptyTitle: 'Noch keine Anfragen',
+    emptyBody:
+      'Sobald jemand das Formular auf /kontakt abschickt, steht die Nachricht hier — mit Referenz, damit sie am Telefon auffindbar ist.',
+    tabEmptyTitle: 'Nichts in diesem Tab',
+    tabEmptyBody: 'Hier ist gerade nichts. Die anderen Tabs oben führen weiter.',
+  },
   customers: {
     title: 'Kunden',
     lead: 'Wer bei uns gebucht hat, mit Objekten, Abos und Verlauf. Archivierte bleiben lesbar.',

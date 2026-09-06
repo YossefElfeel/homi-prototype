@@ -70,6 +70,10 @@ const ICONS: Record<AdminPermission, LucideIcon> = {
   calendar: CalendarDays,
   customers: Users,
   messages: Mail,
+  /* An inbox tray, not a second envelope. The envelope above it is a thread
+     with somebody already on file; this is post from a stranger, and two
+     identical glyphs in one group would say they are the same job. */
+  enquiries: Inbox,
   properties: Home,
   keys: KeyRound,
   subscriptions: RefreshCw,

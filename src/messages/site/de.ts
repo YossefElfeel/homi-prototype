@@ -409,6 +409,7 @@ export const siteDe = {
       'Hier entstehen Antworten auf die Fragen, die uns am häufigsten gestellt werden. Bis dahin: rufen Sie an, wir erklären es Ihnen direkt.',
   },
   thanks: {
+    reference: 'Ihre Referenz:',
     meta: { title: 'Danke' },
     title: 'Danke — das ist bei uns angekommen.',
     lead: 'Wir melden uns innert 24 Stunden.',

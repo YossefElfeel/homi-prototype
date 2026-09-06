@@ -1496,6 +1496,18 @@ export const ADMIN_PERMISSIONS = [
   'calendar',
   'customers',
   'messages',
+  /*
+   * What the contact form sent, which is a right of its own rather than a
+   * corner of `messages`.
+   *
+   * They look adjacent and are not the same thing. `messages` is a thread with
+   * somebody already on file — a customer discussing a booking. This is post
+   * from a stranger, and it carries an email address and a phone number given
+   * by somebody who is not a customer and may never be one. Reading one does
+   * not imply reading the other, and the two would be granted to different
+   * people in an office of three.
+   */
+  'enquiries',
   'properties',
   'keys',
   'subscriptions',
@@ -1762,7 +1774,73 @@ export interface Settings {
 }
 
 
-/* ---- the Ratgeber (§17.3) -------------------------------------------- */
+
+/* ---- what the contact form sends (§8) --------------------------------- */
+
+/**
+ * Where an enquiry has got to.
+ *
+ * Two states and a bin, and the shape is copied from the review moderation on
+ * purpose — somebody who has learned one inbox has learned the other. `new` is
+ * nobody has looked; `answered` is somebody dealt with it, by phone or by mail,
+ * outside this app. There is deliberately no `inProgress`: an enquiry is read
+ * and answered in one sitting, and a third state nothing writes is the lie
+ * `status-registry.ts` exists to prevent.
+ */
+export type EnquiryStatus = 'new' | 'answered';
+
+/**
+ * One submission of the contact form.
+ *
+ * This record did not exist. `contact-form.tsx` validated six fields, showed a
+ * spinner and pushed to /danke with a comment saying «Mock only — no request
+ * leaves the browser» — so a visitor was told, on a page built for the purpose,
+ * that somebody would come back to them within 24 hours about a message that
+ * had never been written down anywhere. That is the worst class of gap in this
+ * prototype: not a missing screen, but a promise the product makes and cannot
+ * keep.
+ *
+ * Separate from `CustomerMessage`, which is a thread with somebody the business
+ * already has on file. This is from a stranger: there is no customer id to hang
+ * it on, and inventing one — creating a customer record because somebody filled
+ * in a form — would put people in the CRM who never became customers.
+ */
+export interface Enquiry {
+  id: ID;
+  reference: string;
+  name: string;
+  email: string;
+  /** Optional on the form, and genuinely optional: an email is enough to reply. */
+  phone?: string;
+  /** Optional. Empty means the office reads the first line of the message. */
+  subject?: string;
+  message: string;
+  /**
+   * §20.6 — the tick that has to be there before anything is stored.
+   *
+   * Kept on the record rather than checked and discarded, because "did this
+   * person agree to us holding their details" is a question that gets asked
+   * months later, and the honest answer has to come from the record.
+   */
+  consent: boolean;
+  receivedAt: ISODate;
+  status: EnquiryStatus;
+  /** Who dealt with it, so «wer hat da geantwortet?» has an answer. */
+  answeredBy?: ID;
+  answeredAt?: ISODate;
+  /** In the bin, recoverable — same rule as a review. */
+  deletedAt?: ISODate;
+  /**
+   * The customer this turned into, once it did.
+   *
+   * The commercial point of the inbox: an enquiry is a lead, and the exit from
+   * a lead is a customer record. Set, the row stops being something to answer
+   * and starts being something that worked.
+   */
+  customerId?: ID;
+}
+
+/* ---- the blog (§17.3) -------------------------------------------- */
 
 /**
  * A post is either being written or it is on the website. Two states, and no

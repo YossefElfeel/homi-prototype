@@ -1,6 +1,44 @@
 import type { adminCrmDe } from './crm.de';
 
 export const adminCrmEn: typeof adminCrmDe = {
+  enquiries: {
+    title: 'Contact enquiries',
+    lead: 'What comes in through the form on /kontakt. Answering happens by mail or phone — this says what is open and what is done.',
+    tabNew: 'Open',
+    tabAnswered: 'Answered',
+    tabDeleted: 'Deleted',
+    search: 'Search enquiries',
+    searchPlaceholder: 'Name, email, subject or reference',
+
+    overdueTitle: 'Past the promised time',
+    overdueBody:
+      '/kontakt says we come back within {hours} hours. This one has been here longer.',
+
+    markAnswered: 'Mark as answered',
+    reopen: 'Reopen',
+    convert: 'Turn into a customer',
+    delete: 'Delete',
+    restore: 'Restore',
+
+    answeredBy: 'Answered by {name} on {date}',
+    becameCustomer: 'This became a customer record — open it',
+
+    answeredDone: '{ref} is answered.',
+    reopenDone: '{ref} is open again.',
+    convertDone: 'Customer record created for {name}.',
+    deleteDone: '{ref} is deleted.',
+    restoreDone: '{ref} is back.',
+
+    deleteTitle: 'Delete this enquiry?',
+    deleteBody:
+      'It moves to the «Deleted» tab and can be brought back from there. For marketing post that is the usual route.',
+
+    emptyTitle: 'No enquiries yet',
+    emptyBody:
+      'As soon as somebody submits the form on /kontakt, the message is here — with a reference, so it can be found when they ring.',
+    tabEmptyTitle: 'Nothing in this tab',
+    tabEmptyBody: 'Nothing here right now. The other tabs above lead on.',
+  },
   customers: {
     title: 'Customers',
     lead: 'Everyone who has booked, with their properties, plans and history. Archived customers stay readable.',

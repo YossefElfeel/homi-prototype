@@ -51,6 +51,7 @@ import type {
   ISODate,
   BlogPost,
   BlogStatus,
+  EnquiryStatus,
 } from './schema';
 import { SEED_ADDONS, SEED_PLANS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { defaultFor, planDelete, textFor } from '@/lib/templates';
@@ -357,7 +358,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 37;
+const SCHEMA_VERSION = 38;
 
 /**
  * §10 — the default payment term.
@@ -1278,7 +1279,43 @@ interface StoreState {
    */
   setServices: (services: Service[]) => void;
 
-  /* ---- the Ratgeber (§17.3) ----
+  /* ---- contact enquiries (§8) ----
+     The form validated six fields, showed a spinner and pushed to /danke —
+     and threw the message away. So the site promised an answer within 24
+     hours about something nothing had written down. */
+  /**
+   * A message from the contact form.
+   *
+   * Returns the reference so /danke can print it. A visitor who is told
+   * «wir melden uns» and given nothing to quote has no way to follow it up,
+   * and the office has no way to find it when they ring.
+   */
+  submitEnquiry: (
+    input: {
+      name: string;
+      email: string;
+      phone?: string;
+      subject?: string;
+      message: string;
+      consent: boolean;
+    },
+    now: Date,
+  ) => { id: ID; reference: string };
+  setEnquiryStatus: (id: ID, status: EnquiryStatus, now: Date) => void;
+  /** Into the bin, recoverable — the same rule a review follows. */
+  deleteEnquiry: (id: ID, now: Date) => void;
+  restoreEnquiry: (id: ID) => void;
+  /**
+   * The lead becomes a customer.
+   *
+   * The exit the inbox exists for. Creates the record from what the form
+   * already knows and links the two, so the enquiry stops being something to
+   * answer and becomes something that worked — and so the customer's history
+   * starts at the message that began it rather than at the first invoice.
+   */
+  convertEnquiry: (id: ID, now: Date) => ID | null;
+
+  /* ---- the blog (§17.3) ----
      The website had no way to say anything that was not a price. A cleaning
      company's cheapest marketing is answering, in public, the questions it
      answers on the phone twenty times a week — and there was nowhere to put
@@ -4623,6 +4660,144 @@ export const useStore = create<StoreState>()(
           summary: `Setting changed: ${keys.join(', ')}`,
           coalesce: true,
         });
+      },
+
+      submitEnquiry: (input, now) => {
+        const id = `enq_${now.getTime().toString(36)}`;
+        /* Numbered in its own run, like an invoice or a request. «Ich habe
+           gestern geschrieben» is not something the office can search for;
+           «KA-2026-0007» is. */
+        const seq = get().data.enquiries.length + 1;
+        const reference = `KA-${now.getFullYear()}-${String(seq).padStart(4, '0')}`;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: [
+              {
+                id,
+                reference,
+                name: input.name.trim(),
+                email: input.email.trim(),
+                phone: input.phone?.trim() || undefined,
+                subject: input.subject?.trim() || undefined,
+                message: input.message.trim(),
+                consent: input.consent,
+                receivedAt: now.toISOString(),
+                status: 'new' as const,
+              },
+              ...s.data.enquiries,
+            ],
+          },
+        }));
+        return { id, reference };
+      },
+
+      setEnquiryStatus: (id, status, now) => {
+        const member = get().demo.currentMemberId;
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id
+                ? {
+                    ...e,
+                    status,
+                    /* Who and when, but only on the way *to* answered.
+                       Reopening keeps them: «Marta hat am 3. geantwortet, und
+                       am 5. kam es zurück» is the story, and clearing the
+                       fields would delete half of it. */
+                    answeredBy: status === 'answered' ? member : e.answeredBy,
+                    answeredAt: status === 'answered' ? now.toISOString() : e.answeredAt,
+                  }
+                : e,
+            ),
+          },
+        }));
+        const next = get().data.enquiries.find((e) => e.id === id);
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${next?.reference ?? id} marked ${status}`,
+        });
+      },
+
+      deleteEnquiry: (id, now) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id ? { ...e, deletedAt: now.toISOString() } : e,
+            ),
+          },
+        }));
+        const gone = get().data.enquiries.find((e) => e.id === id);
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${gone?.reference ?? id} deleted`,
+        });
+      },
+
+      restoreEnquiry: (id) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id ? { ...e, deletedAt: undefined } : e,
+            ),
+          },
+        }));
+        const back = get().data.enquiries.find((e) => e.id === id);
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${back?.reference ?? id} restored`,
+        });
+      },
+
+      convertEnquiry: (id, now) => {
+        const enquiry = get().data.enquiries.find((e) => e.id === id);
+        if (!enquiry || enquiry.customerId) return null;
+
+        /* The form asks for one name, and `Customer` wants two. Splitting on
+           the last space is a guess, and it is the right kind of guess: the
+           office opens the record next and can fix it, whereas refusing to
+           convert until somebody re-types a name they already gave is a step
+           that buys nothing. */
+        const parts = enquiry.name.trim().split(/\s+/);
+        const lastName = parts.length > 1 ? parts[parts.length - 1]! : '';
+        const firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : enquiry.name.trim();
+
+        const customerId = get().createCustomer(
+          {
+            firstName,
+            lastName,
+            email: enquiry.email,
+            phone: enquiry.phone ?? '',
+            /* The market language, because the form does not ask. The record
+               screen offers it, and guessing from the message text would be a
+               worse guess than the default. */
+            language: 'de',
+            internalNotes: `Aus Kontaktanfrage ${enquiry.reference}: ${enquiry.message}`,
+          },
+          now,
+        );
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id ? { ...e, customerId, status: 'answered' as const } : e,
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${enquiry.reference} became a customer`,
+        });
+        return customerId;
       },
 
       createPost: (now) => {
