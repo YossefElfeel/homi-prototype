@@ -1545,6 +1545,17 @@ export const ADMIN_PERMISSIONS = [
   'addons',
   'coupons',
   'reviews',
+  /*
+   * What the marketing site shows of the work, which is a right of its own and
+   * not a corner of `bookings`.
+   *
+   * §20.6 makes a photograph internal by default and publishing it a decision
+   * about somebody else's home. The person who schedules a job and the person
+   * who decides that a picture of a customer's kitchen goes on the website are
+   * not the same job, and letting one imply the other would make a dispatcher
+   * a publisher.
+   */
+  'gallery',
   'templates',
   'applications',
   'postings',

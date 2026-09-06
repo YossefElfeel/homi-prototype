@@ -358,7 +358,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 38;
+const SCHEMA_VERSION = 39;
 
 /**
  * §10 — the default payment term.
@@ -1278,6 +1278,25 @@ interface StoreState {
    * from the seed and move at the next build.
    */
   setServices: (services: Service[]) => void;
+
+  /* ---- the gallery (§20.6) ----
+     `publishConsent` was written by exactly one screen: the customer's own
+     request page, where they tick or untick it. So the office could see the
+     flag and never set it — and «die Kundin hat am Telefon zugestimmt» had
+     nowhere to go. */
+  /**
+   * Release a piece of work onto /referenzen, or take it back.
+   *
+   * Both photographs at once, because the pair is what the customer agreed to:
+   * a released «after» beside an unreleased «before» is one photograph
+   * published without permission, not half a work.
+   *
+   * This asserts that consent *exists* — it does not create it. §20.6 wants it
+   * recorded and in writing; the screen says so on the confirm, because a
+   * switch that quietly publishes somebody's kitchen is the one control in
+   * this panel that could put the business in the wrong.
+   */
+  setWorkReleased: (bookingId: ID, released: boolean) => void;
 
   /* ---- contact enquiries (§8) ----
      The form validated six fields, showed a spinner and pushed to /danke —
@@ -4659,6 +4678,26 @@ export const useStore = create<StoreState>()(
           entityId: keys[0] ?? 'settings',
           summary: `Setting changed: ${keys.join(', ')}`,
           coalesce: true,
+        });
+      },
+
+      setWorkReleased: (bookingId, released) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            photos: s.data.photos.map((p) =>
+              p.bookingId === bookingId && (p.kind === 'before' || p.kind === 'after')
+                ? { ...p, publishConsent: released }
+                : p,
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'photo',
+          entityId: bookingId,
+          summary: released
+            ? `Work released to the gallery (${bookingId})`
+            : `Work withdrawn from the gallery (${bookingId})`,
         });
       },
 

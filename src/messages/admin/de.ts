@@ -34,6 +34,7 @@ export const adminDe = {
       addons: 'Zusatzleistungen',
       coupons: 'Gutscheine',
       reviews: 'Bewertungen',
+      gallery: 'Referenzen',
       templates: 'Vorlagen',
       applications: 'Bewerbungen',
       postings: 'Stellen',

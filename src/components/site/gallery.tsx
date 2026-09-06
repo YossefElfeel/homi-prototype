@@ -12,19 +12,14 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useHydrated, useStore } from '@/mock/store';
 import { SEED_SERVICES } from '@/mock/seed';
 import type { Locale } from '@/i18n/routing';
-import type { Photo } from '@/mock/schema';
+import { releasedWorks, type Work } from '@/lib/gallery';
 
 /** How many works a visitor gets before asking for more. */
 const PAGE = 6;
 
-interface Work {
-  id: string;
-  before: Photo;
-  after: Photo;
-  /** The service the job was booked as. The photos do not carry one, so it is
-      joined through the booking they belong to. */
-  serviceSlug: string | undefined;
-}
+/* The shape moved to `lib/gallery` with the rule that builds it. The booking
+   is the identity — one job, one piece of work — so `work.bookingId` is what
+   the dialog and the grid key on. */
 
 /**
  * Screens 5 and 6 — the gallery grid and the expanded single work.
@@ -61,18 +56,14 @@ export function Gallery() {
   const [service, setService] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
 
-  const works = useMemo(() => {
-    const consented = hydrated ? photos.filter((p) => p.publishConsent) : [];
-    const out: Work[] = [];
-    for (const photo of consented) {
-      if (photo.kind !== 'before' || !photo.bookingId) continue;
-      const after = consented.find((p) => p.bookingId === photo.bookingId && p.kind === 'after');
-      if (!after) continue;
-      const booking = bookings.find((b) => b.id === photo.bookingId);
-      out.push({ id: photo.bookingId, before: photo, after, serviceSlug: booking?.serviceSlug });
-    }
-    return out;
-  }, [hydrated, photos, bookings]);
+  /* The pairing rule lives in `lib/gallery` now — the panel needs the same
+     list to decide what may be shown, and two copies of "a work is a before
+     and an after on one booking" is how the two screens end up disagreeing
+     about how many pieces of work exist. */
+  const works = useMemo(
+    () => (hydrated ? releasedWorks(photos, bookings) : []),
+    [hydrated, photos, bookings],
+  );
 
   /* One entry per service that has released work, in the catalogue's order so
      the row reads like every other service list on the site. */
@@ -140,7 +131,7 @@ export function Gallery() {
 
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((work, i) => (
-          <li key={work.id}>
+          <li key={work.bookingId}>
             <BeforeAfter
               beforeSrc={work.before.src}
               afterSrc={work.after.src}

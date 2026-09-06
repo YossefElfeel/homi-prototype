@@ -378,6 +378,62 @@ export const adminContentDe = {
     save: 'Speichern',
   },
 
+  /* Bildschirm 85 — «Unsere Arbeiten», aus dem Büro. */
+  gallery: {
+    title: 'Referenzen',
+    lead: 'Welche Vorher/Nachher-Paare auf /referenzen erscheinen. Ein Paar ist ein Einsatz — freigegeben wird immer beides zusammen.',
+
+    /* §20.6 ist der ganze Rahmen dieses Bildschirms, also steht er oben und
+       nicht als Beipackzettel an einem Schalter. */
+    consentTitle: 'Fotos sind intern, bis jemand zustimmt',
+    consentBody:
+      'Freigeben heisst hier: die schriftliche Einwilligung der Kundschaft liegt vor. Der Schalter hält das fest — er ersetzt sie nicht.',
+
+    tabReleased: 'Auf der Website',
+    tabWaiting: 'Ohne Freigabe',
+    tabUnpairable: 'Kein Paar',
+
+    before: 'Vorher',
+    after: 'Nachher',
+    unknownCustomer: 'Ohne Kundenzuordnung',
+    unknownService: 'Ohne Leistung',
+
+    release: 'Freigeben',
+    withdraw: 'Zurückziehen',
+    viewOnSite: 'Auf der Website ansehen',
+    openCustomer: 'Kundendatensatz öffnen',
+
+    releaseTitle: 'Auf die Website stellen?',
+    releaseBody:
+      'Beide Bilder dieses Einsatzes erscheinen unter /referenzen. Voraussetzung ist die schriftliche Einwilligung von {name} — mit dem Freigeben bestätigen Sie, dass sie vorliegt.',
+    withdrawTitle: 'Von der Website nehmen?',
+    withdrawBody:
+      'Das Paar verschwindet sofort aus den Referenzen. Die Bilder bleiben am Einsatz erhalten und lassen sich jederzeit wieder freigeben.',
+    releaseDone: 'Der Einsatz steht in den Referenzen.',
+    withdrawDone: 'Der Einsatz ist nicht mehr öffentlich.',
+
+    reason: {
+      context: 'Kontextaufnahme',
+      noPartner: 'Gegenstück fehlt',
+    },
+    reasonBody: {
+      context:
+        'Vom Team aufgenommen, um etwas festzuhalten — eine verschlossene Tür, ein Schaden. War nie für die Website gedacht.',
+      noPartner:
+        'Es gibt nur eine Hälfte. Ein Referenzeintrag braucht ein Vorher und ein Nachher vom selben Einsatz.',
+    },
+
+    emptyTitle: 'Noch keine Fotos',
+    emptyBody:
+      'Sobald das Team bei einem Einsatz Vorher/Nachher-Bilder aufnimmt, stehen sie hier zur Freigabe bereit.',
+    releasedEmptyTitle: 'Noch nichts freigegeben',
+    releasedEmptyBody:
+      'Unter /referenzen steht derzeit nichts. Der Tab «Ohne Freigabe» zeigt, was bereitliegt.',
+    waitingEmptyTitle: 'Nichts offen',
+    waitingEmptyBody: 'Für jedes Paar ist entschieden. Neue Einsätze landen hier.',
+    looseEmptyTitle: 'Alles paart sich',
+    looseEmptyBody: 'Jedes Foto gehört zu einem Vorher/Nachher-Paar.',
+  },
   reviews: {
     title: 'Bewertungen',
     lead: 'Jede Bewertung wird von Ihnen freigegeben, bevor sie auf der Website erscheint.',

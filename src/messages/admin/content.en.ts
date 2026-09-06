@@ -376,6 +376,59 @@ export const adminContentEn: typeof adminContentDe = {
     save: 'Save',
   },
 
+  gallery: {
+    title: 'Our work',
+    lead: 'Which before/after pairs appear on /referenzen. A pair is one job — release always covers both halves.',
+
+    consentTitle: 'Photos are internal until somebody agrees',
+    consentBody:
+      'Releasing here means the customer\u2019s written consent exists. The switch records that — it does not replace it.',
+
+    tabReleased: 'On the website',
+    tabWaiting: 'Not released',
+    tabUnpairable: 'No pair',
+
+    before: 'Before',
+    after: 'After',
+    unknownCustomer: 'No customer linked',
+    unknownService: 'No service',
+
+    release: 'Release',
+    withdraw: 'Withdraw',
+    viewOnSite: 'View on the website',
+    openCustomer: 'Open the customer record',
+
+    releaseTitle: 'Put this on the website?',
+    releaseBody:
+      'Both pictures from this job appear under /referenzen. This requires written consent from {name} — releasing confirms that it exists.',
+    withdrawTitle: 'Take this off the website?',
+    withdrawBody:
+      'The pair leaves the gallery at once. The pictures stay on the job and can be released again at any time.',
+    releaseDone: 'The job is in the gallery.',
+    withdrawDone: 'The job is no longer public.',
+
+    reason: {
+      context: 'Context shot',
+      noPartner: 'Missing counterpart',
+    },
+    reasonBody: {
+      context:
+        'Taken by the crew to record something — a locked door, a damage. Never meant for the website.',
+      noPartner:
+        'Only one half exists. A gallery entry needs a before and an after from the same job.',
+    },
+
+    emptyTitle: 'No photos yet',
+    emptyBody:
+      'As soon as the crew takes before/after pictures on a job, they wait here for release.',
+    releasedEmptyTitle: 'Nothing released yet',
+    releasedEmptyBody:
+      'There is currently nothing on /referenzen. The «Not released» tab shows what is ready.',
+    waitingEmptyTitle: 'Nothing open',
+    waitingEmptyBody: 'Every pair has been decided. New jobs land here.',
+    looseEmptyTitle: 'Everything pairs up',
+    looseEmptyBody: 'Every photo belongs to a before/after pair.',
+  },
   reviews: {
     title: 'Reviews',
     lead: 'Every review is released by you before it appears on the website.',
