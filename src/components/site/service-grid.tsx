@@ -83,7 +83,7 @@ export function ServiceGrid({
       {services.map((service) => (
           <li key={service.slug} className="bg-page">
             <Link
-              href={`/leistungen/${service.slug}`}
+              href={`/services/${service.slug}`}
               className={cn(
                 'group flex h-full flex-col p-7 transition-colors',
                 'hover:bg-accent-subtle focus-visible:bg-accent-subtle',

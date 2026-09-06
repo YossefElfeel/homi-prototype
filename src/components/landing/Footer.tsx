@@ -28,21 +28,21 @@ const SERVICE_SLUGS = SEED_SERVICES.filter(isOffered)
   .sort((a, b) => a.order - b.order)
   .map((s) => s.slug);
 
-/* Index-matched against `t.footer.company`. `/gebiete` sits here because the
+/* Index-matched against `t.footer.company`. `/areas` sits here because the
    eight region pages and their index had no way in from this footer at all —
    only the classic footer carried the area row, so on the shipping theme the
    entire local-SEO surface was reachable by typing a URL. */
 const COMPANY_ROUTES = [
-  "/ueber-uns",
-  "/referenzen",
-  "/preise",
-  "/abos",
-  "/gebiete",
+  "/about",
+  "/work",
+  "/pricing",
+  "/plans",
+  "/areas",
   "/blog",
   "/jobs",
-  "/kontakt",
+  "/contact",
 ];
-const LEGAL_ROUTES = ["/rechtliches/datenschutz", "/rechtliches/agb", "/rechtliches/impressum"];
+const LEGAL_ROUTES = ["/legal/datenschutz", "/legal/agb", "/legal/impressum"];
 
 /**
  * Each account's own mark, not a generic glyph.
@@ -104,7 +104,7 @@ export function Footer() {
               title={t.footer.servicesTitle}
               items={t.footer.services.map((label, i) => ({
                 label,
-                href: `/leistungen/${SERVICE_SLUGS[i] ?? ''}`,
+                href: `/services/${SERVICE_SLUGS[i] ?? ''}`,
               }))}
             />
             <FooterColumn

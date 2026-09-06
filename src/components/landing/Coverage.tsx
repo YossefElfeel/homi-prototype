@@ -59,7 +59,7 @@ export function Coverage() {
 
           <Reveal delay={0.2}>
             <div className="mt-8">
-              <Button href="/anfrage" variant="red" size="md">
+              <Button href="/request" variant="red" size="md">
                 {t.actions.quote}
               </Button>
             </div>

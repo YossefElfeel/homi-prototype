@@ -1,7 +1,7 @@
 import type { Booking, Photo } from '@/mock/schema';
 
 /**
- * What counts as a piece of work on /referenzen, in one place.
+ * What counts as a piece of work on /work, in one place.
  *
  * The rule lived inside the public gallery component, which was fine while the
  * gallery was the only thing that knew it. It is not any more: the office needs

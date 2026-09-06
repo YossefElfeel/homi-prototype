@@ -30,7 +30,7 @@ export function Promises() {
             viewport={inViewLoose}
             transition={{ duration: 0.7, delay: 0.15 }}
           >
-            <Button href="/ueber-uns" variant="red" size="md">
+            <Button href="/about" variant="red" size="md">
               {t.actions.about}
             </Button>
           </motion.div>

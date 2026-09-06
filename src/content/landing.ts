@@ -179,18 +179,18 @@ const germanServiceNames = [
 const en: Content = {
   nav: [
     { label: "Home", href: "/" },
-    { label: "Services", href: "/leistungen" },
-    { label: "Pricing", href: "/preise" },
-    { label: "Plans", href: "/abos" },
+    { label: "Services", href: "/services" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Plans", href: "/plans" },
     /* Its own item rather than a row inside Services: the catalogue behind
-       /leistungen is seven cleaning services priced at one hourly rate, and
+       /services is seven cleaning services priced at one hourly rate, and
        construction is neither. Filing it there would have put a trade with no
        hourly rate under a heading whose whole promise is one. */
-    { label: "Construction", href: "/bau" },
-    { label: "Our work", href: "/referenzen" },
+    { label: "Construction", href: "/construction" },
+    { label: "Our work", href: "/work" },
     { label: "Blog", href: "/blog" },
-    { label: "About us", href: "/ueber-uns" },
-    { label: "Contact", href: "/kontakt" },
+    { label: "About us", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ],
   actions: {
     quote: "Request a quote",
@@ -416,14 +416,14 @@ const en: Content = {
 const de: Content = {
   nav: [
     { label: "Start", href: "/" },
-    { label: "Leistungen", href: "/leistungen" },
-    { label: "Preise", href: "/preise" },
-    { label: "Abos", href: "/abos" },
-    { label: "Bau & Ausbau", href: "/bau" },
-    { label: "Referenzen", href: "/referenzen" },
+    { label: "Leistungen", href: "/services" },
+    { label: "Preise", href: "/pricing" },
+    { label: "Abos", href: "/plans" },
+    { label: "Bau & Ausbau", href: "/construction" },
+    { label: "Referenzen", href: "/work" },
     { label: "Blog", href: "/blog" },
-    { label: "Über uns", href: "/ueber-uns" },
-    { label: "Kontakt", href: "/kontakt" },
+    { label: "Über uns", href: "/about" },
+    { label: "Kontakt", href: "/contact" },
   ],
   actions: {
     quote: "Offerte anfordern",

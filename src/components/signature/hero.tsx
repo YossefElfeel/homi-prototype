@@ -59,13 +59,13 @@ function HeroRaster() {
 
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link href="/anfrage">
+                <Link href="/request">
                   {c.primary}
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="secondary">
-                <Link href="/preise">{c.secondary}</Link>
+                <Link href="/pricing">{c.secondary}</Link>
               </Button>
             </div>
           </div>
@@ -103,13 +103,13 @@ function HeroZuhause() {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link href="/anfrage">
+                <Link href="/request">
                   {c.primary}
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="quiet">
-                <Link href="/preise">{c.secondary}</Link>
+                <Link href="/pricing">{c.secondary}</Link>
               </Button>
             </div>
           </div>
@@ -149,13 +149,13 @@ function HeroGoldkueste() {
               size="lg"
               className="bg-white text-[var(--brand-navy-900)] hover:bg-white/88"
             >
-              <Link href="/anfrage">
+              <Link href="/request">
                 {c.primary}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </Button>
             <Link
-              href="/preise"
+              href="/pricing"
               className="border-b border-white/35 pb-1 text-sm text-white/80 transition-colors hover:border-white hover:text-white"
             >
               {c.secondary}

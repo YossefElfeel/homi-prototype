@@ -64,39 +64,39 @@ export interface PanelArea {
  * Every gated area of the panel.
  *
  * `/admin` itself is absent on purpose — see the note on `ADMIN_PERMISSIONS`.
- * So are the two screens that hang off no navigation entry: `/admin/suche`
- * follows whatever the reader may already search, and `/admin/anmelden` is
+ * So are the two screens that hang off no navigation entry: `/admin/search`
+ * follows whatever the reader may already search, and `/admin/sign-in` is
  * outside the panel entirely.
  */
 export const AREAS: PanelArea[] = [
-  { permission: 'requests', group: 'operations', href: '/admin/anfragen' },
-  { permission: 'offers', group: 'operations', href: '/admin/offerten' },
-  { permission: 'bookings', group: 'operations', href: '/admin/buchungen' },
-  { permission: 'calendar', group: 'operations', href: '/admin/kalender' },
+  { permission: 'requests', group: 'operations', href: '/admin/requests' },
+  { permission: 'offers', group: 'operations', href: '/admin/quotes' },
+  { permission: 'bookings', group: 'operations', href: '/admin/bookings' },
+  { permission: 'calendar', group: 'operations', href: '/admin/calendar' },
 
-  { permission: 'customers', group: 'customers', href: '/admin/kunden' },
-  { permission: 'messages', group: 'customers', href: '/admin/nachrichten' },
-  { permission: 'enquiries', group: 'customers', href: '/admin/kontaktanfragen' },
-  { permission: 'properties', group: 'customers', href: '/admin/objekte' },
-  { permission: 'keys', group: 'customers', href: '/admin/schluessel' },
-  { permission: 'subscriptions', group: 'customers', href: '/admin/abos' },
+  { permission: 'customers', group: 'customers', href: '/admin/customers' },
+  { permission: 'messages', group: 'customers', href: '/admin/messages' },
+  { permission: 'enquiries', group: 'customers', href: '/admin/enquiries' },
+  { permission: 'properties', group: 'customers', href: '/admin/properties' },
+  { permission: 'keys', group: 'customers', href: '/admin/keys' },
+  { permission: 'subscriptions', group: 'customers', href: '/admin/subscriptions' },
 
-  { permission: 'invoices', group: 'finance', href: '/admin/rechnungen' },
-  { permission: 'expenses', group: 'finance', href: '/admin/ausgaben' },
-  /* The one entry that nests inside another. `/admin/ausgaben/arbeitszeit` is a
-     longer prefix than `/admin/ausgaben`, and `permissionForPath` takes the
+  { permission: 'invoices', group: 'finance', href: '/admin/invoices' },
+  { permission: 'expenses', group: 'finance', href: '/admin/expenses' },
+  /* The one entry that nests inside another. `/admin/expenses/hours` is a
+     longer prefix than `/admin/expenses`, and `permissionForPath` takes the
      longest match — so granting «Ausgaben» does not hand over the hours board,
      and granting the hours board does not hand over the receipts. */
-  { permission: 'workforce', group: 'finance', href: '/admin/ausgaben/arbeitszeit' },
-  { permission: 'analytics', group: 'finance', href: '/admin/finanzen' },
+  { permission: 'workforce', group: 'finance', href: '/admin/expenses/hours' },
+  { permission: 'analytics', group: 'finance', href: '/admin/finance' },
 
-  { permission: 'catalogue', group: 'content', href: '/admin/leistungen' },
+  { permission: 'catalogue', group: 'content', href: '/admin/services' },
   { permission: 'blog', group: 'content', href: '/admin/blog' },
-  { permission: 'addons', group: 'content', href: '/admin/zusatzleistungen' },
-  { permission: 'coupons', group: 'content', href: '/admin/gutscheine' },
-  { permission: 'reviews', group: 'content', href: '/admin/bewertungen' },
-  { permission: 'gallery', group: 'content', href: '/admin/referenzen' },
-  { permission: 'templates', group: 'content', href: '/admin/vorlagen' },
+  { permission: 'addons', group: 'content', href: '/admin/add-ons' },
+  { permission: 'coupons', group: 'content', href: '/admin/coupons' },
+  { permission: 'reviews', group: 'content', href: '/admin/reviews' },
+  { permission: 'gallery', group: 'content', href: '/admin/work' },
+  { permission: 'templates', group: 'content', href: '/admin/templates' },
 
   /*
    * revDSG. An application carries a work permit, a date of birth and whatever
@@ -109,10 +109,10 @@ export const AREAS: PanelArea[] = [
   {
     permission: 'applications',
     group: 'hiring',
-    href: '/admin/bewerbungen',
+    href: '/admin/applications',
     ownerOnly: 'privacy',
   },
-  { permission: 'postings', group: 'hiring', href: '/admin/stellen' },
+  { permission: 'postings', group: 'hiring', href: '/admin/postings' },
 
   /*
    * The right to grant rights.
@@ -125,11 +125,11 @@ export const AREAS: PanelArea[] = [
   {
     permission: 'users',
     group: 'system',
-    href: '/admin/benutzer',
+    href: '/admin/users',
     ownerOnly: 'escalation',
   },
-  { permission: 'settings', group: 'system', href: '/admin/einstellungen' },
-  { permission: 'changelog', group: 'system', href: '/admin/protokoll' },
+  { permission: 'settings', group: 'system', href: '/admin/settings' },
+  { permission: 'changelog', group: 'system', href: '/admin/changelog' },
 ];
 
 const BY_PERMISSION = new Map(AREAS.map((area) => [area.permission, area]));
@@ -208,7 +208,7 @@ export function canOpenPanel(member: TeamMember | undefined): boolean {
  *
  * Longest prefix wins, though today no two areas nest. Matching on the path
  * rather than wiring a guard into each of the fifty-eight page files is the
- * whole reason this is enforceable: a screen added under `/admin/rechnungen`
+ * whole reason this is enforceable: a screen added under `/admin/invoices`
  * next month is gated the moment it exists, by nobody remembering anything.
  */
 export function permissionForPath(pathname: string): AdminPermission | null {

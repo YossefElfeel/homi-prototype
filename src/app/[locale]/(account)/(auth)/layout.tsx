@@ -8,7 +8,7 @@ import { SiteFooter } from '@/components/site/footer';
  * are still visiting the site, and stripping the navigation would strand
  * anyone who arrived at the wrong screen.
  *
- * The account area behind them does the opposite: /konto renders in the app
+ * The account area behind them does the opposite: /account renders in the app
  * shell with no site chrome at all. That split is the point. It used to share
  * this layout, which is why every account screen read as a page on a website
  * rather than a dashboard — and the way back to the site is now an explicit

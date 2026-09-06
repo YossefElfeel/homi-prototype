@@ -698,7 +698,7 @@ function baseData(now: Date): DataSet {
      *
      * `states` has carried all nine since it was written, and nobody opens
      * `states` — the default scenario is `demo`, and its bookings list was
-     * three "Geplant", one "Verrechnet" and one "Storniert". So /admin/buchungen
+     * three "Geplant", one "Verrechnet" and one "Storniert". So /admin/bookings
      * shipped with a status filter whose other six options matched nothing, and
      * the booking screen's approval banner, no-access fee and settled-actions
      * notice could not be looked at without first producing each state by hand.
@@ -1055,7 +1055,7 @@ function baseData(now: Date): DataSet {
       takenAt: iso(days(now, -1)),
     },
     /*
-     * Three finished jobs whose customers signed the consent, so /referenzen
+     * Three finished jobs whose customers signed the consent, so /work
      * has something to be.
      *
      * §20.6 has not moved: a photo reaches the public gallery only with
@@ -2099,7 +2099,7 @@ function baseData(now: Date): DataSet {
      * customer of that age has a back catalogue.
      *
      * All settled on purpose: `new` and `inReview` are the office's open work
-     * and every one of them lands in the queue on /admin/anfragen with a §4.1
+     * and every one of them lands in the queue on /admin/requests with a §4.1
      * deadline attached. Ten more would have put ten fresh rows in front of
      * the owner to stock a customer's search box, which is the tail wagging
      * the dog.
@@ -2149,7 +2149,7 @@ function baseData(now: Date): DataSet {
      * `req_q_revision` has been seeded `revisionRequested` since the queue was
      * written, with no offer anywhere — a request whose status says the
      * customer objected to a price nobody had quoted. Three things followed
-     * from it, all of them on /admin/anfragen/req_q_revision: the lifecycle
+     * from it, all of them on /admin/requests/req_q_revision: the lifecycle
      * rail lit «Änderung angefragt» while leaving «Offerte wird erstellt»
      * before it grey, which draws a hole in the middle of itself; the screen's
      * one constructive button greyed out, because the request counts as
@@ -2223,7 +2223,7 @@ function baseData(now: Date): DataSet {
      * The quote the reported bug was found on.
      *
      * It was seeded `revisionRequested` and nothing else — no note, no reason,
-     * no date — so /admin/offerten/off_acc_revision opened on the warning badge
+     * no date — so /admin/quotes/off_acc_revision opened on the warning badge
      * «Änderung angefragt» with not one sentence anywhere on the page saying
      * what the customer wanted. The office could see that somebody had
      * objected and had no way at all to find out to what.
@@ -2275,7 +2275,7 @@ function baseData(now: Date): DataSet {
     }),
     /* Cancelling a request takes its live quote down with it — the store turns
        a `sent` offer into `rejected` on the way out, and a seed that left this
-       one `sent` would put a signable quote on /konto/offerten for a job the
+       one `sent` would put a signable quote on /account/quotes for a job the
        office had already called off. */
     quoteFor('off_acc_called_off', 'req_acc_called_off', {
       issuedDaysAgo: 8,
@@ -2363,7 +2363,7 @@ function baseData(now: Date): DataSet {
    *
    * Unconsented, unlike those three. §20.6 makes internal the default, and it
    * puts the switch in front of a reviewer in the state that demonstrates it:
-   * ticking it here is what makes a fourth work appear on /referenzen, and
+   * ticking it here is what makes a fourth work appear on /work, and
    * clearing it takes the work away again. That is the whole rule, in two
    * clicks, without hand-editing the store.
    *
@@ -2686,7 +2686,7 @@ function baseData(now: Date): DataSet {
   /*
    * The moderation queue, in the scenario a reviewer actually opens.
    *
-   * `reviews` was `[]` here, so /admin/bewertungen opened on «Noch keine
+   * `reviews` was `[]` here, so /admin/reviews opened on «Noch keine
    * Bewertungen» in `demo` — and that empty state explains itself well enough
    * (customers are asked after payment) that the screen read as finished
    * rather than as never having held a card. Every control on it — the reply
@@ -2916,7 +2916,7 @@ function baseData(now: Date): DataSet {
      * The hiring track, in the scenario the app opens on.
      *
      * Postings and applications used to be seeded only by `hiring`, so
-     * /admin/stellen and /admin/bewerbungen were two empty screens by default
+     * /admin/postings and /admin/applications were two empty screens by default
      * — and the applications screen is owner-only, so the one reviewer who
      * can see it at all was the one who saw nothing. Neither list is a
      * scenario in its own right: an established company has open roles and a
@@ -4208,7 +4208,7 @@ function hiredMembers(now: Date): TeamMember[] {
       role: 'contractor',
       active: true,
       /* Her own week, and nothing that prices it. This is what the field
-         interface leaves out: `/einsatz` shows today and tomorrow, so a
+         interface leaves out: `/job` shows today and tomorrow, so a
          contractor planning around a Thursday had to ring the office. */
       permissions: ['calendar', 'bookings'],
       regions: ['8700', '8706', '8707', '8708', '8712'],
@@ -4269,7 +4269,7 @@ function hiredMembers(now: Date): TeamMember[] {
  * The hiring scenario, on top of the seeded hiring data.
  *
  * The postings, the applications and the two hires used to live here, which
- * meant /admin/bewerbungen and /admin/stellen were two empty screens in the
+ * meant /admin/applications and /admin/postings were two empty screens in the
  * scenario the app opens on — a reviewer had to know the demo bar existed and
  * switch to «Personal» before either screen had anything in it. They are in
  * `baseData` now. What is left here is the part that really is scenario-only:
@@ -4457,7 +4457,7 @@ const EXTRA_PEOPLE: {
 /**
  * The archive — the tab nobody could ever see anything in.
  *
- * `/admin/kunden` has carried an «Archiv» tab since the wave that made
+ * `/admin/customers` has carried an «Archiv» tab since the wave that made
  * archiving what «löschen» means for a customer, and **not one seeded customer
  * had `archivedAt`**. So the tab opened on its empty state on every scenario,
  * for ever, and the only way to put a row in it was to archive somebody off
@@ -5081,7 +5081,7 @@ function financeHistory(now: Date): {
  * hours that *can* be attributed to a job now are. Backfilling a year of
  * labour would mean inventing a year of jobs to hang it on.
  *
- * The owner is not on this list. /admin/finanzen states that his own pay is
+ * The owner is not on this list. /admin/finance states that his own pay is
  * not in the costs — a sole proprietor draws from the profit, so a wage beside
  * the rent would count the same money twice — and seeding his hours here would
  * make that sentence false on the screen it is printed on. The form still
@@ -5347,7 +5347,7 @@ function accountHistory(
      * The collection stop on the one assembly job that became a real booking.
      *
      * A-2515 already carries one, but it expired and never produced a job — so
-     * the block the *crew* reads on `/einsatz/[id]`, and the row the office
+     * the block the *crew* reads on `/job/[id]`, and the row the office
      * reads on the booking, were both branches nothing could reach. This is
      * the same address inside the service area, which is also the ordinary
      * case: most collections are local, and the out-of-area warning stays a
@@ -5428,7 +5428,7 @@ function enquiries(now: Date): Enquiry[] {
       message:
         'Wir suchen für unser Büro in Stäfa (ca. 140 m², 8 Arbeitsplätze) eine wöchentliche Reinigung ab dem neuen Quartal. Können Sie eine Offerte schicken?',
       consent: true,
-      /* Older than the 24 hours /kontakt promises. The list marks it, because
+      /* Older than the 24 hours /contact promises. The list marks it, because
          a promise nobody can see being broken is one nobody fixes. */
       receivedAt: at(31),
       status: 'new',
@@ -5618,7 +5618,7 @@ function blogPosts(now: Date): BlogPost[] {
           'Wir übernehmen die Abgabe inklusive Backofen, Storen und Kühlschrank — mit schriftlicher Abnahmegarantie.',
           'We take on the handover including the oven, the blinds and the fridge — with a written guarantee.',
           ['Offerte anfragen', 'Request a quote'],
-          '/anfrage?leistung=umzugsreinigung',
+          '/request?leistung=umzugsreinigung',
         ),
       ],
     },
@@ -5735,7 +5735,7 @@ function blogPosts(now: Date): BlogPost[] {
           'Unsicher, was für Sie passt? Die Abos lassen sich jederzeit wechseln oder pausieren.',
           'Not sure what fits? Plans can be switched or paused at any time.',
           ['Abos vergleichen', 'Compare plans'],
-          '/abos',
+          '/plans',
         ),
       ],
     },
@@ -6495,7 +6495,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
      *
      * The link is what makes `completed` reachable on the quotes list: with no
      * `offerId`, `off_s_accepted` sat on «Angenommen» for ever while the job it
-     * paid for stood finished two rows away on /admin/buchungen, and the
+     * paid for stood finished two rows away on /admin/bookings, and the
      * scenario whose whole purpose is one record per state had no record for
      * this one.
      */
@@ -7601,7 +7601,7 @@ function rawScenario(name: ScenarioName, now: Date): DataSet {
        * person — happened nowhere. These carry `contactName`/`contactPhone`
        * rather than a `customerId`: an applicant is not a customer, and
        * inventing a customer record to hold a phone number would put them in
-       * /admin/kunden, which is wrong in a way that is hard to undo.
+       * /admin/customers, which is wrong in a way that is hard to undo.
        */
       const interviews: CalendarEvent[] = [
         calendarEvent(now, {

@@ -61,9 +61,9 @@ export function ContactForm() {
     /*
      * The message is written down now.
      *
-     * This was `setTimeout(() => router.push('/danke'))` with a comment saying
+     * This was `setTimeout(() => router.push('/thank-you'))` with a comment saying
      * no request leaves the browser — true, and it left the office with
-     * nothing. /danke tells the visitor we answer within 24 hours, so the form
+     * nothing. /thank-you tells the visitor we answer within 24 hours, so the form
      * was making a promise about a message that existed for 900ms in a closure
      * and then did not exist at all. The reference goes into the URL because
      * a promise you cannot quote back is not one somebody can chase.
@@ -79,7 +79,7 @@ export function ContactForm() {
       },
       now,
     );
-    window.setTimeout(() => router.push(`/danke?ref=${reference}`), 600);
+    window.setTimeout(() => router.push(`/thank-you?ref=${reference}`), 600);
   }
 
   function revalidate(event: React.FormEvent<HTMLFormElement>) {
@@ -88,13 +88,13 @@ export function ContactForm() {
   }
 
   /*
-   * Success is /danke, not a panel drawn in place.
+   * Success is /thank-you, not a panel drawn in place.
    *
    * Screen 12 exists for exactly this moment and nothing reached it: the form
    * confirmed inline, so the one place that tells a visitor what happens next
    * — the three numbered steps, and when to expect an answer — was a URL you
    * had to know. Two designs for one moment, and the shorter one won by
-   * default. The «send another» button goes with the panel; /kontakt is one
+   * default. The «send another» button goes with the panel; /contact is one
    * click away, and a second message is the rarer case than wanting to know
    * whether anyone will call back.
    */
@@ -134,7 +134,7 @@ export function ContactForm() {
               <>
                 {t('consent')}{' '}
                 <Link
-                  href="/rechtliches/datenschutz"
+                  href="/legal/datenschutz"
                   className="underline decoration-from-font underline-offset-4"
                 >
                   {t('consentLink')}

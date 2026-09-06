@@ -160,7 +160,7 @@ export function Header() {
             <div className="ml-auto flex items-center gap-2 sm:gap-3 xl:ml-0">
               <LocaleSwitch tone={stuck ? "dark" : "light"} />
               <span className="hidden sm:block">
-                <Button href="/anfrage" variant="red" size={stuck ? "md" : "lg"}>
+                <Button href="/request" variant="red" size={stuck ? "md" : "lg"}>
                   {t.actions.quote}
                 </Button>
               </span>
@@ -243,7 +243,7 @@ export function Header() {
 
               <div className="mt-auto pt-10">
                 <Button
-                  href="/anfrage"
+                  href="/request"
                   variant="red"
                   className="w-full"
                   onClick={() => setOpen(false)}

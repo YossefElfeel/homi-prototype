@@ -38,7 +38,7 @@ export function CtaBand({ theme }: { theme: Theme }) {
               size="lg"
               className="bg-white text-[var(--brand-navy-900)] hover:bg-white/88"
             >
-              <Link href="/anfrage">
+              <Link href="/request">
                 {t('primary')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -64,7 +64,7 @@ export function CtaBand({ theme }: { theme: Theme }) {
           <p className="mx-auto mt-5 max-w-[52ch] text-lg text-ink-secondary">{t('lead')}</p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">
-              <Link href="/anfrage">
+              <Link href="/request">
                 {t('primary')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -91,7 +91,7 @@ export function CtaBand({ theme }: { theme: Theme }) {
         </div>
         <div className="flex flex-wrap items-center gap-3 lg:col-span-5 lg:justify-end">
           <Button asChild size="lg">
-            <Link href="/anfrage">
+            <Link href="/request">
               {t('primary')}
               <ArrowRight className="size-4" aria-hidden />
             </Link>

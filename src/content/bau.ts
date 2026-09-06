@@ -6,7 +6,7 @@ import type { Locale } from '@/i18n/routing';
  * Deliberately *not* in the message dictionary and deliberately not in the
  * mock store either — and the second one is the distinction that matters.
  *
- * `/referenzen` is customer work: before-and-after pairs joined to a booking,
+ * `/work` is customer work: before-and-after pairs joined to a booking,
  * shown only where §20.6 consent was recorded, and empty by default. These are
  * the company's *own* photographs of its own jobs, so no consent gate applies
  * and no store row governs them. Modelling them as store `Photo`s would have
@@ -19,7 +19,7 @@ import type { Locale } from '@/i18n/routing';
  * is asked to fill more than it can carry.
  */
 export interface WorkPhoto {
-  /** File under /public/bau, without the extension. */
+  /** File under /public/construction, without the extension. */
   slug: string;
   group: WorkGroup;
   width: number;

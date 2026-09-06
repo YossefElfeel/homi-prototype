@@ -179,7 +179,7 @@ Marco Brunner`;
    now a moved job with the notice that told the customer, B-1055 sits inside
    the current month, and two calendar events were added for `done` and
    `cancelled`. A blob from 18 has none of it: every moved booking loses the
-   date it was moved from, so the note on /admin/buchungen/[id] and the one on
+   date it was moved from, so the note on /admin/bookings/[id] and the one on
    the customer's dashboard both vanish, and two legend rows filter to
    nothing. Not a crash — a reviewer quietly looking at the old product.
 
@@ -240,7 +240,7 @@ Marco Brunner`;
    is kept whole and the five never arrive.
 
    The result is the worst possible reading of this wave. A blob from 25 opens
-   /admin/gutscheine on the empty state — and that empty state used to say the
+   /admin/coupons on the empty state — and that empty state used to say the
    list was deliberately empty, so the screen would argue, convincingly, that
    the seed was working as intended. Every state badge, the search box, the
    filter and the switch would sit on a table with nothing in them, and the
@@ -254,7 +254,7 @@ Marco Brunner`;
    The shape half is the quieter of the two and worth naming, because a blob
    from 26 does not crash on it: no persisted review carries `hidden`, so the
    group is simply never rendered and the new button looks like it writes into
-   nothing. The data half is the loud one. /admin/bewertungen would open on
+   nothing. The data half is the loud one. /admin/reviews would open on
    «Noch keine Bewertungen» for a reviewer who had opened the app before and on
    five cards for one who had not — and that empty state explains itself well
    (reviews arrive after payment), so the screen would argue the seed was
@@ -286,9 +286,9 @@ Marco Brunner`;
    so they are kept whole and neither the year of revenue nor the ceiling on
    WELCOME10 ever lands.
 
-   What that reads as is the worst version of this wave. /admin/finanzen would
+   What that reads as is the worst version of this wave. /admin/finance would
    draw eleven empty months and one bar — the exact "the chart is broken" first
-   impression the revenue history was seeded to prevent — while /admin/ausgaben
+   impression the revenue history was seeded to prevent — while /admin/expenses
    beside it showed a full year of costs, so the profit line would be a loss in
    every month. And the coupon form's third field would render for a reader who
    had opened the app before with nothing in it, on the one screen this wave
@@ -301,7 +301,7 @@ Marco Brunner`;
    it, and `baseData` gained the labour rows on the seeded jobs. `merge` fills in
    collections that are *missing*; `expenses` is present in any blob from 29, so
    it would be kept whole and not one of those rows would ever land — and
-   /admin/ausgaben/arbeitszeit, the screen that wave is about, would open on its
+   /admin/expenses/hours, the screen that wave is about, would open on its
    empty state for a reviewer who had used the app before and on a full board for
    one who had not. The empty state argues its own case well («noch keine
    Arbeitszeit erfasst»), so nothing on screen would say the data was stale.
@@ -322,7 +322,7 @@ Marco Brunner`;
    of. What a stale blob loses is the seed, and it loses it in a way that
    argues its own case. The demo bookings now carry reported hours and two of
    them are handed to the contractors rather than all nine to Marco — so
-   /admin/buchungen opens with an «Ausführung» column of one repeated name and
+   /admin/bookings opens with an «Ausführung» column of one repeated name and
    no hours under it, the approval banner on B-1052 has nothing to approve and
    says «Es wurde keine Zeit gemeldet», and the labour form's opening figure
    silently falls back to the check-in/check-out span. Every one of those is a
@@ -578,7 +578,7 @@ interface StoreState {
      A customer could only ever come into being as a side effect of the public
      wizard: `submitDraft` invents one from the contact step. So the owner of a
      phone-first local business had no way to write down the person who just
-     called, and on day one — the empty scenario — /admin/kunden was a list with
+     called, and on day one — the empty scenario — /admin/customers was a list with
      no way to put anything in it. */
   createCustomer: (
     input: {
@@ -1274,7 +1274,7 @@ interface StoreState {
    *
    * "Edits reach the site immediately" is what this comment used to claim and
    * it is only half true: the request flow reads the store and follows at
-   * once, while /leistungen, /preise and the homepage are rendered statically
+   * once, while /services, /pricing and the homepage are rendered statically
    * from the seed and move at the next build.
    */
   setServices: (services: Service[]) => void;
@@ -1285,7 +1285,7 @@ interface StoreState {
      flag and never set it — and «die Kundin hat am Telefon zugestimmt» had
      nowhere to go. */
   /**
-   * Release a piece of work onto /referenzen, or take it back.
+   * Release a piece of work onto /work, or take it back.
    *
    * Both photographs at once, because the pair is what the customer agreed to:
    * a released «after» beside an unreleased «before» is one photograph
@@ -1299,13 +1299,13 @@ interface StoreState {
   setWorkReleased: (bookingId: ID, released: boolean) => void;
 
   /* ---- contact enquiries (§8) ----
-     The form validated six fields, showed a spinner and pushed to /danke —
+     The form validated six fields, showed a spinner and pushed to /thank-you —
      and threw the message away. So the site promised an answer within 24
      hours about something nothing had written down. */
   /**
    * A message from the contact form.
    *
-   * Returns the reference so /danke can print it. A visitor who is told
+   * Returns the reference so /thank-you can print it. A visitor who is told
    * «wir melden uns» and given nothing to quote has no way to follow it up,
    * and the office has no way to find it when they ring.
    */
@@ -1458,7 +1458,7 @@ interface StoreState {
   /**
    * A job the owner entered directly, with no quote behind it.
    *
-   * /admin/buchungen has printed a "Manuell" source label since it was built,
+   * /admin/bookings has printed a "Manuell" source label since it was built,
    * for a kind of booking nothing in the app could produce. This is what makes
    * that label true. Refuses the same things the customer-facing picker
    * refuses — the daily ceiling, the notice period, closures — because a rule
@@ -1691,7 +1691,7 @@ export const useStore = create<StoreState>()(
         }
 
         /*
-         * The last gate, not the first. `/anfrage/objekt` already refuses to
+         * The last gate, not the first. `/request/property` already refuses to
          * continue on an out-of-area postcode, but the wizard's later steps are
          * addressable URLs and the draft survives a reload — so the rule has to
          * hold in the one place every path goes through. Nothing is committed:
@@ -2063,7 +2063,7 @@ export const useStore = create<StoreState>()(
             ),
             /*
              * A cancelled request must take its open quote with it. Leaving a
-             * `sent` offer behind would keep it live on /konto/offerten and
+             * `sent` offer behind would keep it live on /account/quotes and
              * still be signable — the customer would be booking a job they had
              * just called off.
              */
@@ -3134,7 +3134,7 @@ export const useStore = create<StoreState>()(
         });
         /* The log entry outlives the record on purpose. A draft that quietly
            vanishes is the one shape of "where did that invoice go" nobody can
-           answer afterwards, and /admin/protokoll prints the summary rather
+           answer afterwards, and /admin/changelog prints the summary rather
            than dereferencing the id. */
         get().logChange({
           entity: 'invoice',

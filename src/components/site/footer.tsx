@@ -49,19 +49,19 @@ export function SiteFooter({ theme }: { theme?: Theme }) {
 
           <FooterColumn title={t('servicesHeading')}>
             {SEED_SERVICES.filter(isOffered).map((service) => (
-              <FooterLink key={service.slug} href={`/leistungen/${service.slug}`}>
+              <FooterLink key={service.slug} href={`/services/${service.slug}`}>
                 {service.name.de}
               </FooterLink>
             ))}
           </FooterColumn>
 
           <FooterColumn title={t('companyHeading')}>
-            <FooterLink href="/ueber-uns">{nav('about')}</FooterLink>
-            <FooterLink href="/referenzen">{nav('gallery')}</FooterLink>
-            <FooterLink href="/preise">{nav('pricing')}</FooterLink>
-            <FooterLink href="/abos">{nav('packages')}</FooterLink>
+            <FooterLink href="/about">{nav('about')}</FooterLink>
+            <FooterLink href="/work">{nav('gallery')}</FooterLink>
+            <FooterLink href="/pricing">{nav('pricing')}</FooterLink>
+            <FooterLink href="/plans">{nav('packages')}</FooterLink>
             <FooterLink href="/jobs">{nav('careers')}</FooterLink>
-            <FooterLink href="/kontakt">{nav('contact')}</FooterLink>
+            <FooterLink href="/contact">{nav('contact')}</FooterLink>
           </FooterColumn>
 
           <FooterColumn title={t('contactHeading')}>
@@ -108,7 +108,7 @@ export function SiteFooter({ theme }: { theme?: Theme }) {
             {SERVED_REGIONS.map((region) => (
               <li key={region.slug}>
                 <Link
-                  href={`/gebiete/${region.slug}`}
+                  href={`/areas/${region.slug}`}
                   className="text-sm text-ink-secondary transition-colors hover:text-ink"
                 >
                   {region.name}
@@ -124,9 +124,9 @@ export function SiteFooter({ theme }: { theme?: Theme }) {
         <div className="mt-10 flex flex-col gap-4 border-t border-line-subtle pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-ink-tertiary">{t('rights', { year })}</p>
           <ul className="flex flex-wrap gap-x-5 gap-y-2">
-            <FooterLink href="/rechtliches/agb">{t('terms')}</FooterLink>
-            <FooterLink href="/rechtliches/datenschutz">{t('privacy')}</FooterLink>
-            <FooterLink href="/rechtliches/impressum">{t('imprint')}</FooterLink>
+            <FooterLink href="/legal/agb">{t('terms')}</FooterLink>
+            <FooterLink href="/legal/datenschutz">{t('privacy')}</FooterLink>
+            <FooterLink href="/legal/impressum">{t('imprint')}</FooterLink>
           </ul>
         </div>
       </div>

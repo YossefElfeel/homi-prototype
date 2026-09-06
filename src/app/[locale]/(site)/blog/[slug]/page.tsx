@@ -165,13 +165,13 @@ export default async function RatgeberPostPage({
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link href={`/anfrage?leistung=${service.slug}`}>
+                  <Link href={`/request?leistung=${service.slug}`}>
                     {t('serviceCta')}
                     <ArrowRight className="size-4" aria-hidden />
                   </Link>
                 </Button>
                 <Button asChild variant="secondary">
-                  <Link href={`/leistungen/${service.slug}`}>{t('serviceRead')}</Link>
+                  <Link href={`/services/${service.slug}`}>{t('serviceRead')}</Link>
                 </Button>
               </div>
             </aside>

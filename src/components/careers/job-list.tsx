@@ -43,7 +43,7 @@ export function JobList() {
         body={t('emptyBody')}
         action={
           <Button asChild>
-            <Link href="/jobs/bewerbung">
+            <Link href="/jobs/apply">
               {t('spontaneousAction')}
               <ArrowRight className="size-4" aria-hidden />
             </Link>

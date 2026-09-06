@@ -30,7 +30,7 @@ const ROLES: DemoRole[] = ['visitor', 'customer', 'owner', 'contractor'];
  *
  * Switching the role used to change permissions and leave you on the page you
  * were already on — so picking "Owner" on the homepage looked like the control
- * was broken. Nothing links to /admin, /konto or /einsatz from the public site
+ * was broken. Nothing links to /admin, /account or /job from the public site
  * (deliberately: that navigation belongs to customers), which left the URL bar
  * as the only way in. The switcher now takes you there.
  *
@@ -39,9 +39,9 @@ const ROLES: DemoRole[] = ['visitor', 'customer', 'owner', 'contractor'];
  */
 const ROLE_HOME: Record<DemoRole, string> = {
   visitor: '/',
-  customer: '/konto',
+  customer: '/account',
   owner: '/admin',
-  contractor: '/einsatz',
+  contractor: '/job',
 };
 
 /**

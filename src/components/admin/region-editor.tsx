@@ -185,7 +185,7 @@ export function RegionEditor() {
                   {region.name}
                 </span>
                 <span className="font-mono text-xs text-ink-tertiary">
-                  /gebiete/{region.slug}
+                  /areas/{region.slug}
                 </span>
               </span>
 

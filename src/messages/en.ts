@@ -233,7 +233,7 @@ export const en: Messages = {
 
   /* The form a payment method is put on file with — up here rather than under
      `account` or `admin`, because both screens do it: the customer under
-     /konto/zahlungsmittel and the owner on the customer record. The card fields
+     /account/payment-methods and the owner on the customer record. The card fields
      used to live only in `admin.crm`, where screen 45 could not reach them —
      which is exactly why 45 asked for nothing at all. */
   paymentForm: {

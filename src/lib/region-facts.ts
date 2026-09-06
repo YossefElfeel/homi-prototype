@@ -46,7 +46,7 @@ export function regionUsage(postcode: string, data: DataSet): RegionUsage {
  * Not a lock. An owner may remove a seeded area exactly as they may remove one
  * they added — the business genuinely might stop serving Grüningen. What it
  * buys is the sentence on the confirm step: a seeded area has a statically
- * rendered `/gebiete/<slug>` page behind it that will keep answering until the
+ * rendered `/areas/<slug>` page behind it that will keep answering until the
  * next build, and removing the row without saying so would leave a live page
  * advertising a town the request flow now refuses.
  */

@@ -209,5 +209,5 @@ export function resetLinkExpired(
  * work.
  */
 export function resetLinkPath(token: string): string {
-  return `/passwort?token=${token}&von=admin`;
+  return `/password?token=${token}&von=admin`;
 }

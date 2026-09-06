@@ -95,7 +95,7 @@ export function ApplicationForm({ postingSlug }: { postingSlug?: string }) {
     if (!draft.consent) return;
     if (posting) update({ postingId: posting.id });
     const { reference } = submitApplication(now);
-    router.push(`/jobs/bewerbung/gesendet?ref=${reference}`);
+    router.push(`/jobs/apply/sent?ref=${reference}`);
   }
 
   function addFile(file: File) {

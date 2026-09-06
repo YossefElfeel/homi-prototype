@@ -75,8 +75,8 @@ export function FieldShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto min-h-dvh w-full max-w-[26rem] bg-page">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line-subtle bg-page/95 px-5 backdrop-blur-sm">
           {/* The logo is the way back to the job list — this shell has no nav,
-              and /einsatz itself had no exit of any kind. */}
-          <Link href="/einsatz" aria-label={t('jobsLink')}>
+              and /job itself had no exit of any kind. */}
+          <Link href="/job" aria-label={t('jobsLink')}>
             <Logo showMark={false} />
           </Link>
           {hydrated && member && (

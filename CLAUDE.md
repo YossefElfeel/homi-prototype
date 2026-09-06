@@ -41,10 +41,10 @@ for a correction pass. Say the outcome, not the file count.
    | الشاشة | تروح لها إزاي | تبصّ على إيه | اتشال إيه |
 
    - **الشاشة** — the real route, with a seed id that exists:
-     `/konto/anfragen/req_3`, never `/konto/anfragen/[id]`. A route nobody can
+     `/account/requests/req_3`, never `/account/requests/[id]`. A route nobody can
      open is not a route.
    - **تروح لها إزاي** — the click path from a cold start, and it **must begin
-     with the role**. Every screen under `/konto` and `/admin` is gated: paste
+     with the role**. Every screen under `/account` and `/admin` is gated: paste
      the URL without switching role in «Demo-Steuerung» and you get an access
      gate, which reads as a broken link to somebody who does not know the
      prototype. Say the role, then the clicks.

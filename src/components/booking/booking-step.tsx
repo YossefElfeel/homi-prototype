@@ -75,12 +75,12 @@ export function BookingStep({
    */
   useEffect(() => {
     if (!hydrated || index !== -1) return;
-    router.replace(`/anfrage/${resumeStep(step, steps)}`);
+    router.replace(`/request/${resumeStep(step, steps)}`);
   }, [hydrated, index, step, steps, router]);
 
   function go() {
     if (onContinue && onContinue() === false) return;
-    if (forward) router.push(`/anfrage/${forward}`);
+    if (forward) router.push(`/request/${forward}`);
   }
 
   return (
@@ -111,7 +111,7 @@ export function BookingStep({
           {/* Desktop navigation. On mobile it lives in the sticky bar below. */}
           <div className="mt-10 hidden items-center justify-between gap-4 border-t border-line-subtle pt-6 sm:flex">
             {back ? (
-              <Button variant="ghost" onClick={() => router.push(`/anfrage/${back}`)}>
+              <Button variant="ghost" onClick={() => router.push(`/request/${back}`)}>
                 <ArrowLeft className="size-4" aria-hidden />
                 {t('back')}
               </Button>
@@ -149,7 +149,7 @@ export function BookingStep({
                 onClick={() => {
                   resetDraft();
                   toast.success(t('draftCleared'));
-                  router.push('/anfrage/leistung');
+                  router.push('/request/service');
                 }}
               >
                 <RotateCcw className="size-3.5" aria-hidden />
@@ -207,7 +207,7 @@ export function BookingStep({
               variant="secondary"
               size="icon"
               aria-label={t('back')}
-              onClick={() => router.push(`/anfrage/${back}`)}
+              onClick={() => router.push(`/request/${back}`)}
             >
               <ArrowLeft className="size-4" aria-hidden />
             </Button>

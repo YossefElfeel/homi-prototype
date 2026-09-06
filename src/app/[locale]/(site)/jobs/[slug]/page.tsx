@@ -53,7 +53,7 @@ export async function generateMetadata({
  * published set at build time, which is what the metadata and the masthead
  * need. Everything the office edits — the lists, the workload, the published
  * date — stays in `JobPostingDetail` against the live store, so an edit on
- * /admin/stellen still shows here without a rebuild.
+ * /admin/postings still shows here without a rebuild.
  */
 export default async function JobPostingPage({
   params,
@@ -71,7 +71,7 @@ export default async function JobPostingPage({
    * Deliberately not `notFound()` on a slug this set does not know.
    *
    * `PUBLISHED` is the build-time catalogue, and the office can add a role on
-   * /admin/stellen after the build — that posting lives only in the store. A
+   * /admin/postings after the build — that posting lives only in the store. A
    * 404 here would make every role the owner creates unreachable on the site
    * that advertises it. So an unknown slug still renders, under the careers
    * heading rather than a role name, and `JobPostingDetail` decides against

@@ -3,8 +3,8 @@
  *
  * `expired` is never stored on a request: §9.3 makes the date end a quote, and
  * a date cannot set a field. So every screen showing a request has to derive
- * it, and for three waves only one of them did — `/konto/offerten` called a
- * lapsed quote «Abgelaufen» while `/konto/anfragen` and the request detail
+ * it, and for three waves only one of them did — `/account/quotes` called a
+ * lapsed quote «Abgelaufen» while `/account/requests` and the request detail
  * beside it read the stored status and said «Offerte erhalten», with a primary
  * button onto a quote nobody could sign.
  *
@@ -63,12 +63,12 @@ check(
   `expiresAt ${off1.expiresAt}`,
 );
 check(
-  'day 13: /konto/offerten derives expired',
+  'day 13: /account/quotes derives expired',
   offerBadgeState(off1, later) === 'expired',
   offerBadgeState(off1, later),
 );
 check(
-  'day 13: /konto/anfragen now derives expired too (the fix)',
+  'day 13: /account/requests now derives expired too (the fix)',
   requestBadgeState(req3, off1, later) === 'expired',
   `derived ${requestBadgeState(req3, off1, later)}, stored still ${req3.status}`,
 );

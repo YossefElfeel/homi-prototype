@@ -32,9 +32,9 @@ export default function NotFound() {
       <ul className="mt-8 space-y-3 border-t border-line-subtle pt-6">
         {(
           [
-            ['/leistungen', nav('services')],
-            ['/preise', nav('pricing')],
-            ['/kontakt', nav('contact')],
+            ['/services', nav('services')],
+            ['/pricing', nav('pricing')],
+            ['/contact', nav('contact')],
           ] as const
         ).map(([href, label]) => (
           <li key={href}>
@@ -50,7 +50,7 @@ export default function NotFound() {
 
       <div className="mt-10">
         <Button asChild>
-          <Link href="/anfrage">{nav('requestQuote')}</Link>
+          <Link href="/request">{nav('requestQuote')}</Link>
         </Button>
       </div>
     </main>

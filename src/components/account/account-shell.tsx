@@ -45,24 +45,24 @@ const NAV: {
   {
     group: 'jobs',
     items: [
-      { href: '/konto', key: 'dashboard', icon: LayoutDashboard, exact: true },
-      { href: '/konto/anfragen', key: 'requests', icon: FileText },
-      { href: '/konto/offerten', key: 'offers', icon: FileText },
-      { href: '/konto/rechnungen', key: 'invoices', icon: Receipt },
-      { href: '/konto/nachrichten', key: 'messages', icon: MessageSquare },
+      { href: '/account', key: 'dashboard', icon: LayoutDashboard, exact: true },
+      { href: '/account/requests', key: 'requests', icon: FileText },
+      { href: '/account/quotes', key: 'offers', icon: FileText },
+      { href: '/account/invoices', key: 'invoices', icon: Receipt },
+      { href: '/account/messages', key: 'messages', icon: MessageSquare },
       /* «Vorher / Nachher» stood here as a tab of its own. The pair belongs to
          the job that produced it, so it is a card on the request now — one
          fewer place to look for something that was never a category. */
-      { href: '/konto/bewertung', key: 'review', icon: Star },
+      { href: '/account/review', key: 'review', icon: Star },
     ],
   },
   {
     group: 'account',
     items: [
-      { href: '/konto/objekte', key: 'properties', icon: Home },
-      { href: '/konto/abo', key: 'subscription', icon: RefreshCw },
-      { href: '/konto/zahlungsmittel', key: 'payment', icon: CreditCard },
-      { href: '/konto/profil', key: 'profile', icon: User },
+      { href: '/account/properties', key: 'properties', icon: Home },
+      { href: '/account/plan', key: 'subscription', icon: RefreshCw },
+      { href: '/account/payment-methods', key: 'payment', icon: CreditCard },
+      { href: '/account/profile', key: 'profile', icon: User },
     ],
   },
 ];
@@ -123,7 +123,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
         action={
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild>
-              <Link href="/anmelden">{t('gateAction')}</Link>
+              <Link href="/sign-in">{t('gateAction')}</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/">{appT('backToSite')}</Link>
@@ -186,7 +186,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
     <AppShell
       nav={nav}
       navLabel={t('title')}
-      homeHref="/konto"
+      homeHref="/account"
       user={{ name: userName, role: demoRoles('customer') }}
       onSignOut={signOut}
       notifications={[
@@ -194,15 +194,15 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
           id: m.id,
           title: m.subject,
           detail: m.body.slice(0, 60),
-          href: '/konto/nachrichten',
+          href: '/account/messages',
         })),
         ...dueInvoices.slice(0, 3).map((i) => ({
           id: i.id,
           title: i.reference,
-          href: `/konto/rechnungen/${i.id}`,
+          href: `/account/invoices/${i.id}`,
         })),
       ]}
-      notificationsHref="/konto"
+      notificationsHref="/account"
     >
       {children}
     </AppShell>

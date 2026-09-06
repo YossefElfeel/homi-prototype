@@ -334,9 +334,9 @@ export const USAGE: Record<TemplateFlow, TemplateUsage[]> = {
   requests: [],
   /* The picker itself sits in the quote builder, one level in from a request.
      The list is the entry every admin walks through to reach it. */
-  quotes: [{ key: 'quote', href: '/admin/offerten' }],
+  quotes: [{ key: 'quote', href: '/admin/quotes' }],
   bookings: [],
-  invoices: [{ key: 'invoice', href: '/admin/rechnungen' }],
+  invoices: [{ key: 'invoice', href: '/admin/invoices' }],
   reviews: [],
   general: [],
 };

@@ -68,8 +68,8 @@ export function offerBadgeState(offer: Offer, now: Date): string {
  *
  * Nothing in the store ever writes `request.status = 'expired'` — expiry is a
  * date, not a value somebody sets. Every screen therefore has to derive it, and
- * the customer's half derived it in one place out of three: `/konto/offerten`
- * called a lapsed quote «Abgelaufen» while `/konto/anfragen` and the request
+ * the customer's half derived it in one place out of three: `/account/quotes`
+ * called a lapsed quote «Abgelaufen» while `/account/requests` and the request
  * detail beside it still read «Offerte erhalten» off the stored status, and the
  * detail went on offering a primary button onto a quote nobody could sign. The
  * office's own list had already worked this out and reads it correctly, so the

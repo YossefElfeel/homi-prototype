@@ -35,7 +35,7 @@ export function Steps() {
             viewport={inViewLoose}
             transition={{ duration: 0.7, delay: 0.15 }}
           >
-            <Button href="/anfrage" variant="red" size="md">
+            <Button href="/request" variant="red" size="md">
               {t.actions.quote}
             </Button>
           </motion.div>

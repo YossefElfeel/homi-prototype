@@ -66,7 +66,7 @@ export function CustomerLink({
   className?: string;
 }) {
   return (
-    <RecordLink href={id ? `/admin/kunden/${id}` : undefined} className={className}>
+    <RecordLink href={id ? `/admin/customers/${id}` : undefined} className={className}>
       {name}
     </RecordLink>
   );

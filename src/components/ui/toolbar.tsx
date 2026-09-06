@@ -78,7 +78,7 @@ export function Toolbar({
         cap left a 24rem box sitting in a card twice that wide with nothing
         beside it. The filters keep their natural width, so a wide panel grows
         the one control that has any use for the room — and a narrow one, like
-        the thread list on /admin/nachrichten, wraps its filters underneath
+        the thread list on /admin/messages, wraps its filters underneath
         rather than crushing the search.
       */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 [&>label]:inline-flex [&>label]:min-w-44 [&>label]:flex-col">

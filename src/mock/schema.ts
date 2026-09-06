@@ -62,7 +62,7 @@ export type ServiceStatus = 'active' | 'inactive' | 'draft';
 export interface Service {
   id: ID;
   /**
-   * Free-form, not `ServiceSlug`. It is the URL segment under /leistungen and
+   * Free-form, not `ServiceSlug`. It is the URL segment under /services and
    * the key a request is filed under, and an owner creating «Fassadenreinigung»
    * needs a slug for it — a closed union made the create flow impossible
    * rather than merely unbuilt.
@@ -520,7 +520,7 @@ export interface Offer {
    * The two used to share one field, on the reasoning that both are "the text
    * attached to this quote". They travel in opposite directions: `message` goes
    * out with the quote and is the first thing the customer reads on
-   * `/offerte/[id]`; this comes back and only the office reads it. One field
+   * `/quote/[id]`; this comes back and only the office reads it. One field
    * meant that asking a question silently deleted the note the office had
    * written, and the panel then printed the customer's complaint under the
    * heading "Covering note".
@@ -767,7 +767,7 @@ export interface CalendarEvent {
   /**
    * Set once the person on the other end is a customer. Someone who phoned
    * once and has not booked anything is not one, and inventing a `Customer`
-   * record for every enquiry would fill /admin/kunden with people who are not
+   * record for every enquiry would fill /admin/customers with people who are not
    * customers yet.
    */
   customerId?: ID;
@@ -1517,7 +1517,7 @@ export const ADMIN_PERMISSIONS = [
    * Hours worked, which is a right of its own rather than a corner of
    * `expenses`.
    *
-   * It sits at /admin/ausgaben/arbeitszeit — inside the costs route — and the
+   * It sits at /admin/expenses/hours — inside the costs route — and the
    * temptation is to let it inherit. It must not: that board names who worked
    * which job and what they are owed, so it is the one costs screen that is
    * also a staffing record. A bookkeeper who enters receipts and a manager who
@@ -1804,7 +1804,7 @@ export type EnquiryStatus = 'new' | 'answered';
  * One submission of the contact form.
  *
  * This record did not exist. `contact-form.tsx` validated six fields, showed a
- * spinner and pushed to /danke with a comment saying «Mock only — no request
+ * spinner and pushed to /thank-you with a comment saying «Mock only — no request
  * leaves the browser» — so a visitor was told, on a page built for the purpose,
  * that somebody would come back to them within 24 hours about a message that
  * had never been written down anywhere. That is the worst class of gap in this

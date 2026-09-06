@@ -55,7 +55,7 @@ export function JobPostingDetail({ slug }: { slug: string }) {
           body={index('emptyBody')}
           action={
             <Button asChild>
-              <Link href="/jobs/bewerbung">{index('spontaneousAction')}</Link>
+              <Link href="/jobs/apply">{index('spontaneousAction')}</Link>
             </Button>
           }
         />
@@ -143,7 +143,7 @@ export function JobPostingDetail({ slug }: { slug: string }) {
             </dl>
 
             <Button asChild className="mt-6 w-full">
-              <Link href={`/jobs/bewerbung?stelle=${posting.slug}`}>
+              <Link href={`/jobs/apply?stelle=${posting.slug}`}>
                 {t('apply')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>

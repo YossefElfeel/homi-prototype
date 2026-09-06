@@ -109,7 +109,7 @@ export function Services() {
 
           <Reveal delay={0.2}>
             <div className="mt-8">
-              <Button href="/leistungen" variant="red" size="md">
+              <Button href="/services" variant="red" size="md">
                 {t.actions.services}
               </Button>
             </div>
@@ -199,7 +199,7 @@ export function Services() {
                     </div>
                     {pos === 0 ? (
                       <motion.a
-                        href="/anfrage"
+                        href="/request"
                         aria-label={service.name}
                         initial={{ scale: 0.6, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}

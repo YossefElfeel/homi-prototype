@@ -1,0 +1,381 @@
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { ArrowRight, Check, ChevronRight, ShieldCheck, X } from 'lucide-react';
+
+import { Link } from '@/i18n/navigation';
+import { routing, type Locale } from '@/i18n/routing';
+import { getStressMode, getTheme } from '@/lib/theme-server';
+import { getServiceContent } from '@/content/services';
+import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from '@/mock/seed';
+import { addOnsForService } from '@/lib/addon-catalogue';
+import { durationRange } from '@/mock/engines/pricing';
+import type { ServiceSlug } from '@/mock/schema';
+import { isOffered } from '@/lib/service-catalogue';
+import { Button } from '@/components/ui/button';
+import { Money } from '@/components/ui/money';
+import { Faq } from '@/components/ui/accordion';
+import { CtaBand } from '@/components/signature/cta-band';
+import { Section, SectionHeading } from '@/components/signature/section-heading';
+import { Masthead } from '@/components/landing/Masthead';
+import { ServiceMosaic } from '@/components/landing/ServiceMosaic';
+import { SectionHead } from '@/components/landing/PageSection';
+import { formatChf } from '@/components/ui/money';
+
+/** The three photographs the design shipped, on the services they show. */
+const SERVICE_PHOTO: Partial<Record<string, string>> = {
+  unterhaltsreinigung: '/img/service-1.webp',
+  umzugsreinigung: '/img/service-2.webp',
+  moebelmontage: '/img/service-3.webp',
+};
+import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
+
+/**
+ * Only what is on sale gets a page.
+ *
+ * This mapped the whole catalogue, which was harmless while every seeded
+ * service was active and is not any more: a draft would be pre-rendered into a
+ * fully browsable page with a "request a quote" button on it, for a service
+ * the owner has not finished pricing. The grid, the footer and the sitemap
+ * have always filtered — this was the one place that did not.
+ */
+export function generateStaticParams() {
+  return routing.locales.flatMap((locale) =>
+    SEED_SERVICES.filter(isOffered).map((service) => ({ locale, slug: service.slug })),
+  );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const service = SEED_SERVICES.find((s) => s.slug === slug);
+  if (!service || !isOffered(service)) return {};
+  return {
+    title: service.name[locale as Locale],
+    description: service.short[locale as Locale],
+  };
+}
+
+/**
+ * Screen 2 — the service template. One layout, seven services.
+ *
+ * The "what is not included" block is not filler. The brief: it prevents half
+ * the disputes before they happen, and it is the section most likely to be
+ * cut for looking negative. It stays.
+ */
+export default async function ServicePage({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}) {
+  const { locale, slug } = await params;
+  setRequestLocale(locale);
+
+  const service = SEED_SERVICES.find((s) => s.slug === slug);
+  /* `isOffered` and not just existence: a service taken off the website has to
+     stop answering on its own URL too, or "deactivate" means nothing more than
+     removing it from the menus. */
+  if (!service || !isOffered(service)) notFound();
+
+  const [theme, stressed] = await Promise.all([getTheme(), getStressMode()]);
+  const t = await getTranslations('site.services');
+  const nav = await getTranslations('nav');
+  const content = getServiceContent(slug as ServiceSlug, locale as Locale, stressed);
+
+  const range = durationRange(service.durationProfile);
+  /* `addOnsForService` rather than the membership test alone. This filtered
+     on which services an add-on belongs to and never on whether it was still
+     offered, so an add-on the owner switched off went on being advertised here
+     at its price — the request flow, which does check `active`, would then not
+     offer it. Same class of bug as the service catalogue's: one rule answered
+     differently on two screens. Still read from the seed rather than the store,
+     because this page is statically rendered — see §17.2b on /open-questions. */
+  const addOns = addOnsForService(SEED_ADDONS, service.slug);
+  const related = SEED_SERVICES.filter((s) => isOffered(s) && s.slug !== service.slug).slice(0, 3);
+
+  const pricing = await getTranslations('site.pricing');
+  const d = await getTranslations('site.display.services');
+  const hv = theme === 'homivaro';
+  const photo = SERVICE_PHOTO[service.slug];
+
+  /*
+   * This is the one interior page that earns a photograph, and only for the
+   * three services one exists for — the page is *about* the thing in the
+   * picture. The other four open on type alone rather than borrowing an image
+   * of a different job.
+   *
+   * The service name is the whole heading, so it takes the navy `lead` slot
+   * with no red half: there is nothing here to split, and inventing a split
+   * would put the accent on an arbitrary syllable of a compound noun.
+   */
+  const masthead = hv ? (
+    <Masthead
+      lines={[{ lead: service.name[locale as Locale] }]}
+      lead={content.lead}
+      action={{ label: t('cta'), href: `/request?leistung=${service.slug}` }}
+      image={photo ? { src: photo, alt: service.name[locale as Locale] } : undefined}
+      stats={[
+        {
+          label: t('fromLabel'),
+          value: formatChf(serviceFromPrice(service.minDuration), locale as Locale),
+        },
+        ...(range ? [{ label: t('durationLabel'), value: `${range[0]}–${range[1]} h` }] : []),
+        {
+          label: pricing('minimumLabel'),
+          value: `${Math.max(service.minDuration, SEED_SETTINGS.minimumHours)} h`,
+        },
+      ]}
+    />
+  ) : null;
+
+  return (
+    <>
+      <div className="border-b border-line-subtle">
+        <div className="mx-auto max-w-7xl px-gutter py-4">
+          <nav aria-label="Breadcrumb">
+            {/* `py-1` on each crumb: they were 18px tall, the smallest targets
+                on the site, and they sit at the very top of the page where a
+                thumb reaches worst. */}
+            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink-tertiary">
+              <li>
+                {/* Was the literal «Home» — the first word of the breadcrumb,
+                    untranslated on every route including the German ones. */}
+                <Link href="/" className="inline-flex items-center py-1 transition-colors hover:text-ink">
+                  {nav('home')}
+                </Link>
+              </li>
+              <ChevronRight className="size-3.5" aria-hidden />
+              <li>
+                <Link href="/services" className="inline-flex items-center py-1 transition-colors hover:text-ink">
+                  {nav('services')}
+                </Link>
+              </li>
+              <ChevronRight className="size-3.5" aria-hidden />
+              <li aria-current="page" className="text-ink">
+                {service.name[locale as Locale]}
+              </li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+
+      {masthead}
+
+      {/* The old opening block carries an h1 of its own, so it is removed
+          outright rather than hidden — two h1s in the document is no outline
+          at all, even when one of them is display:none. */}
+      {!hv ? (
+      <div className="border-b border-line-subtle">
+        <div className="mx-auto grid max-w-7xl gap-10 px-gutter py-14 lg:grid-cols-12 lg:py-20">
+          <div className="lg:col-span-7">
+            <ServiceIcon slug={service.slug} className="size-7 text-ink-accent" />
+            <h1 className="display-type mt-5 text-display-4">
+              {service.name[locale as Locale]}
+            </h1>
+            <span aria-hidden className="mt-6 block h-0.5 w-12 bg-rule" />
+            <p className="mt-6 max-w-[46ch] text-lg text-ink-secondary">{content.lead}</p>
+
+            {service.handoverGuarantee && (
+              <p className="mt-6 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-status-success px-3 py-2 text-sm text-status-success-fg">
+                <ShieldCheck className="size-4" aria-hidden />
+                {t('guaranteeBadge')}
+              </p>
+            )}
+
+            <div className="mt-9">
+              <Button asChild size="lg">
+                <Link href={`/request?leistung=${service.slug}`}>
+                  {t('cta')}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <dl className="divide-y divide-line-subtle border-y border-line-subtle lg:col-span-5 lg:self-start">
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              <dt className="text-sm text-ink-secondary">{t('fromLabel')}</dt>
+              <dd className="text-lg">
+                <Money amount={serviceFromPrice(service.minDuration)} emphasis="strong" />
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              {/* Was the literal "Stundensatz", printed on the English route
+                  as well as the German one. */}
+              <dt className="text-sm text-ink-secondary">{pricing('rateLabel')}</dt>
+              <dd>
+                <Money amount={SEED_SETTINGS.hourlyRate} per="hour" />
+              </dd>
+            </div>
+            {range && (
+              <div className="flex items-baseline justify-between gap-4 py-4">
+                <dt className="text-sm text-ink-secondary">{t('durationLabel')}</dt>
+                <dd data-numeric>
+                  {range[0]}–{range[1]} h
+                </dd>
+              </div>
+            )}
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              {/* Was the literal «Mindestbezug», printed on the English
+                  route beside three labels that do translate. The key
+                  already existed — the masthead above uses it. */}
+              <dt className="text-sm text-ink-secondary">{pricing('minimumLabel')}</dt>
+              <dd data-numeric>
+                {Math.max(service.minDuration, SEED_SETTINGS.minimumHours)} h
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+      ) : null}
+
+      <Section>
+        <div className={hv ? 'grid items-start gap-4 lg:grid-cols-2' : 'grid gap-12 lg:grid-cols-2'}>
+          <div className={hv ? 'hv-card hv-card-light p-8' : undefined}>
+            <h2 className="subhead-type text-2xl">{t('includedTitle')}</h2>
+            <ul className="mt-6 space-y-3">
+              {content.included.map((item) => (
+                <li key={item} className="flex gap-3">
+                  <Check className="mt-1 size-4 shrink-0 text-eco" aria-hidden />
+                  <span className="text-ink-secondary">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={hv ? 'hv-card hv-card-dark p-8' : undefined}>
+            <h2 className="subhead-type text-2xl">{t('notIncludedTitle')}</h2>
+            <p
+              className={`mt-3 max-w-[var(--measure)] text-sm ${
+                hv ? 'text-ink-inverse/70' : 'text-ink-secondary'
+              }`}
+            >
+              {t('notIncludedLead')}
+            </p>
+            <ul className="mt-6 space-y-3">
+              {content.notIncluded.map((item) => (
+                <li key={item} className="flex gap-3">
+                  <X
+                    className={`mt-1 size-4 shrink-0 ${
+                      hv ? 'text-ink-accent-inverse' : 'text-ink-tertiary'
+                    }`}
+                    aria-hidden
+                  />
+                  <span className={hv ? 'text-ink-inverse' : 'text-ink-secondary'}>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Section>
+
+      {addOns.length > 0 && (
+        <Section tone="sunken">
+          {hv ? (
+            <SectionHead lines={d.raw('addOnsLines')} />
+          ) : (
+            <SectionHeading theme={theme} title={t('addOnsTitle')} align="start" />
+          )}
+          {/*
+           * White cards, because the section they stand on is grey.
+           *
+           * They were `hv-card-light`, which paints `--surface-sunken` — the
+           * exact colour of a `tone="sunken"` section. Every add-on card was
+           * therefore invisible: what reached the page was five headings, five
+           * lines of body copy and a hairline rule floating on grey, with no
+           * edge anywhere to say where one add-on ended and the next began.
+           * A card's whole job is to be a boundary, and this one had been
+           * asked to be the same colour as the thing it was bounding.
+           *
+           * The price is the reason this section exists — it is what turns
+           * "we could also do the oven" into a decision — so it is set at the
+           * size of a decision rather than at body size.
+           */}
+          <ul className="mt-8 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {addOns.map((addOn) => (
+              <li key={addOn.slug} className="surface-card flex h-full flex-col p-6">
+                <h3 className="font-medium">{addOn.name[locale as Locale]}</h3>
+                <p className="mt-1.5 flex-1 text-sm text-ink-secondary">
+                  {addOn.short[locale as Locale]}
+                </p>
+                <p className="mt-5 flex items-baseline justify-between gap-3 border-t border-line pt-4">
+                  <Money amount={addOn.price} className="text-xl" />
+                  <span
+                    data-numeric
+                    className="bg-sunken text-ink-secondary shrink-0 rounded-full px-2.5 py-1 text-sm"
+                  >
+                    +{addOn.extraDuration} h
+                  </span>
+                </p>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section>
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <h2 className="subhead-type text-2xl">{t('calcTitle')}</h2>
+            <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{t('calcBody')}</p>
+            <Button asChild variant="link" className="mt-5">
+              <Link href="/pricing">
+                {/* Was the literal string "Alle Preise ansehen" — German, on
+                    the English route as well as the German one. */}
+                {pricing('allPricesCta')}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </Button>
+          </div>
+          <div className="lg:col-span-7">
+            <h2 className="subhead-type text-2xl">{t('faqTitle')}</h2>
+            <Faq items={content.faq} className="mt-6" />
+          </div>
+        </div>
+      </Section>
+
+      <Section tone="sunken">
+        {hv ? (
+          <SectionHead lines={d.raw('relatedLines')} />
+        ) : (
+          <SectionHeading theme={theme} title={t('relatedTitle')} align="start" />
+        )}
+        {hv ? (
+          /* The same tiles /services shows, not a second design for the same
+             cards. Three services led out of this page in a flat white strip
+             with hairline dividers while the index led into them with photo
+             tiles — the two screens disagreed about what a service card is,
+             and the visitor crossing between them saw the disagreement. */
+          <div className="mt-8">
+            <ServiceMosaic exclude={service.slug} limit={3} />
+          </div>
+        ) : (
+          <ul className="mt-8 grid gap-px border border-line-subtle bg-line-subtle sm:grid-cols-3">
+            {related.map((other) => (
+              <li key={other.slug} className="bg-page">
+                <Link
+                  href={`/services/${other.slug}`}
+                  className="flex h-full flex-col p-6 transition-colors hover:bg-accent-subtle"
+                >
+                  <ServiceIcon slug={other.slug} className="size-5 text-ink-accent" />
+                  <h3 className="mt-4 font-medium">{other.name[locale as Locale]}</h3>
+                  <p className="mt-2 flex-1 text-sm text-ink-secondary">
+                    {other.short[locale as Locale]}
+                  </p>
+                  <p className="mt-4">
+                    <Money amount={serviceFromPrice(other.minDuration)} from />
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <CtaBand theme={theme} />
+    </>
+  );
+}
