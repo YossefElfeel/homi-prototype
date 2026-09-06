@@ -1778,33 +1778,65 @@ export interface Settings {
 export type BlogStatus = 'draft' | 'published';
 
 /**
- * One block of an article — a heading, its paragraphs, and optionally a
- * picture.
+ * What a block *is*. Seven kinds, and the list is deliberately short.
  *
- * Sections rather than one body of markdown, and the reason is who writes
- * them. Markdown puts syntax in front of the office, and a mistyped heading or
- * a broken list is invisible until the page is built — on a statically
- * rendered site that means invisible until the next deploy. A section is also
- * the unit that gets *translated*: German and English can differ in how many
- * paragraphs a point takes, and they cannot differ in how many sections the
- * article has, which is the constraint that keeps the two versions the same
- * article.
+ * A rich-text surface was the alternative and it loses the thing this shape is
+ * for: every block carries its own text per language, so German and English
+ * can differ in how many words a point takes and cannot differ in how the
+ * article is built. One HTML blob per language gives that up, and gives up
+ * knowing which half of a translation is missing.
  *
- * The image is a path into `/public/img`, picked from what is already there.
- * There is no upload in this prototype and inventing a file input that writes
- * nowhere would be a control that lies.
+ * `cta` is here because a Ratgeber that never asks for the work is a cost
+ * centre. It is a block rather than a fixed footer so the writer decides where
+ * the ask goes — after the checklist, not after the sign-off nobody reads.
  */
-export interface BlogSection {
+export type BlogBlockKind =
+  | 'paragraph'
+  | 'heading'
+  | 'list'
+  | 'numbered'
+  | 'quote'
+  | 'image'
+  | 'cta';
+
+/**
+ * One block of an article.
+ *
+ * Flat and optional rather than a discriminated union, and it is a considered
+ * trade. A union types the *renderer* beautifully and makes the editor
+ * miserable: every patch of a single field becomes a cast, because
+ * `Partial<BlogBlock>` over a union is a union of partials that no generic
+ * `patchBlock(id, patch)` can satisfy. The renderer switches on `kind` and
+ * reads only what that kind uses, which is the one place the discrimination
+ * actually buys anything — so it is done there, in one function, rather than
+ * paid for at every keystroke in the editor.
+ *
+ * `text` carries inline marks: `**fett**`, `*kursiv*`, `[Wort](/pfad)`. Three,
+ * not a syntax — they are what the toolbar buttons insert, and a writer never
+ * has to type one. See `renderMarks` for why the parser refuses anything else.
+ */
+export interface BlogBlock {
   id: string;
-  heading: Partial<Record<Locale, string>>;
-  paragraphs: Partial<Record<Locale, string[]>>;
+  kind: BlogBlockKind;
+  /** `paragraph`, `heading`, `quote`, and the caption of a `cta`. */
+  text?: Partial<Record<Locale, string>>;
+  /** `list` and `numbered` — one entry per bullet. */
+  items?: Partial<Record<Locale, string[]>>;
+  /** `image`. A path into /public/img; there is no upload in this prototype. */
   image?: string;
   imageAlt?: Partial<Record<Locale, string>>;
+  /** `heading` — h2 by default, h3 for a sub-point. Never h1: the title is. */
+  level?: 2 | 3;
+  /** `quote` — who said it. Optional; an unattributed pull-quote is normal. */
+  attribution?: Partial<Record<Locale, string>>;
+  /** `cta` — where the button goes, and what it says. */
+  href?: string;
+  label?: Partial<Record<Locale, string>>;
 }
 
 export interface BlogPost {
   id: ID;
-  /** The URL segment under /ratgeber. Unique, derived from the German title. */
+  /** The URL segment under /blog. Unique, derived from the German title. */
   slug: string;
   title: Partial<Record<Locale, string>>;
   /** The line under the title on the index, and the meta description. */
@@ -1827,7 +1859,7 @@ export interface BlogPost {
    */
   publishedAt?: ISODate;
   updatedAt: ISODate;
-  sections: BlogSection[];
+  blocks: BlogBlock[];
   /**
    * The service this article is about, for the link at the foot of it.
    *

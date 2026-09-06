@@ -707,10 +707,10 @@ export const adminContentEn: typeof adminContentDe = {
 
 
   blog: {
-    title: 'Guides',
-    lead: 'Write, translate and publish articles. The Ratgeber is the one page on the website that carries something other than a price.',
+    title: 'Blog',
+    lead: 'Write, translate and publish articles. The Blog is the one page on the website that carries something other than a price.',
     back: 'Back to website text',
-    backToList: 'Back to the guides',
+    backToList: 'Back to the blog',
     createAction: 'New article',
     untitled: 'Untitled',
 
@@ -739,7 +739,7 @@ export const adminContentEn: typeof adminContentDe = {
 
     publishTitle: 'Publish «{name}»?',
     publishBody:
-      'The article appears in the Ratgeber and in the sitemap. Both happen at the next deploy of the website — not immediately.',
+      'The article appears in the Blog and in the sitemap. Both happen at the next deploy of the website — not immediately.',
     publishConfirm: 'Publish',
     publishDone: '«{name}» is published.',
     withdrawTitle: 'Withdraw «{name}»?',
@@ -755,7 +755,7 @@ export const adminContentEn: typeof adminContentDe = {
 
     emptyTitle: 'Nothing written yet',
     emptyBody:
-      'The Ratgeber is the cheapest marketing a cleaning company has: answering the questions that get asked on the phone twenty times a week anyway.',
+      'The Blog is the cheapest marketing a cleaning company has: answering the questions that get asked on the phone twenty times a week anyway.',
     searchEmptyTitle: 'No article found',
     searchEmptyBody: 'Nothing matches «{query}».',
 
@@ -767,7 +767,7 @@ export const adminContentEn: typeof adminContentDe = {
     fieldExcerpt: 'Lead paragraph',
     fieldExcerptHint: 'Shown under the title on the index, and used as the search-engine description.',
     fieldSlug: 'Page address',
-    fieldSlugHint: 'Becomes /ratgeber/{slug}. One for every language — four URLs for one article split whatever search value it earns four ways.',
+    fieldSlugHint: 'Becomes /blog/{slug}. One for every language — four URLs for one article split whatever search value it earns four ways.',
     fieldAuthor: 'Written by',
     fieldAuthorHint: 'The name goes under the title. An unsigned article reads as filler.',
     fieldService: 'Related service',
@@ -781,19 +781,46 @@ export const adminContentEn: typeof adminContentDe = {
     imageNone: 'No image',
     fieldImage: 'Image in this section',
     fieldImageAlt: 'Image description',
-    sectionsTitle: 'Sections',
-    addSection: 'Add a section',
-    removeSection: 'Remove section',
     moveUp: 'Move up',
     moveDown: 'Move down',
-    sectionUntitled: 'Section {n}',
-    sectionsEmpty:
-      'No sections yet. An article is made of sections, each with its own heading — which is what keeps every block separately translatable.',
     fieldHeading: 'Heading',
-    fieldParagraphs: 'Text',
-    fieldParagraphsHint: 'A blank line separates two paragraphs.',
 
-    boardTitle: 'Guides',
+    blocksTitle: 'The article',
+    blocksLead:
+      'An article is made of blocks. Each carries its own text per language — so German and English can differ in length and still be the same article.',
+    blocksEmpty:
+      'No blocks yet. Start with a heading, then a paragraph — the order can be changed at any time.',
+    addBlock: 'Add a block:',
+    removeBlock: 'Remove block',
+    kind: {
+      paragraph: 'Paragraph',
+      heading: 'Heading',
+      list: 'List',
+      numbered: 'Numbered',
+      quote: 'Quote',
+      image: 'Image',
+      cta: 'Call to action',
+    },
+    marksHint:
+      'Select and format: bold, italic, link. The asterisks in the text are the formatting — they do not appear on the website.',
+    markBold: 'Bold',
+    markItalic: 'Italic',
+    markLink: 'Insert a link',
+    fieldText: 'Text',
+    fieldLevel: 'Level',
+    levelSection: 'Section',
+    levelSub: 'Sub-point',
+    fieldItems: 'Points',
+    fieldItemsHint: 'One point per line.',
+    fieldAttribution: 'Who says this?',
+    fieldAttributionHint: 'Optional. An unattributed quote is perfectly normal.',
+    fieldImageHint: 'From the images already in the project. There is no upload in this prototype.',
+    fieldCtaText: 'The sentence before it',
+    fieldCtaTextHint: 'Optional. One sentence saying where the button goes.',
+    fieldCtaLabel: 'Button label',
+    fieldCtaHref: 'Target',
+    fieldCtaHrefHint: 'A path on this website, e.g. /anfrage or /abos.',
+    boardTitle: 'Blog',
     boardBody: '{n} articles, {drafts} of them drafts.',
     boardAction: 'Manage articles',
   },

@@ -90,7 +90,7 @@ export const AREAS: PanelArea[] = [
   { permission: 'analytics', group: 'finance', href: '/admin/finanzen' },
 
   { permission: 'catalogue', group: 'content', href: '/admin/leistungen' },
-  { permission: 'blog', group: 'content', href: '/admin/ratgeber' },
+  { permission: 'blog', group: 'content', href: '/admin/blog' },
   { permission: 'addons', group: 'content', href: '/admin/zusatzleistungen' },
   { permission: 'coupons', group: 'content', href: '/admin/gutscheine' },
   { permission: 'reviews', group: 'content', href: '/admin/bewertungen' },

@@ -66,7 +66,7 @@ export default async function RatgeberIndexPage({
         {POSTS.map((post) => (
           <li key={post.id} className="hv-card hv-card-light group overflow-hidden">
             <Link
-              href={`/ratgeber/${post.slug}`}
+              href={`/blog/${post.slug}`}
               className="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-focus"
             >
               {post.cover && (

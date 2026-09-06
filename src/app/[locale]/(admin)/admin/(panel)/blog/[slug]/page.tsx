@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { ChevronDown, ChevronUp, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 import { LOCALE_LABELS, routing, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,10 @@ import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { cn } from '@/lib/cn';
-import { BLOG_IMAGES, emptySection, isPublished, missingLocales } from '@/lib/blog';
+import { BlockEditor } from '@/components/admin/block-editor';
+import { BLOG_IMAGES, isPublished, missingLocales } from '@/lib/blog';
 import { isOffered } from '@/lib/service-catalogue';
 import { useHydrated, useStore } from '@/mock/store';
-import type { BlogSection } from '@/mock/schema';
 
 /**
  * Screen R4 — writing one article.
@@ -60,25 +60,13 @@ export default function EditPostPage({ params }: { params: Promise<{ slug: strin
     value: string,
   ) => updatePost(post.id, { [field]: { ...post[field], [locale]: value } });
 
-  const patchSection = (id: string, patch: Partial<BlogSection>) =>
-    updatePost(post.id, {
-      sections: post.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-    });
-
-  const moveSection = (index: number, to: number) => {
-    const next = [...post.sections];
-    const [moved] = next.splice(index, 1);
-    if (!moved) return;
-    next.splice(to, 0, moved);
-    updatePost(post.id, { sections: next });
-  };
 
   return (
     <div>
       <PageHeader
         title={post.title[locale] || post.title.de || t('untitled')}
         lead={t('editorLead')}
-        back={{ href: '/admin/ratgeber', label: t('backToList') }}
+        back={{ href: '/admin/blog', label: t('backToList') }}
         actions={
           <div className="flex items-center gap-3">
             <SaveIndicator
@@ -89,7 +77,7 @@ export default function EditPostPage({ params }: { params: Promise<{ slug: strin
             <StatusBadge entity="blogPost" state={post.status} size="sm" />
             {isPublished(post) && (
               <Button asChild variant="secondary" size="sm">
-                <a href={`/ratgeber/${post.slug}`} target="_blank" rel="noreferrer">
+                <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
                   {t('rowView')}
                   <ExternalLink className="size-3.5" aria-hidden />
                 </a>
@@ -256,151 +244,19 @@ export default function EditPostPage({ params }: { params: Promise<{ slug: strin
           </CardBody>
         </Card>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="display-type text-xl">{t('sectionsTitle')}</h2>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              updatePost(post.id, {
-                sections: [...post.sections, emptySection(post.sections.length)],
-              })
-            }
-          >
-            <Plus className="size-4" aria-hidden />
-            {t('addSection')}
-          </Button>
+        <div className="mt-8">
+          <h2 className="display-type text-xl">{t('blocksTitle')}</h2>
+          <p className="mt-1 max-w-[var(--measure)] text-sm text-ink-secondary">
+            {t('blocksLead')}
+          </p>
+          <div className="mt-5">
+            <BlockEditor
+              blocks={post.blocks}
+              locale={locale}
+              onChange={(blocks) => updatePost(post.id, { blocks })}
+            />
+          </div>
         </div>
-
-        {post.sections.length === 0 ? (
-          <p className="mt-4 max-w-[var(--measure)] text-ink-secondary">{t('sectionsEmpty')}</p>
-        ) : (
-          <ul className="mt-4 space-y-5">
-            {post.sections.map((section, index) => (
-              <li key={section.id}>
-                <Card>
-                  <CardHeader
-                    title={
-                      section.heading[locale] ||
-                      section.heading.de ||
-                      t('sectionUntitled', { n: index + 1 })
-                    }
-                    actions={
-                      <span className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t('moveUp')}
-                          disabled={index === 0}
-                          onClick={() => moveSection(index, index - 1)}
-                        >
-                          <ChevronUp className="size-4" aria-hidden />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t('moveDown')}
-                          disabled={index === post.sections.length - 1}
-                          onClick={() => moveSection(index, index + 1)}
-                        >
-                          <ChevronDown className="size-4" aria-hidden />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t('removeSection')}
-                          onClick={() =>
-                            updatePost(post.id, {
-                              sections: post.sections.filter((s) => s.id !== section.id),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" aria-hidden />
-                        </Button>
-                      </span>
-                    }
-                  />
-                  <CardBody className="space-y-5">
-                    <Field label={t('fieldHeading')}>
-                      {(props) => (
-                        <Input
-                          {...props}
-                          value={section.heading[locale] ?? ''}
-                          onChange={(e) =>
-                            patchSection(section.id, {
-                              heading: { ...section.heading, [locale]: e.target.value },
-                            })
-                          }
-                        />
-                      )}
-                    </Field>
-
-                    {/* One paragraph per line. The record holds an array, so
-                        the split happens here rather than in the renderer —
-                        a body kept as one string with newlines in it is how a
-                        paragraph break silently becomes whitespace on the
-                        page. Blank lines are dropped on the way in. */}
-                    <Field label={t('fieldParagraphs')} hint={t('fieldParagraphsHint')}>
-                      {(props) => (
-                        <Textarea
-                          {...props}
-                          rows={7}
-                          value={(section.paragraphs[locale] ?? []).join('\n\n')}
-                          onChange={(e) =>
-                            patchSection(section.id, {
-                              paragraphs: {
-                                ...section.paragraphs,
-                                [locale]: e.target.value
-                                  .split(/\n{2,}/)
-                                  .map((p) => p.trim())
-                                  .filter(Boolean),
-                              },
-                            })
-                          }
-                        />
-                      )}
-                    </Field>
-
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <Field label={t('fieldImage')}>
-                        {(props) => (
-                          <Select
-                            {...props}
-                            value={section.image ?? ''}
-                            onChange={(e) =>
-                              patchSection(section.id, { image: e.target.value || undefined })
-                            }
-                          >
-                            <option value="">{t('imageNone')}</option>
-                            {BLOG_IMAGES.map((src) => (
-                              <option key={src} value={src}>
-                                {src}
-                              </option>
-                            ))}
-                          </Select>
-                        )}
-                      </Field>
-                      {section.image && (
-                        <Field label={t('fieldImageAlt')} hint={t('fieldAltHint')}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              value={section.imageAlt?.[locale] ?? ''}
-                              onChange={(e) =>
-                                patchSection(section.id, {
-                                  imageAlt: { ...section.imageAlt, [locale]: e.target.value },
-                                })
-                              }
-                            />
-                          )}
-                        </Field>
-                      )}
-                    </div>
-                  </CardBody>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   );

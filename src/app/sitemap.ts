@@ -52,9 +52,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       frequency: 'monthly' as const,
     })),
     { path: '/referenzen', priority: 0.6, frequency: 'weekly' },
-    { path: '/ratgeber', priority: 0.7, frequency: 'weekly' },
+    { path: '/blog', priority: 0.7, frequency: 'weekly' },
     ...posts.map((post) => ({
-      path: `/ratgeber/${post.slug}`,
+      path: `/blog/${post.slug}`,
       priority: 0.6,
       frequency: 'yearly' as const,
     })),

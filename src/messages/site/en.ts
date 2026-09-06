@@ -159,7 +159,7 @@ export const siteEn: typeof siteDe = {
     allPricesCta: 'See all prices',
     noticeTitle: 'The binding price is in the quote',
     noticeBody:
-      'The figures here are guides. After your request we assess the property and send a written quote with every line itemised, within 24 hours.',
+      'The figures here are blog. After your request we assess the property and send a written quote with every line itemised, within 24 hours.',
     faqTitle: 'Questions about price',
     q1: 'Why is there no instant price?',
     a1: 'Because it would be wrong. Two flats of the same size take different amounts of time. We look at your details and photos, then name a price we stand by.',
@@ -359,10 +359,10 @@ export const siteEn: typeof siteDe = {
   },
 
   blog: {
-    metaTitle: 'Guides',
+    metaTitle: 'Blog',
     metaDescription:
       'What we answer on the phone twenty times a week, written down: handing back a flat, keys, cleaning rhythm, windows.',
-    title: 'Guides',
+    title: 'Blog',
     lead: 'What we explain on the phone anyway, here to read. No sales pitch.',
     lines: [{ lead: 'What we explain' }, { accent: 'on the phone anyway.' }],
     gridLines: [{ lead: 'All' }, { accent: 'articles' }],

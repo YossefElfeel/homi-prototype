@@ -736,12 +736,12 @@ export const adminContentDe = {
   },
 
 
-  /* Bildschirme R3 und R4 — der Ratgeber, aus dem Büro. */
+  /* Bildschirme R3 und R4 — der Blog, aus dem Büro. */
   blog: {
-    title: 'Ratgeber',
-    lead: 'Beiträge schreiben, übersetzen und aufschalten. Der Ratgeber ist die einzige Seite der Website, auf der etwas steht, das kein Preis ist.',
+    title: 'Blog',
+    lead: 'Beiträge schreiben, übersetzen und aufschalten. Der Blog ist die einzige Seite der Website, auf der etwas steht, das kein Preis ist.',
     back: 'Zurück zu den Website-Texten',
-    backToList: 'Zurück zum Ratgeber',
+    backToList: 'Zurück zum Blog',
     createAction: 'Beitrag anlegen',
     untitled: 'Ohne Titel',
 
@@ -773,7 +773,7 @@ export const adminContentDe = {
        Beiträge gemeint ist. */
     publishTitle: '«{name}» aufschalten?',
     publishBody:
-      'Der Beitrag erscheint im Ratgeber und in der Sitemap. Beides passiert beim nächsten Aufschalten der Website — nicht sofort.',
+      'Der Beitrag erscheint im Blog und in der Sitemap. Beides passiert beim nächsten Aufschalten der Website — nicht sofort.',
     publishConfirm: 'Aufschalten',
     publishDone: '«{name}» ist aufgeschaltet.',
     withdrawTitle: '«{name}» zurückziehen?',
@@ -789,7 +789,7 @@ export const adminContentDe = {
 
     emptyTitle: 'Noch keine Beiträge',
     emptyBody:
-      'Der Ratgeber ist das günstigste Marketing, das eine Reinigungsfirma hat: die Fragen beantworten, die ohnehin zwanzigmal die Woche am Telefon gestellt werden.',
+      'Der Blog ist das günstigste Marketing, das eine Reinigungsfirma hat: die Fragen beantworten, die ohnehin zwanzigmal die Woche am Telefon gestellt werden.',
     searchEmptyTitle: 'Kein Beitrag gefunden',
     searchEmptyBody: 'Für «{query}» gibt es keinen Beitrag.',
 
@@ -803,7 +803,7 @@ export const adminContentDe = {
     fieldExcerptHint:
       'Steht auf der Übersicht unter dem Titel und ist die Beschreibung für Suchmaschinen.',
     fieldSlug: 'Adresse der Seite',
-    fieldSlugHint: 'Ergibt /ratgeber/{slug}. Gilt für alle Sprachen — vier URLs für einen Text teilen den Suchwert durch vier.',
+    fieldSlugHint: 'Ergibt /blog/{slug}. Gilt für alle Sprachen — vier URLs für einen Text teilen den Suchwert durch vier.',
     fieldAuthor: 'Verfasst von',
     fieldAuthorHint: 'Der Name steht unter dem Titel. Ein Beitrag ohne Namen liest sich wie Füllmaterial.',
     fieldService: 'Passende Leistung',
@@ -817,20 +817,51 @@ export const adminContentDe = {
     imageNone: 'Kein Bild',
     fieldImage: 'Bild im Abschnitt',
     fieldImageAlt: 'Bildbeschreibung',
-    sectionsTitle: 'Abschnitte',
-    addSection: 'Abschnitt hinzufügen',
-    removeSection: 'Abschnitt entfernen',
     moveUp: 'Nach oben',
     moveDown: 'Nach unten',
-    sectionUntitled: 'Abschnitt {n}',
-    sectionsEmpty:
-      'Noch kein Abschnitt. Ein Beitrag besteht aus Abschnitten mit je einer Überschrift — so bleibt jeder Block einzeln übersetzbar.',
     fieldHeading: 'Überschrift',
-    fieldParagraphs: 'Text',
-    fieldParagraphsHint: 'Eine Leerzeile trennt zwei Absätze.',
 
     /* Der Weg vom Textbrett hierher. */
-    boardTitle: 'Ratgeber',
+    /* ---- der Block-Editor ---- */
+    blocksTitle: 'Der Beitrag',
+    blocksLead:
+      'Ein Beitrag besteht aus Blöcken. Jeder trägt seinen eigenen Text pro Sprache — so können Deutsch und Englisch unterschiedlich lang sein und trotzdem derselbe Artikel bleiben.',
+    blocksEmpty:
+      'Noch kein Block. Fangen Sie mit einer Überschrift an, dann einem Absatz — die Reihenfolge lässt sich jederzeit ändern.',
+    addBlock: 'Block hinzufügen:',
+    removeBlock: 'Block entfernen',
+    kind: {
+      paragraph: 'Absatz',
+      heading: 'Überschrift',
+      list: 'Liste',
+      numbered: 'Nummeriert',
+      quote: 'Zitat',
+      image: 'Bild',
+      cta: 'Aufruf',
+    },
+    /* «fett» und «kursiv» stehen auf den Knöpfen; die Zeichen tippt niemand
+       selbst. Der Hinweis nennt sie trotzdem, weil sie im Feld sichtbar sind
+       und sonst wie ein Fehler aussehen. */
+    marksHint:
+      'Markieren und formatieren: fett, kursiv, Link. Die Sternchen im Text sind die Formatierung — sie erscheinen nicht auf der Website.',
+    markBold: 'Fett',
+    markItalic: 'Kursiv',
+    markLink: 'Link einfügen',
+    fieldText: 'Text',
+    fieldLevel: 'Ebene',
+    levelSection: 'Abschnitt',
+    levelSub: 'Unterpunkt',
+    fieldItems: 'Punkte',
+    fieldItemsHint: 'Ein Punkt pro Zeile.',
+    fieldAttribution: 'Wer sagt das?',
+    fieldAttributionHint: 'Optional. Ein Zitat ohne Namen ist völlig normal.',
+    fieldImageHint: 'Aus den vorhandenen Bildern. Einen Upload gibt es in diesem Prototyp nicht.',
+    fieldCtaText: 'Der Satz davor',
+    fieldCtaTextHint: 'Optional. Ein Satz, der erklärt, wohin der Knopf führt.',
+    fieldCtaLabel: 'Knopfbeschriftung',
+    fieldCtaHref: 'Ziel',
+    fieldCtaHrefHint: 'Ein Pfad auf dieser Website, z. B. /anfrage oder /abos.',
+    boardTitle: 'Blog',
     boardBody: '{n} Beiträge, davon {drafts} im Entwurf.',
     boardAction: 'Beiträge verwalten',
   },
