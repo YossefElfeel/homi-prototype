@@ -586,14 +586,24 @@ export default function NewRequestPage() {
                           person is not in the system", which is a different
                           fact and sends the owner off to create a second
                           record for somebody they blocked on purpose. */}
+                      {/* An archived customer gets the same treatment as a
+                          blocked one, for the same reason and it is worth
+                          restating: taking the row out of the list entirely
+                          says «diese Person ist nicht im System», which is a
+                          different fact and is how the office ends up typing a
+                          second record for somebody they filed away on
+                          purpose. Shown, disabled, and labelled — so the
+                          answer on screen is «sie ist im Archiv», and the way
+                          forward is to restore her. */}
                       {customers.map((c) => (
                         <option
                           key={c.id}
                           value={c.id}
-                          disabled={c.status === 'blocked'}
+                          disabled={c.status === 'blocked' || Boolean(c.archivedAt)}
                         >
                           {c.lastName}, {c.firstName} — {c.phone}
                           {c.status === 'blocked' ? ` (${t('customerBlocked')})` : ''}
+                          {c.archivedAt ? ` (${t('customerArchived')})` : ''}
                         </option>
                       ))}
                     </Select>

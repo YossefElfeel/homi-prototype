@@ -256,9 +256,12 @@ export default function NewAppointmentPage() {
                 }}
               >
                 <option value="">{t('customerPlaceholder')}</option>
+                {/* Same rule as the request form: an archived customer is
+                    visible and unpickable, never absent. */}
                 {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} disabled={Boolean(c.archivedAt)}>
                     {c.firstName} {c.lastName}
+                    {c.archivedAt ? ` (${t('customerArchived')})` : ''}
                   </option>
                 ))}
               </Select>

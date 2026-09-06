@@ -389,6 +389,7 @@ export const adminDe = {
     customerNone: 'Noch kein Kunde gewählt',
     customerNew: 'Neuen Kunden erfassen',
     customerBlocked: 'gesperrt',
+    customerArchived: 'im Archiv',
     customerEmptyTitle: 'Noch keine Kunden',
     customerEmptyBody:
       'Eine Anfrage gehört immer zu einer Person. Erfassen Sie zuerst den Kunden — danach kommen Sie hierher zurück.',
@@ -968,6 +969,8 @@ export const adminDe = {
 
     customerLabel: 'Kunde',
     customerPlaceholder: 'Kunde wählen',
+    /* Sichtbar und nicht wählbar — dieselbe Regel wie im Anfrageformular. */
+    customerArchived: 'im Archiv',
     customerNone: 'Noch kein Kunde — nur Name und Telefon',
     propertyLabel: 'Objekt',
     propertyPlaceholder: 'Objekt wählen',
