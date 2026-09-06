@@ -14,6 +14,15 @@ export const adminCrmEn: typeof adminCrmDe = {
     overdueBody:
       '/contact says we come back within {hours} hours. This one has been here longer.',
 
+    reply: 'Reply',
+    replyLabel: 'Your reply',
+    replyHint:
+      'Recorded on the enquiry. It is not sent — that happens by mail or phone as before. Where a customer record already exists, it also lands in their message thread.',
+    replySend: 'Record the reply',
+    replyBy: '{name} · {date}',
+    replyDone: '{ref} is answered.',
+    toRequest: 'Turn into a request',
+    becameRequest: 'This became a request — open it',
     markAnswered: 'Mark as answered',
     reopen: 'Reopen',
     convert: 'Turn into a customer',

@@ -1403,22 +1403,21 @@ export const FLOWS: Flow[] = [
     actions: [
       added('Read it', '/admin/enquiries', 'Cards, not a table: the message is the record, and a truncated cell would hide the only thing worth reading'),
       added('Reply', '/admin/enquiries', 'By mail or phone, through the links on the card. The answer happens outside this app and an outbox that sends nothing would be worse than saying so'),
-      added('Mark it answered', '/admin/enquiries', 'Records who and when, so «wer hat da geantwortet?» has an answer'),
+      added('Write the answer down', '/admin/enquiries', 'Replying *is* answering, so it is one action — the screen used to record that somebody answered and never what they said, which is the half that matters when the person rings a week later and gets whoever picks up'),
+      added('Mark it answered', '/admin/enquiries', 'Still there for the ones dealt with entirely by phone, where there is no text to keep'),
       added('Turn it into a customer', '/admin/customers/cus_1', 'The commercial exit. Not automatic — one of the five seeded enquiries is a supplier'),
       added('Delete it', '/admin/enquiries', 'Into the bin, recoverable — the rule a review already follows'),
     ],
     exits: [
       added('Answered', '/admin/enquiries', 'Off the open queue, with the name and date on the record'),
       added('A customer record', '/admin/customers/cus_1', 'The enquiry links to it and stops being something to answer'),
+      added('A request', '/admin/requests', 'The commercial exit, and the one the inbox is actually for'),
       added('Binned', '/admin/enquiries', 'Restorable from the third tab; spam is the honest reason'),
       open(
-        'The visitor hears back',
-        'Nothing in the app sends the reply — the office answers by mail or telephone, and marking the enquiry answered records that they did rather than doing it. An outbox is a wave of its own, and the templates screen already holds the texts it would use',
+        'The reply actually leaves the building',
+        'The answer is written down and, where the person is already a customer, lands in their message thread — but nothing in this app sends an email. The office still replies by mail or telephone; this records what was said rather than saying it. An outbox is a wave of its own, and the templates screen already holds the texts it would use',
       ),
-      open(
-        'The enquiry becomes a request',
-        'A lead that says «Umzugsreinigung Ende Monat» is one step from a quote, and the only exit today is a customer record somebody then has to take a request from by hand. Whether the inbox should open the request wizard pre-filled is a question about how the office actually works',
-      ),
+      added('Turn it into a request', '/admin/requests/new?enquiry=enq_1', 'The wizard opens pre-filled with the customer, where one exists, and the words the person actually wrote — and the enquiry links to the request it became'),
     ],
   },
   {

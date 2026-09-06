@@ -1344,6 +1344,22 @@ interface StoreState {
     now: Date,
   ) => { id: ID; reference: string };
   setEnquiryStatus: (id: ID, status: EnquiryStatus, now: Date) => void;
+  /**
+   * Write the answer down, and mark it answered in the same act.
+   *
+   * Two steps for one intention was the old shape: type nothing, press «als
+   * beantwortet markieren», and the record kept who and when but not a word of
+   * what was said. Replying *is* answering, so it does both — and an enquiry
+   * that was reopened goes back to answered here rather than needing a second
+   * button.
+   *
+   * Where the enquiry has already become a customer, the reply is also written
+   * into their message thread. That is not duplication for its own sake: the
+   * customer record is where somebody looks for the history of a person, and a
+   * conversation that starts in the inbox and continues in the CRM should be
+   * one conversation rather than two halves nobody joins up.
+   */
+  replyToEnquiry: (id: ID, body: string, now: Date) => void;
   /** Into the bin, recoverable — the same rule a review follows. */
   deleteEnquiry: (id: ID, now: Date) => void;
   restoreEnquiry: (id: ID) => void;
@@ -1356,6 +1372,8 @@ interface StoreState {
    * starts at the message that began it rather than at the first invoice.
    */
   convertEnquiry: (id: ID, now: Date) => ID | null;
+  /** Remember which request an enquiry turned into, so the row stops asking. */
+  linkEnquiryToRequest: (id: ID, requestId: ID) => void;
 
   /* ---- the blog (§17.3) ----
      The website had no way to say anything that was not a price. A cleaning
@@ -4807,6 +4825,66 @@ export const useStore = create<StoreState>()(
           },
         }));
         return { id, reference };
+      },
+
+      linkEnquiryToRequest: (id, requestId) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id ? { ...e, requestId, status: 'answered' as const } : e,
+            ),
+          },
+        }));
+        const enquiry = get().data.enquiries.find((e) => e.id === id);
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${enquiry?.reference ?? id} became a request`,
+        });
+      },
+
+      replyToEnquiry: (id, body, now) => {
+        const enquiry = get().data.enquiries.find((e) => e.id === id);
+        if (!enquiry || !body.trim()) return;
+        const member = get().demo.currentMemberId;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            enquiries: s.data.enquiries.map((e) =>
+              e.id === id
+                ? {
+                    ...e,
+                    replies: [...(e.replies ?? []), { at: now.toISOString(), by: member, body: body.trim() }],
+                    status: 'answered' as const,
+                    answeredBy: e.answeredBy ?? member,
+                    answeredAt: e.answeredAt ?? now.toISOString(),
+                  }
+                : e,
+            ),
+          },
+        }));
+
+        /* Into the customer's thread as well, where one exists. The subject is
+           the enquiry's own reference so the two ends carry the same label. */
+        if (enquiry.customerId) {
+          get().sendMessage(
+            {
+              customerId: enquiry.customerId,
+              subject: enquiry.reference,
+              body: body.trim(),
+              from: 'homivaro',
+            },
+            now,
+          );
+        }
+
+        get().logChange({
+          entity: 'enquiry',
+          entityId: id,
+          summary: `Enquiry ${enquiry.reference} answered`,
+        });
       },
 
       setEnquiryStatus: (id, status, now) => {

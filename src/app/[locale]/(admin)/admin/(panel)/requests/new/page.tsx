@@ -127,6 +127,8 @@ export default function NewRequestPage() {
   const closures = useStore((s) => s.data.closures);
   const createProperty = useStore((s) => s.createProperty);
   const createRequestForCustomer = useStore((s) => s.createRequestForCustomer);
+  const enquiries = useStore((s) => s.data.enquiries);
+  const linkEnquiryToRequest = useStore((s) => s.linkEnquiryToRequest);
   const updateRequest = useStore((s) => s.updateRequest);
   const submitRequestDraft = useStore((s) => s.submitRequestDraft);
   const discardRequestDraft = useStore((s) => s.discardRequestDraft);
@@ -147,6 +149,18 @@ export default function NewRequestPage() {
    */
   const sourceEventId = search.get('event');
   const sourceEvent = events.find((e) => e.id === sourceEventId);
+
+  /*
+   * The other way in, and the same idea as the calendar entry above it.
+   *
+   * The contact inbox could turn an enquiry into a *customer* and no further —
+   * so «Umzugsreinigung Ende Monat, Abnahme am 29.» became a name and an email
+   * address, and the request it was obviously asking for was retyped from a
+   * message on another screen. What the form can take from an enquiry is the
+   * customer, if one exists yet, and the words the person actually wrote.
+   */
+  const sourceEnquiryId = search.get('enquiry');
+  const sourceEnquiry = enquiries.find((e) => e.id === sourceEnquiryId);
 
   const [open, setOpen] = useState<string[]>(['customer', 'property', 'service']);
   const [discarding, setDiscarding] = useState(false);
@@ -179,6 +193,23 @@ export default function NewRequestPage() {
    * person typing. The customer and the note are all a call can supply — the
    * address and the service are what the request screen is for.
    */
+  /* Same guard and the same reason as the event above: every field is
+     controlled, so re-running would fight the person typing. */
+  const seededFromEnquiry = useRef(false);
+  useEffect(() => {
+    if (!sourceEnquiry || seededFromEnquiry.current) return;
+    seededFromEnquiry.current = true;
+    /* Unconditional, for the same reason the event loader below is: the field
+       already defaults to empty, so branching buys nothing but a
+       cascading-render lint error. An enquiry with no customer yet simply
+       leaves the picker where it was. */
+    setCustomerId(sourceEnquiry.customerId ?? '');
+    /* The customer's own words go in the customer note, not the internal one.
+       They wrote it; it is not an office remark about them. */
+    setCustomerNote(sourceEnquiry.message);
+    setInternalNote(`Aus Kontaktanfrage ${sourceEnquiry.reference}`);
+  }, [sourceEnquiry]);
+
   const seededFromEvent = useRef(false);
   useEffect(() => {
     if (!sourceEvent || seededFromEvent.current) return;
@@ -412,6 +443,9 @@ export default function NewRequestPage() {
     /* Closes the loop on the calendar. The call stops being an open promise
        the moment the work it produced exists. */
     if (sourceEvent) linkEventToRequest(sourceEvent.id, result.id, now);
+    /* Closes the same loop for the inbox: the enquiry stops being something to
+       answer the moment the work it asked for exists. */
+    if (sourceEnquiry) linkEnquiryToRequest(sourceEnquiry.id, result.id);
 
     toast.success(t('done', { reference: result.reference }));
     router.push(
