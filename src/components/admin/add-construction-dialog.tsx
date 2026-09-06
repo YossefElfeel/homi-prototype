@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { LOCALE_LABELS, routing, type Locale } from '@/i18n/routing';
@@ -45,9 +45,14 @@ export function AddConstructionDialog({
 }) {
   const t = useTranslations('admin.construction');
   const actionsT = useTranslations('actions');
+  const locale = useLocale() as Locale;
 
   const photos = useStore((s) => s.data.construction);
+  const sections = useStore((s) => s.data.constructionSections);
   const addPhoto = useStore((s) => s.addConstructionPhoto);
+
+  const section = sections.find((sec) => sec.id === group);
+  const sectionName = section?.title[locale] ?? section?.title.de ?? group;
 
   const [src, setSrc] = useState('');
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -79,17 +84,31 @@ export function AddConstructionDialog({
         <DialogHeader>
           <DialogTitle>{t('addTitle')}</DialogTitle>
           <DialogDescription>
-            {t('addBody', { group: t(`groups.${group}` as 'groups.trockenbau') })}
+            {/* The section's own title, from the record. This asked the
+                dictionary for a per-group heading — a block deleted in the
+                wave that made sections records and let them name themselves —
+                so the dialog printed «admin.construction.groups.trockenbau» at
+                somebody. The parity check could not see it, because the key
+                was assembled from a value at runtime. That blind spot is
+                narrower now: `message-test` enumerates the runtime-built keys
+                whose value set comes from a union or a registry. */}
+            {t('addBody', { group: sectionName })}
           </DialogDescription>
         </DialogHeader>
 
-        {unused.length === 0 ? (
-          <p className="text-ink-secondary">{t('addNoFiles')}</p>
-        ) : (
-          <div className="space-y-5">
+        {/*
+          Always the picker, never a dead end.
+          This used to swap the whole form for «every available file is already
+          assigned» the moment the project's own files ran out — which was true
+          and, once uploads existed, stopped being a reason to refuse. It hid
+          the upload button behind a sentence about something else.
+        */}
+        <div className="space-y-5">
             <ImagePicker
               label={t('addFile')}
-              hint={t('addFileHint')}
+              /* Says why only uploads are on offer, rather than replacing the
+                 form with that sentence. */
+              hint={unused.length === 0 ? t('addNoFiles') : t('addFileHint')}
               options={unused.map((u) => `/construction/${u}.jpg`)}
               /* Everything already in a group — including uploads, which the
                  picker offers from this browser's own library and cannot know
@@ -120,8 +139,7 @@ export function AddConstructionDialog({
                 )}
               </Field>
             ))}
-          </div>
-        )}
+        </div>
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

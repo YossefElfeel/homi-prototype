@@ -154,6 +154,14 @@ export const en: Messages = {
       overdue: 'Overdue',
       paid: 'Paid',
     },
+    blogPost: {
+      draft: 'Draft',
+      published: 'Published',
+    },
+    enquiry: {
+      new: 'Open',
+      answered: 'Answered',
+    },
     review: {
       pending: 'Awaiting review',
       published: 'Published',

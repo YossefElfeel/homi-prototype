@@ -22,6 +22,9 @@ import { IntlMessageFormat } from 'intl-messageformat';
 import { globSync } from 'tinyglobby';
 
 import { de, en } from '../src/messages/index.ts';
+import { ADMIN_PERMISSIONS } from '../src/mock/schema.ts';
+import { PERMISSION_GROUPS } from '../src/lib/admin-permissions.ts';
+import { STATUS_ENTITIES, statesOf } from '../src/lib/status-registry.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -100,6 +103,43 @@ for (const file of globSync('src/**/*.tsx', { cwd: process.cwd() })) {
     }
   }
 }
+
+/* ---- the runtime-built keys whose value set *is* knowable ---------------
+ *
+ * The counter below is honest and it is also where a real bug hid: the
+ * construction dialog asked the dictionary for a per-group heading for a wave
+ * after that block was deleted, and printed the raw key at somebody. The
+ * pattern is unresolvable from source, but the *values* are enumerable — they
+ * come from a union or a registry this file can import. Those get checked.
+ *
+ * What stays uncounted is the genuinely open kind: a key built from a slug the
+ * office invents. There is no list to check it against, which is exactly why
+ * a service's count question and a section's headings are fields on records
+ * rather than message keys.
+ */
+for (const [name, dict] of [['de', de], ['en', en]] as const) {
+  for (const permission of ADMIN_PERMISSIONS) {
+    check(
+      `[dynamic] admin.shell.nav.${permission} in ${name}`,
+      typeof resolve(dict, `admin.shell.nav.${permission}`) === 'string',
+    );
+  }
+  for (const group of PERMISSION_GROUPS) {
+    check(
+      `[dynamic] admin.shell.groups.${group} in ${name}`,
+      typeof resolve(dict, `admin.shell.groups.${group}`) === 'string',
+    );
+  }
+  for (const entity of STATUS_ENTITIES) {
+    for (const state of statesOf(entity)) {
+      check(
+        `[dynamic] status.${entity}.${state} in ${name}`,
+        typeof resolve(dict, `status.${entity}.${state}`) === 'string',
+      );
+    }
+  }
+}
+
 
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
 if (dynamic > 0) console.log(`${dynamic} keys are built at runtime and not checked`);

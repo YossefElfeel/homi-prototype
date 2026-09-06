@@ -156,6 +156,17 @@ export const de = {
       overdue: 'Überfällig',
       paid: 'Bezahlt',
     },
+    /* Die Wörter, die auf dem Abzeichen stehen. Ohne sie druckt der Bildschirm
+       den Schlüssel — was er seit zwei Wellen tat, weil der Schlüssel aus
+       einem Wert gebaut wird und die Paritätsprüfung ihn nicht sah. */
+    blogPost: {
+      draft: 'Entwurf',
+      published: 'Aufgeschaltet',
+    },
+    enquiry: {
+      new: 'Offen',
+      answered: 'Beantwortet',
+    },
     review: {
       pending: 'Zur Prüfung',
       published: 'Veröffentlicht',
