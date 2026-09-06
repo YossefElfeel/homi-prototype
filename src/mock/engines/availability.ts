@@ -29,7 +29,12 @@ import {
   businessWeekday,
   startOfBusinessDay,
 } from '@/lib/business-time';
-import { distanceKm, regionByPostcode, travelMinutes } from './coverage';
+import {
+  distanceKm,
+  regionByPostcode,
+  travelMinutes,
+  type ServedRegion,
+} from './coverage';
 
 export interface Slot {
   start: string;
@@ -57,6 +62,16 @@ export interface SlotQuery {
    * genuinely have none — see `occupiesSlot` for which kinds block a slot.
    */
   events?: CalendarEvent[];
+  /**
+   * The service area, for the travel buffer between two jobs.
+   *
+   * Optional, and the default is the seeded eight. A caller that does not pass
+   * it gets the behaviour this engine has always had; one that does gets the
+   * live list, which is what makes a municipality added in the panel schedule
+   * like a real place instead of falling into `bufferBetween`'s
+   * "unknown location" bucket.
+   */
+  regions?: ServedRegion[];
 }
 
 const SLOT_GRANULARITY_MIN = 30;
@@ -186,9 +201,10 @@ export function bookingsOnDay(day: Date, bookings: Booking[]) {
 function bufferBetween(
   postcodeA: string | undefined,
   postcodeB: string | undefined,
+  regions?: ServedRegion[],
 ): number {
-  const a = postcodeA ? regionByPostcode(postcodeA) : undefined;
-  const b = postcodeB ? regionByPostcode(postcodeB) : undefined;
+  const a = postcodeA ? regionByPostcode(postcodeA, regions) : undefined;
+  const b = postcodeB ? regionByPostcode(postcodeB, regions) : undefined;
   if (!a || !b) return 30; // Unknown location — assume the middle bucket.
   return travelMinutes(distanceKm(a, b));
 }
@@ -198,7 +214,7 @@ function bufferBetween(
 export function slotsForDay(day: Date, q: SlotQuery): Slot[] {
   if (dayBlockReason(day, q)) return [];
 
-  const { settings, durationMinutes, property, bookings, holds, properties, now } = q;
+  const { settings, durationMinutes, property, bookings, holds, properties, now, regions } = q;
   const dayStart = atTime(day, settings.dayStart);
   const dayEnd = atTime(day, settings.dayEnd);
   const earliest = addMinutes(now, settings.minLeadHours * 60);
@@ -244,7 +260,7 @@ export function slotsForDay(day: Date, q: SlotQuery): Slot[] {
     let routeCost = 0;
 
     for (const job of existing) {
-      const buffer = bufferBetween(property.postcode, job.postcode);
+      const buffer = bufferBetween(property.postcode, job.postcode, regions);
       if (
         overlaps(
           addMinutes(start, -buffer),
@@ -345,6 +361,10 @@ export function detectRouteConflicts(
   day: Date,
   bookings: Booking[],
   properties: Pick<Property, 'id' | 'postcode'>[],
+  /* Same default as `SlotQuery.regions`, for the same reason: the calendar
+     that flags «zu wenig Zeit dazwischen» has to measure from the same map the
+     slot picker offered from, or the two disagree about the same afternoon. */
+  regions?: ServedRegion[],
 ) {
   const jobs = bookingsOnDay(day, bookings);
   const conflicts: { a: Booking; b: Booking; needed: number; available: number }[] = [];
@@ -355,6 +375,7 @@ export function detectRouteConflicts(
     const needed = bufferBetween(
       properties.find((p) => p.id === a.propertyId)?.postcode,
       properties.find((p) => p.id === b.propertyId)?.postcode,
+      regions,
     );
     const available =
       (new Date(b.start).getTime() - addMinutes(new Date(a.start), a.duration).getTime()) /

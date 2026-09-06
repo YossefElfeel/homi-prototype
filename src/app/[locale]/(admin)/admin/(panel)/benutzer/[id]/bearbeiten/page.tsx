@@ -43,6 +43,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
   const hydrated = useHydrated();
 
   const team = useStore((s) => s.data.team);
+  const regions = useStore((s) => s.regions);
   const services = useStore((s) => s.services);
   const settings = useStore((s) => s.settings);
   const updateTeamMember = useStore((s) => s.updateTeamMember);
@@ -231,7 +232,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
                 {settings.servedPostcodes.map((code) => (
                   <Checkbox
                     key={code}
-                    label={`${code} ${regionByPostcode(code)?.name ?? ''}`}
+                    label={`${code} ${regionByPostcode(code, regions)?.name ?? ''}`}
                     checked={form.regions.includes(code)}
                     onChange={(e) =>
                       patch({

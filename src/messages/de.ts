@@ -14,6 +14,8 @@ export const de = {
   },
 
   nav: {
+    home: 'Start',
+    language: 'Sprache',
     services: 'Leistungen',
     pricing: 'Preise',
     packages: 'Abos',

@@ -650,7 +650,14 @@ export const TRACKS: Track[] = [
         'vollständig',
         'SMS zu lang',
       ], 'Zeigt, in welchen Bereichen die Vorlage angeboten wird — aus derselben Tabelle, die die Wähler lesen'),
-      done('80', 'Einstellungen — Gebiete', 'Settings — regions', '/admin/einstellungen'),
+      done(
+        '80',
+        'Einstellungen — Gebiete',
+        'Settings — service area',
+        '/admin/einstellungen',
+        ['add an area', 'edit an area', 'removal refused — area in use'],
+        'The eight switches became a list that can be added to. Removal is refused while any property, customer address or application sits on the postcode',
+      ),
       done('81', 'Einstellungen — Zeiten', 'Settings — hours & closures', '/admin/einstellungen', [
         'closure period',
       ]),
@@ -659,6 +666,28 @@ export const TRACKS: Track[] = [
       ]),
       done('83', 'Änderungsprotokoll', 'Change log', '/admin/protokoll', ['empty']),
       done('84', 'Suche', 'Unified search', '/admin/suche', ['idle', 'empty']),
+      /*
+       * Lettered like the users track, and for the same reason: these are not
+       * screens 85 and 86 of the specification's eighty-eight — the field
+       * track already holds those numbers — but a named area the waves added.
+       * Numbering them anyway would give the board two screen 85s.
+       */
+      done(
+        'W1',
+        'Website-Texte',
+        'Website text',
+        '/admin/inhalte',
+        ['filtered to a group', 'filtered to gaps', 'search finds a sentence', 'a live service with no page copy'],
+        'Filed by page, not by message file: every row is a route somebody can open',
+      ),
+      done(
+        'W2',
+        'Website-Texte — eine Seite',
+        'Website text — one surface',
+        '/admin/inhalte/service.umzugsreinigung',
+        ['German', 'English (gap counted on the tab)', 'edited block', 'reset to shipped text'],
+        'Five editors, one per kind of block — a bullet list is not a paragraph with dashes in it',
+      ),
     ],
   },
   {

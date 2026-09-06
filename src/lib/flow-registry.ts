@@ -1369,6 +1369,87 @@ export const FLOWS: Flow[] = [
       ),
     ],
   },
+  {
+    id: 'content',
+    en: 'Writing the website',
+    actors: ['owner'],
+    entries: [
+      added(
+        'Every place on the site that has words in it',
+        '/admin/inhalte',
+        'Filed by page and not by message file. The first cut of this board had one row per dictionary namespace — «site», «booking», «admin» — which is how the strings are stored and is nobody’s answer to «where does the sentence on the pricing page live»',
+      ),
+      added(
+        'Straight to a service’s page copy',
+        '/admin/inhalte/service.umzugsreinigung',
+        'The lead paragraph, the included list, the «what is not included» block and the FAQ. §17.2 promised this screen in wave 1 and `content/services.ts` has carried the comment ever since',
+      ),
+      added(
+        'From the warning about a service with no copy',
+        '/admin/inhalte',
+        'A service that is on sale, has a price and has a blank lead paragraph is a page the site cannot build. The board says so and links to the one to write',
+      ),
+    ],
+    actions: [
+      added('Rewrite a paragraph or a heading', '/admin/inhalte/page.home', 'Autosaves per keystroke, logged once per two minutes rather than once per character'),
+      added(
+        'Add, remove and reorder a bullet',
+        '/admin/inhalte/service.umzugsreinigung',
+        'The unit is the line. Editing the included list as a textarea would make reordering a cut-and-paste, which is the operation that loses one',
+      ),
+      added(
+        'Write a language that has no dictionary',
+        '/admin/inhalte/page.home',
+        'French and Italian fall back to German by §20.6, so the tab shows the German the visitor actually gets and counts it as a gap rather than as text',
+      ),
+      added('Put the shipped text back', '/admin/inhalte/page.home', 'Per language, so a bad English translation can go without touching the German'),
+      added(
+        'Take the changes out as a file',
+        '/admin/inhalte',
+        'The marketing pages are built at deploy time. Without this the screen would be a box that swallows work',
+      ),
+    ],
+    exits: [
+      added('The panel and the request flow read it at once', '/anfrage/leistung', 'Anything rendered from the store follows immediately'),
+      open(
+        'The marketing pages read it',
+        'They are statically rendered and read `SEED_SERVICES`, `content/services.ts` and the dictionaries, so an edit here is the copy the *next build* ships. Same boundary as §17.2b for add-ons, and the export is the hand-off it implies. Making them live means turning the editable blocks into client components — a decision about the whole marketing site, not about this screen',
+      ),
+      open(
+        'A service the owner added gets a marketing page',
+        'Its four blocks are now writable, which was the missing half of §17.2a. The other half is the route: /leistungen/[slug] is pre-rendered from the seed, so a new slug has no page to put the copy on until the site is rebuilt',
+      ),
+    ],
+  },
+  {
+    id: 'area',
+    en: 'Changing the service area',
+    actors: ['owner'],
+    entries: [
+      added('The area list in settings', '/admin/einstellungen', 'Eight switches over a frozen array became a list with an «add» on it'),
+    ],
+    actions: [
+      ok('Switch an area off', '/admin/einstellungen', 'Stops new requests; every property, job and invoice in that town stays'),
+      added('Add a municipality', '/admin/einstellungen', 'Postcode, name, page address and coordinates. Refused on a duplicate postcode or a duplicate URL — two towns on one address means one of them is unreachable'),
+      added('Correct one', '/admin/einstellungen', 'A changed postcode moves in `servedPostcodes` with it, or the area would answer «ausserhalb» for its own town'),
+    ],
+    exits: [
+      added('Removed', '/admin/einstellungen', 'Only while nothing sits on the postcode'),
+      added(
+        'Removal refused, with the count',
+        '/admin/einstellungen',
+        'Properties, customer addresses and applications are counted first. A postcode is not a foreign key, so deleting the row breaks nothing a type would notice — it just makes every address in that town read as outside the area, silently',
+      ),
+      open(
+        'The area’s own page appears',
+        '/gebiete and its children are pre-rendered from `SERVED_REGIONS`, so a municipality added in the panel is served, quotable and bookable at once and gets its page at the next build. Removing a seeded one has the mirror problem, and the confirm step says so',
+      ),
+      open(
+        'Coordinates come from somewhere other than a person',
+        'Latitude and longitude are typed, validated only against Switzerland’s bounding box, and drive the travel buffer between two jobs. A real build geocodes the name; this one asks, and says on the form what the numbers are for',
+      ),
+    ],
+  },
 ];
 
 export function flowCounts() {

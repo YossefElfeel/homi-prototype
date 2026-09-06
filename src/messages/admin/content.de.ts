@@ -606,7 +606,62 @@ export const adminContentDe = {
     regionsIncluded: 'Im Gebiet',
     regionsExcluded: 'Ausserhalb',
     regionsZurichNote:
-      'Die Stadt Zürich gehört bewusst nicht dazu. Die Gebietsseiten und die Suchmaschinenoptimierung zielen auf diese acht Gemeinden.',
+      'Die Stadt Zürich gehört bewusst nicht dazu. Die Gebietsseiten und die Suchmaschinenoptimierung zielen auf diese Gemeinden.',
+
+    /* Die Liste war acht Zeilen lang und konnte nur acht Zeilen lang sein.
+       «Wir reinigen jetzt auch in Zollikon» war bis zu dieser Welle eine
+       Codeänderung — der Bildschirm, der aussah, als verwalte er das
+       Einsatzgebiet, konnte Teile davon nur abschalten. */
+    regionsAdd: 'Gemeinde aufnehmen',
+    regionsAddTitle: 'Neue Gemeinde',
+    regionsAddLead:
+      'Sie gilt sofort: die Anfragestrecke nimmt Adressen mit dieser PLZ ab dem Speichern an. Die Gebietsseite dazu entsteht beim nächsten Aufschalten der Website.',
+    regionsEditTitle: '«{name}» bearbeiten',
+    regionsFieldPostcode: 'Postleitzahl',
+    regionsFieldPostcodeHint: 'Vier Ziffern. Entscheidet, welche Adressen als «im Gebiet» gelten.',
+    regionsFieldName: 'Gemeinde',
+    regionsFieldNameHint: 'Steht auf der Gebietsseite und in der Adressprüfung.',
+    regionsFieldSlug: 'Adresse der Seite',
+    regionsFieldSlugHint: 'Ergibt /gebiete/{slug}. Wird aus dem Namen gebildet.',
+    regionsFieldLat: 'Breitengrad',
+    regionsFieldLng: 'Längengrad',
+    /* Der einzige Hinweis auf diesem Bildschirm zu einer Zahl, die niemand
+       sieht. Ohne Koordinaten liegt die Gemeinde bei (0, 0) — 5000 km vor der
+       Küste Westafrikas — und der Terminplaner rechnet jeden Einsatz dort aus
+       der kostenlosen Anfahrt heraus. Das sieht hier nach nichts aus und auf
+       dem Kalender nach einem Fehler. */
+    regionsCoordsHint:
+      'Ungefährer Mittelpunkt der Gemeinde. Daraus rechnet die Planung die Fahrzeit zwischen zwei Einsätzen — ohne stimmige Koordinaten fällt jeder Auftrag hier aus der kostenlosen Anfahrt.',
+    regionsSave: 'Aufnehmen',
+    regionsSaveEdit: 'Änderungen übernehmen',
+    regionsCancel: 'Abbrechen',
+    regionsEdit: 'Bearbeiten',
+    regionsRemove: 'Entfernen',
+    regionsRemoveTitle: '«{name}» aus dem Einsatzgebiet nehmen?',
+    regionsRemoveBody:
+      'Die Gemeinde verschwindet aus der Liste und aus der Adressprüfung. Bereits erfasste Objekte und Aufträge bleiben — sie liegen dann in einem Ort, den die Firma nicht mehr als Einsatzgebiet führt.',
+    regionsRemoveSeeded:
+      'Diese Gemeinde hat eine eigene Seite unter /gebiete/{slug}. Die bleibt bis zum nächsten Aufschalten online und wirbt weiter für einen Ort, den die Anfragestrecke ab sofort ablehnt.',
+    regionsRemoveConfirm: 'Entfernen',
+    regionsRemoveBlockedTitle: '«{name}» wird noch verwendet',
+    regionsRemoveBlockedBody:
+      '{n} Einträge liegen in dieser Gemeinde: {breakdown}. Solange das so ist, lässt sich die PLZ nicht löschen — jede dieser Adressen würde ab dann als «ausserhalb des Einsatzgebiets» gelesen, ohne dass irgendwo ein Fehler erschiene. Schalten Sie die Gemeinde stattdessen ab: das stoppt neue Anfragen und lässt die Vergangenheit stehen.',
+    regionsUsageProperties: '{n} Objekte',
+    regionsUsageCustomers: '{n} Kundenadressen',
+    regionsUsageApplications: '{n} Bewerbungen',
+    regionsRemoveBlockedClose: 'Verstanden',
+    regionsErrorPostcodeFormat: 'Eine Postleitzahl hat vier Ziffern.',
+    regionsErrorPostcodeTaken: 'Diese PLZ steht schon in der Liste.',
+    regionsErrorNameRequired: 'Ohne Namen bleibt die Kachel auf der Gebietsseite leer.',
+    regionsErrorSlugTaken:
+      'Diese Adresse ist vergeben. Zwei Gemeinden auf einer URL heisst: eine davon ist nicht erreichbar.',
+    regionsErrorCoordinates:
+      'Die Koordinaten liegen ausserhalb der Schweiz. Prüfen Sie Breiten- und Längengrad — die Planung rechnet damit.',
+    regionsAdded: '«{name}» ist im Einsatzgebiet.',
+    regionsRemoved: '«{name}» wurde entfernt.',
+    regionsCount: '{n} Gemeinden, {on} davon aktiv',
+    regionsBuildNote:
+      'Neue Gemeinden gelten sofort für Anfragen, Offerten und Planung. Ihre eigene Seite unter /gebiete bekommen sie beim nächsten Aufschalten der Website.',
 
     hoursTitle: 'Arbeitszeiten',
     hoursDays: 'Arbeitstage',
@@ -655,6 +710,311 @@ export const adminContentDe = {
     hours: 'Stunden',
     save: 'Speichern',
     saved: 'Gespeichert',
+  },
+
+  /*
+   * Bildschirme 85 und 85a — die Website, als Text.
+   *
+   * Bis hierher konnte das Panel ändern, was eine Leistung *kostet*, und nicht,
+   * was ihre Seite *sagt*. Die Kommentare in `content/services.ts` versprechen
+   * seit Welle 1 einen Bildschirm, auf dem die Absätze und FAQ «pro Sprache
+   * bearbeitbar» sind (§17.2) — hier ist er.
+   */
+  website: {
+    title: 'Website-Texte',
+    lead: 'Jeder Text auf der Website, nach Seite geordnet und pro Sprache bearbeitbar.',
+
+    /* Der wichtigste Satz des Bildschirms, und er steht oben statt im
+       Kleingedruckten. Ein Redaktionssystem, das nichts sagt, wird für ein
+       Redaktionssystem gehalten, das sofort veröffentlicht — und die
+       Enttäuschung kommt dann erst, wenn jemand die Seite aufruft. */
+    staticNote:
+      'Die Marketing-Seiten werden beim Aufschalten gebaut. Was Sie hier schreiben, ist der Text der nächsten Version der Website — nicht der Text, den ein Besucher jetzt sieht. Die Anfragestrecke und das Panel lesen sofort mit.',
+    exportAction: 'Änderungen exportieren',
+    exportEmpty: 'Es gibt noch nichts zu exportieren.',
+    exportDone: 'Datei mit {n} Textänderungen heruntergeladen.',
+
+    search: 'Text suchen',
+    searchPlaceholder: 'Wort, Seite oder Schlüssel',
+    filterGroup: 'Bereich',
+    filterAll: 'alle',
+    filterState: 'Zustand',
+    filterEdited: 'bearbeitet',
+    filterGaps: 'Übersetzung fehlt',
+
+    groupServices: 'Leistungsseiten',
+    groupPages: 'Seiten',
+    groupLegal: 'Rechtliches',
+    /* Die Strecken sind auch Website: Wer «Anfrage senden» in «Anfrage
+       abschicken» ändern will, sucht nicht unter «Bedienoberfläche». */
+    groupFlows: 'Strecken',
+    groupSystem: 'Überall',
+
+    /*
+     * Nach Seite benannt, nicht nach Datei.
+     *
+     * Die erste Fassung dieses Bildschirms hatte eine Zeile pro
+     * Sprachdatei-Namensraum — «site», «booking», «admin». So sind die
+     * Wörterbücher abgelegt, und so denkt niemand, der Texte schreibt. Die
+     * Frage lautet «wo steht der Satz auf der Preisseite», und «site» ist
+     * darauf keine Antwort.
+     */
+    surfaces: {
+      page: {
+        home: 'Startseite',
+        chrome: 'Navigation & Fusszeile',
+        services: 'Leistungen — Übersicht',
+        pricing: 'Preise',
+        plans: 'Abos',
+        gallery: 'Referenzen',
+        about: 'Über uns',
+        contact: 'Kontakt',
+        regionsIndex: 'Gebiete — Übersicht',
+        region: 'Gebietsseite (Vorlage)',
+        bau: 'Bau',
+        careers: 'Jobs & Bewerbung',
+        thanks: 'Danke-Seite',
+        legalFrame: 'Rechtliches — Rahmen',
+      },
+      flow: {
+        booking: 'Anfragestrecke',
+        offer: 'Offerte (Kundensicht)',
+        account: 'Kundenkonto',
+        field: 'Aussendienst',
+      },
+      system: {
+        words: 'Knöpfe & allgemeine Wörter',
+        status: 'Statusbezeichnungen',
+        payment: 'Zahlungsformular',
+        panel: 'Admin-Panel',
+        demo: 'Demo-Steuerung',
+      },
+    },
+    scopeSite: 'Website',
+    scopePanel: 'Panel',
+
+    colSurface: 'Wo',
+    colGroup: 'Bereich',
+    colFields: 'Textbausteine',
+    colEdited: 'Bearbeitet',
+    colGaps: 'Fehlt auf {locale}',
+
+    rowOpen: 'Texte bearbeiten',
+    rowView: 'Auf der Website ansehen',
+
+    emptyTitle: 'Kein Text gefunden',
+    emptyBody: 'Für «{query}» gibt es keinen Baustein. Suchen Sie nach einem Wort aus dem Text selbst — die Suche liest den Inhalt, nicht nur die Namen.',
+
+    /* Die eine Zahl auf diesem Bildschirm, die nicht vom Text handelt: eine
+       Leistung, die aufgeschaltet ist, einen Preis hat und keinen Fliesstext —
+       das ist eine Seite, welche die Website nicht bauen kann. */
+    missingCopyTitle: '{n} aufgeschaltete Leistungen ohne Seitentext',
+    missingCopyBody:
+      'Diese Leistungen sind verkäuflich und haben nichts, was auf ihrer Seite stehen könnte: {names}. Bis der Einleitungstext geschrieben ist, bekommen sie beim nächsten Aufschalten keine eigene Seite.',
+    missingCopyAction: 'Text schreiben',
+
+    /* ---- 85a: ein Bildschirm, alle Sprachen ---- */
+    back: 'Zurück zu den Website-Texten',
+    detailLead: 'Deutsch ist die Marktsprache und trägt alles, was nicht übersetzt ist (§20.6).',
+    localeTab: 'Sprache',
+    sourceEdited: 'bearbeitet',
+    sourceDefault: 'wie ausgeliefert',
+    /* Der Zustand, den ein blosser String nicht ausdrücken kann: die englische
+       Seite zeigt Deutsch, völlig korrekt, und sieht fertig aus. */
+    sourceFallback: 'zeigt Deutsch',
+    sourceMissing: 'leer',
+    fallbackHint:
+      'Für diese Sprache steht nichts. Die Seite zeigt den deutschen Text — sie sieht dadurch fertig aus, ohne übersetzt zu sein.',
+
+    reset: 'Zurücksetzen',
+    resetLocale: 'Diese Sprache zurücksetzen',
+    resetAll: 'Alle Sprachen zurücksetzen',
+    resetDone: 'Ausgelieferter Text wiederhergestellt.',
+    resetTitle: 'Text zurücksetzen?',
+    resetBody:
+      'Der Baustein zeigt wieder, was mit der aktuellen Version der Website ausgeliefert wurde. Ihre Änderung ist danach weg.',
+
+    addItem: 'Zeile hinzufügen',
+    addPair: 'Eintrag hinzufügen',
+    removeItem: 'Zeile entfernen',
+    moveUp: 'Nach oben',
+    moveDown: 'Nach unten',
+    listEmpty: 'Noch keine Zeile. Die Liste erscheint auf der Seite nicht, solange sie leer ist.',
+
+    pairQuestion: 'Frage',
+    pairAnswer: 'Antwort',
+    pairTitle: 'Titel',
+    pairBody: 'Text',
+    pairName: 'Name und Ort',
+    pairQuote: 'Zitat',
+    pairPrice: 'Preis',
+    pairFigure: 'Zahl',
+    pairCaption: 'Beschriftung',
+    headlineLead: 'Erste Hälfte',
+    /* Welche Hälfte rot ist, ist eine Schreibentscheidung und keine
+       Formatierung — siehe `lib/display-headline.ts`. Deshalb steht sie hier
+       als eigenes Feld und nicht als Knopf über einem Textkasten. */
+    headlineAccent: 'Zweite Hälfte (rot)',
+    headlineHint: 'Grosse Überschrift in zwei Farben. Jede Zeile bricht dort, wo sie hier bricht.',
+
+    /*
+     * Die Namen der häufigsten Textbausteine.
+     *
+     * Der Bildschirm hat den ganzen Schlüsselpfad als Feldnamen gedruckt — eine
+     * Seite mit 87 Zeilen, die alle «site.pricing.title» hiessen. In den
+     * Website-Texten kommen 999 verschiedene Endungen vor, 859 davon genau
+     * einmal; jede einzeln zu benennen ist nichts, was jemand pflegt. Diese
+     * rund siebzig decken den grössten Teil ab, der Rest wird aus dem Namen
+     * abgeleitet — und der volle Pfad steht in beiden Fällen darunter, weil er
+     * das Einzige ist, wonach im Code gesucht werden kann.
+     */
+    words: {
+      title: 'Titel',
+      subtitle: 'Untertitel',
+      lead: 'Einleitung',
+      intro: 'Einleitung',
+      body: 'Text',
+      eyebrow: 'Kleinzeile',
+      heading: 'Überschrift',
+      lines: 'Grosse Überschrift',
+      cta: 'Knopf',
+      action: 'Aktion',
+      label: 'Beschriftung',
+      hint: 'Hinweis',
+      placeholder: 'Platzhalter',
+      note: 'Anmerkung',
+      caption: 'Bildunterschrift',
+      summary: 'Zusammenfassung',
+      description: 'Beschreibung',
+      meta: 'Suchmaschine',
+      metaTitle: 'Titel für Suchmaschinen',
+      metaDescription: 'Beschreibung für Suchmaschinen',
+      back: 'Zurück',
+      next: 'Weiter',
+      prev: 'Zurück',
+      submit: 'Absenden',
+      save: 'Speichern',
+      saved: 'Gespeichert',
+      cancel: 'Abbrechen',
+      confirm: 'Bestätigen',
+      close: 'Schliessen',
+      open: 'Öffnen',
+      edit: 'Bearbeiten',
+      add: 'Hinzufügen',
+      remove: 'Entfernen',
+      delete: 'Löschen',
+      send: 'Senden',
+      view: 'Ansehen',
+      done: 'Fertig',
+      search: 'Suche',
+      loading: 'Lädt',
+      required: 'Pflichtfeld',
+      optional: 'Optional',
+      empty: 'Leerzustand',
+      emptyTitle: 'Leerzustand — Titel',
+      emptyBody: 'Leerzustand — Text',
+      emptyAction: 'Leerzustand — Knopf',
+      searchEmptyTitle: 'Keine Treffer — Titel',
+      searchEmptyBody: 'Keine Treffer — Text',
+      filterEmptyTitle: 'Kein Ergebnis — Titel',
+      filterEmptyBody: 'Kein Ergebnis — Text',
+      filterAll: 'Filter «alle»',
+      filterReset: 'Filter zurücksetzen',
+      missingTitle: 'Fehlt — Titel',
+      missingBody: 'Fehlt — Text',
+      rowOpen: 'Zeile öffnen',
+      nextTitle: 'Wie es weitergeht',
+      accessTitle: 'Zutritt',
+      faqTitle: 'Häufige Fragen',
+      faqLines: 'Überschrift «Häufige Fragen»',
+      name: 'Name',
+      firstName: 'Vorname',
+      lastName: 'Nachname',
+      email: 'E-Mail',
+      emailLabel: 'E-Mail',
+      phone: 'Telefon',
+      hours: 'Zeiten',
+      price: 'Preis',
+      total: 'Total',
+      discount: 'Rabatt',
+      duration: 'Dauer',
+      area: 'Fläche',
+      kind: 'Art',
+      status: 'Status',
+      badge: 'Plakette',
+      reference: 'Referenz',
+      offer: 'Offerte',
+    },
+    fields: {
+      service: {
+        lead: 'Einleitung',
+        included: 'Was dazugehört',
+        /* Der Auftrag ist eindeutig: dieser Block verhindert die Hälfte der
+           Streitfälle, bevor sie entstehen. Er ist auch der, den man am
+           ehesten streicht, weil er negativ klingt. */
+        notIncluded: 'Was nicht dazugehört',
+        faq: 'Häufige Fragen',
+      },
+      legal: {
+        title: 'Titel',
+        intro: 'Einleitung',
+        heading: 'Abschnitt',
+        paragraphs: 'Absätze',
+      },
+      home: {
+        heroHeadline: 'Grosse Überschrift im Kopfbereich',
+        heroSub: 'Untertitel im Kopfbereich',
+        heroTags: 'Schlagworte im Kopfbereich',
+        heroBadge: 'Plakette über dem Bild',
+        stats: 'Vier Kennzahlen',
+        servicesHeadline: 'Überschrift «Leistungen»',
+        servicesBody: 'Text «Leistungen»',
+        servicesItems: 'Leistungskacheln',
+        promisesHeadline: 'Überschrift «Versprechen»',
+        promises: 'Versprechen',
+        stepsHeadline: 'Überschrift «Ablauf»',
+        steps: 'Ablauf in vier Schritten',
+        coverageHeadline: 'Überschrift «Einsatzgebiet»',
+        coverageBody: 'Text «Einsatzgebiet»',
+        plansHeadline: 'Überschrift «Abos»',
+        plansDiscount: 'Rabattbeschriftung auf den Abo-Karten',
+        ctaHeadline: 'Überschrift im Aufruf-Band',
+        ctaBody: 'Text im Aufruf-Band',
+        testimonialsEyebrow: 'Kleinzeile über «Stimmen»',
+        testimonialsHeadline: 'Überschrift «Stimmen»',
+        testimonialsRating: 'Bewertungszeile',
+        testimonials: 'Kundenstimmen',
+        testimonialsCount: 'Grosse Zahl über den Stimmen',
+        testimonialsStars: 'Sternebeschriftung (Vorlesehilfe)',
+      },
+      chrome: {
+        nav: 'Menüpunkte',
+        tagline: 'Zeile in der Fusszeile',
+        footerServices: 'Fusszeile — Leistungen',
+        footerCompany: 'Fusszeile — Unternehmen',
+        footerLegal: 'Fusszeile — Rechtliches',
+        hours: 'Öffnungszeiten',
+        copyright: 'Copyright-Zeile',
+        footerServicesTitle: 'Fusszeile — Titel «Leistungen»',
+        footerCompanyTitle: 'Fusszeile — Titel «Unternehmen»',
+        footerSupportTitle: 'Fusszeile — Titel «Support»',
+        footerSocial: 'Fusszeile — Titel «Social Media»',
+        madeIn: 'Herkunftszeile',
+        phone: 'Telefonnummer',
+        mobile: 'Mobilnummer',
+        email: 'E-Mail-Adresse',
+      },
+      careers: {
+        how: 'Auswahlverfahren',
+        next: 'Wie es weitergeht',
+      },
+      bau: {
+        alt: 'Bildbeschreibung',
+      },
+    },
+
+    interfaceNote:
+      'Diese Wörter stehen nicht auf einer Seite, sondern überall: Knöpfe, Statusbezeichnungen, Fehlermeldungen. Ein Wort hier ändert jeden Bildschirm, der es verwendet.',
   },
 
   changelog: {

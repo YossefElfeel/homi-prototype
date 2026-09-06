@@ -141,8 +141,10 @@ export default async function ServicePage({
                 thumb reaches worst. */}
             <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink-tertiary">
               <li>
+                {/* Was the literal «Home» — the first word of the breadcrumb,
+                    untranslated on every route including the German ones. */}
                 <Link href="/" className="inline-flex items-center py-1 transition-colors hover:text-ink">
-                  Home
+                  {nav('home')}
                 </Link>
               </li>
               <ChevronRight className="size-3.5" aria-hidden />
@@ -217,7 +219,10 @@ export default async function ServicePage({
               </div>
             )}
             <div className="flex items-baseline justify-between gap-4 py-4">
-              <dt className="text-sm text-ink-secondary">Mindestbezug</dt>
+              {/* Was the literal «Mindestbezug», printed on the English
+                  route beside three labels that do translate. The key
+                  already existed — the masthead above uses it. */}
+              <dt className="text-sm text-ink-secondary">{pricing('minimumLabel')}</dt>
               <dd data-numeric>
                 {Math.max(service.minDuration, SEED_SETTINGS.minimumHours)} h
               </dd>

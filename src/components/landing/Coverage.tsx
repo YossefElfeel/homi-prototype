@@ -6,10 +6,33 @@ import { DisplayLines } from "@/components/landing/DisplayLines";
 import { Reveal } from "@/components/landing/Reveal";
 import { EASE, inViewLoose, stagger } from "@/components/landing/motion";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
+import { SERVED_REGIONS } from "@/mock/engines/coverage";
+import { useHydrated, useStore } from "@/mock/store";
 
 export function Coverage() {
   const t = useContent();
   const { locale } = useLocale();
+  /*
+   * The service area, not a third copy of it.
+   *
+   * `landing.ts` shipped its own eight town-and-postcode pairs, so this block
+   * was the third place the coverage list was written down — after
+   * `SERVED_REGIONS` and `Settings.servedPostcodes` — and the only one that
+   * could not be reached from anywhere. Adding a municipality in the panel
+   * updated the area index, the request flow and the coverage check, and left
+   * the homepage advertising eight towns. Three lists, one fact.
+   *
+   * Falls back to the seeded eight until the persisted store has rehydrated,
+   * which is what keeps the server render and the first client render
+   * identical — the tiles animate in on scroll, so an empty first paint here
+   * is a section that never reveals.
+   */
+  const hydrated = useHydrated();
+  const stored = useStore((s) => s.regions);
+  const served = useStore((s) => s.settings.servedPostcodes);
+  const areas = (hydrated ? stored : SERVED_REGIONS).filter((r) =>
+    hydrated ? served.includes(r.postcode) : true,
+  );
 
   return (
     <section className="py-20 lg:py-[70px]">
@@ -51,7 +74,7 @@ export function Coverage() {
           variants={stagger(0.06)}
           className="grid grid-cols-2 gap-4 sm:grid-cols-6"
         >
-          {t.coverage.items.map((m, i) => (
+          {areas.map((m, i) => (
             <motion.li
               key={m.name}
               variants={{
@@ -84,7 +107,7 @@ export function Coverage() {
                 {m.name}
               </p>
               <p className="text-ink-secondary group-hover:text-ink mt-3 text-sm tabular-nums transition-colors duration-400">
-                {m.zip}
+                {m.postcode}
               </p>
             </motion.li>
           ))}

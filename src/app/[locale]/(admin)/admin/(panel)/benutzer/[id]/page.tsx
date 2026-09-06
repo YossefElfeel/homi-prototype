@@ -76,6 +76,7 @@ export default function AdminUserPage({ params }: { params: Promise<{ id: string
   const now = useNow();
 
   const data = useStore((s) => s.data);
+  const regions = useStore((s) => s.regions);
   const services = useStore((s) => s.services);
   const memberId = useStore((s) => s.demo.currentMemberId);
   const setActive = useStore((s) => s.setTeamMemberActive);
@@ -462,7 +463,7 @@ export default function AdminUserPage({ params }: { params: Promise<{ id: string
               <ul className="mt-3 space-y-1 text-sm">
                 {member.regions.map((code) => (
                   <li key={code}>
-                    <span data-numeric>{code}</span> {regionByPostcode(code)?.name ?? ''}
+                    <span data-numeric>{code}</span> {regionByPostcode(code, regions)?.name ?? ''}
                   </li>
                 ))}
               </ul>

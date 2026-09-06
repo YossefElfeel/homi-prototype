@@ -53,6 +53,7 @@ export default function PropertyStep() {
   const draft = useStore((s) => s.draft);
   const updateDraft = useStore((s) => s.updateDraft);
   const settings = useStore((s) => s.settings);
+  const regions = useStore((s) => s.regions);
   const services = useStore((s) => s.services);
   const role = useStore((s) => s.demo.role);
   const currentCustomerId = useStore((s) => s.demo.currentCustomerId);
@@ -114,11 +115,16 @@ export default function PropertyStep() {
   const coverage = checkCoverage(
     usingSaved ? (savedProperty?.postcode ?? '') : p.postcode,
     settings.servedPostcodes,
+    regions,
   );
 
   /* Checked, and deliberately not enforced — see the note beside the message
      it produces. */
-  const pickupCoverage = checkCoverage(pickup?.postcode ?? '', settings.servedPostcodes);
+  const pickupCoverage = checkCoverage(
+    pickup?.postcode ?? '',
+    settings.servedPostcodes,
+    regions,
+  );
 
   /*
    * A saved address is not automatically a complete one.
