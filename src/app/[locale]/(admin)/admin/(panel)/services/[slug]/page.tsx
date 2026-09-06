@@ -221,74 +221,6 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
           </CardBody>
         </Card>
 
-        {/*
-          The count question, and it only exists for a counted service.
-
-          This is the field the request flow was missing. `serviceNeeds` turns
-          the count on for every `perUnit` service — correct — and the form
-          beside it read a fixed «Wie viele Fensterflügel?», so the second
-          counted service an owner added asked about windows and priced the
-          answer. A wrong question is worse than a missing one, because the
-          visitor answers it.
-
-          German only on this card, deliberately: it is the market language and
-          §20.6 makes it the fallback for the other three, so one field is what
-          stands between a counted service and a form that cannot be filled in.
-          The other languages are written on the language card above, like
-          every other string on the record.
-        */}
-        {service.calc === 'perUnit' && (
-          <Card>
-            <CardHeader title={t('countTitle')} description={t('countCardHint')} />
-            <CardBody className="space-y-5">
-              <Field label={t('countLabelField')} hint={t('countLabelHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countLabel?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countLabel: { ...service.countLabel, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Field label={t('countHintField')} hint={t('countHintHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countHint?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countHint: { ...service.countHint, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Field label={t('countNounField')} hint={t('countNounHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countNoun?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countNoun: { ...service.countNoun, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-
-              {needsCountWords(service) && (
-                <p className="rounded-[var(--radius-sm)] border border-status-warning-line bg-status-warning px-3 py-2 text-sm text-status-warning-fg">
-                  {t('countMissing')}
-                </p>
-              )}
-            </CardBody>
-          </Card>
-        )}
 
         <Card>
           <CardHeader title={t('pricingTitle')} description={t('pricingHint')} />
@@ -384,6 +316,75 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
             />
           </CardBody>
         </Card>
+
+        {/*
+          The count question, and it only exists for a counted service.
+
+          This is the field the request flow was missing. `serviceNeeds` turns
+          the count on for every `perUnit` service — correct — and the form
+          beside it read a fixed «Wie viele Fensterflügel?», so the second
+          counted service an owner added asked about windows and priced the
+          answer. A wrong question is worse than a missing one, because the
+          visitor answers it.
+
+          German only on this card, deliberately: it is the market language and
+          §20.6 makes it the fallback for the other three, so one field is what
+          stands between a counted service and a form that cannot be filled in.
+          The other languages are written on the language card above, like
+          every other string on the record.
+        */}
+        {service.calc === 'perUnit' && (
+          <Card>
+            <CardHeader title={t('countTitle')} description={t('countCardHint')} />
+            <CardBody className="space-y-5">
+              <Field label={t('countLabelField')} hint={t('countLabelHint')}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={service.countLabel?.[locale] ?? ''}
+                    onChange={(e) =>
+                      patch({
+                        countLabel: { ...service.countLabel, [locale]: e.target.value },
+                      })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label={t('countHintField')} hint={t('countHintHint')}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={service.countHint?.[locale] ?? ''}
+                    onChange={(e) =>
+                      patch({
+                        countHint: { ...service.countHint, [locale]: e.target.value },
+                      })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label={t('countNounField')} hint={t('countNounHint')}>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={service.countNoun?.[locale] ?? ''}
+                    onChange={(e) =>
+                      patch({
+                        countNoun: { ...service.countNoun, [locale]: e.target.value },
+                      })
+                    }
+                  />
+                )}
+              </Field>
+
+              {needsCountWords(service) && (
+                <p className="rounded-[var(--radius-sm)] border border-status-warning-line bg-status-warning px-3 py-2 text-sm text-status-warning-fg">
+                  {t('countMissing')}
+                </p>
+              )}
+            </CardBody>
+          </Card>
+        )}
 
         {/*
           The one control on this screen that does not autosave.

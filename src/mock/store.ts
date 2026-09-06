@@ -358,7 +358,7 @@ Marco Brunner`;
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
    exists to fill it. */
-const SCHEMA_VERSION = 39;
+const SCHEMA_VERSION = 40;
 
 /**
  * §10 — the default payment term.

@@ -15,7 +15,7 @@ import {
   useDismissLabel,
 } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Select } from '@/components/ui/field';
+
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -30,7 +30,6 @@ import { cn } from '@/lib/cn';
 /** §17.2 — three stars or fewer is the review the owner has to answer first. */
 const CRITICAL_AT = 3;
 
-type StateFilter = 'all' | ReviewStatus;
 
 /**
  * The three answers to "what is on the website?", which is the question this
@@ -41,9 +40,22 @@ type StateFilter = 'all' | ReviewStatus;
  * the unpublished tab. The tab is the coarse question the owner arrives with;
  * the filter is the fine one they reach for once they are inside it.
  */
-type Tab = 'published' | 'unpublished' | 'deleted';
+/**
+ * One tab per state, plus the bin.
+ *
+ * The first cut had three — published, «not published», deleted — with a
+ * status filter beside the search to split the middle one. That was two
+ * controls doing one job, and the coarse one hid `hidden`: a review the owner
+ * had taken down sat in the same tab as one nobody had read yet, and telling
+ * them apart meant reaching for the second control.
+ *
+ * Derived from `statesOf('review')` rather than listed here, so the tab strip
+ * cannot fall out of step with the status registry — a fifth review state
+ * would get a tab without anybody remembering this line.
+ */
+type Tab = ReviewStatus | 'deleted';
 
-const TABS: Tab[] = ['published', 'unpublished', 'deleted'];
+const TABS: Tab[] = [...statesOf('review'), 'deleted'] as Tab[];
 
 function Stars({ rating, label }: { rating: number; label: string }) {
   return (
@@ -104,8 +116,11 @@ export default function AdminReviewsPage() {
   const now = useNow();
 
   const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<Tab>('unpublished');
-  const [state, setState] = useState<StateFilter>('all');
+  const [tab, setTab] = useState<Tab>(
+    /* The queue, because the reviews waiting on a decision are the reason
+       somebody opens this screen. */
+    'pending',
+  );
   const deleting = useConfirmTarget<Review>();
   const erasing = useConfirmTarget<Review>();
 
@@ -117,9 +132,8 @@ export default function AdminReviewsPage() {
       .filter((r) => {
         if (tab === 'deleted') return Boolean(r.deletedAt);
         if (r.deletedAt) return false;
-        return tab === 'published' ? r.status === 'published' : r.status !== 'published';
+        return r.status === tab;
       })
-      .filter((r) => (state === 'all' ? true : r.status === state))
       .filter((r) => {
         if (!q) return true;
         const customer = customers.find((c) => c.id === r.customerId);
@@ -138,18 +152,17 @@ export default function AdminReviewsPage() {
           .includes(q);
       })
       .sort((a, b) => {
-        /* Queue first, not newest first. The pending group was at the top of
-           the screen when this was four sections, and that ordering was the
-           one thing about the sections worth keeping: the reviews waiting on
-           a decision are the reason the owner opened the screen. */
+        /* Every tab but the bin now holds one state, so ordering by state has
+           nothing left to do there — it still does in «Gelöscht», which is the
+           one tab that mixes them. Within a state, newest first. */
         const byState = order.indexOf(a.status) - order.indexOf(b.status);
-        return byState !== 0 ? byState : (a.submittedAt < b.submittedAt ? 1 : -1);
+        return byState !== 0 ? byState : a.submittedAt < b.submittedAt ? 1 : -1;
       });
-  }, [reviews, customers, tab, state, query, order]);
+  }, [reviews, customers, tab, query, order]);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
-  const filtering = state !== 'all' || query.trim() !== '';
+  const filtering = query.trim() !== '';
 
   const customerName = (id: string) => {
     const c = customers.find((x) => x.id === id);
@@ -181,7 +194,6 @@ export default function AdminReviewsPage() {
 
   function resetFilters() {
     setQuery('');
-    setState('all');
   }
 
   return (
@@ -227,10 +239,7 @@ export default function AdminReviewsPage() {
           >
             {TABS.map((id) => {
               const count = reviews.filter((r) =>
-                id === 'deleted'
-                  ? Boolean(r.deletedAt)
-                  : !r.deletedAt &&
-                    (id === 'published' ? r.status === 'published' : r.status !== 'published'),
+                id === 'deleted' ? Boolean(r.deletedAt) : !r.deletedAt && r.status === id,
               ).length;
 
               return (
@@ -248,16 +257,9 @@ export default function AdminReviewsPage() {
                     e.preventDefault();
                     const next = TABS[(TABS.indexOf(id) + delta + TABS.length) % TABS.length]!;
                     setTab(next);
-                    setState('all');
                     document.getElementById(`reviews-tab-${next}`)?.focus();
                   }}
-                  onClick={() => {
-                    setTab(id);
-                    /* The status filter is scoped to the tab it was set in.
-                       Carrying «Zurückgezogen» into the published tab would
-                       leave an empty list under a tab that has rows in it. */
-                    setState('all');
-                  }}
+                  onClick={() => setTab(id)}
                   className={cn(
                     '-mb-px flex min-h-11 items-center gap-2 border-b-2 px-4 py-2 text-sm transition-colors',
                     tab === id
@@ -265,7 +267,7 @@ export default function AdminReviewsPage() {
                       : 'border-transparent text-ink-secondary hover:border-line-strong hover:text-ink',
                   )}
                 >
-                  {t(`tab${id.charAt(0).toUpperCase()}${id.slice(1)}` as 'tabPublished')}
+                  {id === 'deleted' ? t('tabDeleted') : statusT(id)}
                   {/* The count in a chip, so the tab reads «Gelöscht · 1»
                       rather than as two words that might both be labels. */}
                   <span
@@ -295,25 +297,6 @@ export default function AdminReviewsPage() {
               filtering
                 ? appT('results', { shown: visible.length, total: reviews.length })
                 : appT('resultsAll', { total: reviews.length })
-            }
-            filters={
-              <label>
-                <span className="sr-only">{t('filterState')}</span>
-                <Select
-                  dense
-                  value={state}
-                  onChange={(e) => setState(e.target.value as StateFilter)}
-                >
-                  <option value="all">
-                    {t('filterState')}: {t('filterAll')}
-                  </option>
-                  {order.map((s) => (
-                    <option key={s} value={s}>
-                      {t('filterState')}: {statusT(s)}
-                    </option>
-                  ))}
-                </Select>
-              </label>
             }
           />
 
@@ -346,11 +329,15 @@ export default function AdminReviewsPage() {
                 return (
                   <li key={review.id} className="surface-card p-5">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      {/* On the card rather than over the list. The heading it
-                          replaces only said what state the cards under it were
-                          in — which a filtered list, having no groups, could
-                          no longer say anywhere. */}
-                      <StatusBadge entity="review" state={review.status} size="sm" />
+                      {/* Only in the bin. Everywhere else the tab above the
+                          list already says the state, and repeating it on
+                          every card is a word the reader has to skip on every
+                          row. «Gelöscht» is the one tab that mixes states, and
+                          there the badge is the only thing that says whether a
+                          binned review had been published. */}
+                      {tab === 'deleted' && (
+                        <StatusBadge entity="review" state={review.status} size="sm" />
+                      )}
                       <Stars
                         rating={review.rating}
                         label={t('starsLabel', { n: review.rating })}
