@@ -398,6 +398,29 @@ export const adminContentDe = {
     unknownCustomer: 'Ohne Kundenzuordnung',
     unknownService: 'Ohne Leistung',
 
+    addAction: 'Referenz hinzufügen',
+    addTitle: 'Referenz hinzufügen',
+    addBody:
+      'Fotos kommen sonst vom Team über die Einsatz-Screens. Hier lässt sich eine Arbeit von Hand anlegen — für Bilder, die per Mail kamen oder auf einem Telefon liegen.',
+    addBooking: 'Zu welchem Einsatz gehört das?',
+    addBookingHint:
+      'Nur abgeschlossene Einsätze ohne Referenz. Der Einsatz liefert Leistung und Datum — ohne ihn wäre es ein Stockfoto.',
+    addBookingPlaceholder: 'Einsatz wählen',
+    addNote: 'Notiz',
+    addNoteHint: 'Optional. Steht unter dem Paar, nur intern.',
+    addSameImage: 'Vorher und Nachher dürfen nicht dasselbe Bild sein.',
+    addConsentNote:
+      'Wird als Entwurf angelegt und erscheint nicht auf der Website. Das Freigeben ist ein eigener Schritt mit eigener Rückfrage.',
+    addNoCandidates:
+      'Jeder abgeschlossene Einsatz hat bereits eine Referenz. Neue Einsätze erscheinen hier, sobald sie fertig sind.',
+    addDone: 'Referenz angelegt — noch nicht freigegeben.',
+
+    remove: 'Entfernen',
+    removeTitle: 'Referenz entfernen?',
+    removeBody:
+      'Beide Bilder werden gelöscht. Das gilt nur für Referenzen, die im Büro angelegt wurden — Fotos vom Team gehören zum Einsatzprotokoll und bleiben.',
+    removeDone: 'Referenz entfernt.',
+
     release: 'Freigeben',
     withdraw: 'Zurückziehen',
     viewOnSite: 'Auf der Website ansehen',

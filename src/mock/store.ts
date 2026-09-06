@@ -1297,6 +1297,29 @@ interface StoreState {
    * this panel that could put the business in the wrong.
    */
   setWorkReleased: (bookingId: ID, released: boolean) => void;
+  /**
+   * A piece of work added from the office.
+   *
+   * Photographs reached this app one way: the crew, through the field screens
+   * at check-in and check-out. That is the right *default* and it was the only
+   * door — so a job photographed on somebody's phone, or a picture the
+   * customer sent by mail, could not become a reference at all, and the
+   * gallery screen was a place to switch things off rather than a place to
+   * build the page.
+   *
+   * `source: 'owner'` rather than `'field'`, because where a photograph came
+   * from is a fact worth keeping: the crew's are timestamped by a check-in and
+   * these are not.
+   *
+   * Never released on creation. §20.6 makes publishing a separate decision
+   * with a separate confirm, and folding it into «hinzufügen» would put a
+   * customer's kitchen on the website as a side effect of filing it.
+   */
+  addWork: (
+    input: { bookingId: ID; before: string; after: string; note?: string },
+    now: Date,
+  ) => void;
+  removeWork: (bookingId: ID) => void;
 
   /* ---- contact enquiries (§8) ----
      The form validated six fields, showed a spinner and pushed to /thank-you —
@@ -4678,6 +4701,60 @@ export const useStore = create<StoreState>()(
           entityId: keys[0] ?? 'settings',
           summary: `Setting changed: ${keys.join(', ')}`,
           coalesce: true,
+        });
+      },
+
+      addWork: ({ bookingId, before, after, note }, now) => {
+        const stamp = now.getTime().toString(36);
+        const shared = {
+          source: 'owner' as const,
+          /* Visible to the customer from the start: it is a picture of their
+             own home, and the one thing they should never have to ask for. */
+          visibleToCustomer: true,
+          publishConsent: false,
+          bookingId,
+          takenAt: now.toISOString(),
+        };
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            photos: [
+              ...s.data.photos,
+              { ...shared, id: `pho_${stamp}_b`, src: before, kind: 'before' as const, note },
+              { ...shared, id: `pho_${stamp}_a`, src: after, kind: 'after' as const },
+            ],
+          },
+        }));
+        get().logChange({
+          entity: 'photo',
+          entityId: bookingId,
+          summary: `Work added by the office (${bookingId})`,
+        });
+      },
+
+      removeWork: (bookingId) => {
+        set((s) => ({
+          data: {
+            ...s.data,
+            /* Only the pair, and only the office's own. A crew photograph is
+               evidence attached to a check-in — deleting it from a gallery
+               screen would remove the record of what a job looked like on
+               arrival, which is not this screen's to take. */
+            photos: s.data.photos.filter(
+              (p) =>
+                !(
+                  p.bookingId === bookingId &&
+                  p.source === 'owner' &&
+                  (p.kind === 'before' || p.kind === 'after')
+                ),
+            ),
+          },
+        }));
+        get().logChange({
+          entity: 'photo',
+          entityId: bookingId,
+          summary: `Work removed by the office (${bookingId})`,
         });
       },
 

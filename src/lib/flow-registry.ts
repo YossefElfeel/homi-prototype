@@ -1375,6 +1375,7 @@ export const FLOWS: Flow[] = [
     actors: ['contractor', 'owner', 'customer', 'visitor'],
     entries: [
       added('The crew photographs the job', '/job/bkg_3/check', 'A before and an after on one booking — a context shot never pairs, and a gallery built from loose photos would put a picture of a damaged worktop on the marketing site'),
+      added('The office adds one by hand', '/admin/work', 'The door the screen did not have. Photos reached this app one way — the field screens — so a job shot on somebody’s phone, or pictures a customer sent by mail, could not become a reference at all'),
       added('The pair waits for a decision', '/admin/work', 'The «Ohne Freigabe» tab, which is where a job sits until somebody asks'),
     ],
     actions: [
