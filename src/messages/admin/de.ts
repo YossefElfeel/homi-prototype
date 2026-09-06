@@ -439,7 +439,7 @@ export const adminDe = {
 
     serviceTitle: 'Leistung',
     serviceNone: 'Noch keine Leistung gewählt',
-    windowCount: 'Anzahl Fenster',
+    unitCount: 'Anzahl Fenster',
     furniturePieces: 'Anzahl Möbelstücke',
     countHint: 'Ohne Anzahl lässt sich kein Preis rechnen.',
 
@@ -551,7 +551,7 @@ export const adminDe = {
     serviceTitle: 'Leistung',
     addOns: 'Zusatzleistungen',
     noAddOns: 'Keine',
-    windowCount: 'Anzahl Fensterflügel',
+    unitCount: 'Anzahl Fensterflügel',
     furniturePieces: 'Anzahl Möbelstücke',
     estimated: 'Geschätzte Dauer',
     estimatedNote: 'Vom System aus Fläche, Bädern und Zustand berechnet.',

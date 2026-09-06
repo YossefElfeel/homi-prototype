@@ -12,7 +12,7 @@ import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { durationRange } from '@/mock/engines/pricing';
 import { useHydrated, useStore } from '@/mock/store';
 import { isOffered } from '@/lib/service-catalogue';
-import { serviceNeeds } from '@/lib/service-flow';
+import { countWords, serviceNeeds } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
@@ -69,7 +69,7 @@ export default function ServiceStep({
       patch.serviceSlug = service.slug;
       // Same dependent resets the radio does — add-ons are service-scoped.
       patch.addOnIds = [];
-      patch.windowCount = null;
+      patch.unitCount = null;
       patch.furniturePieces = null;
       patch.pickup = null;
     }
@@ -91,10 +91,11 @@ export default function ServiceStep({
      the pricing engine tests — so a second counted service the owner adds gets
      the count field without anybody remembering this line. */
   const needs = serviceNeeds(selected);
+  const words = countWords(selected, locale);
 
   const complete =
     Boolean(selected) &&
-    (!needs.asksWindowCount || Boolean(draft.windowCount)) &&
+    (!needs.asksCount || Boolean(draft.unitCount)) &&
     (!needs.asksFurniturePieces || Boolean(draft.furniturePieces));
 
   return (
@@ -151,7 +152,7 @@ export default function ServiceStep({
                           // assembly has one, and a leftover would send the
                           // crew to a shop on a window-cleaning job.
                           addOnIds: [],
-                          windowCount: null,
+                          unitCount: null,
                           furniturePieces: null,
                           pickup: null,
                         })
@@ -184,16 +185,25 @@ export default function ServiceStep({
         </ul>
       </fieldset>
 
-      {needs.asksWindowCount && (
-        <Field label={t('windowsLabel')} hint={t('windowsHint')} className="mt-8 max-w-xs">
+      {/* The question comes off the record. It used to be a fixed «Wie viele
+          Fensterflügel?» beside a flag that fires for *every* counted service,
+          so the second one an owner added asked about windows and priced the
+          answer. `countLabel` is null only for a counted service nobody has
+          finished writing, and the catalogue refuses to publish one of those. */}
+      {needs.asksCount && (
+        <Field
+          label={words.label ?? t('windowsLabel')}
+          hint={words.hint ?? t('windowsHint')}
+          className="mt-8 max-w-xs"
+        >
           {(props) => (
             <Input
               type="number"
               min={1}
               inputMode="numeric"
-              value={draft.windowCount ?? ''}
+              value={draft.unitCount ?? ''}
               onChange={(e) =>
-                updateDraft({ windowCount: e.target.value ? Number(e.target.value) : null })
+                updateDraft({ unitCount: e.target.value ? Number(e.target.value) : null })
               }
               {...props}
             />

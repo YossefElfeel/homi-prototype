@@ -440,9 +440,9 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                   was being asked to approve a price whose input was not on the
                   page.
                 */}
-                {needs.asksWindowCount && request.windowCount != null && (
-                  <SummaryRow label={rt('windowCount')}>
-                    <span data-numeric>{request.windowCount}</span>
+                {needs.asksCount && request.unitCount != null && (
+                  <SummaryRow label={rt('unitCount')}>
+                    <span data-numeric>{request.unitCount}</span>
                   </SummaryRow>
                 )}
                 {needs.asksFurniturePieces && request.furniturePieces != null && (

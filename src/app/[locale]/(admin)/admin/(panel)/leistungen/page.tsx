@@ -39,6 +39,7 @@ import {
   isOffered,
   serviceUsage,
 } from '@/lib/service-catalogue';
+import { needsCountWords } from '@/lib/service-flow';
 import { statesOf } from '@/lib/status-registry';
 import { useHydrated, useStore } from '@/mock/store';
 import type { DurationProfile, Service, ServiceStatus } from '@/mock/schema';
@@ -50,6 +51,12 @@ type TypeFilter = 'all' | DurationProfile;
 type Pending =
   | { kind: 'activate' | 'deactivate' | 'delete'; service: Service }
   | { kind: 'deleteBlocked'; service: Service; used: number }
+  /* A counted service with no question cannot go on sale: the request flow
+     would draw a number box with nothing written over it, and the visitor
+     would answer a question nobody asked. Refused rather than published with
+     a fallback — a fallback here is what made window cleaning's wording turn
+     up on a carpet service in the first place. */
+  | { kind: 'activateBlocked'; service: Service }
   | null;
 
 /**
@@ -300,10 +307,13 @@ export default function AdminServicesPage() {
           <Switch
             checked={isOffered(s)}
             onCheckedChange={() =>
-              setPending({
-                kind: isOffered(s) ? 'deactivate' : 'activate',
-                service: s,
-              })
+              setPending(
+                isOffered(s)
+                  ? { kind: 'deactivate', service: s }
+                  : needsCountWords(s)
+                    ? { kind: 'activateBlocked', service: s }
+                    : { kind: 'activate', service: s },
+              )
             }
             aria-label={
               isOffered(s)
@@ -372,9 +382,14 @@ export default function AdminServicesPage() {
     );
   }
 
-  const blocked = pending?.kind === 'deleteBlocked';
+  const blocked = pending?.kind === 'deleteBlocked' || pending?.kind === 'activateBlocked';
   const confirmCopy = pending
     ? {
+        activateBlocked: {
+          title: t('countBlockedTitle', { name: pending.service.name[locale] }),
+          body: t('countBlockedBody'),
+          action: '',
+        },
         activate: {
           title: t('activateTitle', { name: pending.service.name[locale] }),
           body: t('activateBody'),

@@ -502,7 +502,7 @@ export function emptyDraft(): RequestDraft {
       needsExtraEffort: false,
     },
     addOnIds: [],
-    windowCount: null,
+    unitCount: null,
     furniturePieces: null,
     pickup: null,
     access: null,
@@ -656,7 +656,7 @@ interface StoreState {
       propertyId: ID;
       serviceSlug: string;
       addOnIds: ID[];
-      windowCount?: number | null;
+      unitCount?: number | null;
       furniturePieces?: number | null;
       /** The second stop on an assembly job — see `ServiceRequest.pickup`. */
       pickup?: PickupLocation | null;
@@ -1683,7 +1683,7 @@ export const useStore = create<StoreState>()(
           propertyId,
           serviceSlug: draft.serviceSlug!,
           addOnIds: draft.addOnIds,
-          windowCount: draft.windowCount ?? undefined,
+          unitCount: draft.unitCount ?? undefined,
           furniturePieces: draft.furniturePieces ?? undefined,
           /* Only when the visitor actually gave one. `pickup: null` on the
              draft means "no second stop", and writing an empty object here
@@ -1921,7 +1921,7 @@ export const useStore = create<StoreState>()(
           propertyId: input.propertyId,
           serviceSlug: input.serviceSlug,
           addOnIds: input.addOnIds,
-          windowCount: input.windowCount ?? undefined,
+          unitCount: input.unitCount ?? undefined,
           furniturePieces: input.furniturePieces ?? undefined,
           pickup: input.pickup ?? undefined,
           preferred: input.preferred,

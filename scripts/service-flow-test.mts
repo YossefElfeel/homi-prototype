@@ -53,7 +53,7 @@ function estimate(service: Service, over: Record<string, unknown> = {}) {
       service,
       addOns: [],
       ...durationFacts(service, facts),
-      windowCount: 20,
+      unitCount: 20,
       furniturePieces: 3,
     },
     SEED_SETTINGS,
@@ -99,7 +99,7 @@ console.log(`\n— the two counted services, and only those —\n`);
 
 check(
   'fensterreinigung asks for a window count',
-  serviceNeeds(SEED_SERVICES.find((s) => s.slug === 'fensterreinigung')!).asksWindowCount,
+  serviceNeeds(SEED_SERVICES.find((s) => s.slug === 'fensterreinigung')!).asksCount,
 );
 check(
   'moebelmontage asks for a piece count',
@@ -107,7 +107,7 @@ check(
 );
 check(
   'no other bookable service asks for either',
-  BOOKABLE.filter((s) => serviceNeeds(s).asksWindowCount || serviceNeeds(s).asksFurniturePieces)
+  BOOKABLE.filter((s) => serviceNeeds(s).asksCount || serviceNeeds(s).asksFurniturePieces)
     .length === 2,
 );
 
@@ -215,7 +215,7 @@ for (const service of BOOKABLE) {
     `${service.slug} · prices from the answers it asked for`,
     hasEnoughToPrice(service, {
       area: needs.asksArea ? 120 : null,
-      windowCount: needs.asksWindowCount ? 20 : null,
+      unitCount: needs.asksCount ? 20 : null,
       furniturePieces: needs.asksFurniturePieces ? 3 : null,
     }),
   );
@@ -232,7 +232,7 @@ for (const service of BOOKABLE) {
 const facade = SEED_SERVICES.find((s) => s.slug === 'fassadenreinigung')!;
 check(
   'a service with neither an area nor a count can still be priced',
-  hasEnoughToPrice(facade, { area: null, windowCount: null, furniturePieces: null }),
+  hasEnoughToPrice(facade, { area: null, unitCount: null, furniturePieces: null }),
   `min ${facade.minDuration}h × CHF ${facade.basePrice}`,
 );
 

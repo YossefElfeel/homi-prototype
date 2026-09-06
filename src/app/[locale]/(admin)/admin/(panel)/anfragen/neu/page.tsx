@@ -25,7 +25,7 @@ import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { PickupLocation, PropertyKind, TimeBand } from '@/mock/schema';
 import { isOffered } from '@/lib/service-catalogue';
-import { serviceNeeds } from '@/lib/service-flow';
+import { countWords, serviceNeeds } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 const KINDS: {
@@ -156,7 +156,7 @@ export default function NewRequestPage() {
   const [property, setProperty] = useState(emptyProperty);
   const [serviceSlug, setServiceSlug] = useState<string>('');
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
-  const [windowCount, setWindowCount] = useState<number | null>(null);
+  const [unitCount, setUnitCount] = useState<number | null>(null);
   const [furniturePieces, setFurniturePieces] = useState<number | null>(null);
   const [pickup, setPickup] = useState<PickupLocation | null>(null);
   const [date, setDate] = useState<string | null>(null);
@@ -199,7 +199,7 @@ export default function NewRequestPage() {
     setPropertyChoice(draft.propertyId);
     setServiceSlug(draft.serviceSlug);
     setAddOnIds(draft.addOnIds);
-    setWindowCount(draft.windowCount ?? null);
+    setUnitCount(draft.unitCount ?? null);
     setFurniturePieces(draft.furniturePieces ?? null);
     setPickup(draft.pickup ?? null);
     setFlexible(draft.preferred.flexible);
@@ -251,7 +251,7 @@ export default function NewRequestPage() {
           propertyId: savedProperty?.id ?? null,
           property,
           addOnIds,
-          windowCount,
+          unitCount,
           furniturePieces,
         },
         { services, addOns, settings, properties, plans },
@@ -262,7 +262,7 @@ export default function NewRequestPage() {
       savedProperty,
       property,
       addOnIds,
-      windowCount,
+      unitCount,
       furniturePieces,
       services,
       addOns,
@@ -298,7 +298,7 @@ export default function NewRequestPage() {
         ));
 
   const countNeeded =
-    (needs.asksWindowCount && !windowCount) ||
+    (needs.asksCount && !unitCount) ||
     (needs.asksFurniturePieces && !furniturePieces);
 
   const serviceReady = Boolean(service) && !countNeeded;
@@ -370,7 +370,7 @@ export default function NewRequestPage() {
         propertyId,
         serviceSlug,
         addOnIds,
-        windowCount: windowCount ?? undefined,
+        unitCount: unitCount ?? undefined,
         furniturePieces: furniturePieces ?? undefined,
         pickup: pickup ?? undefined,
         preferred,
@@ -391,7 +391,7 @@ export default function NewRequestPage() {
         propertyId,
         serviceSlug,
         addOnIds,
-        windowCount,
+        unitCount,
         furniturePieces,
         pickup,
         preferred,
@@ -435,7 +435,7 @@ export default function NewRequestPage() {
         propertyId: resolvePropertyId() ?? draft.propertyId,
         ...(serviceSlug ? { serviceSlug } : {}),
         addOnIds,
-        windowCount: windowCount ?? undefined,
+        unitCount: unitCount ?? undefined,
         furniturePieces: furniturePieces ?? undefined,
         pickup: pickup ?? undefined,
         preferred,
@@ -456,7 +456,7 @@ export default function NewRequestPage() {
         propertyId: resolvePropertyId() ?? '',
         serviceSlug: serviceSlug || 'unterhaltsreinigung',
         addOnIds,
-        windowCount,
+        unitCount,
         furniturePieces,
         pickup,
         preferred,
@@ -1033,17 +1033,23 @@ export default function NewRequestPage() {
                   )}
                 </Field>
 
-                {needs.asksWindowCount && (
-                  <Field label={t('windowCount')} hint={t('countHint')}>
+                {/* The service's own question, not a fixed one about windows —
+                    the phone form has to ask exactly what the website asks, or
+                    the same job is two different records. */}
+                {needs.asksCount && (
+                  <Field
+                    label={countWords(service, locale).label ?? t('unitCount')}
+                    hint={countWords(service, locale).hint ?? t('countHint')}
+                  >
                     {(props) => (
                       <Input
                         {...props}
                         type="number"
                         min={1}
                         inputMode="numeric"
-                        value={windowCount ?? ''}
+                        value={unitCount ?? ''}
                         onChange={(e) =>
-                          setWindowCount(e.target.value ? Number(e.target.value) : null)
+                          setUnitCount(e.target.value ? Number(e.target.value) : null)
                         }
                       />
                     )}
@@ -1278,7 +1284,7 @@ export default function NewRequestPage() {
                    a window clean the office was told to supply an area the
                    form no longer has a field for. */
                 <p className="mt-2 text-sm text-ink-secondary">
-                  {needs.asksWindowCount
+                  {needs.asksCount
                     ? t('estimateWaitingWindows')
                     : needs.asksFurniturePieces
                       ? t('estimateWaitingPieces')

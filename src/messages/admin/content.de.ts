@@ -37,6 +37,9 @@ export const adminContentDe = {
     /* Der Titel nennt die Leistung, nicht die Handlung — die steht schon auf
        dem Knopf. Wer die Rückfrage liest, muss vor allem wissen, welche der
        acht Zeilen gemeint ist. */
+    countBlockedTitle: '«{name}» hat noch keine Frage',
+    countBlockedBody:
+      'Die Leistung wird nach Anzahl abgerechnet, aber es steht nirgends, wonach gezählt wird. Aufgeschaltet würde die Anfragestrecke ein Zahlenfeld ohne Beschriftung zeigen. Tragen Sie die Frage unter «Zähleinheit» ein — danach lässt sie sich aufschalten.',
     activateTitle: '«{name}» aufschalten?',
     activateBody:
       'Die Leistung steht danach in der Anfragestrecke zur Auswahl, mit dem hinterlegten Ansatz — der ist damit gegenüber Kunden verbindlich. Die Marketing-Seiten werden beim Build aus dem Katalog erzeugt und ziehen erst beim nächsten Deploy nach.',
@@ -95,6 +98,17 @@ export const adminContentDe = {
   },
 
   service: {
+    countTitle: 'Zähleinheit',
+    countCardHint:
+      'Was die Anfragestrecke fragt, wenn diese Leistung nach Anzahl abgerechnet wird. Ohne diesen Text steht in der Strecke ein Zahlenfeld ohne Frage darüber.',
+    countLabelField: 'Die Frage',
+    countLabelHint: 'Zum Beispiel «Wie viele Fensterflügel?». Steht über dem Zahlenfeld.',
+    countHintField: 'Der Hinweis darunter',
+    countHintHint: 'Hier sagt man, was als eine Einheit zählt. Genau der Satz, der die Diskussion an der Tür verhindert.',
+    countNounField: 'Die Einheit im Plural',
+    countNounHint: 'Steht auf der Zusammenfassung, in der Anfrage und auf der Offerte. «18» allein beantwortet nichts.',
+    countMissing:
+      'Ohne Frage lässt sich diese Leistung nicht anfragen: die Strecke zeigte sonst ein Zahlenfeld ohne Beschriftung. Solange sie fehlt, bleibt die Leistung ein Entwurf.',
     back: 'Alle Leistungen',
     nameTitle: 'Bezeichnung',
     nameHint: 'Erscheint auf der Website und in der Offerte, in der Sprache des Kunden.',

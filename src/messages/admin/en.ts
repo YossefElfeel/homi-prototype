@@ -382,7 +382,7 @@ export const adminEn: typeof adminDe = {
 
     serviceTitle: 'Service',
     serviceNone: 'No service chosen yet',
-    windowCount: 'Number of windows',
+    unitCount: 'Number of windows',
     furniturePieces: 'Number of items',
     countHint: 'Without a count there is no price to compute.',
 
@@ -489,7 +489,7 @@ export const adminEn: typeof adminDe = {
     serviceTitle: 'Service',
     addOns: 'Add-ons',
     noAddOns: 'None',
-    windowCount: 'Window sashes',
+    unitCount: 'Window sashes',
     furniturePieces: 'Pieces of furniture',
     estimated: 'Estimated duration',
     estimatedNote: 'Calculated by the system from area, bathrooms and condition.',
