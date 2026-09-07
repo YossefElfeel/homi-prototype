@@ -1,19 +1,23 @@
 'use client';
 
 import { use, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { LOCALE_LABELS, TRANSLATED_LOCALES, type Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { ConfirmDialog, useConfirmTarget, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SwitchField } from '@/components/ui/switch';
 import { Field, Input, Select, Textarea, Checkbox } from '@/components/ui/field';
 import { KIND_KEY } from '@/components/careers/job-list';
+import { ActionIcon } from '@/lib/action-icons';
+import { postingUsage, type PostingUsage } from '@/lib/posting-facts';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useStore } from '@/mock/store';
 import type { EmploymentKind, JobPosting } from '@/mock/schema';
@@ -51,15 +55,23 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
   const listT = useTranslations('admin.postings');
   const appT = useTranslations('app');
   const careers = useTranslations('careers.index');
+  const locale = useLocale() as Locale;
   const hydrated = useHydrated();
+  const router = useRouter();
 
   const postings = useStore((s) => s.data.postings);
+  const applications = useStore((s) => s.data.applications);
   const regions = useStore((s) => s.regions);
   const settings = useStore((s) => s.settings);
   const updatePosting = useStore((s) => s.updatePosting);
+  const deletePosting = useStore((s) => s.deletePosting);
   /* A counter, not a boolean: two edits in quick succession have to read as
      two saves, and a boolean that is already true cannot say so. */
   const [saveTick, setSaveTick] = useState(0);
+  /* The usage is the target: `total > 0` is the refusal, and the counts are
+     what the refusal says instead of «in Verwendung». */
+  const removing = useConfirmTarget<PostingUsage>();
+  const dismissLabel = useDismissLabel();
 
   if (!hydrated) return <p className="text-ink-tertiary">…</p>;
 
@@ -69,6 +81,32 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
   function patch(next: Partial<JobPosting>) {
     updatePosting(posting!.id, next);
     setSaveTick((n) => n + 1);
+  }
+
+  /* The same words the list row shows, so the confirm here and the confirm
+     there ask about the job by one name. */
+  const name = posting.title[locale] || t('untitled');
+
+  /*
+   * The counts are read here so the refusal can name them, and read again in
+   * the store — this pair is a render old, and the jobs page is public, so an
+   * application arriving in between is not a theoretical race.
+   */
+  function askDelete() {
+    removing.ask(postingUsage(posting!.id, applications));
+  }
+
+  function confirmDelete() {
+    if (deletePosting(posting!.id)) {
+      toast.success(listT('deleteDone', { title: name }));
+      /* Back to the list rather than staying on a screen whose record no
+         longer exists — which would render the bare «—» not-found state and
+         read as a broken link rather than as a deletion that worked. */
+      router.replace('/admin/postings');
+    } else {
+      toast.error(listT('deleteRaced'));
+      removing.dismiss();
+    }
   }
 
   return (
@@ -256,7 +294,54 @@ export default function EditPostingPage({ params }: { params: Promise<{ slug: st
             />
           </CardBody>
         </Card>
+
+        {/*
+          Its own card rather than a third row inside «Veröffentlichung», and
+          last. Publishing is reversible and this is not, so the two do not
+          belong under one heading — and the heading is a heading, not the
+          confirm's question: «Stelle löschen?» sitting permanently on the page
+          is a prompt the reader answers by ignoring it. It belongs on this
+          screen all the same, because somebody who opened the duplicate they
+          created by mistake should not have to go back to the list to be rid
+          of it.
+        */}
+        <Card tone="danger">
+          <CardHeader title={t('deleteSectionTitle')} description={t('deleteHint')} />
+          <CardBody>
+            <Button variant="danger" onClick={askDelete}>
+              <ActionIcon.delete className="size-4" aria-hidden />
+              {listT('rowDelete')}
+            </Button>
+          </CardBody>
+        </Card>
       </div>
+
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={
+          removing.target && removing.target.total > 0
+            ? listT('deleteBlockedTitle', { title: name })
+            : listT('deleteTitle', { title: name })
+        }
+        body={
+          removing.target && removing.target.total > 0
+            ? listT('deleteBlockedBody', {
+                applications: removing.target.applications,
+                open: removing.target.open,
+              })
+            : posting.published
+              ? listT('deletePublishedBody', { slug: posting.slug })
+              : listT('deleteBody')
+        }
+        action={listT('deleteConfirm')}
+        dismiss={dismissLabel}
+        /* Shown and refused rather than hidden: a reader who came here to
+           delete needs to see that the act was understood and declined, with
+           the count beside it. An absent button answers nothing. */
+        disabled={Boolean(removing.target && removing.target.total > 0)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

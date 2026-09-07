@@ -150,8 +150,21 @@ export const adminHiringEn: typeof adminHiringDe = {
     rowPublish: 'Publish',
     rowUnpublish: 'Take off the jobs page',
     rowPublishBlocked: 'Publish — needs a title first',
+    rowDelete: 'Delete the job',
     published_toast: 'The job is now on the jobs page.',
     unpublished_toast: 'The job is no longer public.',
+    deleteTitle: 'Delete “{title}”?',
+    deleteBody:
+      'Nobody has applied for this job, so no application is lost. It is a draft and was never public.',
+    deletePublishedBody:
+      'Nobody has applied for this job, so no application is lost. It is public at /jobs/{slug} though: after deleting, that page carries the invitation to apply speculatively instead of the advert. Taking it off the jobs page is the other option — then the job stays here.',
+    deleteConfirm: 'Delete',
+    deleteDone: '“{title}” deleted.',
+    deleteRaced:
+      'Not deleted: an application for this job arrived in the meantime. Reload the list.',
+    deleteBlockedTitle: '“{title}” cannot be deleted',
+    deleteBlockedBody:
+      '{applications, plural, one {One application names this job} other {# applications name this job}}. {open, plural, =0 {All have been answered} one {One is still unanswered} other {# are still unanswered}}. Deleted, each of them would read as a speculative application — and no filter on the applications list would find it again. Take it off the jobs page instead: it then no longer appears in the list of open roles, and the applications it already took stay where they are.',
     searchEmptyTitle: 'Nothing matches',
     searchEmptyBody:
       'No job matches the search or the chosen filter. Change the term, or clear the filter.',
@@ -185,5 +198,8 @@ export const adminHiringEn: typeof adminHiringDe = {
     publishedHint: 'The switch takes effect at once — the job is then public on /jobs.',
     saved: 'Saved',
     preview: 'See it on the jobs page',
+    deleteSectionTitle: 'Delete this job',
+    deleteHint:
+      'Only while nobody has applied. A job with applications is taken off the jobs page, not deleted — otherwise those applications would read as speculative ones.',
   },
 };

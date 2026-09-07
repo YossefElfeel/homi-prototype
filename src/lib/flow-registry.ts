@@ -1319,6 +1319,11 @@ export const FLOWS: Flow[] = [
         'A real PDF, generated on download — the record carries a filename and a size, never bytes, and the file says so on its first page',
       ),
       ok('Turn into a staff account', '/admin/applications/app_1/account'),
+      added(
+        'Delete a job — or be refused with a reason',
+        '/admin/postings',
+        'The list could only ever grow. Unpublishing was the one way off the jobs page, and it is the right act for a job that has taken applications — but it left the duplicate and the abandoned draft sitting in the list for ever with «Entwurf» beside them, indistinguishable from a role somebody is still writing. Refused as soon as any application names the job, because the applications screens read the title off that id and fall through to «Spontanbewerbung» when it is gone — so a deletion would relabel people who answered an advert as people who wrote in unprompted, and no filter on the list could find them again',
+      ),
     ],
     exits: [
       ok('Rejected with a reason', '/admin/applications/app_1'),
