@@ -13,6 +13,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
+import { NEW_ID } from '@/lib/new-record';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { useHydrated, useStore } from '@/mock/store';
 import type {
@@ -81,7 +82,7 @@ export default function EditTemplatePage({
   const addTemplate = useStore((s) => s.addTemplate);
   const updateTemplate = useStore((s) => s.updateTemplate);
 
-  const isNew = id === 'neu';
+  const isNew = id === NEW_ID;
   /* The new template lives here until it is saved. An existing one autosaves
      straight into the store like every other settings screen, so `pending`
      only ever holds the unsaved case. */

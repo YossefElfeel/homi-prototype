@@ -18,6 +18,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
 import { couponCapThreshold, couponRemaining, couponState } from '@/lib/coupon-facts';
+import { NEW_ID } from '@/lib/new-record';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Coupon } from '@/mock/schema';
 
@@ -46,7 +47,7 @@ function draftOf(coupon: Coupon): Draft {
 
 function blankCoupon(now: Date): Coupon {
   return {
-    id: 'neu',
+    id: NEW_ID,
     code: '',
     kind: 'percent',
     value: 10,
@@ -109,7 +110,7 @@ export default function CouponPage({ params }: { params: Promise<{ id: string }>
    */
   if (!hydrated) return <SkeletonPage label={t('back')} />;
 
-  if (id === 'neu') return <CouponEditor coupon={blankCoupon(now)} isNew />;
+  if (id === NEW_ID) return <CouponEditor coupon={blankCoupon(now)} isNew />;
 
   if (!coupon) {
     return (

@@ -624,7 +624,7 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Book somebody’s hours to a job',
-        '/admin/expenses/new?category=arbeitszeit',
+        '/admin/expenses/new?kategorie=arbeitszeit',
         'Wages were one lump a month with a person’s name typed into the supplier box — no job, no hours, no rate — so the largest cost in a cleaning company was the one nothing could be asked about. «Wie viele Stunden hat Marta im März gemacht» was a phone call, and «was hat dieser Umzug an Leuten gekostet» had no answer at all: the job knew its price, the month knew its payroll, and nothing joined the two. «Arbeitszeit» is one person on one job and carries the four facts that make it a record — who worked, how long, whose money settled it, who carries it. «Löhne» stays, for the payout that really does have nothing behind it',
       ),
       added(
@@ -1123,7 +1123,11 @@ export const FLOWS: Flow[] = [
         '/admin/coupons',
         'The list was empty in every scenario, and the empty state declared that to be the intention. The only way to screen 77 was therefore "create a coupon" — opening an existing one was simply not possible',
       ),
-      ok('New coupon', '/admin/coupons/new'),
+      added(
+        'New coupon',
+        '/admin/coupons/new',
+        'Stood on this board as working and had not been for eleven waves. The URL rename moved the button from /neu to /new and left the screen still testing for /neu, so «Gutschein erstellen» — the only entry into screen 77 that does not need an existing code — answered «Dieser Gutschein existiert nicht mehr». The same slip killed «Kosten erfassen» and «Vorlage erstellen»; all three now read one constant',
+      ),
       added(
         'Open an existing coupon',
         '/admin/coupons/cpn_1',
