@@ -360,8 +360,17 @@ Marco Brunner`;
    state on a build that ships five. The archive is the same shape of problem
    read the other way: `customers` is present in every blob since 1, so it is
    kept whole and the archive tab would open empty on exactly the wave that
-   exists to fill it. */
-const SCHEMA_VERSION = 43;
+   exists to fill it.
+
+   44: `Service` traded `countLabel`/`countHint`/`countNoun` for `counts`, a
+   list of units, and `ServiceRequest`/`RequestDraft` traded `unitCount` for
+   `unitCounts` keyed by unit id. This one is not a missing collection `merge`
+   could fill: `services` is present in every blob since 1 and is kept whole,
+   so a stale store would hand the window clean to the new pricing rule with
+   no `counts` at all — `estimateHours` would find nothing to loop over and
+   quote every window job at the minimum. A saved request would lose its
+   count the same way. */
+const SCHEMA_VERSION = 44;
 
 /**
  * §10 — the default payment term.
@@ -504,7 +513,7 @@ export function emptyDraft(): RequestDraft {
       needsExtraEffort: false,
     },
     addOnIds: [],
-    unitCount: null,
+    unitCounts: {},
     furniturePieces: null,
     pickup: null,
     access: null,
@@ -652,7 +661,7 @@ interface StoreState {
       propertyId: ID;
       serviceSlug: string;
       addOnIds: ID[];
-      unitCount?: number | null;
+      unitCounts?: Record<string, number>;
       furniturePieces?: number | null;
       /** The second stop on an assembly job — see `ServiceRequest.pickup`. */
       pickup?: PickupLocation | null;
@@ -1787,7 +1796,7 @@ export const useStore = create<StoreState>()(
           propertyId,
           serviceSlug: draft.serviceSlug!,
           addOnIds: draft.addOnIds,
-          unitCount: draft.unitCount ?? undefined,
+          unitCounts: draft.unitCounts,
           furniturePieces: draft.furniturePieces ?? undefined,
           /* Only when the visitor actually gave one. `pickup: null` on the
              draft means "no second stop", and writing an empty object here
@@ -2025,7 +2034,7 @@ export const useStore = create<StoreState>()(
           propertyId: input.propertyId,
           serviceSlug: input.serviceSlug,
           addOnIds: input.addOnIds,
-          unitCount: input.unitCount ?? undefined,
+          unitCounts: input.unitCounts ?? {},
           furniturePieces: input.furniturePieces ?? undefined,
           pickup: input.pickup ?? undefined,
           preferred: input.preferred,

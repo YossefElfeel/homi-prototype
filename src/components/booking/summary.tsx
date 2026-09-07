@@ -6,7 +6,7 @@ import { Info } from 'lucide-react';
 import type { Locale } from '@/i18n/routing';
 import { MoneyRange } from '@/components/ui/money';
 import { useStore } from '@/mock/store';
-import { countWords, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { useEstimate } from './use-estimate';
 
 /**
@@ -56,10 +56,12 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
             <span data-numeric>{saved?.area ?? draft.property.area}</span>
           </Row>
         )}
-        {needs.asksCount && draft.unitCount && (
-          <Row label={countWords(service, locale).noun ?? ts('windowsSummary')}>
-            <span data-numeric>{draft.unitCount}</span>
-          </Row>
+        {countUnits(service).map((unit) =>
+          draft.unitCounts[unit.id] ? (
+            <Row key={unit.id} label={unitWords(unit, locale).noun ?? ts('windowsSummary')}>
+              <span data-numeric>{draft.unitCounts[unit.id]}</span>
+            </Row>
+          ) : null,
         )}
         {needs.asksFurniturePieces && draft.furniturePieces && (
           <Row label={ts('piecesSummary')}>

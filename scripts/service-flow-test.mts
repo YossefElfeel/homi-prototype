@@ -20,7 +20,12 @@
  * question it does not ask must not.
  */
 import { SEED_SERVICES, SEED_ADDONS, SEED_SETTINGS } from '../src/mock/seed.ts';
-import { serviceNeeds, hasEnoughToPrice, durationFacts } from '../src/lib/service-flow.ts';
+import {
+  countUnits,
+  serviceNeeds,
+  hasEnoughToPrice,
+  durationFacts,
+} from '../src/lib/service-flow.ts';
 import { stepsForService, BOOKING_STEPS } from '../src/components/booking/steps.ts';
 import { addOnsForService } from '../src/lib/addon-catalogue.ts';
 import { isOffered } from '../src/lib/service-catalogue.ts';
@@ -39,6 +44,18 @@ const check = (name: string, ok: boolean, detail = '') => {
 /** Everything a visitor can actually pick in the wizard. */
 const BOOKABLE = SEED_SERVICES.filter((s) => isOffered(s) && !s.quotedIndividually);
 
+/**
+ * Twenty of everything the service counts.
+ *
+ * Read off the record rather than written here: a literal `{ sashes: 20 }` is
+ * an answer to the one seeded counted service, and a second one counting
+ * something else would price at zero — the test would compare an unchanged
+ * total against an unchanged total and call it a pass.
+ */
+function answered(service: Service) {
+  return Object.fromEntries(countUnits(service).map((unit) => [unit.id, 20]));
+}
+
 /** A priced draft for one service, with every quantity answered. */
 function estimate(service: Service, over: Record<string, unknown> = {}) {
   const facts = {
@@ -53,7 +70,7 @@ function estimate(service: Service, over: Record<string, unknown> = {}) {
       service,
       addOns: [],
       ...durationFacts(service, facts),
-      unitCount: 20,
+      unitCounts: answered(service),
       furniturePieces: 3,
     },
     SEED_SETTINGS,
@@ -215,7 +232,7 @@ for (const service of BOOKABLE) {
     `${service.slug} · prices from the answers it asked for`,
     hasEnoughToPrice(service, {
       area: needs.asksArea ? 120 : null,
-      unitCount: needs.asksCount ? 20 : null,
+      unitCounts: answered(service),
       furniturePieces: needs.asksFurniturePieces ? 3 : null,
     }),
   );
@@ -232,7 +249,7 @@ for (const service of BOOKABLE) {
 const facade = SEED_SERVICES.find((s) => s.slug === 'fassadenreinigung')!;
 check(
   'a service with neither an area nor a count can still be priced',
-  hasEnoughToPrice(facade, { area: null, unitCount: null, furniturePieces: null }),
+  hasEnoughToPrice(facade, { area: null, unitCounts: {}, furniturePieces: null }),
   `min ${facade.minDuration}h × CHF ${facade.basePrice}`,
 );
 

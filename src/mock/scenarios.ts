@@ -1961,7 +1961,7 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_2',
       serviceSlug: 'fensterreinigung',
       addOnIds: [],
-      unitCount: 8,
+      unitCounts: { sashes: 8 },
       preferred: { flexible: true },
       photoIds: [],
       customerNote: 'The windows on the lake side, before the weekend if possible.',
@@ -2055,7 +2055,7 @@ function baseData(now: Date): DataSet {
       propertyId: 'prp_2b',
       serviceSlug: 'fensterreinigung',
       addOnIds: [],
-      unitCount: 12,
+      unitCounts: { sashes: 12 },
       preferred: { flexible: true },
       photoIds: [],
       customerNote: 'Could you price the frames as a separate line?',
@@ -5408,7 +5408,7 @@ function queueRequest(
     propertyId: `prp_m${input.n}`,
     serviceSlug: input.service,
     addOnIds: [],
-    unitCount: input.service === 'fensterreinigung' ? 8 : undefined,
+    unitCounts: input.service === 'fensterreinigung' ? { sashes: 8 } : undefined,
     furniturePieces: input.service === 'moebelmontage' ? 3 : undefined,
     preferred:
       input.preferredInDays != null
@@ -5464,7 +5464,7 @@ function accountHistory(
     propertyId: input.office ? 'prp_2b' : 'prp_2',
     serviceSlug: input.service,
     addOnIds: [],
-    unitCount: input.service === 'fensterreinigung' ? 10 : undefined,
+    unitCounts: input.service === 'fensterreinigung' ? { sashes: 10 } : undefined,
     furniturePieces: input.service === 'moebelmontage' ? 3 : undefined,
     /*
      * The collection stop on the one assembly job that became a real booking.
@@ -6052,7 +6052,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       propertyId: 'prp_5',
       serviceSlug: 'fensterreinigung',
       addOnIds: [],
-      unitCount: 14,
+      unitCounts: { sashes: 14 },
       preferred: { date: iso(days(now, 6)), band: 'morning', flexible: false },
       photoIds: [],
       customerNote: 'Sprossenfenster, teilweise sehr hoch.',
@@ -6168,7 +6168,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
       propertyId: 'prp_5',
       serviceSlug: 'fensterreinigung',
       addOnIds: [],
-      unitCount: 8,
+      unitCounts: { sashes: 8 },
       preferred: { flexible: true },
       photoIds: [],
       status: 'expired',
@@ -6268,7 +6268,7 @@ function withAllStates(data: DataSet, now: Date): DataSet {
         addOnIds: SEED_ADDONS.filter(
           (a) => a.active && a.services.includes(slug) && a.slug === 'backofen',
         ).map((a) => a.id),
-        unitCount: slug === 'fensterreinigung' ? 6 + si * 3 : undefined,
+        unitCounts: slug === 'fensterreinigung' ? { sashes: 6 + si * 3 } : undefined,
         furniturePieces: slug === 'moebelmontage' ? 2 + si : undefined,
         preferred:
           si % 3 === 0

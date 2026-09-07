@@ -988,6 +988,11 @@ export const FLOWS: Flow[] = [
         'Per hour, per unit or flat. `calc` was a three-way union that only the seed could set — and the list rendered it with a two-way ternary',
       ),
       added(
+        'Say what is counted, and how long it takes',
+        '/admin/services/new',
+        'A card that only exists for a service billed by count, and it takes several units: a window clean counts sashes, a glazing job counts panes and frames. There was one fixed question in the code, so every counted service asked about windows',
+      ),
+      added(
         'Put on sale and withdraw, with a prompt',
         '/admin/services',
         'A switch in a column of its own, so the state is readable without opening — but it does not act on the click; it opens the prompt. Both directions change what a customer sees',
@@ -998,6 +1003,11 @@ export const FLOWS: Flow[] = [
         'Filed as a draft',
         '/admin/services/new',
         'Appears nowhere but in the catalogue. This state did not exist before: `active` was a boolean, and "not finished yet" and "withdrawn" were the same row',
+      ),
+      added(
+        'Refused: counted, but nothing says what is counted',
+        '/admin/services/new',
+        'Both the create form and the availability switch refuse it, and both say why. Published, the request flow would have drawn a number box with nothing written over it — saving the same record as a draft still works',
       ),
       added(
         'On sale — stands in the request flow',

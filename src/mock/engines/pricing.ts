@@ -72,7 +72,7 @@ export interface EstimateInput {
   hasPets: boolean;
   needsExtraEffort: boolean;
   /** Per-unit services. */
-  unitCount?: number;
+  unitCounts?: Record<string, number>;
   furniturePieces?: number;
   /** Scheduling context — only known once a slot is chosen. */
   start?: Date;
@@ -157,9 +157,21 @@ export function estimateHours(input: EstimateInput, settings: Settings) {
     if (needsExtraEffort) rows.push({ key: 'effort', hours: 1 });
   }
 
-  // §5.1 — windows are counted, not measured: half an hour per five.
-  if (service.calc === 'perUnit' && input.unitCount) {
-    rows.push({ key: 'windows', hours: Math.ceil(input.unitCount / 5) * 0.5 });
+  /*
+   * §5.1 — counted work is converted to hours, one unit at a time.
+   *
+   * Rounded up per *block* rather than charged per item, because that is the
+   * rule the business actually has: five sashes and six are the same trip up
+   * the ladder. A service may count more than one thing, so this sums them —
+   * a glazing job counts panes and frames, and each carries its own rule.
+   */
+  if (service.calc === 'perUnit') {
+    for (const unit of service.counts ?? []) {
+      const n = input.unitCounts?.[unit.id];
+      if (!n) continue;
+      const blocks = Math.ceil(n / Math.max(1, unit.blockOf));
+      rows.push({ key: 'windows', hours: (blocks * unit.minutesPerBlock) / 60 });
+    }
   }
 
   if (service.slug === 'moebelmontage' && input.furniturePieces) {

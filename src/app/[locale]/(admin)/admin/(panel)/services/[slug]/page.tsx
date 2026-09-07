@@ -21,6 +21,7 @@ import {
   hasPublicPage,
 } from '@/lib/service-catalogue';
 import { needsCountWords } from '@/lib/service-flow';
+import { CountUnitsEditor } from '@/components/admin/count-units-editor';
 import { useHydrated, useStore } from '@/mock/store';
 import type { CalcMethod, DurationProfile, Service, ServiceStatus } from '@/mock/schema';
 
@@ -89,6 +90,14 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
 
   function applyStatus() {
     if (!nextStatus || !service) return;
+    /* The catalogue list refuses this publication and says why; the select on
+       this screen reached the same state around the back, and a counted
+       service with no question puts an unlabelled number box in front of a
+       visitor whichever screen let it through. */
+    if (nextStatus === 'active' && needsCountWords(service)) {
+      toast.error(servicesT('countBlockedBody'));
+      return;
+    }
     setServiceStatus(service.id, nextStatus);
     toast.success(
       nextStatus === 'active'
@@ -336,52 +345,11 @@ export default function EditServicePage({ params }: { params: Promise<{ slug: st
         {service.calc === 'perUnit' && (
           <Card>
             <CardHeader title={t('countTitle')} description={t('countCardHint')} />
-            <CardBody className="space-y-5">
-              <Field label={t('countLabelField')} hint={t('countLabelHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countLabel?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countLabel: { ...service.countLabel, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Field label={t('countHintField')} hint={t('countHintHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countHint?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countHint: { ...service.countHint, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Field label={t('countNounField')} hint={t('countNounHint')}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={service.countNoun?.[locale] ?? ''}
-                    onChange={(e) =>
-                      patch({
-                        countNoun: { ...service.countNoun, [locale]: e.target.value },
-                      })
-                    }
-                  />
-                )}
-              </Field>
-
-              {needsCountWords(service) && (
-                <p className="rounded-[var(--radius-sm)] border border-status-warning-line bg-status-warning px-3 py-2 text-sm text-status-warning-fg">
-                  {t('countMissing')}
-                </p>
-              )}
+            <CardBody>
+              <CountUnitsEditor
+                units={service.counts ?? []}
+                onChange={(counts) => patch({ counts })}
+              />
             </CardBody>
           </Card>
         )}

@@ -39,7 +39,7 @@ export const adminContentDe = {
        acht Zeilen gemeint ist. */
     countBlockedTitle: '«{name}» hat noch keine Frage',
     countBlockedBody:
-      'Die Leistung wird nach Anzahl abgerechnet, aber es steht nirgends, wonach gezählt wird. Aufgeschaltet würde die Anfragestrecke ein Zahlenfeld ohne Beschriftung zeigen. Tragen Sie die Frage unter «Zähleinheit» ein — danach lässt sie sich aufschalten.',
+      'Die Leistung wird nach Anzahl abgerechnet, aber es steht nirgends, wonach gezählt wird. Aufgeschaltet würde die Anfragestrecke ein Zahlenfeld ohne Beschriftung zeigen. Tragen Sie die Frage unter «Zähleinheiten» ein — danach lässt sie sich aufschalten.',
     activateTitle: '«{name}» aufschalten?',
     activateBody:
       'Die Leistung steht danach in der Anfragestrecke zur Auswahl, mit dem hinterlegten Ansatz — der ist damit gegenüber Kunden verbindlich. Die Marketing-Seiten werden beim Build aus dem Katalog erzeugt und ziehen erst beim nächsten Deploy nach.',
@@ -98,17 +98,29 @@ export const adminContentDe = {
   },
 
   service: {
-    countTitle: 'Zähleinheit',
+    countTitle: 'Zähleinheiten',
     countCardHint:
-      'Was die Anfragestrecke fragt, wenn diese Leistung nach Anzahl abgerechnet wird. Ohne diesen Text steht in der Strecke ein Zahlenfeld ohne Frage darüber.',
+      'Was die Anfragestrecke fragt, wenn diese Leistung nach Anzahl abgerechnet wird — eine Frage pro Sache, die gezählt wird. Ein Fensterputz zählt Flügel; eine Montage zählt Möbelstücke und Wandbefestigungen getrennt.',
+    countEmpty:
+      'Noch keine Einheit. Solange keine da ist, hat die Strecke nichts zu fragen und die Leistung bleibt ein Entwurf.',
+    countUnitN: 'Einheit {n}',
+    countAdd: 'Weitere Einheit',
+    countRemove: 'Diese Einheit entfernen',
     countLabelField: 'Die Frage',
     countLabelHint: 'Zum Beispiel «Wie viele Fensterflügel?». Steht über dem Zahlenfeld.',
     countHintField: 'Der Hinweis darunter',
     countHintHint: 'Hier sagt man, was als eine Einheit zählt. Genau der Satz, der die Diskussion an der Tür verhindert.',
     countNounField: 'Die Einheit im Plural',
     countNounHint: 'Steht auf der Zusammenfassung, in der Anfrage und auf der Offerte. «18» allein beantwortet nichts.',
+    countBlockOf: 'Je wie viele?',
+    countBlockOfHint:
+      'Bei Fenstern fünf: fünf Flügel sind eine halbe Stunde. Steht hier 1, wird jedes Stück einzeln gerechnet.',
+    countMinutes: 'Minuten dafür',
+    countMinutesHint:
+      'Wie lange ein solcher Block dauert. Angefangene Blöcke zählen ganz — sechs Flügel kosten so viel wie zehn.',
+    countRule: 'Je {units} Stück rechnet die Offerte {minutes} Minuten. Angefangene Blöcke zählen ganz.',
     countMissing:
-      'Ohne Frage lässt sich diese Leistung nicht anfragen: die Strecke zeigte sonst ein Zahlenfeld ohne Beschriftung. Solange sie fehlt, bleibt die Leistung ein Entwurf.',
+      'Eine Einheit hat noch keine Frage: die Strecke zeigte sonst ein Zahlenfeld ohne Beschriftung. Solange sie fehlt, bleibt die Leistung ein Entwurf.',
     back: 'Alle Leistungen',
     nameTitle: 'Bezeichnung',
     nameHint: 'Erscheint auf der Website und in der Offerte, in der Sprache des Kunden.',
@@ -164,6 +176,8 @@ export const adminContentDe = {
     saveActive: 'Anlegen und aufschalten',
     createNote:
       'Ein Entwurf erscheint nirgends ausser hier. Aufschalten stellt die Leistung sofort in die Anfragestrecke.',
+    countRequired:
+      'Aufschalten geht erst, wenn jede Zähleinheit ihre Frage hat — sonst stünde in der Anfragestrecke ein Zahlenfeld ohne Beschriftung. Als Entwurf speichern geht jederzeit.',
     createdDraft: '«{name}» als Entwurf angelegt.',
     createdActive: '«{name}» angelegt und aufgeschaltet.',
     activateTitle: '«{name}» direkt aufschalten?',

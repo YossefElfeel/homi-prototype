@@ -44,7 +44,7 @@ import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { areaLabel, figure } from '@/lib/property-size';
 import { estimateHours } from '@/mock/engines/pricing';
 import { checkCoverage } from '@/mock/engines/coverage';
-import { durationFacts, hasEnoughToPrice, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, durationFacts, hasEnoughToPrice, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -169,7 +169,7 @@ export default function RequestDetailPage({
    */
   const duration = !hasEnoughToPrice(service, {
     area: property.area,
-    unitCount: request.unitCount,
+    unitCounts: request.unitCounts,
     furniturePieces: request.furniturePieces,
   })
     ? null
@@ -178,7 +178,7 @@ export default function RequestDetailPage({
           service,
           addOns: chosen,
           ...durationFacts(service, property),
-          unitCount: request.unitCount,
+          unitCounts: request.unitCounts,
           furniturePieces: request.furniturePieces,
         },
         settings,
@@ -503,10 +503,15 @@ export default function RequestDetailPage({
                   no floor area either, the row underneath it reads «—» and the
                   number that replaced it has to be visible.
                 */}
-                {request.unitCount != null && (
-                  <Row label={t('unitCount')}>
-                    <span data-numeric>{request.unitCount}</span>
-                  </Row>
+                {/* One row per counted unit, named by the service rather than
+                    by a fixed label — the office reads the same words the
+                    customer was asked. */}
+                {countUnits(service).map((unit) =>
+                  request.unitCounts?.[unit.id] ? (
+                    <Row key={unit.id} label={unitWords(unit, locale).noun ?? t('unitCount')}>
+                      <span data-numeric>{request.unitCounts[unit.id]}</span>
+                    </Row>
+                  ) : null,
                 )}
                 {request.furniturePieces != null && (
                   <Row label={t('furniturePieces')}>

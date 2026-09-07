@@ -40,7 +40,7 @@ export const adminContentEn: typeof adminContentDe = {
        rows this is about. */
     countBlockedTitle: '«{name}» has no question yet',
     countBlockedBody:
-      'The service bills by count, but nothing says what is being counted. Published, the request flow would show an unlabelled number box. Write the question under «Counted unit» and it can go on sale.',
+      'The service bills by count, but nothing says what is being counted. Published, the request flow would show an unlabelled number box. Write the question under «Counted units» and it can go on sale.',
     activateTitle: 'Activate “{name}”?',
     activateBody:
       'It becomes a choice in the request flow at the rate you have set, which is the rate customers are then quoted. The marketing pages are generated from the catalogue at build time and follow on the next deploy.',
@@ -99,17 +99,29 @@ export const adminContentEn: typeof adminContentDe = {
   },
 
   service: {
-    countTitle: 'Counted unit',
+    countTitle: 'Counted units',
     countCardHint:
-      'What the request flow asks when this service bills by count. Without it the flow shows a number box with no question over it.',
+      'What the request flow asks when this service bills by count — one question per thing being counted. A window clean counts sashes; an assembly counts pieces and wall fixings separately.',
+    countEmpty:
+      'No unit yet. Until there is one the flow has nothing to ask, and the service stays a draft.',
+    countUnitN: 'Unit {n}',
+    countAdd: 'Another unit',
+    countRemove: 'Remove this unit',
     countLabelField: 'The question',
     countLabelHint: 'For example «How many window sashes?». Sits above the number box.',
     countHintField: 'The line underneath',
     countHintHint: 'Where the business says what counts as one unit — the sentence that stops the argument at the door.',
     countNounField: 'The unit, plural',
     countNounHint: 'Printed on the summary, on the request and on the quote. «18» on its own answers nothing.',
+    countBlockOf: 'How many at a time?',
+    countBlockOfHint:
+      'Five for windows: five sashes are half an hour. Leave it at 1 and every item is priced on its own.',
+    countMinutes: 'Minutes for that',
+    countMinutesHint:
+      'How long one such block takes. A started block counts whole — six sashes cost what ten do.',
+    countRule: 'Every {units} of these bills {minutes} minutes. A started block counts whole.',
     countMissing:
-      'Without a question this service cannot be requested: the flow would show an unlabelled number box. Until it is written the service stays a draft.',
+      'A unit has no question yet: the flow would show an unlabelled number box. Until it is written the service stays a draft.',
     back: 'All services',
     nameTitle: 'Name',
     nameHint: 'Appears on the website and in the quote, in the customer’s language.',
@@ -164,6 +176,8 @@ export const adminContentEn: typeof adminContentDe = {
     saveActive: 'Create and activate',
     createNote:
       'A draft appears nowhere but here. Activating puts the service into the request flow at once.',
+    countRequired:
+      'It can only go live once every counted unit has its question — otherwise the request flow shows an unlabelled number box. Saving it as a draft works either way.',
     createdDraft: '“{name}” saved as a draft.',
     createdActive: '“{name}” created and live.',
     activateTitle: 'Put “{name}” on sale straight away?',
