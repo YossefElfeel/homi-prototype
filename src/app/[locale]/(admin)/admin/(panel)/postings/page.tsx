@@ -10,6 +10,7 @@ import { useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { ConfirmDialog, useConfirmTarget, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Select } from '@/components/ui/field';
@@ -19,6 +20,7 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
 import { KIND_KEY } from '@/components/careers/job-list';
 import { ActionIcon } from '@/lib/action-icons';
+import { postingUsage, type PostingUsage } from '@/lib/posting-facts';
 import { regionByPostcode } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { EmploymentKind, JobPosting } from '@/mock/schema';
@@ -55,10 +57,19 @@ export default function AdminPostingsPage() {
   const applications = useStore((s) => s.data.applications);
   const createPosting = useStore((s) => s.createPosting);
   const updatePosting = useStore((s) => s.updatePosting);
+  const deletePosting = useStore((s) => s.deletePosting);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'all' | 'published' | 'draft'>('all');
   const [kind, setKind] = useState<'all' | EmploymentKind>('all');
+  /*
+   * The one decision on this screen that cannot happen on a click. Taking a
+   * job off the jobs page is the other item in the same strip and is
+   * reversible; this is not — and when it refuses it refuses with the count of
+   * applications, not with a greyed-out item nobody can interrogate.
+   */
+  const removing = useConfirmTarget<{ posting: JobPosting; used: PostingUsage }>();
+  const dismissLabel = useDismissLabel();
 
   const items = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -111,6 +122,31 @@ export default function AdminPostingsPage() {
     toast.success(posting.published ? t('unpublished_toast') : t('published_toast'));
   }
 
+  /* The same words the row shows. A confirm that asks about «Ohne
+     Bezeichnung» and a row that reads «Ohne Bezeichnung» are the same job;
+     a confirm asking about an empty string is a question about nothing. */
+  const name = (posting: JobPosting) => posting.title[locale] || postingT('untitled');
+
+  /*
+   * The counts are read here so the refusal can name them. They are read again
+   * inside the store, which is not redundant: this pair is a render old, and
+   * the jobs page is public — an application could have arrived in between.
+   */
+  function askDelete(posting: JobPosting) {
+    removing.ask({ posting, used: postingUsage(posting.id, applications) });
+  }
+
+  function confirmDelete() {
+    const posting = removing.target?.posting;
+    if (!posting) return;
+    if (deletePosting(posting.id)) {
+      toast.success(t('deleteDone', { title: name(posting) }));
+    } else {
+      toast.error(t('deleteRaced'));
+    }
+    removing.dismiss();
+  }
+
   const columns: Column<JobPosting>[] = [
     {
       key: 'title',
@@ -123,7 +159,7 @@ export default function AdminPostingsPage() {
        * drawing an empty cell, which on the row that is also the card's title
        * reads as a rendering fault rather than as work not yet done.
        */
-      cell: (p) => p.title[locale] || postingT('untitled'),
+      cell: (p) => name(p),
     },
     {
       key: 'kind',
@@ -259,6 +295,13 @@ export default function AdminPostingsPage() {
                 <ActionIcon.activate aria-hidden />
               )}
             </RowActionButton>
+            <RowActionsDivider />
+            {/* Offered on every row, including the ones it will refuse. A menu
+                item that appears and disappears by row teaches nobody the
+                rule; a refusal that names four applications does. */}
+            <RowActionButton tone="danger" label={t('rowDelete')} onClick={() => askDelete(p)}>
+              <ActionIcon.delete aria-hidden />
+            </RowActionButton>
           </RowActions>
         )}
         empty={
@@ -268,6 +311,39 @@ export default function AdminPostingsPage() {
             <EmptyState title={t('emptyTitle')} body={t('emptyBody')} action={createButton} />
           )
         }
+      />
+
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={
+          removing.target && removing.target.used.total > 0
+            ? t('deleteBlockedTitle', { title: name(removing.target.posting) })
+            : t('deleteTitle', { title: removing.target ? name(removing.target.posting) : '' })
+        }
+        body={
+          removing.target && removing.target.used.total > 0
+            ? t('deleteBlockedBody', {
+                applications: removing.target.used.applications,
+                open: removing.target.used.open,
+              })
+            : /* A published job with no applications is a real delete — the
+                 role that was filled off-platform, the duplicate advert — but
+                 it has a public URL, and the reader is the only person who
+                 knows whether that link has been sent anywhere. So the body
+                 says which page goes and what a visitor sees instead of it. */
+              removing.target?.posting.published
+              ? t('deletePublishedBody', { slug: removing.target.posting.slug })
+              : t('deleteBody')
+        }
+        action={t('deleteConfirm')}
+        dismiss={dismissLabel}
+        /* Shown and refused rather than hidden. Somebody who opened the menu
+           to delete needs to see that the act was understood and declined,
+           with the count beside it; a button that is simply absent answers
+           nothing and reads as a bug. */
+        disabled={Boolean(removing.target && removing.target.used.total > 0)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

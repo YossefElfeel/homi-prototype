@@ -13,6 +13,7 @@
     "test:crm": "npx --yes tsx@4 scripts/crm-test.mts",
     "test:messages": "npx --yes tsx@4 scripts/message-test.mts",
     "test:plans": "npx --yes tsx@4 scripts/plan-test.mts",
+    "test:postings": "npx --yes tsx@4 scripts/posting-test.mts",
     "test:properties": "npx --yes tsx@4 scripts/property-test.mts",
     "test:invoices": "npx --yes tsx@4 scripts/invoice-test.mts",
     "test:expenses": "npx --yes tsx@4 scripts/expense-test.mts",

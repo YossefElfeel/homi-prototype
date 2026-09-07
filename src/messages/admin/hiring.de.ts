@@ -153,8 +153,21 @@ export const adminHiringDe = {
     rowPublish: 'Veröffentlichen',
     rowUnpublish: 'Von der Jobseite nehmen',
     rowPublishBlocked: 'Veröffentlichen — erst mit Bezeichnung möglich',
+    rowDelete: 'Stelle löschen',
     published_toast: 'Die Stelle steht jetzt auf der Jobseite.',
     unpublished_toast: 'Die Stelle ist nicht mehr öffentlich.',
+    deleteTitle: '«{title}» löschen?',
+    deleteBody:
+      'Auf diese Stelle hat sich niemand beworben — es geht also keine Bewerbung verloren. Sie ist ein Entwurf und stand nie öffentlich.',
+    deletePublishedBody:
+      'Auf diese Stelle hat sich niemand beworben — es geht also keine Bewerbung verloren. Sie steht aber öffentlich auf /jobs/{slug}: nach dem Löschen steht dort statt des Inserats die Einladung zur Spontanbewerbung. Von der Jobseite nehmen wäre die andere Möglichkeit — dann bleibt die Stelle hier stehen.',
+    deleteConfirm: 'Löschen',
+    deleteDone: '«{title}» gelöscht.',
+    deleteRaced:
+      'Nicht gelöscht: in der Zwischenzeit ist eine Bewerbung auf diese Stelle eingegangen. Laden Sie die Liste neu.',
+    deleteBlockedTitle: '«{title}» lässt sich nicht löschen',
+    deleteBlockedBody:
+      '{applications, plural, one {Eine Bewerbung nennt diese Stelle} other {# Bewerbungen nennen diese Stelle}}. {open, plural, =0 {Alle sind beantwortet} one {Eine ist noch unbeantwortet} other {# sind noch unbeantwortet}}. Nach dem Löschen stünde jede davon als Spontanbewerbung da — über keinen Filter der Bewerbungsliste noch zu finden. Nehmen Sie die Stelle stattdessen von der Jobseite: sie steht dann nicht mehr in der Liste der offenen Stellen, und die eingegangenen Bewerbungen bleiben, wo sie sind.',
     searchEmptyTitle: 'Keine Treffer',
     searchEmptyBody:
       'Keine Stelle passt zur Suche oder zum gewählten Filter. Suchbegriff ändern oder Filter zurücksetzen.',
@@ -191,5 +204,8 @@ export const adminHiringDe = {
       'Der Schalter wirkt sofort — die Stelle steht danach öffentlich auf /jobs.',
     saved: 'Gespeichert',
     preview: 'Auf der Jobseite ansehen',
+    deleteSectionTitle: 'Stelle löschen',
+    deleteHint:
+      'Nur solange sich niemand auf diese Stelle beworben hat. Eine Stelle mit Bewerbungen wird von der Jobseite genommen, nicht gelöscht — sonst stünden die Bewerbungen dazu als Spontanbewerbungen da.',
   },
 };

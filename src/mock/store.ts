@@ -66,6 +66,7 @@ import {
   type CancelBlock,
   type UpgradeBlock,
 } from '@/lib/plan-facts';
+import { postingUsage } from '@/lib/posting-facts';
 import { normaliseAddress } from '@/lib/contact-address';
 import { isCompleteLabour, memberName } from '@/lib/labour-facts';
 import { propertyUsage } from '@/lib/property-facts';
@@ -785,6 +786,21 @@ interface StoreState {
    */
   createPosting: (now: Date) => { id: ID; slug: string };
   updatePosting: (id: ID, patch: Partial<JobPosting>) => void;
+  /**
+   * Refuses while any application still names the job — see `postingUsage`.
+   * Returns false so the caller can say why rather than silently doing nothing.
+   *
+   * Unpublishing and deleting are two different acts and the list needed both.
+   * `updatePosting({ published: false })` is for a job that has been advertised
+   * and is being closed: the record has to survive, because every application
+   * it took reads its title off this id and would otherwise be relabelled a
+   * speculative one. This is for the job created by mistake — the duplicate,
+   * the draft that was never going to be filled, `createPosting`'s own
+   * untouched output — which until now stayed in the list for ever with
+   * «Entwurf» beside it, and could not even be told apart from a real role
+   * still being written.
+   */
+  deletePosting: (id: ID) => boolean;
   updateTeamMember: (id: ID, patch: Partial<TeamMember>) => void;
 
   /* ---- users & rights (screens U1–U5) ----
@@ -2937,6 +2953,27 @@ export const useStore = create<StoreState>()(
             postings: s.data.postings.map((p) => (p.id === id ? { ...p, ...patch } : p)),
           },
         })),
+
+      deletePosting: (id) => {
+        const s = get();
+        const posting = s.data.postings.find((p) => p.id === id);
+        if (!posting) return false;
+        /* Re-checked here rather than trusted from the menu: the confirm panel
+           read the count one render ago, and the store is the only place that
+           can be sure nobody has applied in between. The jobs page is public,
+           so that is not a theoretical race. */
+        if (postingUsage(id, s.data.applications).total > 0) return false;
+        set({ data: { ...s.data, postings: s.data.postings.filter((p) => p.id !== id) } });
+        get().logChange({
+          entity: 'posting',
+          entityId: id,
+          /* Named, unlike `createPosting`'s log line, because after this the id
+             resolves to nothing — the log entry is the only place left that can
+             say which job went. */
+          summary: `Job posting "${posting.title.en || posting.title.de || 'untitled'}" deleted`,
+        });
+        return true;
+      },
 
       updateTeamMember: (id, patch) =>
         set((s) => ({
