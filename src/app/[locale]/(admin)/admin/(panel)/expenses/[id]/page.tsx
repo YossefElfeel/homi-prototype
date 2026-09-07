@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
 import { EXPENSE_CATEGORIES, effectiveExpenseStatus } from '@/lib/expense-facts';
 import { isCompleteLabour, memberName, suggestedHours } from '@/lib/labour-facts';
+import { NEW_ID } from '@/lib/new-record';
 import type { Locale } from '@/i18n/routing';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Booking, Expense, ExpenseCategory, LabourEntry, TeamMember } from '@/mock/schema';
@@ -75,7 +76,7 @@ function blankLabour(ownerId: string): LabourEntry {
 
 function blankExpense(now: Date): Expense {
   return {
-    id: 'neu',
+    id: NEW_ID,
     reference: '',
     category: 'supplies',
     supplier: '',
@@ -130,7 +131,7 @@ export default function ExpensePage({ params }: { params: Promise<{ id: string }
      form on the seed copy and then save it back over the edit. */
   if (!hydrated) return <SkeletonPage label={t('back')} />;
 
-  if (id === 'neu') return <NewExpense />;
+  if (id === NEW_ID) return <NewExpense />;
 
   if (!expense) {
     return (
