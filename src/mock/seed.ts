@@ -103,15 +103,26 @@ export const SEED_SERVICES: Service[] = [
     /* The wording the request flow used to hold as a fixed string. Moving it
        onto the record is the whole point of the change: it is a fact about
        window cleaning, not about the form. */
-    countLabel: {
-      de: 'Wie viele Fensterflügel?',
-      en: 'How many window sashes?',
-    },
-    countHint: {
-      de: 'Zählen Sie die Flügel, nicht die Räume. Fünf Flügel entsprechen einer halben Stunde.',
-      en: 'Count the sashes, not the rooms. Five sashes equal half an hour.',
-    },
-    countNoun: { de: 'Fensterflügel', en: 'Window sashes' },
+    /* One unit, with §5.1's rule stated as the business states it: half an
+       hour per five sashes, rounded up. A rate per sash would be six minutes
+       and would silently reprice every window job — five sashes and six are
+       the same trip up the ladder. */
+    counts: [
+      {
+        id: 'sashes',
+        label: {
+          de: 'Wie viele Fensterflügel?',
+          en: 'How many window sashes?',
+        },
+        hint: {
+          de: 'Zählen Sie die Flügel, nicht die Räume. Fünf Flügel entsprechen einer halben Stunde.',
+          en: 'Count the sashes, not the rooms. Five sashes equal half an hour.',
+        },
+        noun: { de: 'Fensterflügel', en: 'Window sashes' },
+        blockOf: 5,
+        minutesPerBlock: 30,
+      },
+    ],
     durationProfile: 'none',
     // Counted per window, but still billed by the hour: five windows are half
     // an hour (§5.1), so the rate here is the hourly rate like every other

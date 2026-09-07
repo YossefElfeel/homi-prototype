@@ -12,7 +12,7 @@ import { ServiceIcon, serviceFromPrice } from '@/components/site/service-grid';
 import { durationRange } from '@/mock/engines/pricing';
 import { useHydrated, useStore } from '@/mock/store';
 import { isOffered } from '@/lib/service-catalogue';
-import { countWords, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 /** Screen 13 — one service per request, stated on the screen rather than enforced silently. */
@@ -71,7 +71,7 @@ export default function ServiceStep({
       patch.serviceSlug = service.slug;
       // Same dependent resets the radio does — add-ons are service-scoped.
       patch.addOnIds = [];
-      patch.unitCount = null;
+      patch.unitCounts = {};
       patch.furniturePieces = null;
       patch.pickup = null;
     }
@@ -93,11 +93,10 @@ export default function ServiceStep({
      the pricing engine tests — so a second counted service the owner adds gets
      the count field without anybody remembering this line. */
   const needs = serviceNeeds(selected);
-  const words = countWords(selected, locale);
 
   const complete =
     Boolean(selected) &&
-    (!needs.asksCount || Boolean(draft.unitCount)) &&
+    countUnits(selected).every((u) => Boolean(draft.unitCounts[u.id])) &&
     (!needs.asksFurniturePieces || Boolean(draft.furniturePieces));
 
   return (
@@ -154,7 +153,7 @@ export default function ServiceStep({
                           // assembly has one, and a leftover would send the
                           // crew to a shop on a window-cleaning job.
                           addOnIds: [],
-                          unitCount: null,
+                          unitCounts: {},
                           furniturePieces: null,
                           pickup: null,
                         })
@@ -187,31 +186,43 @@ export default function ServiceStep({
         </ul>
       </fieldset>
 
-      {/* The question comes off the record. It used to be a fixed «Wie viele
-          Fensterflügel?» beside a flag that fires for *every* counted service,
-          so the second one an owner added asked about windows and priced the
-          answer. `countLabel` is null only for a counted service nobody has
-          finished writing, and the catalogue refuses to publish one of those. */}
-      {needs.asksCount && (
-        <Field
-          label={words.label ?? t('windowsLabel')}
-          hint={words.hint ?? t('windowsHint')}
-          className="mt-8 max-w-xs"
-        >
-          {(props) => (
-            <Input
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={draft.unitCount ?? ''}
-              onChange={(e) =>
-                updateDraft({ unitCount: e.target.value ? Number(e.target.value) : null })
-              }
-              {...props}
-            />
-          )}
-        </Field>
-      )}
+      {/* One box per counted unit, each asking the service's own question.
+
+          It was a single box under a fixed «Wie viele Fensterflügel?» beside a
+          flag that fires for *every* counted service — so the second counted
+          service an owner added asked about windows and priced the answer, and
+          a service that counts two things had nowhere to put the second. The
+          words come off the record; the catalogue refuses to publish a counted
+          service whose units have no question. */}
+      {countUnits(selected).map((unit) => {
+        const words = unitWords(unit, locale);
+        return (
+          <Field
+            key={unit.id}
+            label={words.label ?? t('windowsLabel')}
+            hint={words.hint ?? t('windowsHint')}
+            className="mt-8 max-w-xs"
+          >
+            {(props) => (
+              <Input
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={draft.unitCounts[unit.id] ?? ''}
+                onChange={(e) =>
+                  updateDraft({
+                    unitCounts: {
+                      ...draft.unitCounts,
+                      [unit.id]: e.target.value ? Number(e.target.value) : 0,
+                    },
+                  })
+                }
+                {...props}
+              />
+            )}
+          </Field>
+        );
+      })}
 
       {needs.asksFurniturePieces && (
         <Field label={t('piecesLabel')} hint={t('piecesHint')} className="mt-8 max-w-xs">

@@ -94,8 +94,10 @@ const CUSTOMER_KEYS = [
   'paymentAdd',
   'paymentAddTitle',
   'paymentKind',
-  'paymentLabelField',
-  'paymentLabelHint',
+  /* «Bezeichnung» went with the card fields it duplicated — the dialog asks
+     per kind now and the strings moved to `paymentForm`. The two keys stayed
+     on this list and it has been failing ever since, which is how a suite
+     stops being read. */
   'paymentAddSave',
   'paymentCancel',
   'paymentAdded',

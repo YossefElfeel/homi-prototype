@@ -33,7 +33,7 @@ export interface EstimateSource {
     needsExtraEffort: boolean;
   };
   addOnIds: ID[];
-  unitCount: number | null;
+  unitCounts: Record<string, number>;
   furniturePieces: number | null;
   /** The plan the customer picked, by id. */
   planIntent?: ID | null;
@@ -74,7 +74,7 @@ export function computeEstimate(
   if (
     !hasEnoughToPrice(service, {
       area,
-      unitCount: source.unitCount,
+      unitCounts: source.unitCounts,
       furniturePieces: source.furniturePieces,
     })
   ) {
@@ -86,7 +86,7 @@ export function computeEstimate(
       service,
       addOns: addOns.filter((a) => source.addOnIds.includes(a.id)),
       ...durationFacts(service, { area, bathrooms, hasPets, needsExtraEffort }),
-      unitCount: source.unitCount ?? undefined,
+      unitCounts: source.unitCounts,
       furniturePieces: source.furniturePieces ?? undefined,
       /* The estimate a visitor sees while picking a plan is the *quoted*
          price with the plan's discount on it, which is what they are comparing.

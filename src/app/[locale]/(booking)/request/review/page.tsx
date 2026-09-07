@@ -12,7 +12,7 @@ import { Money, MoneyRange } from '@/components/ui/money';
 import { BookingStep } from '@/components/booking/booking-step';
 import { useEstimate } from '@/components/booking/use-estimate';
 import { useNow, useStore } from '@/mock/store';
-import { countWords, hasAddOns, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, hasAddOns, serviceNeeds, unitWords } from '@/lib/service-flow';
 
 /**
  * Screen 22 — review and submit.
@@ -132,10 +132,13 @@ export default function ReviewStep() {
             mentioned the number — and it is the one answer they cannot check
             against the address or the date.
           */}
-          {needs.asksCount && draft.unitCount && (
-            <span data-numeric className="block text-sm text-ink-tertiary">
-              {countWords(service, locale).noun ?? st('windowsSummary')}: {draft.unitCount}
-            </span>
+          {countUnits(service).map((unit) =>
+            draft.unitCounts[unit.id] ? (
+              <span key={unit.id} data-numeric className="block text-sm text-ink-tertiary">
+                {unitWords(unit, locale).noun ?? st('windowsSummary')}:{' '}
+                {draft.unitCounts[unit.id]}
+              </span>
+            ) : null,
           )}
           {needs.asksFurniturePieces && draft.furniturePieces && (
             <span data-numeric className="block text-sm text-ink-tertiary">

@@ -25,7 +25,7 @@ import { checkCoverage } from '@/mock/engines/coverage';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { PickupLocation, PropertyKind, TimeBand } from '@/mock/schema';
 import { isOffered } from '@/lib/service-catalogue';
-import { countWords, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { cn } from '@/lib/cn';
 
 const KINDS: {
@@ -170,7 +170,7 @@ export default function NewRequestPage() {
   const [property, setProperty] = useState(emptyProperty);
   const [serviceSlug, setServiceSlug] = useState<string>('');
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
-  const [unitCount, setUnitCount] = useState<number | null>(null);
+  const [unitCounts, setUnitCounts] = useState<Record<string, number>>({});
   const [furniturePieces, setFurniturePieces] = useState<number | null>(null);
   const [pickup, setPickup] = useState<PickupLocation | null>(null);
   const [date, setDate] = useState<string | null>(null);
@@ -230,7 +230,7 @@ export default function NewRequestPage() {
     setPropertyChoice(draft.propertyId);
     setServiceSlug(draft.serviceSlug);
     setAddOnIds(draft.addOnIds);
-    setUnitCount(draft.unitCount ?? null);
+    setUnitCounts(draft.unitCounts ?? {});
     setFurniturePieces(draft.furniturePieces ?? null);
     setPickup(draft.pickup ?? null);
     setFlexible(draft.preferred.flexible);
@@ -282,7 +282,7 @@ export default function NewRequestPage() {
           propertyId: savedProperty?.id ?? null,
           property,
           addOnIds,
-          unitCount,
+          unitCounts,
           furniturePieces,
         },
         { services, addOns, settings, properties, plans },
@@ -293,7 +293,7 @@ export default function NewRequestPage() {
       savedProperty,
       property,
       addOnIds,
-      unitCount,
+      unitCounts,
       furniturePieces,
       services,
       addOns,
@@ -329,7 +329,7 @@ export default function NewRequestPage() {
         ));
 
   const countNeeded =
-    (needs.asksCount && !unitCount) ||
+    countUnits(service).some((u) => !unitCounts[u.id]) ||
     (needs.asksFurniturePieces && !furniturePieces);
 
   const serviceReady = Boolean(service) && !countNeeded;
@@ -401,7 +401,7 @@ export default function NewRequestPage() {
         propertyId,
         serviceSlug,
         addOnIds,
-        unitCount: unitCount ?? undefined,
+        unitCounts,
         furniturePieces: furniturePieces ?? undefined,
         pickup: pickup ?? undefined,
         preferred,
@@ -422,7 +422,7 @@ export default function NewRequestPage() {
         propertyId,
         serviceSlug,
         addOnIds,
-        unitCount,
+        unitCounts,
         furniturePieces,
         pickup,
         preferred,
@@ -469,7 +469,7 @@ export default function NewRequestPage() {
         propertyId: resolvePropertyId() ?? draft.propertyId,
         ...(serviceSlug ? { serviceSlug } : {}),
         addOnIds,
-        unitCount: unitCount ?? undefined,
+        unitCounts,
         furniturePieces: furniturePieces ?? undefined,
         pickup: pickup ?? undefined,
         preferred,
@@ -490,7 +490,7 @@ export default function NewRequestPage() {
         propertyId: resolvePropertyId() ?? '',
         serviceSlug: serviceSlug || 'unterhaltsreinigung',
         addOnIds,
-        unitCount,
+        unitCounts,
         furniturePieces,
         pickup,
         preferred,
@@ -1070,25 +1070,35 @@ export default function NewRequestPage() {
                 {/* The service's own question, not a fixed one about windows —
                     the phone form has to ask exactly what the website asks, or
                     the same job is two different records. */}
-                {needs.asksCount && (
-                  <Field
-                    label={countWords(service, locale).label ?? t('unitCount')}
-                    hint={countWords(service, locale).hint ?? t('countHint')}
-                  >
-                    {(props) => (
-                      <Input
-                        {...props}
-                        type="number"
-                        min={1}
-                        inputMode="numeric"
-                        value={unitCount ?? ''}
-                        onChange={(e) =>
-                          setUnitCount(e.target.value ? Number(e.target.value) : null)
-                        }
-                      />
-                    )}
-                  </Field>
-                )}
+                {/* One box per counted unit, asking exactly what the website
+                    asks — the phone form and the wizard have to collect the
+                    same numbers or the same job becomes two different records. */}
+                {countUnits(service).map((unit) => {
+                  const words = unitWords(unit, locale);
+                  return (
+                    <Field
+                      key={unit.id}
+                      label={words.label ?? t('unitCount')}
+                      hint={words.hint ?? t('countHint')}
+                    >
+                      {(props) => (
+                        <Input
+                          {...props}
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          value={unitCounts[unit.id] ?? ''}
+                          onChange={(e) =>
+                            setUnitCounts({
+                              ...unitCounts,
+                              [unit.id]: e.target.value ? Number(e.target.value) : 0,
+                            })
+                          }
+                        />
+                      )}
+                    </Field>
+                  );
+                })}
 
                 {needs.asksFurniturePieces && (
                   <Field label={t('furniturePieces')} hint={t('countHint')}>

@@ -27,8 +27,10 @@ import {
   slugify,
   uniqueSlug,
 } from '@/lib/service-catalogue';
+import { needsCountWords } from '@/lib/service-flow';
+import { CountUnitsEditor } from '@/components/admin/count-units-editor';
 import { useHydrated, useStore } from '@/mock/store';
-import type { CalcMethod, DurationProfile } from '@/mock/schema';
+import type { CalcMethod, CountUnit, DurationProfile } from '@/mock/schema';
 
 /** An empty translation record — four keys, so no locale is silently absent. */
 function emptyText(): Record<Locale, string> {
@@ -76,6 +78,7 @@ export default function NewServicePage() {
   const [basePrice, setBasePrice] = useState(settings.hourlyRate);
   const [minDuration, setMinDuration] = useState(settings.minimumHours);
   const [handoverGuarantee, setHandoverGuarantee] = useState(false);
+  const [counts, setCounts] = useState<CountUnit[]>([]);
   /** Only after a save attempt — an error under a field nobody has reached yet
       is the form telling the owner off for not having typed it. */
   const [touched, setTouched] = useState(false);
@@ -89,10 +92,17 @@ export default function NewServicePage() {
      after saving — and it is the real one, collision suffix included, because
      `uniqueSlug` runs against the same list the store will use. */
   const slug = uniqueSlug(slugify(germanName) || 'leistung', services);
+  /* Same gate the catalogue list applies to the availability switch. A
+     counted service with no question is not a half-finished record — it is
+     a number box with nothing written over it, in front of a visitor. */
+  const countsMissing = needsCountWords({ calc, counts });
 
   function save(activate: boolean) {
     setTouched(true);
     if (missingName) return;
+    /* Only publication is blocked. A draft with a half-written unit is exactly
+       what a draft is for, and refusing to save it would lose the typing. */
+    if (activate && countsMissing) return;
 
     const service = createService({
       name,
@@ -102,6 +112,11 @@ export default function NewServicePage() {
       basePrice,
       minDuration,
       handoverGuarantee,
+      /* Only on a counted service. Switching the method to «pro Stück» and
+         back would otherwise leave the units on the record, where nothing
+         reads them and the next owner to switch it back finds questions
+         they never wrote. */
+      counts: calc === 'perUnit' ? counts : undefined,
       status: activate ? 'active' : 'draft',
     });
 
@@ -144,7 +159,7 @@ export default function NewServicePage() {
         onSubmit={(e) => {
           e.preventDefault();
           setTouched(true);
-          if (missingName) return;
+          if (missingName || countsMissing) return;
           setConfirming(true);
         }}
       >
@@ -298,9 +313,34 @@ export default function NewServicePage() {
           </CardBody>
         </Card>
 
+        {/*
+          Only for a counted service, and only underneath the price.
+
+          «Nach Anzahl» has been selectable here since the day the billing
+          method appeared, and nothing on this screen asked what was counted —
+          so the service was created, the request flow turned its count on, and
+          the visitor got a number box with a fixed «Wie viele Fensterflügel?»
+          over it whatever the service actually was. It sits below the price
+          card because the billing method is what decides whether it exists.
+        */}
+        {calc === 'perUnit' && (
+          <Card className="mt-app-section">
+            <CardHeader title={serviceT('countTitle')} description={serviceT('countCardHint')} />
+            <CardBody>
+              <CountUnitsEditor units={counts} onChange={setCounts} />
+            </CardBody>
+          </Card>
+        )}
+
         {touched && missingName && (
           <Alert tone="danger" className="mt-app">
             {t('nameRequired')}
+          </Alert>
+        )}
+
+        {touched && !missingName && countsMissing && (
+          <Alert tone="warning" className="mt-app">
+            {t('countRequired')}
           </Alert>
         )}
 

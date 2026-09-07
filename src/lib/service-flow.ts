@@ -1,4 +1,5 @@
 import type { Locale } from '@/i18n/routing';
+import type { CountUnit } from '@/mock/schema';
 import type { AddOn, Service } from '@/mock/schema';
 import type { PropertyKind } from '@/mock/schema';
 import { addOnsForService } from './addon-catalogue';
@@ -52,7 +53,7 @@ export interface ServiceNeeds {
    * `perUnit` service, which is correct, and the form read a fixed «Wie viele
    * Fenster?» beside it — so a second counted service asked the wrong
    * question and priced the answer. What the question says now comes off the
-   * record (`Service.countLabel`).
+   * record — one question per unit in `Service.counts`.
    */
   asksCount: boolean;
   /** §5.1 — assembly is priced per piece. */
@@ -137,7 +138,7 @@ export function hasAddOns(addOns: AddOn[], serviceSlug: string | null) {
 /** The quantities a service needs before a price can be computed at all. */
 export interface EstimateInputs {
   area: number | null | undefined;
-  unitCount: number | null | undefined;
+  unitCounts: Record<string, number> | undefined;
   furniturePieces: number | null | undefined;
 }
 
@@ -156,7 +157,14 @@ export function hasEnoughToPrice(service: Service | undefined, inputs: EstimateI
   if (!service) return false;
   const needs = serviceNeeds(service);
   if (needs.asksArea && !inputs.area) return false;
-  if (needs.asksCount && !inputs.unitCount) return false;
+  /* Every unit the service counts has to have an answer, not just one of
+     them — a glazing job priced on panes and left blank on frames is a quote
+     built from half the work. */
+  if (needs.asksCount) {
+    for (const unit of service.counts ?? []) {
+      if (!inputs.unitCounts?.[unit.id]) return false;
+    }
+  }
   if (needs.asksFurniturePieces && !inputs.furniturePieces) return false;
   return true;
 }
@@ -192,35 +200,39 @@ export function durationFacts(service: Service, facts: SizeFacts) {
 }
 
 /**
- * The words a counted service asks and reports in.
+ * The words one counted unit asks and reports in, in the reader's language.
  *
- * The fallback is the old fixed wording, and it is deliberately the *window*
- * wording: the one seeded `perUnit` service is window cleaning, so a record
- * that predates `countLabel` keeps saying exactly what it said before. A
- * service the owner adds has no fallback worth having — asking «Wie viele
- * Fensterflügel?» about carpets is the bug this whole change exists to remove
- * — so `countLabel` returns null there and the form says the record is
- * unfinished instead of inventing a question.
+ * German is the fallback for every other locale (§20.6). Returns null rather
+ * than a stand-in when nothing is written: the form says the record is
+ * unfinished instead of inventing a question, which is what the fixed «Wie
+ * viele Fensterflügel?» used to do to every service that was not windows.
  */
-export function countWords(service: Service | undefined, locale: Locale) {
+export function unitWords(unit: CountUnit, locale: Locale) {
   const pick = (field: Partial<Record<Locale, string>> | undefined) =>
     field?.[locale] ?? field?.de ?? null;
 
-  return {
-    label: pick(service?.countLabel),
-    hint: pick(service?.countHint),
-    noun: pick(service?.countNoun),
-  };
+  return { label: pick(unit.label), hint: pick(unit.hint), noun: pick(unit.noun) };
+}
+
+/** The units a service actually asks about. Empty for anything not counted. */
+export function countUnits(service: Service | undefined): CountUnit[] {
+  if (!service || service.calc !== 'perUnit') return [];
+  return service.counts ?? [];
 }
 
 /**
- * Whether a counted service can actually be put in front of a customer.
+ * Whether a counted service can be put in front of a customer.
  *
- * A `perUnit` service with no question is a priced thing nobody can be asked
- * about — the request flow would draw a number box with no label over it. The
- * catalogue screens refuse to publish one, which is the same shape of gate
- * `servicesWithoutCopy` applies to a service with no page text.
+ * A `perUnit` service with no units, or a unit with no question, is a priced
+ * thing nobody can be asked about — the request flow would draw a number box
+ * with nothing written over it. The catalogue refuses to publish one, the same
+ * way it refuses a service whose page has no text.
  */
-export function needsCountWords(service: Service): boolean {
-  return service.calc === 'perUnit' && !service.countLabel?.de?.trim();
+export function needsCountWords(service: {
+  calc: Service['calc'];
+  counts?: CountUnit[];
+}): boolean {
+  if (service.calc !== 'perUnit') return false;
+  const units = service.counts ?? [];
+  return units.length === 0 || units.some((u) => !u.label.de?.trim());
 }

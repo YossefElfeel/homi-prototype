@@ -59,6 +59,36 @@ export type DurationProfile = 'standard' | 'deep' | 'moveout' | 'office' | 'none
  */
 export type ServiceStatus = 'active' | 'inactive' | 'draft';
 
+/**
+ * One thing a `perUnit` service counts.
+ *
+ * There was one of these per service, flattened into three fields on the
+ * record — and a service counts one kind of thing only for as long as nobody
+ * sells a second. A window clean is windows; a glazing job is panes *and*
+ * frames; an assembly is pieces and wall fixings. The moment two counts are
+ * needed the flat shape has nowhere to put the second, and the office is back
+ * to describing it in a note the price engine cannot read.
+ *
+ * The time rule is two numbers because §5.1's is: «half an hour per five
+ * windows», not «six minutes each». Rounding up per block is what the business
+ * actually does — five windows and six windows are the same trip up the
+ * ladder — and flattening it to a rate per item would silently reprice every
+ * window job in the seed.
+ */
+export interface CountUnit {
+  id: string;
+  /** The question on the request form — «Wie viele Fensterflügel?». */
+  label: Partial<Record<Locale, string>>;
+  /** The line under it, where the business says what counts as one. */
+  hint?: Partial<Record<Locale, string>>;
+  /** The plural, for every screen that later reports the number. */
+  noun: Partial<Record<Locale, string>>;
+  /** Units per block. 5 for windows; 1 where each item is priced on its own. */
+  blockOf: number;
+  /** Minutes of work one block takes. 30 for five windows. */
+  minutesPerBlock: number;
+}
+
 export interface Service {
   id: ID;
   /**
@@ -87,37 +117,28 @@ export interface Service {
    * the fact that there is no price is stated rather than encoded in a zero.
    */
   quotedIndividually?: boolean;
-  /**
-   * What the count question says, for a service billed `perUnit`.
+
+/**
+   * What this service counts, when it bills `perUnit`.
    *
-   * This was the bug that made the field necessary. `serviceNeeds` turns the
-   * count question on for **any** service whose `calc` is `perUnit` — which is
-   * right — and the label came from `booking.windowsLabel`, a fixed string
-   * reading «Wie viele Fenster?». So the moment an owner added a second
-   * counted service, the request flow asked how many *windows* a carpet clean
-   * needed. A wrong question is worse than a missing one: the visitor answers
-   * it, and the number is priced.
+   * An array, and the reason is the bug that made the field exist at all:
+   * `serviceNeeds` turns the count question on for *any* `perUnit` service —
+   * which is right — while the wording came from a fixed message reading «Wie
+   * viele Fensterflügel?». So the second counted service anybody added asked
+   * how many windows a carpet clean needed, and priced the answer. A wrong
+   * question is worse than a missing one, because the visitor answers it.
    *
-   * Three fields rather than one because the count is read in three voices and
-   * they are not the same words:
+   * It was one question per service for a wave. That is the same mistake one
+   * size smaller: a glazing job counts panes *and* frames, and a service that
+   * can hold only one count sends the second into a note the price engine
+   * cannot read.
    *
-   *  · `countLabel` is the question on the form — «Wie viele Fenster?»
-   *  · `countHint` is the line under it, where the business says what counts
-   *    as one unit. «Ein Fenster ist Glas, Rahmen und Sims» is the sentence
-   *    that stops the argument at the door.
-   *  · `countNoun` is the plural on every screen that later *reports* the
-   *    number — the review step, the request record, the quote line. «18» on
-   *    its own is not an answer to anything.
-   *
-   * Meaningless on an hourly or flat service, and the editor only shows them
-   * for `perUnit`. Optional in the type because the seven seeded services
-   * predate the field and only one of them is counted — but `serviceNeeds`
-   * treats a counted service with no label as an incomplete record rather than
-   * falling back to the window wording, which is how the old bug worked.
+   * Optional because the seven seeded services predate it and one of them is
+   * counted. `serviceNeeds` treats a counted service with no units as an
+   * unfinished record rather than falling back to the window wording — which
+   * is exactly how the old bug worked.
    */
-  countLabel?: Partial<Record<Locale, string>>;
-  countHint?: Partial<Record<Locale, string>>;
-  countNoun?: Partial<Record<Locale, string>>;
+  counts?: CountUnit[];
   /** Move-out cleaning carries the handover guarantee (§12). */
   handoverGuarantee: boolean;
   status: ServiceStatus;
@@ -342,7 +363,14 @@ export interface ServiceRequest {
   serviceSlug: string;
   addOnIds: ID[];
   /** Windows are billed per unit (§5.1: 0.5h per five windows). */
-  unitCount?: number;
+  /**
+   * How many of each counted unit, keyed by `CountUnit.id`.
+   *
+   * A map rather than a number, because a service may count more than one
+   * thing. A request taken before that was true carries the single count under
+   * the service's first unit id, which is what the migration in the store does.
+   */
+  unitCounts?: Record<string, number>;
   furniturePieces?: number;
   /**
    * Where the furniture is collected from, when that is not `propertyId`.
@@ -405,7 +433,7 @@ export interface RequestDraft {
   propertyId: ID | null;
   property: PropertyInput;
   addOnIds: ID[];
-  unitCount: number | null;
+  unitCounts: Record<string, number>;
   furniturePieces: number | null;
   /** Null until the visitor says the furniture is somewhere else. */
   pickup: PickupLocation | null;

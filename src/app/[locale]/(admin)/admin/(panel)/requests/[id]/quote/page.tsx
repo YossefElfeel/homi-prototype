@@ -18,7 +18,7 @@ import { TemplatePicker } from '@/components/admin/template-picker';
 import { offerLineLabel } from '@/lib/offer-label';
 import { cn } from '@/lib/cn';
 import { areaLabel } from '@/lib/property-size';
-import { serviceNeeds } from '@/lib/service-flow';
+import { countUnits, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { checkCoverage } from '@/mock/engines/coverage';
 
 /**
@@ -440,10 +440,15 @@ export default function QuoteBuilderPage({ params }: { params: Promise<{ id: str
                   was being asked to approve a price whose input was not on the
                   page.
                 */}
-                {needs.asksCount && request.unitCount != null && (
-                  <SummaryRow label={rt('unitCount')}>
-                    <span data-numeric>{request.unitCount}</span>
-                  </SummaryRow>
+                {countUnits(service).map((unit) =>
+                  request.unitCounts?.[unit.id] ? (
+                    <SummaryRow
+                      key={unit.id}
+                      label={unitWords(unit, locale).noun ?? rt('unitCount')}
+                    >
+                      <span data-numeric>{request.unitCounts[unit.id]}</span>
+                    </SummaryRow>
+                  ) : null,
                 )}
                 {needs.asksFurniturePieces && request.furniturePieces != null && (
                   <SummaryRow label={rt('furniturePieces')}>

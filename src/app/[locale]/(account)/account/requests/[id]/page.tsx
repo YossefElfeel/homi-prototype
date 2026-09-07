@@ -19,7 +19,7 @@ import { Lifecycle } from '@/components/ui/lifecycle';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { areaLabel, figure } from '@/lib/property-size';
-import { countWords, serviceNeeds } from '@/lib/service-flow';
+import { countUnits, serviceNeeds, unitWords } from '@/lib/service-flow';
 import { quoteStages } from '@/lib/quote-lifecycle';
 import { requestBadgeState } from '@/lib/offer-label';
 import { isExpired } from '@/mock/engines/offers';
@@ -331,10 +331,15 @@ export default function AccountRequestPage({
                   they left something blank on a screen that never showed them
                   the field. The counts they *were* asked for take its place.
                 */}
-                {needs.asksCount && request.unitCount != null && (
-                  <DetailRow label={countWords(service, locale).noun ?? st('windowsSummary')}>
-                    <span data-numeric>{request.unitCount}</span>
-                  </DetailRow>
+                {countUnits(service).map((unit) =>
+                  request.unitCounts?.[unit.id] ? (
+                    <DetailRow
+                      key={unit.id}
+                      label={unitWords(unit, locale).noun ?? st('windowsSummary')}
+                    >
+                      <span data-numeric>{request.unitCounts[unit.id]}</span>
+                    </DetailRow>
+                  ) : null,
                 )}
                 {needs.asksFurniturePieces && request.furniturePieces != null && (
                   <DetailRow label={st('piecesSummary')}>
