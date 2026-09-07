@@ -453,6 +453,130 @@ function reset() {
     'creating a plan is logged',
     useStore.getState().data.changeLog.some((e) => e.entityId === id),
   );
+
+  /* The plan just created is held by nobody, which is the only kind that may
+     go. Retiring is what a sold plan gets. */
+  check('an unused plan can be deleted', useStore.getState().deletePlan(id));
+  check('and it is gone', useStore.getState().plans.length === before);
+  check(
+    'deleting a plan is logged',
+    useStore
+      .getState()
+      .data.changeLog.filter((e) => e.entityId === id)
+      .length >= 2,
+  );
+}
+
+/* ------------------------------------------- what deletion refuses to touch */
+{
+  reset();
+  const state = () => useStore.getState();
+
+  /* `pln_basic` carries four subscribers in the demo, `pln_buero_standard`
+     none. Both states are in the seed on purpose: the refusal and the deletion
+     are each one click from a cold start, so neither has to be produced by
+     wrecking the demo first. */
+  const held = state().plans.find((p) => p.id === 'pln_basic')!;
+  const unheld = state().plans.find((p) => p.id === 'pln_buero_standard')!;
+
+  check(
+    'the demo really does hold one of each',
+    state().data.subscriptions.some((sub) => sub.planId === held.id) &&
+      !state().data.subscriptions.some((sub) => sub.planId === unheld.id) &&
+      !state().data.requests.some((r) => r.planIntent === unheld.id),
+  );
+
+  check('a plan somebody holds is refused', state().deletePlan(held.id) === false);
+  check('and it is still there', state().plans.some((p) => p.id === held.id));
+
+  /*
+   * A cancelled subscription still blocks it.
+   *
+   * This is the assertion worth having. «Nobody is on it any more» is the
+   * reading that would let a plan be deleted out from under a paid invoice —
+   * §15 keeps invoices whole, and an invoice naming a package that no longer
+   * exists cannot be explained to the person who paid it.
+   */
+  const sub = state().data.subscriptions.find((x) => x.planId === held.id)!;
+  useStore.setState({
+    data: {
+      ...state().data,
+      subscriptions: state().data.subscriptions.map((x) =>
+        x.planId === held.id ? { ...x, status: 'cancelled' as const } : x,
+      ),
+      requests: state().data.requests.map((r) =>
+        r.planIntent === held.id ? { ...r, planIntent: undefined } : r,
+      ),
+    },
+  });
+  check(
+    'a plan whose subscribers have all cancelled is still refused',
+    Boolean(sub) && state().deletePlan(held.id) === false,
+  );
+
+  /*
+   * The wish on a request counts as well.
+   *
+   * Built rather than found: every seeded `planIntent` is on a plan somebody
+   * also holds, so reading one out of the demo would have tested the
+   * subscription rule a second time and passed either way. The intent is moved
+   * onto a plan nobody holds, which isolates it.
+   */
+  reset();
+  check(
+    'the isolation holds — nobody is on this plan',
+    !state().data.subscriptions.some((x) => x.planId === 'pln_buero_plus'),
+  );
+  useStore.setState({
+    data: {
+      ...state().data,
+      requests: state().data.requests.map((r, i) =>
+        i === 0 ? { ...r, planIntent: 'pln_buero_plus' } : r,
+      ),
+    },
+  });
+  check(
+    'a plan a request still asks for is refused',
+    state().deletePlan('pln_buero_plus') === false,
+  );
+
+  reset();
+  check('an unheld seeded plan can go', state().deletePlan('pln_buero_standard'));
+
+  /*
+   * References must not be reused after a delete.
+   *
+   * `reference` and `order` were derived from `plans.length`, which is the
+   * highest number in use only while nothing is ever removed. With a delete on
+   * the screen, the next plan created would carry a reference the change log
+   * already names.
+   */
+  const refsBefore = state().plans.map((p) => p.reference);
+  const fresh = state().createPlan(
+    {
+      name: { de: 'Nach dem Löschen', en: 'After the delete', fr: '', it: '' },
+      description: { de: '', en: '', fr: '', it: '' },
+      features: [],
+      price: 100,
+      includedVisits: 4,
+      validityMonths: 12,
+      serviceSlug: 'unterhaltsreinigung',
+      extraDiscountPercent: 0,
+      active: false,
+      visibleOnSite: false,
+    },
+    NOW,
+  );
+  const made = state().plans.find((p) => p.id === fresh)!;
+  check(
+    'a plan created after a delete does not reuse a reference',
+    !refsBefore.includes(made.reference),
+    made.reference,
+  );
+  check(
+    'nor an order',
+    state().plans.filter((p) => p.order === made.order).length === 1,
+  );
 }
 
 if (failures.length > 0) {

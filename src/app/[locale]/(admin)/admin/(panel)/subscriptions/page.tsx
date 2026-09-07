@@ -15,11 +15,16 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Select } from '@/components/ui/field';
 import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
-import { RowAction, RowActions } from '@/components/ui/row-actions';
+import { RowAction, RowActionButton, RowActions, RowActionsDivider } from '@/components/ui/row-actions';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Toolbar } from '@/components/ui/toolbar';
 import { planRhythm } from '@/lib/offer-facts';
-import { activeSubscriberCount } from '@/lib/plan-facts';
+import { activeSubscriberCount, planUsage, type PlanUsage } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Plan } from '@/mock/schema';
 
@@ -48,6 +53,8 @@ export default function PlansPage() {
   const services = useStore((s) => s.services);
   const subscriptions = useStore((s) => s.data.subscriptions);
   const setPlanActive = useStore((s) => s.setPlanActive);
+  const deletePlan = useStore((s) => s.deletePlan);
+  const requests = useStore((s) => s.data.requests);
 
   const [query, setQuery] = useState('');
   /*
@@ -57,6 +64,14 @@ export default function PlansPage() {
    * product, they are two — so that is what the filter filters.
    */
   const [service, setService] = useState<'all' | string>('all');
+  /*
+   * The one decision on this screen that cannot happen on a click. Retiring is
+   * the switch in the last column and is reversible; this is not, so it asks —
+   * and when it refuses it refuses with the counts, not with a greyed-out menu
+   * item nobody can interrogate.
+   */
+  const removing = useConfirmTarget<{ plan: Plan; used: PlanUsage }>();
+  const dismissLabel = useDismissLabel();
   const [status, setStatus] = useState<'all' | 'active' | 'retired'>('all');
 
   const filtered = useMemo(() => {
@@ -88,6 +103,26 @@ export default function PlansPage() {
     toast.success(
       t(plan.active ? 'retiredDone' : 'activatedDone', { name: plan.name[locale] }),
     );
+  }
+
+  /*
+   * The counts are read here so the refusal can name them. They are read again
+   * inside the store, which is not redundant: this pair is a render old, and a
+   * quote accepted in another tab could have opened a subscription in between.
+   */
+  function askDelete(plan: Plan) {
+    removing.ask({ plan, used: planUsage(plan.id, { subscriptions, requests }) });
+  }
+
+  function confirmDelete() {
+    const plan = removing.target?.plan;
+    if (!plan) return;
+    if (deletePlan(plan.id)) {
+      toast.success(t('deleteDone', { name: plan.name[locale] }));
+    } else {
+      toast.error(t('deleteRaced'));
+    }
+    removing.dismiss();
   }
 
   const columns: Column<Plan>[] = [
@@ -260,6 +295,13 @@ export default function PlansPage() {
             <RowAction href={`/admin/subscriptions/${p.id}/edit`} label={t('rowEdit')}>
               <ActionIcon.edit aria-hidden />
             </RowAction>
+            <RowActionsDivider />
+            {/* Offered on every row, including the ones it will refuse. A
+                menu item that appears and disappears by row teaches nobody
+                the rule; a refusal that names four subscribers does. */}
+            <RowActionButton tone="danger" label={t('rowDelete')} onClick={() => askDelete(p)}>
+              <ActionIcon.delete aria-hidden />
+            </RowActionButton>
           </RowActions>
         )}
         empty={
@@ -278,6 +320,32 @@ export default function PlansPage() {
             />
           )
         }
+      />
+
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={
+          removing.target && removing.target.used.total > 0
+            ? t('deleteBlockedTitle', { name: removing.target.plan.name[locale] })
+            : t('deleteTitle', { name: removing.target?.plan.name[locale] ?? '' })
+        }
+        body={
+          removing.target && removing.target.used.total > 0
+            ? t('deleteBlockedBody', {
+                subscriptions: removing.target.used.subscriptions,
+                requests: removing.target.used.requests,
+              })
+            : t('deleteBody')
+        }
+        action={t('deleteConfirm')}
+        dismiss={dismissLabel}
+        /* Shown and refused rather than hidden. Somebody who opened the menu
+           to delete needs to see that the act was understood and declined,
+           with the count beside it; a button that is simply absent answers
+           nothing and reads as a bug. */
+        disabled={Boolean(removing.target && removing.target.used.total > 0)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

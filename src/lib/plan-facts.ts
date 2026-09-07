@@ -361,6 +361,44 @@ export function cancelDeadline(subscription: Subscription, settings: Settings): 
   return deadline;
 }
 
+export interface PlanUsage {
+  /** Everybody who ever held it, cancelled and expired included. */
+  subscriptions: number;
+  /** Visitors who asked for it on a request, whether or not it was opened. */
+  requests: number;
+  total: number;
+}
+
+/**
+ * What would break if this plan were deleted.
+ *
+ * The same shape and the same reasoning as `serviceUsage`: a `Subscription`
+ * names its plan by id, so removing the row does not fail anywhere — it makes
+ * every subscriber screen, every renewal and every invoice line that quotes
+ * the package name unreadable, quietly. The count is what the refusal shows,
+ * instead of asking "are you sure" about a number nobody can see.
+ *
+ * Expired and cancelled subscriptions count. That is the part worth being
+ * explicit about: §15 keeps invoices whole, and an invoice for a package
+ * whose name has been deleted is an invoice nobody can explain to the customer
+ * who paid it. Retiring is the action for a plan that has been sold —
+ * `setPlanActive` exists precisely so the record survives its own withdrawal.
+ * Deletion is for the plan created by mistake, and that is the only plan it
+ * lets through.
+ *
+ * A request's `planIntent` counts too. It is what the visitor asked for, and
+ * the request screen prints the plan's name off the id — deleting the plan
+ * turns a recorded wish into a blank.
+ */
+export function planUsage(
+  planId: ID,
+  data: { subscriptions: Subscription[]; requests: { planIntent?: ID }[] },
+): PlanUsage {
+  const subscriptions = data.subscriptions.filter((s) => s.planId === planId).length;
+  const requests = data.requests.filter((r) => r.planIntent === planId).length;
+  return { subscriptions, requests, total: subscriptions + requests };
+}
+
 /** Subscribers of one plan, newest first. */
 export function subscribersOf(planId: ID, subscriptions: Subscription[]): Subscription[] {
   return subscriptions
