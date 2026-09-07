@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useFormatter } from '@/i18n/format';
 import { Check, Search, Users } from 'lucide-react';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { ActionIcon } from '@/lib/action-icons';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { SwitchField } from '@/components/ui/switch';
 import { Toolbar } from '@/components/ui/toolbar';
 import { planRhythm } from '@/lib/offer-facts';
-import { subscribersOf, subscriptionState, visitsLeft } from '@/lib/plan-facts';
+import { planUsage, subscribersOf, subscriptionState, visitsLeft, type PlanUsage } from '@/lib/plan-facts';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import type { Subscription } from '@/mock/schema';
 
@@ -43,6 +43,7 @@ import type { Subscription } from '@/mock/schema';
 export default function PlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('admin.plan');
+  const plansT = useTranslations('admin.plans');
   const rhythmT = useTranslations('admin.rhythm');
   const format = useFormatter();
   const locale = useLocale() as Locale;
@@ -57,11 +58,17 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const settings = useStore((s) => s.settings);
   const setPlanActive = useStore((s) => s.setPlanActive);
   const setPlanVisible = useStore((s) => s.setPlanVisible);
+  const deletePlan = useStore((s) => s.deletePlan);
+  const requests = useStore((s) => s.data.requests);
   const cancelSubscription = useStore((s) => s.cancelSubscription);
 
+  const router = useRouter();
   const dismissLabel = useDismissLabel();
   const cancelling = useConfirmTarget<Subscription>();
   const [query, setQuery] = useState('');
+  /* The usage is the target: `total > 0` is the refusal, and the counts are
+     what the refusal says instead of «in use». */
+  const removing = useConfirmTarget<PlanUsage>();
 
   const subscribers = useMemo(
     () => (plan ? subscribersOf(plan.id, subscriptions) : []),
@@ -206,6 +213,30 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     },
   ];
 
+  /*
+   * The counts are read here so the refusal can name them, and read again in
+   * the store — this pair is a render old, and a quote accepted in another tab
+   * could have opened a subscription in between.
+   */
+  function askDelete() {
+    if (!plan) return;
+    removing.ask(planUsage(plan.id, { subscriptions, requests }));
+  }
+
+  function confirmDelete() {
+    if (!plan) return;
+    if (deletePlan(plan.id)) {
+      toast.success(plansT('deleteDone', { name: plan.name[locale] }));
+      /* Back to the list rather than staying on a screen whose record no
+         longer exists — which would render the «plan not found» state and read
+         as a broken link rather than as a deletion that worked. */
+      router.replace('/admin/subscriptions');
+    } else {
+      toast.error(plansT('deleteRaced'));
+      removing.dismiss();
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -327,6 +358,21 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                 toast.success(t(visible ? 'shownDone' : 'hiddenDone'));
               }}
             />
+
+            {/*
+              Below the two switches, and separated from them, because it is
+              not a third setting — the switches are reversible and this is
+              not. It belongs on this screen all the same: somebody who opens
+              the plan they created by mistake should not have to go back to
+              the list to be rid of it.
+            */}
+            <div className="border-t border-line-subtle pt-4">
+              <Button variant="danger" size="sm" onClick={askDelete}>
+                <ActionIcon.delete className="size-4" aria-hidden />
+                {plansT('rowDelete')}
+              </Button>
+              <p className="mt-2 text-sm text-ink-tertiary">{t('deleteHint')}</p>
+            </div>
           </Card>
         </aside>
       </div>
@@ -430,6 +476,31 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
         action={t('rowCancel')}
         dismiss={dismissLabel}
         onConfirm={cancel}
+      />
+
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={
+          removing.target && removing.target.total > 0
+            ? plansT('deleteBlockedTitle', { name: plan.name[locale] })
+            : plansT('deleteTitle', { name: plan.name[locale] })
+        }
+        body={
+          removing.target && removing.target.total > 0
+            ? plansT('deleteBlockedBody', {
+                subscriptions: removing.target.subscriptions,
+                requests: removing.target.requests,
+              })
+            : plansT('deleteBody')
+        }
+        action={plansT('deleteConfirm')}
+        dismiss={dismissLabel}
+        /* Shown and refused rather than hidden: a reader who came here to
+           delete needs to see that the act was understood and declined, with
+           the count beside it. An absent button answers nothing. */
+        disabled={Boolean(removing.target && removing.target.total > 0)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

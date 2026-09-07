@@ -60,6 +60,7 @@ import { defaultFor, planDelete, textFor } from '@/lib/templates';
 import {
   cancelBlock,
   nextPlanVisit,
+  planUsage,
   upgradeBlock,
   upgradeQuote,
   type CancelBlock,
@@ -1078,6 +1079,20 @@ interface StoreState {
   updatePlan: (id: ID, patch: Partial<Plan>) => void;
   /** Stops it being sold. Leaves every existing subscriber untouched. */
   setPlanActive: (id: ID, active: boolean) => void;
+  /**
+   * Refuses while anybody holds the plan or ever held it, and while any
+   * request still names it — see `planUsage`. Returns false so the caller can
+   * say why rather than silently doing nothing.
+   *
+   * Retiring and deleting are two different acts and the catalogue needed
+   * both. `setPlanActive` is for a plan that has been sold and is being
+   * withdrawn; the record has to survive, because subscribers' screens and
+   * paid invoices name it. This is for the plan created by mistake — the
+   * typo, the price nobody agreed, the second copy of an existing package —
+   * which until now stayed in the list for ever with «retired» beside it,
+   * indistinguishable from a real product taken off sale.
+   */
+  deletePlan: (id: ID) => boolean;
   setPlanVisible: (id: ID, visibleOnSite: boolean) => void;
 
   /* ---- plans, the subscribers (screens 43 + 70) ---- */
@@ -3852,11 +3867,18 @@ export const useStore = create<StoreState>()(
       createPlan: (input, now) => {
         const s = get();
         const id = `pln_${now.getTime().toString(36).slice(-5)}`;
+        /* Off the highest number in use, not off the length of the list. The
+           two agree only while nothing is ever removed, and deleting a plan is
+           now a thing the catalogue can do — six plans minus one and the next
+           `P-006` would be the second row to carry that reference, with the
+           change log naming both. */
+        const nextNumber =
+          s.plans.reduce((high, p) => Math.max(high, Number(p.reference.slice(2)) || 0), 0) + 1;
         const plan: Plan = {
           ...input,
           id,
-          reference: `P-${String(s.plans.length + 1).padStart(3, '0')}`,
-          order: s.plans.length + 1,
+          reference: `P-${String(nextNumber).padStart(3, '0')}`,
+          order: s.plans.reduce((high, p) => Math.max(high, p.order), 0) + 1,
         };
         set({ plans: [...s.plans, plan] });
         get().logChange({
@@ -3910,6 +3932,23 @@ export const useStore = create<StoreState>()(
             plan.id !== id ? plan : { ...plan, visibleOnSite: visibleOnSite && plan.active },
           ),
         })),
+
+      deletePlan: (id) => {
+        const s = get();
+        const plan = s.plans.find((x) => x.id === id);
+        if (!plan) return false;
+        /* Re-checked here rather than trusted from the menu: the confirm panel
+           read the count one render ago, and the store is the only place that
+           can be sure nobody has signed up in between. */
+        if (planUsage(id, s.data).total > 0) return false;
+        set({ plans: s.plans.filter((x) => x.id !== id) });
+        get().logChange({
+          entity: 'plan',
+          entityId: id,
+          summary: `Plan ${plan.name.en} deleted`,
+        });
+        return true;
+      },
 
       /* ---- plans, the subscriber side ---- */
 

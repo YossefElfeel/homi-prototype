@@ -539,6 +539,17 @@ export const adminCrmDe = {
     addAction: 'Abo anlegen',
     rowView: 'Abo öffnen',
     rowEdit: 'Bearbeiten',
+    rowDelete: 'Löschen',
+    deleteTitle: '«{name}» löschen?',
+    deleteBody:
+      'Niemand hat dieses Abo je gehabt und keine Anfrage nennt es — es geht also nichts verloren. Zurückziehen wäre die andere Möglichkeit: dann bleibt es in der Liste stehen. Gelöscht ist es weg.',
+    deleteConfirm: 'Löschen',
+    deleteDone: '«{name}» gelöscht.',
+    deleteRaced:
+      'Nicht gelöscht: in der Zwischenzeit hat jemand dieses Abo abgeschlossen. Laden Sie die Liste neu.',
+    deleteBlockedTitle: '«{name}» lässt sich nicht löschen',
+    deleteBlockedBody:
+      '{subscriptions, plural, =0 {Niemand hat dieses Abo abgeschlossen} one {Eine Person hat dieses Abo abgeschlossen} other {# Personen haben dieses Abo abgeschlossen}}, und {requests, plural, =0 {keine Anfrage nennt es} one {eine Anfrage nennt es} other {# Anfragen nennen es}}. Gelöscht würden deren Rechnungen und Bildschirme auf einen Namen zeigen, den es nicht mehr gibt. Ziehen Sie es stattdessen zurück — der Schalter am Ende der Zeile: es wird nicht mehr verkauft, und die laufenden Abos bleiben unberührt.',
     searchEmptyTitle: 'Kein Abo passt',
     searchEmptyBody: 'Für «{query}» gibt es hier nichts.',
     filterEmptyBody: 'Mit diesen Filtern bleibt nichts übrig.',
@@ -618,6 +629,8 @@ export const adminCrmDe = {
     retiredDone: 'Abo wird nicht mehr verkauft. Bestehende Abos laufen weiter.',
     shownDone: 'Abo erscheint auf der Website.',
     hiddenDone: 'Abo ist von der Website genommen.',
+    deleteHint:
+      'Nur solange niemand dieses Abo je abgeschlossen hat. Verkaufte Abos werden zurückgezogen, nicht gelöscht — sonst zeigen bezahlte Rechnungen auf einen Namen, den es nicht mehr gibt.',
     subscribersTitle: 'Abonnentinnen und Abonnenten',
     searchLabel: 'Person oder Objekt suchen',
     searchPlaceholder: 'Name, Nummer oder Objekt',

@@ -516,6 +516,17 @@ export const adminCrmEn: typeof adminCrmDe = {
     addAction: 'Add plan',
     rowView: 'Open plan',
     rowEdit: 'Edit',
+    rowDelete: 'Delete',
+    deleteTitle: 'Delete “{name}”?',
+    deleteBody:
+      'Nobody has ever held this plan and no request names it, so nothing is lost. Retiring it is the other option: then it stays in the list. Deleted, it is gone.',
+    deleteConfirm: 'Delete',
+    deleteDone: '“{name}” deleted.',
+    deleteRaced:
+      'Not deleted: somebody subscribed to this plan in the meantime. Reload the list.',
+    deleteBlockedTitle: '“{name}” cannot be deleted',
+    deleteBlockedBody:
+      '{subscriptions, plural, =0 {Nobody holds this plan} one {One person holds this plan} other {# people hold this plan}}, and {requests, plural, =0 {no request names it} one {one request names it} other {# requests name it}}. Deleting it would point their invoices and screens at a name that no longer exists. Retire it instead — the switch at the end of the row: it stops being sold, and the running subscriptions are untouched.',
     searchEmptyTitle: 'No plan matches',
     searchEmptyBody: 'Nothing here for “{query}”.',
     filterEmptyBody: 'Nothing survives these filters.',
@@ -595,6 +606,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     retiredDone: 'Plan is no longer sold. Existing plans continue.',
     shownDone: 'Plan now appears on the site.',
     hiddenDone: 'Plan taken off the site.',
+    deleteHint:
+      'Only while nobody has ever held this plan. A plan that has been sold is retired, not deleted — otherwise paid invoices point at a name that no longer exists.',
     subscribersTitle: 'Subscribers',
     searchLabel: 'Search people or properties',
     searchPlaceholder: 'Name, number or property',

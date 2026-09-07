@@ -838,6 +838,11 @@ export const FLOWS: Flow[] = [
         '/account/plan',
         'The old exit was a row of links to /contact?plan=<id> — a contact form that never read the parameter, so the plan the customer picked was lost on arrival. It is the same subscription now: new package, term restarted, visits reset, and an invoice carrying the credit as its own line. The credit is the unused visits at what they paid per visit on the old plan — arithmetic off their own receipt, not a rate we chose, but §21.7 is still open on whether the business credits them at all',
       ),
+      added(
+        'Deleted — or refused with a reason',
+        '/admin/subscriptions',
+        'The catalogue could only ever grow. Retiring was the one way off the list, and it is the right act for a plan that has been sold — but it left the plan created by mistake sitting there for ever with «zurückgezogen» beside it, indistinguishable from a real product taken off sale. Refused as soon as anybody holds it, ever held it, or a request still names it; the refusal counts them and points at the retire switch instead',
+      ),
       open(
         'Move down a plan',
         '§21.7 puts a downgrade at the next term, and nothing here schedules a change for a future date — the store applies what it is told immediately. Building it would mean a pending change on the subscription, which is a second thing that has to be true at midnight and the prototype has no nightly run. The screen says so and names the office',
