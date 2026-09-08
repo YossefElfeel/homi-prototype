@@ -67,6 +67,7 @@ import {
   type UpgradeBlock,
 } from '@/lib/plan-facts';
 import { postingUsage } from '@/lib/posting-facts';
+import { canCarryPlan } from '@/lib/payment-methods';
 import { normaliseAddress } from '@/lib/contact-address';
 import { isCompleteLabour, memberName } from '@/lib/labour-facts';
 import { propertyUsage } from '@/lib/property-facts';
@@ -371,8 +372,15 @@ Marco Brunner`;
    so a stale store would hand the window clean to the new pricing rule with
    no `counts` at all — `estimateHours` would find nothing to loop over and
    quote every window job at the minimum. A saved request would lose its
-   count the same way. */
-const SCHEMA_VERSION = 44;
+   count the same way.
+
+   45: `Subscription` gained `paymentMethodId` — which saved card the package's
+   recurring charge is bound to. `merge` cannot cover this one either:
+   `subscriptions` is present in every blob since 1 and is kept whole, so a
+   store persisted under 44 hands back running plans with no instrument at
+   all, and screen 45 would report every one of them as «noch nicht
+   festgelegt» on a build whose seed sets all three. */
+const SCHEMA_VERSION = 45;
 
 /**
  * §10 — the default payment term.
@@ -1088,7 +1096,13 @@ interface StoreState {
     input: { customerId: ID; kind: SavedMethodKind; label: string; expiresAt?: string },
     now: Date,
   ) => void;
-  removePaymentMethod: (id: ID) => void;
+  /**
+   * Refuses while a running package is billed to it, and names the packages so
+   * the screen can say which. Removing it silently would leave a subscription
+   * pointing at an id that no longer exists — and the customer would find out
+   * at the next term, from a charge that did not happen.
+   */
+  removePaymentMethod: (id: ID) => { ok: true } | { blocked: 'usedByPlan'; plans: string[] };
   setDefaultPaymentMethod: (id: ID) => void;
 
   /* ---- plans, the catalogue (screens 69, 69a, 70) ----
@@ -1124,9 +1138,33 @@ interface StoreState {
    * the property already holds one — both are refusals, not silent no-ops.
    */
   openSubscription: (
-    input: { customerId: ID; propertyId: ID; planId: ID; method: PaymentMethod },
+    input: {
+      customerId: ID;
+      propertyId: ID;
+      planId: ID;
+      /** How the first term was settled — this lands on the `Payment`. */
+      method: PaymentMethod;
+      /**
+       * The card the following terms are billed to. See `Subscription`.
+       *
+       * Required but nullable on purpose: `payOffer` opens a package off a
+       * paid quote and is never told which card should carry it, so it has to
+       * say «none» out loud rather than leave the field off and have nobody
+       * notice.
+       */
+      paymentMethodId: ID | undefined;
+    },
     now: Date,
   ) => ID | null;
+  /**
+   * Re-points a running package at another saved card.
+   *
+   * The customer had no way to do this at all: screen 45 derived the card from
+   * the list and offered no control, so the only way to move a plan off a card
+   * was to delete the card — which is exactly the thing that must not be
+   * possible while a plan is on it.
+   */
+  setSubscriptionMethod: (id: ID, paymentMethodId: ID, now: Date) => void;
   /** Buys another term. Returns the id of the invoice raised for it. */
   renewSubscription: (id: ID, now: Date) => ID | null;
   pauseSubscription: (id: ID, now: Date) => void;
@@ -2701,12 +2739,28 @@ export const useStore = create<StoreState>()(
          * was withdrawn would punish them for our timing.
          */
         if (request.planIntent && outcome === 'succeeded') {
+          /*
+           * Nothing in the quote flow asks which card should carry the
+           * package. The customer picked a rail for *this* payment, and that
+           * rail may be a TWINT, which cannot carry a package at all — so
+           * `method` is not an answer to this question.
+           *
+           * The package opens on their default card when they have one, and
+           * on nothing when they do not. Screen 45 then shows it as «noch
+           * nicht festgelegt» next to the control that sets it, which is the
+           * truth rather than a card they never chose. Whether this flow ought
+           * to ask outright is on `/open-questions`.
+           */
+          const cards = get().data.paymentMethods.filter(
+            (m) => m.customerId === request.customerId && canCarryPlan(m.kind),
+          );
           get().openSubscription(
             {
               customerId: request.customerId,
               propertyId: request.propertyId,
               planId: request.planIntent,
               method,
+              paymentMethodId: (cards.find((m) => m.isDefault) ?? cards[0])?.id,
             },
             now,
           );
@@ -3898,28 +3952,53 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      removePaymentMethod: (id) =>
-        set((s) => {
-          const removed = s.data.paymentMethods.find((m) => m.id === id);
-          const rest = s.data.paymentMethods.filter((m) => m.id !== id);
-          /* Removing the default promotes the next one rather than leaving the
-             customer with methods on file and no default among them. */
-          const orphaned =
-            removed?.isDefault &&
-            !rest.some((m) => m.customerId === removed.customerId && m.isDefault);
-          const heir = orphaned
-            ? rest.find((m) => m.customerId === removed.customerId)
-            : undefined;
+      removePaymentMethod: (id) => {
+        const s = get();
+        /*
+         * A package that is still running holds its card down.
+         *
+         * `expired` and `cancelled` are history — renewing an expired package
+         * raises a fresh invoice and asks again, so nothing about them is
+         * waiting on this record. `active` and `paused` are the two whose
+         * `paymentMethodId` still means something, and deleting out from under
+         * them leaves a running package pointing at an id that is not there.
+         *
+         * How much this protects depends on §11.6: if the screens are right
+         * that a package is charged automatically, the refusal is the whole
+         * safety net; if §11.5 is right that renewal is a click on an invoice,
+         * it is bookkeeping. It is worth having either way — a dangling id is
+         * a bug in both readings — but the strength of the wording on screen
+         * 45 follows the answer.
+         */
+        const live = s.data.subscriptions.filter(
+          (x) =>
+            x.paymentMethodId === id && (x.status === 'active' || x.status === 'paused'),
+        );
+        if (live.length > 0) {
+          return { blocked: 'usedByPlan', plans: live.map((x) => x.reference) };
+        }
 
-          return {
-            data: {
-              ...s.data,
-              paymentMethods: rest.map((m) =>
-                heir && m.id === heir.id ? { ...m, isDefault: true } : m,
-              ),
-            },
-          };
-        }),
+        const removed = s.data.paymentMethods.find((m) => m.id === id);
+        const rest = s.data.paymentMethods.filter((m) => m.id !== id);
+        /* Removing the default promotes the next one rather than leaving the
+           customer with methods on file and no default among them. */
+        const orphaned =
+          removed?.isDefault &&
+          !rest.some((m) => m.customerId === removed.customerId && m.isDefault);
+        const heir = orphaned
+          ? rest.find((m) => m.customerId === removed.customerId)
+          : undefined;
+
+        set({
+          data: {
+            ...s.data,
+            paymentMethods: rest.map((m) =>
+              heir && m.id === heir.id ? { ...m, isDefault: true } : m,
+            ),
+          },
+        });
+        return { ok: true };
+      },
 
       setDefaultPaymentMethod: (id) =>
         set((s) => {
@@ -4043,7 +4122,7 @@ export const useStore = create<StoreState>()(
        * forgotten, and `Invoice.subscriptionId` existed on the model and was
        * read in two places without anything ever writing it.
        */
-      openSubscription: ({ customerId, propertyId, planId, method }, now) => {
+      openSubscription: ({ customerId, propertyId, planId, method, paymentMethodId }, now) => {
         const s = get();
         const plan = s.plans.find((x) => x.id === planId);
         if (!plan || !plan.active) return null;
@@ -4111,6 +4190,10 @@ export const useStore = create<StoreState>()(
           status: 'active',
           visitsUsed: 0,
           invoiceId: invoice.id,
+          /* Written at the moment the package opens, because this is the one
+             moment the customer is present and choosing which card carries it.
+             Nothing later asks again. */
+          paymentMethodId,
           renewalCount: 0,
           history: [
             { at: now.toISOString(), kind: 'started', label: `Plan started — ${plan.name.en}` },
@@ -4132,6 +4215,50 @@ export const useStore = create<StoreState>()(
           summary: `Plan ${subscription.reference} opened — ${plan.name.en}`,
         });
         return id;
+      },
+
+      setSubscriptionMethod: (id, paymentMethodId, now) => {
+        const s = get();
+        const target = s.data.subscriptions.find((x) => x.id === id);
+        const method = s.data.paymentMethods.find((m) => m.id === paymentMethodId);
+        /* All three refusals are the same mistake caught at different depths:
+           billing a package to an instrument that is not entitled to carry it.
+           The owner match is the one worth stating — without it a customer
+           could point their plan at somebody else's card by id. */
+        if (!target || !method) return;
+        if (method.customerId !== target.customerId) return;
+        if (!canCarryPlan(method.kind)) return;
+        if (target.paymentMethodId === paymentMethodId) return;
+
+        set({
+          data: {
+            ...s.data,
+            subscriptions: s.data.subscriptions.map((x) =>
+              x.id === id
+                ? {
+                    ...x,
+                    paymentMethodId,
+                    /* On the record, because "why did the charge move to the
+                       other card" is a question the office gets asked and
+                       until now had nothing to answer with. */
+                    history: [
+                      ...x.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'method-changed',
+                        label: `Billing moved to ${method.label}`,
+                      },
+                    ],
+                  }
+                : x,
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'subscription',
+          entityId: id,
+          summary: `Plan ${target.reference} billed to ${method.label}`,
+        });
       },
 
       /**

@@ -20,7 +20,7 @@ import {
 import { Money, formatChf } from '@/components/ui/money';
 import { cn } from '@/lib/cn';
 import { planRhythm } from '@/lib/offer-facts';
-import { METHOD_ICONS } from '@/lib/payment-methods';
+import { METHOD_ICONS, canCarryPlan } from '@/lib/payment-methods';
 import { perVisitPrice, propertyOptions, upgradeQuote } from '@/lib/plan-facts';
 import { useAccount } from '@/lib/use-account';
 import { useNow, useStore } from '@/mock/store';
@@ -102,8 +102,22 @@ function SubscribeForm({
   const allMethods = useStore((s) => s.data.paymentMethods);
   const openSubscription = useStore((s) => s.openSubscription);
   const upgradeSubscription = useStore((s) => s.upgradeSubscription);
+  const setSubscriptionMethod = useStore((s) => s.setSubscriptionMethod);
 
-  const methods = allMethods.filter((m) => m.customerId === customerId);
+  /*
+   * Cards only, and this filter is the reason screen 45's TWINT alert is now
+   * true rather than merely displayed.
+   *
+   * This list was every saved method the customer had. So the alert on
+   * `/account/payment-methods` — «TWINT unterstützt keine automatische
+   * Abbuchung» — sat one click away from a dialog that would happily open a
+   * package on TWINT — the screen and the control one click apart, saying
+   * opposite things. Whether the restriction itself is right is §11.6; that
+   * two surfaces disagreed about it was wrong under either answer.
+   */
+  const methods = allMethods.filter(
+    (m) => m.customerId === customerId && canCarryPlan(m.kind),
+  );
   const options = propertyOptions(properties, subscriptions, now);
   const free = options.filter((o) => !o.heldBy);
 
@@ -138,13 +152,28 @@ function SubscribeForm({
         toast.error(t(`upgradeBlocked.${result.blocked}`));
         return;
       }
+      /* The picker is in this dialog for the upgrade too, so a customer moving
+         up and switching card in the same breath expects both to stick. It
+         used to change only what the top-up invoice was paid with, and the
+         package went on being billed to whatever it started on. */
+      setSubscriptionMethod(upgradeOn.id, method.id, now);
       toast.success(t('upgradeDone', { name: plan.name[locale] }));
       onClose();
       return;
     }
 
     const id = openSubscription(
-      { customerId, propertyId: property.id, planId: plan.id, method: method.kind },
+      {
+        customerId,
+        propertyId: property.id,
+        planId: plan.id,
+        method: method.kind,
+        /* The instrument, not just the rail. `method.kind` describes how this
+           first term was settled and lands on the `Payment`; the id is what
+           the following terms are billed to, and until now nothing wrote it
+           down at all. */
+        paymentMethodId: method.id,
+      },
       now,
     );
     setWorking(false);

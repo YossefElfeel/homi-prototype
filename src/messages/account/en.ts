@@ -629,9 +629,10 @@ export const accountEn: typeof accountDe = {
       'Every one of your addresses already has a plan — one package per address. Write to us to add another address.',
     noProperties:
       'No address is on file for your account. Addresses are created with your first request.',
-    pickMethod: 'How would you like to pay?',
-    noMethod: 'You have no payment method on file yet.',
-    addMethod: 'Add a payment method',
+    pickMethod: 'Which card should be charged?',
+    noMethod:
+      'You have no card on file. A plan is charged automatically each term — that needs a card, and TWINT cannot do it.',
+    addMethod: 'Add a card',
     duePlan: 'Package {name}',
     dueCredit: 'Credit for {n, plural, one {# unused visit} other {# unused visits}}',
     dueNow: 'Due now',
@@ -663,6 +664,13 @@ export const accountEn: typeof accountDe = {
     applePay: 'Apple Pay',
     googlePay: 'Google Pay',
     recurringTitle: 'For the plan',
+    recurringLead: 'Which card each running package is charged to. You can move it here.',
+    recurringNone:
+      'No package is running. Once one is, this is where you see which card it charges.',
+    recurringNoCard: 'No card on file — add one above.',
+    recurringPickFor: 'Card for {plan}',
+    recurringUnset: 'Not set yet',
+    recurringSet: 'The plan will be charged to this card from now on.',
     twintBlockedTitle: 'TWINT cannot be used for recurring payments',
     twintBlockedBody:
       'TWINT does not support automatic charging. A plan needs a card; you can still pay for single jobs with TWINT.',
@@ -671,6 +679,7 @@ export const accountEn: typeof accountDe = {
     remove: 'Remove',
     added: 'Payment method saved.',
     removed: 'Payment method removed.',
+    removeBlocked: 'This card is charged for {plans}. Point that plan at another card first.',
     defaultSet: 'Set as the default.',
   },
 

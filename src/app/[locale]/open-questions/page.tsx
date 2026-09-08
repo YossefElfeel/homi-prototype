@@ -151,6 +151,22 @@ const ENTRIES: Entry[] = [
     state: 'decided',
   },
   {
+    ref: '§11.6',
+    question: 'Is a package charged automatically, or renewed by hand?',
+    decision:
+      'OPEN, and two surfaces already answer it differently — which is how it was found. §11.5 above is decided: nothing is charged automatically, the customer renews in one click and an invoice is raised. Screen 45 says the opposite in as many words, «TWINT unterstützt keine automatische Abbuchung. Für das Abo brauchen wir eine Karte», and that one sentence is the whole basis for three rules now in the code: a package may only sit on a card, a card a running package sits on cannot be deleted, and the dialog that opens a package offers cards only. If §11.5 is the true answer, none of the three is needed — a renewal is a customer standing at a screen, and TWINT settles an invoice as well as anything does. If screen 45 is right, then §11.5 describes a product that is not being built. The prototype follows screen 45, because that is the promise the customer is actually shown, and every place that depends on it points here rather than restating it. Answering this also settles Apple Pay and Google Pay: both are card rails that do support merchant-initiated charges, so their absence from the plan-capable list today is a copy decision, not a technical one.',
+    screens: '43, 45, 65, 70a',
+    state: 'open',
+  },
+  {
+    ref: '§11.7',
+    question: 'A package opened off a paid quote — which card carries it?',
+    decision:
+      'OPEN. A request can carry a `planIntent`, so paying the quote opens the package, and nothing in that flow ever asks which card should stand behind it. The rail the quote was paid with is not an answer: it may be a TWINT, which a package is not allowed to sit on. The prototype puts the package on the customer\'s default card when they have one and on nothing when they do not — screen 45 then shows «noch nicht festgelegt» next to the control that sets it, which is at least true. But it is not a decision. Either the flow asks, which costs a step on the longest path in the product, or the confirmation names the card it chose, which costs a sentence. Both are the business\'s to pick, and the second is only defensible if the customer can still change it afterwards — which, as of this wave, they can.',
+    screens: '28, 31, 45',
+    state: 'open',
+  },
+  {
     ref: '§21.6',
     question: 'Package credit in visits or hours?',
     decision:

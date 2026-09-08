@@ -435,6 +435,16 @@ export const FLOWS: Flow[] = [
         'By the customer themselves. They read a new one out over the phone; deleting one they do not — the payment method is theirs. Screen 65 says so where the button is missing, otherwise it looks like a forgotten control',
       ),
       added(
+        'Move a package onto another card',
+        '/account/payment-methods',
+        'There was no way to do it. «Für das Abo» printed the first card in the list — not the one marked «Standard», not anything the customer had chosen, and read-only — so the only way to move a package off a card was to delete the card. A customer now holds one row per running package and picks its card there, and `Subscription.paymentMethodId` is what the dialog that opens a package writes',
+      ),
+      added(
+        'Refuse to delete a card a package is running on',
+        '/account/payment-methods',
+        'The bin used to take it and report success, leaving the package pointing at an id that was not there any more. The refusal names the package — «Diese Karte belastet S-0013» — because "cannot delete" without a reason reads as a broken button',
+      ),
+      added(
         'The customer’s invoices, with amount and payment route',
         '/admin/customers/cus_2',
         'In the timeline an invoice was a row with a number: no amount, no payment state, no route. Details open in a dialog; changes still happen only on screen 72',
