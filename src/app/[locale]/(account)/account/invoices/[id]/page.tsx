@@ -16,7 +16,11 @@ import { Money } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { effectiveInvoiceStatus, mayInvoice } from '@/lib/invoice-permissions';
+import {
+  effectiveInvoiceStatus,
+  isInvoiceOutstanding,
+  mayInvoice,
+} from '@/lib/invoice-permissions';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow } from '@/mock/store';
 
@@ -87,6 +91,7 @@ export default function AccountInvoicePage({
   const total = invoice.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
   const status = effectiveInvoiceStatus(invoice, now);
   const overdue = status === 'overdue';
+  const cancelled = status === 'cancelled';
 
   return (
     <div>
@@ -120,6 +125,23 @@ export default function AccountInvoicePage({
           {t('overdueBody', {
             date: format.dateTime(new Date(invoice.dueAt), 'full'),
           })}
+        </Alert>
+      )}
+
+      {/* The badge was the only thing on this screen that said a bill had been
+          withdrawn, and it says it in grey at the top of a page that otherwise
+          reads exactly like one still owed — dates, a total, and until now a
+          payment slip. The sentence that matters is «Sie müssen nichts
+          bezahlen», so it gets said out loud. Neutral, from the registry:
+          a cancelled invoice is not bad news for the person reading it.
+
+          The office's «Grund der Stornierung» is deliberately not printed
+          here — it is written for the bookkeeping («der Grund bleibt am
+          Beleg») and nobody has decided whether the customer should read it.
+          See /open-questions. */}
+      {cancelled && (
+        <Alert tone="neutral" className="mb-app-section" title={t('cancelledTitle')}>
+          {t('cancelledBody')}
         </Alert>
       )}
 
@@ -186,7 +208,12 @@ export default function AccountInvoicePage({
             </DetailList>
           </Card>
 
-          {invoice.status !== 'paid' && (
+          {/* Was `invoice.status !== 'paid'`, which asks the wrong
+              question: a cancelled invoice is not paid either, so a withdrawn
+              bill still handed the customer a QR reference and told them the
+              amount was already filled in. Whether money is still outstanding is
+              the question, and it is the same derivation the list filters on. */}
+          {isInvoiceOutstanding(status) && (
             <Card>
               <CardHeader title={t('qrTitle')} description={t('qrBody')} />
               <CardBody>

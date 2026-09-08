@@ -263,6 +263,14 @@ const ENTRIES: Entry[] = [
     state: 'open',
   },
   {
+    ref: '§10c',
+    question: 'Does the customer get to read why an invoice was cancelled?',
+    decision:
+      'OPEN, and the prototype withholds it. The office types a «Grund der Stornierung» and the dialog it types into promises the reason stays on the document «für die Buchhaltung nachvollziehbar» — written for the bookkeeper, not for the person who was billed. So screen 40 says the invoice is cancelled and that nothing is owed, and stops there. The seeded reason shows what is being withheld: «Billed in error — the visit is covered by the Basic plan» is a sentence the customer would probably rather see than not. But the same field also holds «Kunde zahlt nicht, an Inkasso übergeben», and one field cannot be internal on Monday and customer-facing on Tuesday. If the business wants the customer to read it, the honest build is a second field the office writes deliberately, not this one relabelled.',
+    screens: '40, 72',
+    state: 'open',
+  },
+  {
     ref: '§10b',
     question: 'Are payment terms fixed at thirty days, or set per invoice?',
     decision:
