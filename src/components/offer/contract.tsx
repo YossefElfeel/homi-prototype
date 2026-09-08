@@ -7,6 +7,8 @@ import type { Locale } from '@/i18n/routing';
 import { Money } from '@/components/ui/money';
 import { SignatureMark } from '@/components/ui/signature-mark';
 import { getLegalDocument } from '@/content/legal';
+import { offerLineLabel } from '@/lib/offer-label';
+import { useStore } from '@/mock/store';
 import { activeLines, offerDiscount, offerSubtotal, offerTotal } from '@/mock/engines/offers';
 import type { Customer, Offer, Property, Service, Signature } from '@/mock/schema';
 import { cn } from '@/lib/cn';
@@ -45,6 +47,8 @@ export function ContractDocument({
   const locale = useLocale() as Locale;
   const format = useFormatter();
   const agb = getLegalDocument('agb', locale);
+  const services = useStore((s) => s.services);
+  const addOns = useStore((s) => s.addOns);
 
   const lines = activeLines(offer);
   const discount = offerDiscount(offer);
@@ -110,8 +114,14 @@ export function ContractDocument({
 
       <Clause heading={t('priceHeading')}>
         <dl className="divide-y divide-line-subtle">
+          {/* Through `offerLineLabel`, like the four other screens that print
+              these. On its own `line.label` is a catalogue slug, so the
+              agreement somebody signs — and the copy on the confirmation, and
+              the owner's copy in the panel — listed the price against
+              «fensterreinigung». A contract that names the work in a machine
+              key is not a contract in the reader's language. */}
           {lines.map((line) => (
-            <Row key={line.id} label={line.displayLabel ?? line.label}>
+            <Row key={line.id} label={offerLineLabel(line, services, addOns, locale)}>
               <Money amount={line.quantity * line.unitPrice} />
             </Row>
           ))}

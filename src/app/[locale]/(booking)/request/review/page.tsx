@@ -121,7 +121,7 @@ export default function ReviewStep() {
   }
 
   return (
-    <BookingStep step="pruefen" title={t('title')} lead={t('lead')} canContinue>
+    <BookingStep step="review" title={t('title')} lead={t('lead')} canContinue>
       <dl className="divide-y divide-line-subtle border-y border-line-subtle">
         <Row label={t('sectionService')} href="/request/service" edit={t('edit')}>
           <span className="block">{service?.name[locale] ?? '—'}</span>

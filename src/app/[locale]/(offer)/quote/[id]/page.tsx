@@ -178,7 +178,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                     </p>
                   )}
                   <Button asChild variant="secondary" size="sm" className="mt-4">
-                    <Link href={`/quote/${offer.id}/bestaetigt`}>
+                    <Link href={`/quote/${offer.id}/confirmed`}>
                       {a('bookingOpen')}
                     </Link>
                   </Button>
@@ -513,7 +513,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
                 size="lg"
                 block
                 className="mt-6"
-                onClick={() => router.push(`/quote/${offer.id}/termin`)}
+                onClick={() => router.push(`/quote/${offer.id}/slot`)}
                 disabled={activeLines(offer).length === 0}
               >
                 {t('accept')}
@@ -522,7 +522,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
 
               <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2">
                 <Button asChild variant="link">
-                  <Link href={`/quote/${offer.id}/aenderung`}>{t('requestChange')}</Link>
+                  <Link href={`/quote/${offer.id}/change`}>{t('requestChange')}</Link>
                 </Button>
                 <Button
                   variant="link"

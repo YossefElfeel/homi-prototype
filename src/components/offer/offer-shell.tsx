@@ -13,7 +13,12 @@ import { daysLeft } from '@/mock/engines/offers';
 import { useNow } from '@/mock/store';
 import type { Offer } from '@/mock/schema';
 
-const STEPS = ['offer', 'termin', 'unterschrift', 'zahlung'] as const;
+/* Named after the routes they mark — `offer` is `/quote/[id]` itself, the rest
+   are its sub-segments. The rail does not build URLs from these, so the German
+   names left behind by the route rename were not broken, only misleading: a
+   page under `payment/` declared itself `step="zahlung"`. Same words, same
+   spelling, one less thing to hold in your head. */
+const STEPS = ['offer', 'slot', 'signature', 'payment'] as const;
 export type OfferStepName = (typeof STEPS)[number];
 
 /**

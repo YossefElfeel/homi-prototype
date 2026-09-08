@@ -65,11 +65,11 @@ export default function SignaturePage({ params }: { params: Promise<{ id: string
       { name: `${customer.firstName} ${customer.lastName}`, path },
       now,
     );
-    router.push(`/quote/${offer.id}/zahlung`);
+    router.push(`/quote/${offer.id}/payment`);
   }
 
   return (
-    <OfferShell offer={offer} step="unterschrift">
+    <OfferShell offer={offer} step="signature">
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">{t('title')}</h1>

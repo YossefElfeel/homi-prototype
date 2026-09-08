@@ -206,7 +206,7 @@ export const TRACKS: Track[] = [
         ['on', 'off'],
         'Interactive rows on screen 23 — toggling one updates the total and the planned duration together',
       ),
-      done('25', 'Termin wählen', 'Pick a slot', '/quote/off_1/termin', [
+      done('25', 'Termin wählen', 'Pick a slot', '/quote/off_1/slot', [
         'closed day',
         'too soon',
         'fully booked',
@@ -216,7 +216,7 @@ export const TRACKS: Track[] = [
         '25a',
         'Termine vorschlagen',
         'Propose dates',
-        '/quote/off_propose/termin',
+        '/quote/off_propose/slot',
         ['picking', 'sent, waiting', 'confirmed'],
         'The first-job path: up to three dates, nothing blocked until the office picks one. off_propose opens waiting, off_confirm opens confirmed',
       ),
@@ -224,11 +224,11 @@ export const TRACKS: Track[] = [
         '26',
         'Vertrag unterschreiben',
         'Sign the agreement',
-        '/quote/off_1/unterschrift',
+        '/quote/off_1/signature',
         ['empty', 'signed'],
         'The agreement is on the page, with Homivaro’s signature already on it — the quote left the office signed. Was three facts and a link to the terms',
       ),
-      done('27', 'Zahlung', 'Payment', '/quote/off_1/zahlung', [
+      done('27', 'Zahlung', 'Payment', '/quote/off_1/payment', [
         'TWINT',
         'card',
         'wallet',
@@ -238,14 +238,14 @@ export const TRACKS: Track[] = [
         '27a',
         'Nichts zu bezahlen',
         'Nothing to pay',
-        '/quote/off_pkg/zahlung',
+        '/quote/off_plan/payment',
         [],
-        '§11.3 — the job is covered by package hours, so the gateway is absent rather than softened',
+        '§11.3 — the visit belongs to a running plan, so the gateway is absent rather than softened. Was pointed at off_pkg, which the coverage check has read as payable since the hour credit was removed: the row named the one screen it could not open',
       ),
-      done('28', 'Buchung bestätigt', 'Booking confirmed', '/quote/off_1/bestaetigt'),
-      done('29', 'Änderung anfragen', 'Request a change', '/quote/off_1/aenderung', ['sent']),
+      done('28', 'Buchung bestätigt', 'Booking confirmed', '/quote/off_1/confirmed'),
+      done('29', 'Änderung anfragen', 'Request a change', '/quote/off_1/change', ['sent']),
       done('30', 'Offerte abgelaufen', 'Quote expired', '/quote/off_2', [], 'off_2 is seeded 20 days old, so it opens in the expired state'),
-      done('31', 'Zahlung fehlgeschlagen', 'Payment failed', '/quote/off_1/zahlung', [
+      done('31', 'Zahlung fehlgeschlagen', 'Payment failed', '/quote/off_1/payment', [
         'hold running',
         'hold expired',
       ], 'Pick "Fehlgeschlagene Zahlung" in the prototype control on screen 27'),

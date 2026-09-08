@@ -118,7 +118,7 @@ export function Plans({
              * scrolls there now. On the homepage it still crosses to the page.
              */}
             <Button
-              href={byService ? "/abos#vergleich" : "/plans"}
+              href={byService ? "/plans#vergleich" : "/plans"}
               variant="red"
               size="md"
             >

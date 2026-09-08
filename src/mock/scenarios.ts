@@ -1961,7 +1961,9 @@ function baseData(now: Date): DataSet {
     queueRequest(now, { id: 'req_q_confirm', ref: 'A-2502', n: 7, service: 'bueroreinigung', status: 'offerSent', agedDays: 4 }),
     queueRequest(now, { id: 'req_q_recurring', ref: 'A-2503', n: 6, service: 'unterhaltsreinigung', status: 'offerSent', agedDays: 3, intent: 'pln_premium' }),
     queueRequest(now, { id: 'req_q_refund', ref: 'A-2504', n: 11, service: 'bueroreinigung', status: 'accepted', agedDays: 16, internal: 'Appointment cancelled, amount refunded.' }),
-    /* cus_2 rather than a household: the package that covers it is theirs. */
+    /* cus_2 rather than a household, so the demo account owns it. Their plan
+       runs on this address but on a different service — see the note on
+       off_pkg below for why that matters and what it used to claim. */
     {
       id: 'req_q_pkg',
       reference: 'A-2505',
@@ -2281,9 +2283,18 @@ function baseData(now: Date): DataSet {
       }),
       signedAt: iso(days(now, -14)),
     },
-    /* Covered by the package: two billable hours against 2.5 remaining. There
-       is nothing to charge, and the payment step says so instead of asking for
-       a card. */
+    /* A plan customer whose plan does *not* cover this job — cus_2 runs Basic
+       on prp_2, and Basic is Unterhaltsreinigung, not the window clean asked
+       for here. So it is payable, and that is the point: «has a plan» and «this
+       visit is covered» are different questions, and the screens have to answer
+       the second one.
+
+       It read "covered by the package: two billable hours against 2.5
+       remaining" until now, which stopped being true when the hour credit was
+       removed — `requestCoverage` has only ever matched a running subscription
+       on the same service. `/screens` and `/flows` both sent the reader here
+       for «Nichts zu bezahlen» and landed them on a CHF 98.– gateway; they
+       point at off_plan now, which genuinely is covered. */
     quoteFor('off_pkg', 'req_q_pkg', { issuedDaysAgo: 1, validDays: 14 }),
     /* Covered by the plan rather than the balance: nothing to charge, and the
        detail says which plan and how many skips are left on it. */

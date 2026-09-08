@@ -43,8 +43,8 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
       {!compact && <h2 className="label-type text-ink-tertiary">{t('summaryTitle')}</h2>}
 
       <dl className={compact ? 'space-y-2.5' : 'mt-4 space-y-2.5'}>
-        {service && <Row label={t('steps.leistung')}>{service.name[locale]}</Row>}
-        {address && <Row label={t('steps.objekt')}>{address}</Row>}
+        {service && <Row label={t('steps.service')}>{service.name[locale]}</Row>}
+        {address && <Row label={t('steps.property')}>{address}</Row>}
         {/*
           The quantity this service is actually priced on. The rail printed m²
           for everything, so a window clean showed the floor area of the flat —
@@ -83,7 +83,7 @@ export function BookingSummary({ compact = false }: { compact?: boolean }) {
           </Row>
         )}
         {draft.photos.length > 0 && (
-          <Row label={t('steps.fotos')}>
+          <Row label={t('steps.photos')}>
             <span data-numeric>{draft.photos.length}</span>
           </Row>
         )}

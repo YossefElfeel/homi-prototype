@@ -65,7 +65,7 @@ export default function PhotosStep() {
 
   return (
     <BookingStep
-      step="fotos"
+      step="photos"
       title={t('title')}
       lead={t('lead')}
       optional

@@ -32,5 +32,5 @@ export default async function BookingIndex({
   if (plz) query.set('plz', plz);
 
   const suffix = query.size > 0 ? `?${query.toString()}` : '';
-  redirect({ href: `/request/leistung${suffix}`, locale });
+  redirect({ href: `/request/service${suffix}`, locale });
 }
