@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  CalendarDays,
   CreditCard,
   FileText,
   Home,
@@ -23,6 +24,7 @@ import { useHydrated, useNow, useStore } from '@/mock/store';
 
 type NavKey =
   | 'dashboard'
+  | 'appointments'
   | 'requests'
   | 'offers'
   | 'invoices'
@@ -46,6 +48,11 @@ const NAV: {
     group: 'jobs',
     items: [
       { href: '/account', key: 'dashboard', icon: LayoutDashboard, exact: true },
+      /* Directly under the overview, because it answers the question the
+         overview only half-answered: the dashboard showed the *next* job and
+         nothing else, so thirteen visits on this account had no entry point
+         anywhere in the navigation. */
+      { href: '/account/appointments', key: 'appointments', icon: CalendarDays },
       { href: '/account/requests', key: 'requests', icon: FileText },
       { href: '/account/quotes', key: 'offers', icon: FileText },
       { href: '/account/invoices', key: 'invoices', icon: Receipt },

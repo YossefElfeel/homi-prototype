@@ -1417,6 +1417,7 @@ export const FLOWS: Flow[] = [
       ok('The dashboard', '/account', 'What is happening now — the next visit, anything owed, anything waiting on them'),
       ok('Their requests', '/account/requests', 'Every request they have sent, with what became of it'),
       ok('Their quotes', '/account/quotes', 'Including the expired ones, because «why can I not accept this» is a question the list has to answer'),
+      added('Their appointments', '/account/appointments', 'The one large record the account had no way in to. `useAccount` had returned `bookings` since wave 8 and two screens read them — the dashboard, to print the next date, and the review form, to work out what was reviewable — so a customer with fourteen visits behind them could open none of them'),
     ],
     actions: [
       ok('Accept or decline a quote', '/quote/off_1', 'The one screen where a customer commits money'),
@@ -1432,10 +1433,14 @@ export const FLOWS: Flow[] = [
       ok('Manage the plan', '/account/plan', 'Skip a visit, pause, or cancel inside the cooling-off window'),
       ok('Withdraw consent for a photograph', '/account/requests/req_3', 'The customer is the only actor who can, and it empties the public gallery entry the same moment'),
       ok('Write to the office', '/account/messages', 'One thread per reference, so a question about an invoice is not filed with a question about a booking'),
+      added('Call off a visit', '/account/appointments/bkg_acc_accepted', 'Section 12 promises this at checkout and repeats the deadline on the dashboard, and until wave 116 neither sentence had a control behind it anywhere in the product — the only way to cancel was the telephone. Free inside the window, and it states the percentage rather than a figure in francs, because what that percentage applies to is unsettled for a plan visit'),
+      added('Find out why they were charged for a locked door', '/account/appointments/bkg_acc_noaccess', 'Section 4.2 puts a fee on an invoice for work nobody did. The customer-facing explanation of where it came from did not exist on any screen'),
     ],
     exits: [
       ok('A booked job', '/account/requests/req_acc_h4', 'The request that became work, with its date and its crew'),
       ok('A review left', '/account/review', 'Only for jobs that are finished, and only once'),
+      added('Finding out what became of a review', '/account/review', 'Four states in `ReviewStatus`, and the person who wrote the words could see none of them. Two of those are why it matters: waiting a fortnight in `pending` and being turned down outright looked identical from outside the office, which is silence'),
+      added('The history of a finished visit', '/account/appointments/bkg_acc_hist_6', 'What was done, when, at which address, with the before-and-after pair and the invoice it became — reachable from the job rather than by matching a date against the invoices list'),
       ok('The plan ended', '/account/plan', 'Inside the window it is refunded; outside it runs to the end of the term'),
       open(
         'Closing the account',
