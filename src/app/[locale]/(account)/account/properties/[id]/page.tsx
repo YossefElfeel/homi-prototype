@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Eye, Home, KeyRound, Pencil } from 'lucide-react';
+import { ArrowRight, Eye, Home, KeyRound, Pencil } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
@@ -18,7 +18,6 @@ import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
-import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ActionIcon } from '@/lib/action-icons';
@@ -26,6 +25,22 @@ import { propertyUsage, type PropertyUsage } from '@/lib/property-facts';
 import { areaLabel, figure } from '@/lib/property-size';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
+
+/*
+  Five, the same number the office's copy of a history card already shows.
+
+  This card used to page, ten at a time, which answered the wrong question. A
+  plan cleans this address every fortnight, so a customer three years in has
+  roughly eighty visits on it — and Zurück/Weiter was the only way through
+  them, seven presses to reach the oldest, with no search, no status filter and
+  no sort to narrow with first. Paging with no filter above it turns a list
+  with no ceiling into clicking with no ceiling.
+
+  So the card answers "what has been happening here lately" and hands the rest
+  to /account/appointments, which has the three controls this aside cannot fit
+  and opens each job besides.
+*/
+const RECENT = 5;
 
 const ACCESS_METHODS: AccessMethod[] = [
   'customer-present',
@@ -60,7 +75,6 @@ export default function AccountPropertyPage({
      same sentences — a confirm worded twice is two different rules to a
      reader. Only the card's own heading is local to this screen. */
   const listT = useTranslations('account.properties');
-  const appT = useTranslations('app');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
@@ -77,7 +91,6 @@ export default function AccountPropertyPage({
   const router = useRouter();
 
   const [editingAccess, setEditingAccess] = useState(false);
-  const [historyPage, setHistoryPage] = useState(1);
   const removing = useConfirmTarget<PropertyUsage>();
 
   if (!hydrated) return <SkeletonPage label={t('back')} />;
@@ -104,7 +117,7 @@ export default function AccountPropertyPage({
   const history = bookings
     .filter((b) => b.propertyId === property.id)
     .sort((a, b) => (a.start < b.start ? 1 : -1));
-  const historyView = paginate(history, historyPage, 10);
+  const recent = history.slice(0, RECENT);
 
   /* The label the delete asks about and reports back. The street stands in for
      a property saved without one, so the confirm never asks about «». */
@@ -383,53 +396,57 @@ export default function AccountPropertyPage({
 
         <aside className="lg:col-span-5">
           <Card pad="none">
-            <CardHeader className="p-card" title={t('historyTitle')} />
+            {/*
+              The link is the card's only way out, so it is in the header where
+              the reader looks before the rows rather than under them, and it
+              names the address rather than the screen: «alle Einsätze» on a
+              property page could plausibly mean all of them, everywhere.
+
+              The description carries the total the pagination line used to
+              print. Without it the card would show five rows of eighty and say
+              nothing about the seventy-five it is not showing — a truncation
+              the reader cannot see is worse than the paging it replaced.
+            */}
+            <CardHeader
+              className="p-card"
+              title={t('historyTitle')}
+              description={
+                history.length > RECENT
+                  ? t('historyRecent', { n: RECENT, total: history.length })
+                  : undefined
+              }
+              actions={
+                history.length > 0 ? (
+                  <Button asChild variant="link" size="sm">
+                    <Link href={`/account/appointments?property=${property.id}`}>
+                      {t('historyAll')}
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+            />
             {history.length === 0 ? (
               <p className="px-card pb-card text-sm text-ink-tertiary">
                 {t('historyEmpty')}
               </p>
             ) : (
-              <>
-                <ul className="border-t border-line-subtle">
-                  {historyView.slice.map((booking) => (
-                    <li
-                      key={booking.id}
-                      className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line-subtle last:border-0"
-                    >
-                      <span data-numeric className="text-sm">
-                        {format.dateTime(new Date(booking.start), 'full')}
-                      </span>
-                      <span className="flex items-center gap-3 text-sm text-ink-secondary">
-                        {services.find((s) => s.slug === booking.serviceSlug)?.name[locale]}
-                        <StatusBadge entity="booking" state={booking.status} size="sm" />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                {/*
-                  A plan cleans this address every fortnight, so the history is
-                  the one list in the account with no ceiling on it: a customer
-                  three years in had every visit ever made stacked in the aside,
-                  and the card grew until the page did. Ten a page, the same ten
-                  every table in the product pages at, and the line stays under
-                  a short history to say where the ceiling is.
-                */}
-                <Pagination
-                  className="px-card pb-card"
-                  page={historyView.page}
-                  pageCount={historyView.pageCount}
-                  onPageChange={setHistoryPage}
-                  label={appT('pageLabel')}
-                  previousLabel={appT('pagePrevious')}
-                  nextLabel={appT('pageNext')}
-                  summary={appT('pageSummary', {
-                    from: historyView.from,
-                    to: historyView.to,
-                    total: historyView.total,
-                  })}
-                  note={appT('pagePerPage', { n: 10 })}
-                />
-              </>
+              <ul className="border-t border-line-subtle">
+                {recent.map((booking) => (
+                  <li
+                    key={booking.id}
+                    className="px-card py-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line-subtle last:border-0"
+                  >
+                    <span data-numeric className="text-sm">
+                      {format.dateTime(new Date(booking.start), 'full')}
+                    </span>
+                    <span className="flex items-center gap-3 text-sm text-ink-secondary">
+                      {services.find((s) => s.slug === booking.serviceSlug)?.name[locale]}
+                      <StatusBadge entity="booking" state={booking.status} size="sm" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </Card>
         </aside>

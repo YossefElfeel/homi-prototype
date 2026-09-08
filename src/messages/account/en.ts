@@ -503,6 +503,12 @@ export const accountEn: typeof accountDe = {
     notesHint: 'For example: do not let the cat out, spare key with the neighbour.',
     historyTitle: 'Jobs at this property',
     historyEmpty: 'No jobs yet.',
+    /* Only there when something is actually missing: the card shows five, and
+       on a property with four jobs the line would warn about nothing. */
+    historyRecent: 'The last {n} of {total} jobs.',
+    /* Names the address rather than the screen — "all jobs" on a property page
+       could just as well mean all of them, everywhere. */
+    historyAll: 'All jobs at this address',
 
     deleteSectionTitle: 'Delete property',
     deleteHint:

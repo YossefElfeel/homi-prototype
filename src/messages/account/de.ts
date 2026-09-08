@@ -549,6 +549,12 @@ export const accountDe = {
     notesHint: 'Zum Beispiel: Katze nicht rauslassen, Ersatzschlüssel beim Nachbarn.',
     historyTitle: 'Einsätze an diesem Objekt',
     historyEmpty: 'Noch keine Einsätze.',
+    /* Steht nur da, wenn wirklich etwas fehlt: Die Karte zeigt fünf, und bei
+       einem Objekt mit vier Einsätzen wäre der Satz eine Warnung vor nichts. */
+    historyRecent: 'Die letzten {n} von {total} Einsätzen.',
+    /* Nennt die Adresse, nicht den Bildschirm — «alle Einsätze» hiesse auf
+       einer Objektseite genauso gut alle überhaupt. */
+    historyAll: 'Alle Einsätze an dieser Adresse',
 
     /* Eigene Karte, ganz unten, statt einer Zeile im Zutritts-Block: Zutritt
        ändern lässt sich zurücknehmen, das hier nicht. Auf diesem Bildschirm,

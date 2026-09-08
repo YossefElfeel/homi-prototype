@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { ArrowRight, CalendarDays, Filter, Search, X } from 'lucide-react';
@@ -55,6 +56,7 @@ export default function AccountAppointmentsPage() {
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  const search = useSearchParams();
   const hydrated = useHydrated();
   const now = useNow();
 
@@ -62,7 +64,19 @@ export default function AccountAppointmentsPage() {
   const services = useStore((s) => s.services);
 
   const [status, setStatus] = useState<StatusFilter>('all');
-  const [property, setProperty] = useState<string>('all');
+  /* Seeded from the URL so «Alle Einsätze an dieser Adresse» on a property
+     screen lands here already narrowed to it, the way the assignee filter on
+     the office's booking list is seeded from a team member's screen. Without
+     it that link would arrive on all fourteen jobs with the address left to
+     find again — and the property card it came from exists precisely because
+     scrolling one address out of the pile is the thing nobody wants to do.
+
+     Not validated against the account's own properties on purpose: an id that
+     is not theirs matches nothing, and the list already answers an empty
+     filter with «nichts passt dazu» and a reset. */
+  const [property, setProperty] = useState<string>(
+    () => search.get('property') ?? 'all',
+  );
   const [query, setQuery] = useState('');
 
   /* Newest first, which for this list means the next visit rather than the
