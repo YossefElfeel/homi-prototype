@@ -681,9 +681,13 @@ export const accountDe = {
       'Auf jeder Ihrer Adressen läuft bereits ein Abo — pro Adresse ist ein Paket möglich. Für eine weitere Adresse melden Sie sich bei uns.',
     noProperties:
       'Für Ihr Konto ist keine Adresse hinterlegt. Adressen entstehen mit der ersten Anfrage.',
-    pickMethod: 'Womit bezahlen?',
-    noMethod: 'Sie haben noch kein Zahlungsmittel hinterlegt.',
-    addMethod: 'Zahlungsmittel hinterlegen',
+    /* Karte, nicht «Zahlungsmittel». Die Liste darunter zeigt seit dieser Welle
+       nur noch Karten, und eine Frage, die mehr verspricht als die Auswahl
+       hergibt, liest sich als fehlende Option. */
+    pickMethod: 'Welche Karte soll belastet werden?',
+    noMethod:
+      'Sie haben noch keine Karte hinterlegt. Ein Abo wird automatisch belastet — dafür brauchen wir eine Karte, TWINT kann das nicht.',
+    addMethod: 'Karte hinterlegen',
     duePlan: 'Paket {name}',
     dueCredit: 'Gutschrift für {n, plural, one {# nicht genutzten Einsatz} other {# nicht genutzte Einsätze}}',
     dueNow: 'Jetzt fällig',
@@ -715,6 +719,16 @@ export const accountDe = {
     applePay: 'Apple Pay',
     googlePay: 'Google Pay',
     recurringTitle: 'Für das Abo',
+    /* Plural, and per Paket. Eine Kundin hält ein Paket pro Adresse — cus_2
+       hält zwei —, und eine einzige Zeile konnte nie sagen, welche Karte
+       welches belastet. */
+    recurringLead: 'Welche Karte jedes laufende Paket belastet. Hier können Sie wechseln.',
+    recurringNone:
+      'Es läuft kein Abo. Sobald eines läuft, steht hier, welche Karte es belastet.',
+    recurringNoCard: 'Keine Karte hinterlegt — oben eine hinzufügen.',
+    recurringPickFor: 'Karte für {plan}',
+    recurringUnset: 'Noch nicht festgelegt',
+    recurringSet: 'Das Abo wird künftig auf dieser Karte belastet.',
     twintBlockedTitle: 'TWINT nicht für wiederkehrende Zahlungen',
     twintBlockedBody:
       'TWINT unterstützt keine automatische Abbuchung. Für das Abo brauchen wir eine Karte; einzelne Aufträge können Sie weiterhin mit TWINT bezahlen.',
@@ -723,6 +737,10 @@ export const accountDe = {
     remove: 'Entfernen',
     added: 'Zahlungsmittel hinterlegt.',
     removed: 'Zahlungsmittel entfernt.',
+    /* Nennt das Paket beim Namen. «Geht nicht» ohne Grund liest sich als
+       Fehler; mit der Abo-Nummer weiss die Kundin, wo sie zuerst wechselt. */
+    removeBlocked:
+      'Diese Karte belastet {plans}. Weisen Sie dem Abo zuerst eine andere Karte zu.',
     defaultSet: 'Als Standard gesetzt.',
   },
 

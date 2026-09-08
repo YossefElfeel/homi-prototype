@@ -922,6 +922,26 @@ export interface Subscription {
   visitsUsed: number;
   /** The invoice that paid for the current term. */
   invoiceId?: ID;
+  /**
+   * The saved card this package is billed to.
+   *
+   * Not `SavedPaymentMethod.isDefault`, and the difference is the whole reason
+   * this field exists. The default is what a *one-off* job is charged to, and
+   * it may legitimately be a TWINT — it is the fastest way to settle a single
+   * cleaning. A package takes a card, because that is what screen 45 promises;
+   * `canCarryPlan` owns that rule and carries the §11.6 caveat on whether the
+   * promise is the right one. So a customer whose default is TWINT still needs
+   * a card standing behind the package, and moving the checkout preference
+   * must not silently move where a package is billed.
+   *
+   * Per subscription rather than per customer because a customer holds one
+   * package per address — `cus_2` in the seed runs two — and a single "the
+   * card for plans" would make one screen answer for both.
+   *
+   * Optional only for a store persisted before 45; every subscription this
+   * build opens carries one, and the screen says so where it is missing.
+   */
+  paymentMethodId?: ID;
   /** How many times this package has been bought again after the first term. */
   renewalCount: number;
   cancelledAt?: ISODate;

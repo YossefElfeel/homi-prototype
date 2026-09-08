@@ -67,7 +67,7 @@ function reset() {
   reset();
   const before = useStore.getState().data.subscriptions.length;
   const id = useStore.getState().openSubscription(
-    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_premium', method: 'card' },
+    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_premium', method: 'card', paymentMethodId: undefined },
     NOW,
   );
   const s = useStore.getState();
@@ -94,7 +94,7 @@ function reset() {
 {
   reset();
   const second = useStore.getState().openSubscription(
-    { customerId: 'cus_2', propertyId: 'prp_2', planId: 'pln_premium', method: 'card' },
+    { customerId: 'cus_2', propertyId: 'prp_2', planId: 'pln_premium', method: 'card', paymentMethodId: undefined },
     NOW,
   );
   check('a property already on a plan refuses a second', second === null);
@@ -102,7 +102,7 @@ function reset() {
   /* But a *different* address of the same customer is exactly the case the
      property column exists for. */
   const other = useStore.getState().openSubscription(
-    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_basic', method: 'card' },
+    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_basic', method: 'card', paymentMethodId: undefined },
     NOW,
   );
   check('another address of another customer is fine', other !== null);
@@ -112,7 +112,7 @@ function reset() {
 {
   reset();
   const refused = useStore.getState().openSubscription(
-    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_buero', method: 'card' },
+    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_buero', method: 'card', paymentMethodId: undefined },
     NOW,
   );
   check('a retired plan cannot be subscribed to', refused === null);
@@ -137,7 +137,7 @@ function reset() {
 {
   reset();
   const id = useStore.getState().openSubscription(
-    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_basic', method: 'card' },
+    { customerId: 'cus_3', propertyId: 'prp_3', planId: 'pln_basic', method: 'card', paymentMethodId: undefined },
     NOW,
   )!;
 
@@ -313,7 +313,7 @@ function reset() {
   check('the demo customer has an address with no plan on it', free.length > 0, `${free.length}`);
 
   const id = useStore.getState().openSubscription(
-    { customerId: 'cus_2', propertyId: free[0]!.id, planId: 'pln_premium', method: 'card' },
+    { customerId: 'cus_2', propertyId: free[0]!.id, planId: 'pln_premium', method: 'card', paymentMethodId: undefined },
     NOW,
   );
   check('and can buy a plan for it without leaving the account', id !== null);
@@ -576,6 +576,107 @@ function reset() {
   check(
     'nor an order',
     state().plans.filter((p) => p.order === made.order).length === 1,
+  );
+}
+
+const st = () => useStore.getState();
+
+/* ------------------------------- which card a package is actually billed to */
+/*
+ * Screen 45 used to answer this by taking the first card in the list. It was
+ * not the card marked «Standard», not anything the customer had chosen, and
+ * not written down anywhere — so nothing here could have caught it going
+ * wrong. These are the rules that replaced it.
+ */
+{
+  reset();
+  const running = st().data.subscriptions.filter(
+    (x) => x.status === 'active' || x.status === 'paused',
+  );
+  check(
+    'every seeded package that will be billed names the card it is billed to',
+    running.filter((x) => x.customerId === 'cus_1' || x.customerId === 'cus_2').every((x) => Boolean(x.paymentMethodId)),
+  );
+  check(
+    "the demo customer's two packages sit on two different cards",
+    st().data.subscriptions.find((x) => x.id === 'sub_2')!.paymentMethodId !==
+      st().data.subscriptions.find((x) => x.id === 'sub_3')!.paymentMethodId,
+  );
+}
+
+{
+  reset();
+  /* The deletion that used to succeed and leave a running package pointing at
+     an id that was not there any more. */
+  const refused = st().removePaymentMethod('pm_card_2');
+  check('a card a running package is billed to cannot be removed', 'blocked' in refused);
+  check(
+    'and the refusal names the package, so the screen can say which',
+    'blocked' in refused && refused.plans.includes('S-0013'),
+    'blocked' in refused ? refused.plans.join(', ') : 'not blocked',
+  );
+  check(
+    'the card is still on file',
+    st().data.paymentMethods.some((m) => m.id === 'pm_card_2'),
+  );
+
+  /* A TWINT carries no package, so nothing holds it down. */
+  check('a method no package uses still goes', 'ok' in st().removePaymentMethod('pm_twint_2'));
+}
+
+{
+  reset();
+  st().setSubscriptionMethod('sub_2', 'pm_card_2b', NOW);
+  check(
+    'a package can be moved to another card',
+    st().data.subscriptions.find((x) => x.id === 'sub_2')!.paymentMethodId === 'pm_card_2b',
+  );
+  check(
+    'and the move is on the record',
+    st()
+      .data.subscriptions.find((x) => x.id === 'sub_2')!
+      .history.some((e) => e.kind === 'method-changed'),
+  );
+  check(
+    'the card it left can then be removed',
+    'ok' in st().removePaymentMethod('pm_card_2'),
+  );
+}
+
+{
+  reset();
+  /* The rule the alert on 45 states. Before this, the dialog that opens a
+     package offered TWINT and this would have gone through. */
+  st().setSubscriptionMethod('sub_2', 'pm_twint_2', NOW);
+  check(
+    'a package cannot be moved onto TWINT',
+    st().data.subscriptions.find((x) => x.id === 'sub_2')!.paymentMethodId === 'pm_card_2',
+  );
+
+  /* cus_1's card, against cus_2's package. */
+  st().setSubscriptionMethod('sub_2', 'pm_card_1', NOW);
+  check(
+    "nor onto another customer's card",
+    st().data.subscriptions.find((x) => x.id === 'sub_2')!.paymentMethodId === 'pm_card_2',
+  );
+}
+
+{
+  reset();
+  const id = st().openSubscription(
+    {
+      customerId: 'cus_2',
+      propertyId: 'prp_2c',
+      planId: 'pln_premium',
+      method: 'card',
+      paymentMethodId: 'pm_card_2b',
+    },
+    NOW,
+  );
+  check(
+    'a package opened from the dialog remembers the card it was opened on',
+    id !== null &&
+      st().data.subscriptions.find((x) => x.id === id)?.paymentMethodId === 'pm_card_2b',
   );
 }
 

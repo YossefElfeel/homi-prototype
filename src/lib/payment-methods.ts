@@ -34,6 +34,38 @@ export const SAVABLE_METHODS: readonly SavedMethodKind[] = [
 ];
 
 /**
+ * Which rails can carry a package's charge — one rule, one place.
+ *
+ * The rule itself is the screens': 45 says «TWINT unterstützt keine
+ * automatische Abbuchung. Für das Abo brauchen wir eine Karte», so a package
+ * takes a card and nothing else. **That premise is contested and the contest is
+ * older than this file** — §11.5 on /open-questions is decided the other way,
+ * that a package is paid once and renewed by the customer in one click, with
+ * no billing run anywhere in the product. If that is the true answer then
+ * nothing is ever charged unattended, TWINT is a perfectly good way to renew,
+ * and this list is too narrow. Logged as §11.6; the code follows what the
+ * screens currently promise rather than quietly picking the other side.
+ *
+ * This existed three times and disagreed with itself each time. Screen 45's
+ * «Für das Abo» card read the first `kind === 'card'` it found; the subscribe
+ * dialog offered *every* saved method, TWINT included, so a plan on TWINT was
+ * one click away on the screen whose own alert says it is impossible; and
+ * `Subscription` stored no instrument at all, so neither answer was written
+ * down anywhere.
+ *
+ * Apple Pay and Google Pay are out for now, and that is a business call rather
+ * than a technical one: both are card rails and both do support merchant-
+ * initiated charges, but the copy on 45 says «a plan needs a card» and
+ * widening it is a decision about what we promise, not about what the code can
+ * express. `/open-questions` carries it.
+ */
+export const PLAN_METHODS: readonly SavedMethodKind[] = ['card'];
+
+export function canCarryPlan(kind: SavedMethodKind): boolean {
+  return PLAN_METHODS.includes(kind);
+}
+
+/**
  * The brand, off the first digit — the same rule every checkout uses.
  *
  * Here rather than in the dialog because it decides what gets *stored*: the

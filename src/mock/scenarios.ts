@@ -997,6 +997,9 @@ function baseData(now: Date): DataSet {
       status: 'active',
       visitsUsed: 8,
       invoiceId: 'inv_plan_1',
+      /* Runs out 02/27, inside this package's term — which is the pairing the
+         expiry warning on 45 exists to surface. */
+      paymentMethodId: 'pm_card_1',
       renewalCount: 0,
       history: [
         { at: iso(days(now, -60)), kind: 'started', label: 'Plan started — Premium' },
@@ -1024,6 +1027,7 @@ function baseData(now: Date): DataSet {
       status: 'active',
       visitsUsed: 3,
       invoiceId: 'inv_plan_2',
+      paymentMethodId: 'pm_card_2',
       /* Bought a second time — this is what the renewal count on screen 70
          reads, and it is why the term runs past the first year's end. */
       renewalCount: 1,
@@ -1048,6 +1052,10 @@ function baseData(now: Date): DataSet {
       status: 'active',
       visitsUsed: 11,
       invoiceId: 'inv_plan_3',
+      /* The office package on the second card, not the household one. Two
+         packages on two different instruments is the state the new rows on 45
+         exist to show, and it has to be reachable without typing a card. */
+      paymentMethodId: 'pm_card_2b',
       renewalCount: 0,
       history: [
         { at: iso(days(now, -90)), kind: 'started', label: 'Plan started — Office Compact' },
@@ -3282,6 +3290,25 @@ function baseData(now: Date): DataSet {
         label: 'TWINT · 079 ··· 66',
         isDefault: false,
         addedAt: iso(days(now, -60)),
+      },
+      /*
+       * A second card, so that "which card does this package charge" has more
+       * than one possible answer.
+       *
+       * cus_2 runs two packages at two addresses, and with one card on file
+       * the new per-package rows on 45 render the same label twice — the
+       * screen looks like it is repeating itself rather than telling two
+       * things apart. The office plan sits on the business card here, which is
+       * also the ordinary reason a household ends up with two.
+       */
+      {
+        id: 'pm_card_2b',
+        customerId: 'cus_2',
+        kind: 'card' as const,
+        label: 'Mastercard · 8817',
+        expiresAt: '11/29',
+        isDefault: false,
+        addedAt: iso(days(now, -95)),
       },
       /*
        * cus_1 had nothing on file, and she is the one customer in the seed on
