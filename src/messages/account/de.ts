@@ -738,7 +738,11 @@ export const accountDe = {
     added: 'Zahlungsmittel hinterlegt.',
     removed: 'Zahlungsmittel entfernt.',
     /* Nennt das Paket beim Namen. «Geht nicht» ohne Grund liest sich als
-       Fehler; mit der Abo-Nummer weiss die Kundin, wo sie zuerst wechselt. */
+       Fehler; mit der Abo-Nummer weiss die Kundin, wo sie zuerst wechselt.
+       Steht im Dialog über der Seite, nicht in einem Toast: die Absage
+       verlangt eine Handlung davor, und ein Toast zieht sich weg, während sie
+       noch liest, welches Paket gemeint ist. */
+    removeBlockedTitle: '{label} lässt sich nicht entfernen',
     removeBlocked:
       'Diese Karte belastet {plans}. Weisen Sie dem Abo zuerst eine andere Karte zu.',
     defaultSet: 'Als Standard gesetzt.',

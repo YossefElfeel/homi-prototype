@@ -442,7 +442,7 @@ export const FLOWS: Flow[] = [
       added(
         'Refuse to delete a card a package is running on',
         '/account/payment-methods',
-        'The bin used to take it and report success, leaving the package pointing at an id that was not there any more. The refusal names the package — «Diese Karte belastet S-0013» — because "cannot delete" without a reason reads as a broken button',
+        'The bin used to take it and report success, leaving the package pointing at an id that was not there any more. The refusal comes as a dialog over the page rather than a toast — it names the package, «Diese Karte belastet S-0013», and it asks for something to be done first, which is not a thing to say on a four-second timer. «Entfernen» is shown and disabled beside the way out, the same call the plan catalogue makes: a control that simply does nothing reads as a broken button',
       ),
       added(
         'The customer’s invoices, with amount and payment route',
