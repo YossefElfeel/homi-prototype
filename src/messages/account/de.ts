@@ -742,6 +742,19 @@ export const accountDe = {
        Steht im Dialog über der Seite, nicht in einem Toast: die Absage
        verlangt eine Handlung davor, und ein Toast zieht sich weg, während sie
        noch liest, welches Paket gemeint ist. */
+    /* Der Papierkorb fragt jetzt, statt sofort zu löschen. Nichts sonst im
+       Produkt vernichtet einen Datensatz ohne Rückfrage — das Konto schliessen
+       fragt, ein Paket löschen fragt. */
+    removeTitle: '{label} entfernen?',
+    removeBody:
+      'Die Karte wird aus Ihrem Konto entfernt. Sie können sie jederzeit wieder hinterlegen.',
+    /* Die Folge, die sonst erst an der nächsten Kasse auffällt. */
+    removeBodyDefault:
+      'Die Karte ist als Standard gesetzt. Wird sie entfernt, rückt die nächste hinterlegte nach. Sie können sie jederzeit wieder hinterlegen.',
+    /* Zwischen Frage und Bestätigung kann ein Abo auf der Karte gelandet sein —
+       im anderen Tab, oder auf /account/plan hinter diesem Dialog. */
+    removeRaced:
+      'Die Karte konnte nicht entfernt werden. Prüfen Sie, ob inzwischen ein Abo darauf läuft.',
     removeBlockedTitle: '{label} lässt sich nicht entfernen',
     removeBlocked:
       'Diese Karte belastet {plans}. Weisen Sie dem Abo zuerst eine andere Karte zu.',

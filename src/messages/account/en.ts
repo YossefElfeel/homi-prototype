@@ -679,6 +679,12 @@ export const accountEn: typeof accountDe = {
     remove: 'Remove',
     added: 'Payment method saved.',
     removed: 'Payment method removed.',
+    removeTitle: 'Remove {label}?',
+    removeBody: 'The card is removed from your account. You can add it again at any time.',
+    removeBodyDefault:
+      'This card is your default. Remove it and the next one on file takes over. You can add it again at any time.',
+    removeRaced:
+      'The card could not be removed. Check whether a plan has since been put on it.',
     removeBlockedTitle: '{label} cannot be removed',
     removeBlocked: 'This card is charged for {plans}. Point that plan at another card first.',
     defaultSet: 'Set as the default.',
