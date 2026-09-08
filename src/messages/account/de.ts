@@ -721,7 +721,6 @@ export const accountDe = {
     defaultLabel: 'Standard',
     makeDefault: 'Als Standard',
     remove: 'Entfernen',
-    demoNote: 'Prototyp: es werden keine echten Zahlungsdaten erfasst.',
     added: 'Zahlungsmittel hinterlegt.',
     removed: 'Zahlungsmittel entfernt.',
     defaultSet: 'Als Standard gesetzt.',
