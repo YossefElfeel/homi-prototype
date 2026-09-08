@@ -374,10 +374,10 @@ export const FLOWS: Flow[] = [
         '/admin/properties/prp_1/edit',
         'A property could be created and read, and nothing else. A house number taken down wrong then stood on every quote, every job sheet and every invoice at that address — lift, pets and extra effort were set to `false` on creation and had a switch nowhere',
       ),
-      added(
+      ok(
         'Delete a property while nothing hangs off it',
         '/admin/properties',
-        'Seven record types point at a property, three of them with `!`. So only an address that has never been used is deleted; otherwise the menu entry names the number blocking it. In every scenario something hangs off every seeded property — the live state is therefore reachable through "add a property", which is also the only case where "delete" is honest. No archive flag: an address mistyped on the phone is a mistake, and a mistake you can only hide turns twelve properties into forty',
+        'Seven record types point at a property, three of them with `!`. So only an address that has never been used is deleted; otherwise the menu entry names the number blocking it. Both outcomes are seeded: `prp_2c` («Attika Stäfa») has never been used in any scenario and deletes, `prp_2` carries nineteen records and refuses — this note used to claim something hung off every seeded property, and it was wrong, which is why the live state was thought to need "add a property" first. No archive flag: an address mistyped on the phone is a mistake, and a mistake you can only hide turns twelve properties into forty',
       ),
       open(
         'Reassign a property to another customer',
@@ -1422,6 +1422,11 @@ export const FLOWS: Flow[] = [
       ok('Accept or decline a quote', '/quote/off_1', 'The one screen where a customer commits money'),
       ok('Edit one property', '/account/properties/prp_2', 'Size and access are what a quote is priced from, so they are the customer’s to correct'),
       ok('Look after their properties', '/account/properties', 'Address, size, access — the facts a quote is priced from'),
+      added(
+        'Delete one of their own properties',
+        '/account/properties',
+        'The list could only grow: a flat typed in by hand and got wrong stayed on the customer’s own screen for ever, and the only way out was to ask the office to do it behind the counter. Same guard as the panel’s — an address nothing has used yet goes, one with history stays so the invoices behind it still resolve (§15) — but the refusal is worded for the person who owns the address rather than for the person who could unpick it: what holds it, counted in requests, appointments, plans and keys, and a link to write to the office for the case the rule cannot tell from a mistake, which is having moved out. `prp_2c` deletes, `prp_2` refuses',
+      ),
       ok('Change how they are reached', '/account/profile', 'Operational mail is not optional and the screen says so rather than offering a switch that does nothing'),
       ok('Pay an invoice', '/account/invoices', 'Card, TWINT or the QR bill'),
       ok('Manage the plan', '/account/plan', 'Skip a visit, pause, or cancel inside the cooling-off window'),

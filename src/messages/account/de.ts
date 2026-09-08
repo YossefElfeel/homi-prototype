@@ -299,6 +299,40 @@ export const accountDe = {
     colNextVisit: 'Nächster Termin',
     nothingBooked: 'Nichts gebucht',
     rowOpen: 'Details ansehen',
+
+    /* Das Löschen fragt in beiden Richtungen: der Zeileneintrag hier und die
+       Karte auf dem Objekt selbst stellen dieselbe Frage, also stehen die
+       Sätze einmal da und werden von beiden Bildschirmen gelesen. */
+    rowDelete: 'Objekt löschen',
+    deleteTitle: '«{label}» endgültig löschen?',
+    deleteBody:
+      'Die Adresse verschwindet aus Ihrer Liste, samt Grösse, Zutritt und Hinweisen. Rückgängig geht das nicht. Verwendet wurde sie noch nie — es geht also nichts verloren, was Sie später brauchen.',
+    deleteConfirm: 'Endgültig löschen',
+    deleteDone: '«{label}» wurde gelöscht.',
+    deleteBlockedTitle: '«{label}» können wir nicht löschen',
+    /* Sagt, warum das Objekt bleibt, statt «nicht möglich». Der Grund ist
+       nicht Bequemlichkeit: Rechnungen und Termine nennen die Adresse über
+       diese id und würden danach ins Leere zeigen. */
+    deleteBlockedBody:
+      'An dieser Adresse hängt schon Ihr Verlauf. Sie bleibt bestehen, damit Ihre Rechnungen und Termine dazu nicht ins Leere zeigen.',
+    deleteHoldsLead: 'Daran hängen:',
+    /* Was es hält, in Ihren Worten — nicht als eine Zahl, die Anfragen,
+       Fotos und interne Einträge zu «19 Einträgen» zusammenzieht. */
+    holds: {
+      requests: '{n, plural, one {# Anfrage} other {# Anfragen}}',
+      bookings: '{n, plural, one {# Termin} other {# Termine}}',
+      subscriptions: '{n, plural, one {# Abo} other {# Abos}}',
+      keys: '{n, plural, one {# Schlüssel bei uns} other {# Schlüssel bei uns}}',
+      photos: '{n, plural, one {# Foto} other {# Fotos}}',
+      events: '{n, plural, one {# Eintrag im Verlauf} other {# Einträge im Verlauf}}',
+    },
+    /* Eine Absage ohne Ausweg ist eine Sackgasse. Ausgezogen ist der Fall,
+       den die Regel sonst nicht bedient — den klärt das Büro von Hand. */
+    deleteBlockedExit:
+      'Wenn die Adresse trotzdem weg soll — zum Beispiel weil Sie dort ausgezogen sind — schreiben Sie uns.',
+    deleteBlockedExitAction: 'Nachricht schreiben',
+    deleteRaced:
+      'Inzwischen hängt etwas an dieser Adresse, sie bleibt bestehen. Bitte laden Sie die Seite neu.',
     search: 'Bezeichnung oder Adresse',
     filterKind: 'Art',
     filterAll: 'Alle',
@@ -379,6 +413,15 @@ export const accountDe = {
     notesHint: 'Zum Beispiel: Katze nicht rauslassen, Ersatzschlüssel beim Nachbarn.',
     historyTitle: 'Einsätze an diesem Objekt',
     historyEmpty: 'Noch keine Einsätze.',
+
+    /* Eigene Karte, ganz unten, statt einer Zeile im Zutritts-Block: Zutritt
+       ändern lässt sich zurücknehmen, das hier nicht. Auf diesem Bildschirm,
+       weil man die Adresse, die man versehentlich erfasst hat, hier geöffnet
+       hat — der Umweg über die Liste ist einer zu viel. Die Frage selbst
+       steht im Dialog, nicht dauerhaft als Überschrift auf der Seite. */
+    deleteSectionTitle: 'Objekt löschen',
+    deleteHint:
+      'Nur solange an der Adresse noch nichts hängt. Danach bleibt sie bestehen — wir sagen Ihnen dann, was sie hält.',
   },
 
   subscription: {

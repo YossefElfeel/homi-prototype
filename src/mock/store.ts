@@ -628,8 +628,15 @@ interface StoreState {
    * delete that ignored them would not leave a gap in a list, it would crash
    * the screen that opened the booking behind it. Returns whether the row
    * went, so the caller can say which of the two happened.
+   *
+   * `actor` because the customer's own screen calls this too, and `logChange`
+   * otherwise credits whoever `demo.currentMemberId` points at — so a customer
+   * deleting their own address would appear in the office's log as an employee
+   * who was not there. The record is gone afterwards and the log line is the
+   * only thing left that can say who removed it; naming the wrong person is
+   * worse than the entry that used to be missing entirely.
    */
-  deleteProperty: (id: ID) => boolean;
+  deleteProperty: (id: ID, actor?: string) => boolean;
   /* ---- the key register (screen 68) ----
      §13.2. Both halves of a key's life used to be a `patchData` written on the
      screen: the intake spread a new entry onto the array, and the return
@@ -1966,7 +1973,7 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      deleteProperty: (id) => {
+      deleteProperty: (id, actor) => {
         const s = get();
         const property = s.data.properties.find((p) => p.id === id);
         if (!property) return false;
@@ -1979,6 +1986,7 @@ export const useStore = create<StoreState>()(
           entity: 'property',
           entityId: id,
           summary: `Property deleted: ${property.label || property.street}`,
+          actor,
         });
         return true;
       },
