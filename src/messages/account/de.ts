@@ -4,6 +4,7 @@ export const accountDe = {
     title: 'Mein Konto',
     nav: {
       dashboard: 'Übersicht',
+      appointments: 'Termine',
       requests: 'Anfragen',
       offers: 'Offerten',
       invoices: 'Rechnungen',
@@ -80,7 +81,6 @@ export const accountDe = {
   dashboard: {
     greeting: 'Guten Tag, {name}',
     nextTitle: 'Ihr nächster Termin',
-    nextNone: 'Zurzeit ist kein Termin gebucht.',
     nextAction: 'Termin ansehen',
     arrival: 'Ankunft zwischen {from} und {to}',
     cancelFreeUntil: 'Kostenlose Absage bis {date}',
@@ -100,6 +100,142 @@ export const accountDe = {
     emptyBody:
       'Sobald Ihre erste Anfrage unterwegs ist, sehen Sie hier Termine, Offerten und Rechnungen an einem Ort.',
     emptyAction: 'Offerte anfordern',
+    /* «Zurzeit ist kein Termin gebucht.» war eine graue Zeile in einer sonst
+       leeren Karte — der weisse Fleck, den die Regel für Leerzustände
+       verhindern soll. Sie sagt jetzt auch, warum nichts da ist und was das
+       ändert. */
+    nextNoneTitle: 'Kein Termin gebucht',
+    nextNoneBody:
+      'Sobald eine Offerte angenommen ist, steht der Einsatz hier — mit Ankunftsfenster und Absagefrist.',
+    nextNoneAction: 'Offerte anfordern',
+    /* Der Link zu allem, was nicht der nächste Termin ist. Ohne ihn war die
+       Karte eine Sackgasse: ein Termin sichtbar, dreizehn nicht. */
+    nextAll: 'Alle Termine',
+  },
+
+  appointments: {
+    title: 'Meine Termine',
+    colDate: 'Datum',
+    colService: 'Leistung',
+    colProperty: 'Objekt',
+    colReference: 'Nummer',
+    colStatus: 'Status',
+    rowOpen: 'Termin ansehen',
+    search: 'Nummer, Leistung oder Adresse',
+    filterStatus: 'Status',
+    filterAll: 'Alle',
+    /* «Kommend» ist kein Status, sondern die Frage, mit der die Liste geöffnet
+       wird: wann kommt ihr wieder. Sie steht deshalb im selben Menü wie die
+       Status und nicht daneben — zwei Menüs liessen «kommend» und
+       «abgeschlossen» gleichzeitig wählen, was die Tabelle leert und nicht
+       erklärt, warum. */
+    filterUpcoming: 'Kommend',
+    filterProperty: 'Objekt',
+    filterPropertyAll: 'Alle Objekte',
+    filterReset: 'Filter zurücksetzen',
+    emptyTitle: 'Noch keine Termine',
+    emptyBody:
+      'Sobald eine Offerte angenommen ist, wird daraus ein Termin — und der steht dann hier, samt Verlauf früherer Einsätze.',
+    emptyAction: 'Offerte anfordern',
+    filterEmptyTitle: 'Kein Termin in dieser Auswahl',
+    filterEmptyBody:
+      'Zu dieser Auswahl gehört gerade kein Termin. Zurücksetzen zeigt wieder alle.',
+    searchEmptyTitle: 'Nichts gefunden',
+    searchEmptyBody:
+      'Zu «{query}» gibt es keinen Termin. Gesucht wird in Nummer, Leistung und Adresse.',
+  },
+
+  appointment: {
+    back: 'Alle Termine',
+    missingTitle: 'Diesen Termin gibt es nicht',
+    missingBody:
+      'Der Link führt ins Leere, oder der Termin gehört zu einem anderen Konto. Die Liste zeigt alle Ihre Termine.',
+    whenTitle: 'Wann',
+    arrival: 'Ankunft zwischen {from} und {to}',
+    duration: 'Geplant: {hours} h',
+    whereTitle: 'Wo',
+    whatTitle: 'Was',
+    referenceLabel: 'Nummer',
+    serviceLabel: 'Leistung',
+    propertyLabel: 'Adresse',
+    /* Vorher änderte sich das Datum stillschweigend. Dieselbe Zeile wie auf
+       der Übersicht, weil es dieselbe Tatsache ist. */
+    movedNote: 'Wir haben diesen Termin am {at} verschoben. Vorher: {from}.',
+
+    /*
+     * Ein Satz je Status — was er für die Kundin bedeutet, nicht was er im
+     * Datensatz heisst. Das Badge trägt das Wort, diese Zeile trägt die Folge.
+     */
+    stateScheduled: 'Der Einsatz steht. Sie erhalten am Vortag eine Erinnerung.',
+    stateRescheduled: 'Wir haben den Termin verschoben — das neue Datum steht oben.',
+    stateInProgress: 'Das Team ist gerade bei Ihnen.',
+    stateNoAccess:
+      'Wir standen vor verschlossener Tür. Nach §4.2 verrechnen wir dafür {percent} % des Auftragswerts.',
+    stateAwaitingApproval:
+      'Der Einsatz ist erledigt. Es wurde mehr Zeit gebraucht als geplant — wir prüfen das gerade und melden uns, bevor etwas verrechnet wird.',
+    stateCompleted: 'Erledigt. Die Rechnung folgt.',
+    stateInvoiced: 'Erledigt und verrechnet.',
+    stateClosed: 'Erledigt, verrechnet und bezahlt.',
+    stateCancelled: 'Dieser Termin wurde abgesagt.',
+
+    /* §12 stand seit der ersten Welle auf dem Bildschirm und es gab keinen
+       Knopf dazu. */
+    cancelTitle: 'Termin absagen',
+    cancelFree: 'Bis {date} ist die Absage kostenlos.',
+    cancelLate:
+      'Die kostenlose Frist ist am {date} abgelaufen. Eine Absage kostet jetzt {percent} % des Auftragswerts.',
+    cancelAction: 'Termin absagen',
+    cancelReasonLabel: 'Warum? (freiwillig)',
+    cancelReasonHint: 'Hilft uns, den nächsten Termin besser zu legen.',
+    cancelConfirmTitle: 'Termin wirklich absagen?',
+    cancelConfirmBody:
+      'Wir sagen den Einsatz ab und schreiben Ihnen. Rückgängig machen lässt sich das nicht — ein neuer Termin braucht eine neue Anfrage.',
+    cancelConfirmLate:
+      'Wir sagen den Einsatz ab und schreiben Ihnen. Weil die kostenlose Frist abgelaufen ist, verrechnen wir {percent} % des Auftragswerts. Rückgängig machen lässt sich das nicht.',
+    cancelConfirmAction: 'Ja, absagen',
+    cancelDismiss: 'Abbrechen',
+    cancelDone: 'Termin abgesagt.',
+    cancelEvent: 'Von der Kundin abgesagt',
+    cancelNoticeBody:
+      'Guten Tag\n\nIhr Termin am {date} ist abgesagt. {feeNote}\n\nFreundliche Grüsse\nHomivaro',
+    cancelFeeNoneNote: 'Es entstehen keine Kosten.',
+    cancelFeeLateNote: 'Nach §12 verrechnen wir {percent} % des Auftragswerts.',
+    /* Die drei Gründe, aus denen der Knopf fehlt. Ein ausgegrauter Knopf ohne
+       Satz war genau das, was hier ersetzt wird. */
+    cancelRunning: 'Der Einsatz läuft bereits — bitte rufen Sie uns an.',
+    cancelFinished: 'Dieser Einsatz ist vorbei und lässt sich nicht mehr absagen.',
+    cancelAlready: 'Dieser Termin ist bereits abgesagt.',
+    /* Ein Abo-Besuch wird übersprungen, nicht abgesagt: das Überspringen zählt
+       gegen das monatliche Kontingent, eine Absage hier täte das nicht. */
+    cancelPlanVisit:
+      'Dieser Einsatz gehört zu Ihrem Abo. Besuche werden im Abo übersprungen — dort sehen Sie auch, wie viele Ihnen diesen Monat noch zustehen.',
+    cancelPlanVisitAction: 'Zum Abo',
+
+    linkQuote: 'Zur Offerte',
+    linkRequest: 'Zur Anfrage',
+    linkInvoice: 'Zur Rechnung',
+    linkPlan: 'Zum Abo',
+    linkProperty: 'Zum Objekt',
+    linkReview: 'Einsatz bewerten',
+    historyTitle: 'Verlauf',
+    /*
+     * Der Verlauf wird aus der Art des Ereignisses gebaut, nicht aus dem
+     * gespeicherten Text. Der stammt aus Seed und Store, ist per lang-check
+     * immer englisch — «Booked and paid» auf einer deutschen Kundenseite —
+     * und enthält ausserdem Interna: wer den Einsatz fährt und die
+     * Stundendiskussion nach §5.3. Beides geht die Kundin nichts an.
+     */
+    historyCreated: 'Gebucht und bezahlt',
+    historyRescheduled: 'Von uns verschoben',
+    historyCheckIn: 'Team vor Ort',
+    historyCheckOut: 'Arbeit beendet',
+    historyNoAccess: 'Kein Zutritt — niemand angetroffen',
+    historyCompleted: 'Abgeschlossen',
+    historyInvoiced: 'Verrechnet',
+    historyClosed: 'Bezahlt und abgeschlossen',
+    historyCancelled: 'Abgesagt',
+    /* Der eigene Text der Kundin, wörtlich — sie hat ihn geschrieben. */
+    historyNote: 'Ihre Begründung: {text}',
   },
 
   requests: {
@@ -570,6 +706,27 @@ export const accountDe = {
        Auftrag entstanden ist — der Weg dahin führt über die Liste. */
     thanksToRequests: 'Zu Ihren Anfragen',
     emptyAction: 'Anfragen ansehen',
+
+    /*
+     * Was aus den abgegebenen Bewertungen wurde.
+     *
+     * Bisher verliess eine Bewertung das Konto und kam nie zurück: dasselbe
+     * Formular bot danach den nächsten Einsatz an, als hätte es die erste nie
+     * gegeben. Vier Zustände hat eine Bewertung, und alle vier gehen die
+     * Person etwas an, die sie geschrieben hat — zwei davon besonders.
+     */
+    mineTitle: 'Ihre Bewertungen',
+    mineLead: 'Was aus dem geworden ist, was Sie uns geschrieben haben.',
+    mineOn: 'Einsatz vom {date}, {service}',
+    mineStars: '{n} von 5 Sternen',
+    minePending:
+      'Wir lesen sie gerade. Ohne Ihre Freigabe erscheint sie nicht auf der Website.',
+    minePublished: 'Auf der Website zu sehen — mit Vorname und erstem Buchstaben des Nachnamens.',
+    mineHidden: 'War veröffentlicht und ist jetzt nicht mehr sichtbar.',
+    mineRejected: 'Wir veröffentlichen diese Bewertung nicht. Ihre Rückmeldung ist bei uns angekommen.',
+    mineConsentOff: 'Sie haben der Veröffentlichung nicht zugestimmt.',
+    mineEmptyTitle: 'Noch keine Bewertung abgegeben',
+    mineEmptyBody: 'Was Sie uns schreiben, steht danach hier — samt dem, was daraus geworden ist.',
   },
 
   /* War ein eigener Bereich mit Titel, Lead und Leerzustand. Jetzt eine Karte

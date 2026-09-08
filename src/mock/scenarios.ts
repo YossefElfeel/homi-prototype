@@ -2423,6 +2423,234 @@ function baseData(now: Date): DataSet {
         { at: iso(days(now, -245)), kind: 'closed', label: 'Closed' },
       ],
     },
+
+    /*
+     * The five states the customer's own side could never show, and four years'
+     * worth of finished work to put them among.
+     *
+     * `BookingStatus` has nine values. Before this wave the demo account
+     * carried four of them and had no screen to show any: the dashboard picked
+     * the single next job and printed a date, so `inProgress`, `noAccess`,
+     * `awaitingApproval`, `completed` and `cancelled` existed in the schema,
+     * were coloured in `status-registry`, were listed on the States board — and
+     * no customer could reach one. Two of the five are the ones a customer most
+     * needs to see, because they are the two that cost money: §4.2 charges for
+     * a locked door and §12 for a late cancellation.
+     *
+     * The back catalogue underneath them is not padding. cus_2 has twenty
+     * requests and had *one* finished job, so the account read as somebody who
+     * had asked for a great deal and never bought anything, and a list of five
+     * rows could not reach its own second page. Nine jobs across the three
+     * addresses put the property filter, the service filter, the date sort and
+     * the pager all in front of a reviewer at once.
+     */
+    {
+      /* Today, with the van at the door. The only state whose truth expires:
+         it is right for as long as the demo clock sits near it, which is why
+         the check-in is relative rather than a fixed hour. */
+      id: 'bkg_acc_running',
+      reference: 'B-1060',
+      customerId: 'cus_2',
+      propertyId: 'prp_2b',
+      serviceSlug: 'unterhaltsreinigung',
+      start: iso(at(now, 8)),
+      duration: 150,
+      arrivalWindow: 30,
+      assigneeId: 'tm_owner',
+      status: 'inProgress',
+      checkInAt: iso(at(now, 8)),
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -9)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(at(now, 8)), kind: 'checkIn', label: 'On site' },
+      ],
+    },
+    {
+      /*
+       * Nobody home — §4.2, and the one row on this list that charges for work
+       * nobody did.
+       *
+       * It belongs on the customer's screen more than any other state here: the
+       * fee appears on an invoice, and until this wave the only explanation of
+       * where it came from was a line item. A customer who cannot see that the
+       * door was locked reads that invoice as a mistake and telephones.
+       */
+      id: 'bkg_acc_noaccess',
+      reference: 'B-1061',
+      customerId: 'cus_2',
+      propertyId: 'prp_2c',
+      serviceSlug: 'fensterreinigung',
+      start: iso(at(pastOpenDay(now, -36), 9)),
+      duration: 120,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'noAccess',
+      checkInAt: iso(at(pastOpenDay(now, -36), 9)),
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -44)), kind: 'created', label: 'Booked and paid' },
+        {
+          at: iso(at(pastOpenDay(now, -36), 9)),
+          kind: 'noAccess',
+          label: 'Nobody on site, waited 20 minutes',
+        },
+      ],
+    },
+    {
+      /*
+       * Checked out over the estimate, with the office pricing the difference.
+       *
+       * §5.3 gives this decision to the owner, not to the customer — so the
+       * appointment screen shows it and offers nothing to press. It is here to
+       * prove that a state the customer merely *watches* still reads clearly:
+       * «wir prüfen die Zeit» is a better answer than a job that silently
+       * stops moving for three days.
+       */
+      id: 'bkg_acc_approval',
+      reference: 'B-1062',
+      customerId: 'cus_2',
+      propertyId: 'prp_2',
+      serviceSlug: 'grundreinigung',
+      start: iso(at(pastOpenDay(now, -4), 8)),
+      duration: 240,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'awaitingApproval',
+      checkInAt: iso(at(pastOpenDay(now, -4), 8)),
+      checkOutAt: iso(at(pastOpenDay(now, -4), 13)),
+      work: [
+        {
+          id: 'wrk_acc_approval',
+          memberId: 'tm_owner',
+          /* An hour over the 240 the quote was written against — the overrun
+             §5.3 exists to price. */
+          minutes: 300,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -4), 13)),
+          note: 'Limescale in the bathroom needed a second pass',
+        },
+      ],
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -12)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(at(pastOpenDay(now, -4), 8)), kind: 'checkIn', label: 'On site' },
+        { at: iso(at(pastOpenDay(now, -4), 13)), kind: 'checkOut', label: '5 h reported' },
+      ],
+    },
+    {
+      /* Finished and not yet billed. The state screen 46 needs: a job the
+         customer can review that no review is sitting on yet. */
+      id: 'bkg_acc_done',
+      reference: 'B-1063',
+      customerId: 'cus_2',
+      propertyId: 'prp_2b',
+      serviceSlug: 'fensterreinigung',
+      start: iso(at(pastOpenDay(now, -11), 14)),
+      duration: 120,
+      arrivalWindow: 60,
+      assigneeId: 'tm_owner',
+      status: 'completed',
+      checkInAt: iso(at(pastOpenDay(now, -11), 14)),
+      checkOutAt: iso(at(pastOpenDay(now, -11), 16)),
+      /* A job that was checked out of carries the hours it took. Without them
+         it is a row the office is asked to approve with nothing on it — the
+         invariant `workforce-test` holds, and the reason "not yet recorded"
+         and "recorded as zero" have to stay different facts. */
+      work: [
+        {
+          id: 'wrk_acc_done',
+          memberId: 'tm_owner',
+          minutes: 120,
+          source: 'field',
+          recordedAt: iso(at(pastOpenDay(now, -11), 16)),
+        },
+      ],
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -19)), kind: 'created', label: 'Booked and paid' },
+        { at: iso(at(pastOpenDay(now, -11), 16)), kind: 'completed', label: 'Work finished' },
+      ],
+    },
+    {
+      /*
+       * Called off by us, three weeks ago.
+       *
+       * `cancelled` and `closed` are the two that read alike in a list and mean
+       * opposite things — one is work that finished, one is work that never
+       * happened — which is why the registry gives them danger and neutral. The
+       * history line names who called it off, because the customer's first
+       * question on seeing this row is whether it was them.
+       */
+      id: 'bkg_acc_called_off',
+      reference: 'B-1064',
+      customerId: 'cus_2',
+      propertyId: 'prp_2c',
+      serviceSlug: 'einmalreinigung',
+      start: iso(at(pastOpenDay(now, -21), 10)),
+      duration: 180,
+      arrivalWindow: 60,
+      status: 'cancelled',
+      photoIds: [],
+      history: [
+        { at: iso(days(now, -30)), kind: 'created', label: 'Booked and paid' },
+        {
+          at: iso(days(now, -23)),
+          kind: 'cancelled',
+          label: 'Called off — crew off sick, refunded in full',
+          actor: 'homivaro',
+        },
+      ],
+    },
+
+    /* The back catalogue. Four settled jobs across the two addresses the
+       account never showed work on, so «Objekt» is a filter with something
+       behind it and the list has a second page. */
+    ...(
+      [
+        { n: 5, ref: 'B-1065', days: -150, prop: 'prp_2b', service: 'unterhaltsreinigung', hour: 8, mins: 120 },
+        { n: 6, ref: 'B-1066', days: -320, prop: 'prp_2c', service: 'umzugsreinigung', hour: 9, mins: 300 },
+        { n: 7, ref: 'B-1067', days: -430, prop: 'prp_2', service: 'grundreinigung', hour: 8, mins: 240 },
+        { n: 8, ref: 'B-1068', days: -600, prop: 'prp_2b', service: 'fensterreinigung', hour: 13, mins: 120 },
+      ] as const
+    ).map(
+      (row): Booking => ({
+        id: `bkg_acc_hist_${row.n}`,
+        reference: row.ref,
+        customerId: 'cus_2',
+        propertyId: row.prop,
+        serviceSlug: row.service,
+        start: iso(at(pastOpenDay(now, row.days), row.hour)),
+        duration: row.mins,
+        arrivalWindow: 60,
+        assigneeId: 'tm_owner',
+        status: 'closed',
+        checkInAt: iso(at(pastOpenDay(now, row.days), row.hour)),
+        checkOutAt: iso(at(pastOpenDay(now, row.days), row.hour + Math.round(row.mins / 60))),
+        /* Settled work, so the hours match the estimate exactly. The variance
+           cases live on the jobs seeded for them; a back catalogue that
+           disagreed with its own quotes four times over would put four
+           arguments in the finance figures that nobody meant to have. */
+        work: [
+          {
+            id: `wrk_acc_hist_${row.n}`,
+            memberId: 'tm_owner',
+            minutes: row.mins,
+            source: 'field' as const,
+            recordedAt: iso(at(pastOpenDay(now, row.days), row.hour + Math.round(row.mins / 60))),
+          },
+        ],
+        photoIds: [],
+        history: [
+          { at: iso(days(now, row.days - 6)), kind: 'created', label: 'Booked and paid' },
+          {
+            at: iso(at(pastOpenDay(now, row.days), row.hour + Math.round(row.mins / 60))),
+            kind: 'completed',
+            label: 'Work finished',
+          },
+          { at: iso(days(now, row.days + 7)), kind: 'closed', label: 'Closed' },
+        ],
+      }),
+    ),
   ];
 
   /*
@@ -2864,6 +3092,70 @@ function baseData(now: Date): DataSet {
       submittedAt: iso(days(now, -6)),
       publishConsent: true,
       deletedAt: iso(days(now, -5)),
+    },
+
+    /*
+     * What the customer who wrote them gets to see.
+     *
+     * `ReviewStatus` has four values and the demo account carried one, which
+     * did not matter while the account had nowhere to show a review back. It
+     * has now: you write a review, it leaves, and until this wave the only
+     * thing that ever came back was the same empty form offering to review the
+     * next job. These four put every outcome on that screen at once —
+     * including the two nobody enjoys writing, which are exactly the two a
+     * customer is owed an answer about.
+     *
+     * None of them is binned. `rev_binned` above is, and a review in the bin is
+     * mid-decision — recoverable, by design — so the customer's own list leaves
+     * it out rather than reporting a state that may be undone tomorrow.
+     */
+    {
+      id: 'rev_acc_published',
+      bookingId: 'bkg_acc_hist_6',
+      customerId: 'cus_2',
+      rating: 5,
+      text: 'Move-out clean done to the day, and the handover passed without a single complaint from the agency.',
+      status: 'published',
+      submittedAt: iso(days(now, -314)),
+      publishConsent: true,
+    },
+    {
+      /* Consent withheld, so it was never publishable — and the screen has to
+         say that rather than leave it looking stuck in the queue. */
+      id: 'rev_acc_pending',
+      bookingId: 'bkg_acc_hist_5',
+      customerId: 'cus_2',
+      rating: 4,
+      text: 'Good work overall. I would have liked a little more care taken over the second bathroom.',
+      status: 'pending',
+      submittedAt: iso(days(now, -144)),
+      publishConsent: false,
+    },
+    {
+      /* The awkward one, and the reason this list is worth building. It names a
+         competitor, so it is not going on the public page — and the customer
+         who wrote it has been waiting fourteen months to find that out. */
+      id: 'rev_acc_rejected',
+      bookingId: 'bkg_acc_hist_7',
+      customerId: 'cus_2',
+      rating: 3,
+      text: 'Perfectly decent, but Blitzblank Meilen quote me a better price for a deep clean.',
+      status: 'rejected',
+      submittedAt: iso(days(now, -424)),
+      publishConsent: true,
+    },
+    {
+      /* Published once and taken down since — a different fact from «never
+         published», and the two were one badge on the customer's side because
+         there was no customer's side. */
+      id: 'rev_acc_hidden',
+      bookingId: 'bkg_acc_hist_8',
+      customerId: 'cus_2',
+      rating: 5,
+      text: 'Windows inside and out, not a streak anywhere. We have had them back every spring since.',
+      status: 'hidden',
+      submittedAt: iso(days(now, -594)),
+      publishConsent: true,
     },
     {
       /* The one card on the screen whose «Veröffentlichen» is enabled on

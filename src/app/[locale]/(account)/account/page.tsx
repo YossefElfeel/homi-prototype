@@ -148,15 +148,45 @@ export default function AccountDashboardPage() {
                       date: format.dateTime(freeUntil, 'full'),
                     })}
                   </p>
-                  <Button asChild variant="secondary" size="sm" className="mt-5">
-                    <Link href={`/account/properties/${nextProperty.id}`}>
-                      <CalendarDays className="size-3.5" aria-hidden />
-                      {t('nextAction')}
-                    </Link>
-                  </Button>
+                  {/*
+                    Opens the appointment, not the address.
+
+                    «Termin ansehen» led to `/account/properties/{id}` — the
+                    only place in the product that held anything about a job —
+                    so the button named one thing and delivered another, and
+                    the deadline printed two lines above it had nothing behind
+                    it at all. There is a job screen now, and this is the way
+                    in to it.
+                  */}
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Button asChild variant="secondary" size="sm">
+                      <Link href={`/account/appointments/${next.id}`}>
+                        <CalendarDays className="size-3.5" aria-hidden />
+                        {t('nextAction')}
+                      </Link>
+                    </Button>
+                    {/* The next job is one of fourteen on this account, and
+                        until this wave it was the only one reachable. */}
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/account/appointments">{t('nextAll')}</Link>
+                    </Button>
+                  </div>
                 </>
               ) : (
-                <p className="text-sm text-ink-tertiary">{t('nextNone')}</p>
+                /* Was a grey line of text in an otherwise empty card. The rule
+                   asks an empty state to say why it is empty and what fills
+                   it; «Zurzeit ist kein Termin gebucht.» did neither. */
+                <EmptyState
+                  compact
+                  icon={CalendarDays}
+                  title={t('nextNoneTitle')}
+                  body={t('nextNoneBody')}
+                  action={
+                    <Button asChild variant="secondary" size="sm">
+                      <Link href="/request">{t('nextNoneAction')}</Link>
+                    </Button>
+                  }
+                />
               )}
             </CardBody>
           </Card>

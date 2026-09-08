@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Textarea, Checkbox } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPage } from '@/components/ui/skeleton';
+import { MyReviews } from '@/components/account/my-reviews';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -87,6 +88,13 @@ export default function AccountReviewPage() {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* The review that has just been sent, in the list, with the state it
+            went in as. The thank-you used to be the last the customer ever saw
+            of it. */}
+        <div className="mt-app-section">
+          <MyReviews />
+        </div>
       </>
     );
   }
@@ -107,6 +115,13 @@ export default function AccountReviewPage() {
             </Button>
           }
         />
+
+        {/* «Noch nichts zu bewerten» is the commonest state of this screen and
+            was its whole content — so a customer with four reviews behind them
+            opened it and read that they had nothing to say. */}
+        <div className="mt-app-section">
+          <MyReviews />
+        </div>
       </>
     );
   }
@@ -200,6 +215,11 @@ export default function AccountReviewPage() {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Under the form, not above it: the job waiting to be reviewed is why
+            the screen was opened. What happened to the earlier ones is the
+            answer to the question that comes second. */}
+        <MyReviews />
       </div>
     </div>
   );

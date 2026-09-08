@@ -5,6 +5,7 @@ export const accountEn: typeof accountDe = {
     title: 'My account',
     nav: {
       dashboard: 'Overview',
+      appointments: 'Appointments',
       requests: 'Requests',
       offers: 'Quotes',
       invoices: 'Invoices',
@@ -80,7 +81,6 @@ export const accountEn: typeof accountDe = {
   dashboard: {
     greeting: 'Hello {name}',
     nextTitle: 'Your next appointment',
-    nextNone: 'Nothing booked at the moment.',
     nextAction: 'See the appointment',
     arrival: 'Arrival between {from} and {to}',
     cancelFreeUntil: 'Free cancellation until {date}',
@@ -100,6 +100,142 @@ export const accountEn: typeof accountDe = {
     emptyBody:
       'Once your first request is on its way, appointments, quotes and invoices all appear here in one place.',
     emptyAction: 'Request a quote',
+    /* «Nothing booked at the moment.» was a grey line in an otherwise empty
+       card — the blank page the empty-state rule exists to prevent. It now
+       says why there is nothing and what changes that. */
+    nextNoneTitle: 'Nothing booked',
+    nextNoneBody:
+      'Once a quote is accepted the job appears here, with its arrival window and the cancellation deadline.',
+    nextNoneAction: 'Request a quote',
+    /* The way to everything that is not the next appointment. Without it the
+       card was a dead end: one job visible, thirteen not. */
+    nextAll: 'All appointments',
+  },
+
+  appointments: {
+    title: 'My appointments',
+    colDate: 'Date',
+    colService: 'Service',
+    colProperty: 'Property',
+    colReference: 'Number',
+    colStatus: 'Status',
+    rowOpen: 'See the appointment',
+    search: 'Number, service or address',
+    filterStatus: 'Status',
+    filterAll: 'All',
+    /* «Upcoming» is not a status but the question the list is opened with —
+       when are you coming back. It sits in the same menu as the statuses
+       rather than beside them: two controls would let «upcoming» and
+       «completed» be picked together, a pair that empties the table and
+       explains nothing about why. */
+    filterUpcoming: 'Upcoming',
+    filterProperty: 'Property',
+    filterPropertyAll: 'All properties',
+    filterReset: 'Clear filters',
+    emptyTitle: 'No appointments yet',
+    emptyBody:
+      'Once a quote is accepted it becomes an appointment — and that appears here, along with the history of earlier visits.',
+    emptyAction: 'Request a quote',
+    filterEmptyTitle: 'No appointment in this selection',
+    filterEmptyBody:
+      'Nothing of yours matches this selection right now. Clearing it shows them all again.',
+    searchEmptyTitle: 'Nothing found',
+    searchEmptyBody:
+      'No appointment matches «{query}». The search covers the number, the service and the address.',
+  },
+
+  appointment: {
+    back: 'All appointments',
+    missingTitle: 'No such appointment',
+    missingBody:
+      'The link leads nowhere, or the appointment belongs to another account. The list shows all of yours.',
+    whenTitle: 'When',
+    arrival: 'Arrival between {from} and {to}',
+    duration: 'Planned: {hours} h',
+    whereTitle: 'Where',
+    whatTitle: 'What',
+    referenceLabel: 'Number',
+    serviceLabel: 'Service',
+    propertyLabel: 'Address',
+    /* The date used to change silently. The same line as on the dashboard,
+       because it is the same fact. */
+    movedNote: 'We moved this appointment on {at}. It was: {from}.',
+
+    /*
+     * One sentence per status — what it means for the customer, not what it is
+     * called in the record. The badge carries the word; this line carries the
+     * consequence.
+     */
+    stateScheduled: 'The job is booked. You will get a reminder the day before.',
+    stateRescheduled: 'We moved this appointment — the new date is above.',
+    stateInProgress: 'The team is with you right now.',
+    stateNoAccess:
+      'We arrived to a locked door. Under §4.2 we charge {percent}% of the job value for that.',
+    stateAwaitingApproval:
+      'The work is done. It took longer than planned — we are reviewing that now and will be in touch before anything is billed.',
+    stateCompleted: 'Done. The invoice follows.',
+    stateInvoiced: 'Done and invoiced.',
+    stateClosed: 'Done, invoiced and paid.',
+    stateCancelled: 'This appointment was called off.',
+
+    /* §12 has been on the screen since the first wave with no button behind
+       it. */
+    cancelTitle: 'Cancel this appointment',
+    cancelFree: 'Cancelling is free until {date}.',
+    cancelLate:
+      'The free window closed on {date}. Cancelling now costs {percent}% of the job value.',
+    cancelAction: 'Cancel the appointment',
+    cancelReasonLabel: 'Why? (optional)',
+    cancelReasonHint: 'It helps us place the next appointment better.',
+    cancelConfirmTitle: 'Cancel this appointment?',
+    cancelConfirmBody:
+      'We will call the job off and write to you. This cannot be undone — a new date needs a new request.',
+    cancelConfirmLate:
+      'We will call the job off and write to you. Because the free window has closed we charge {percent}% of the job value. This cannot be undone.',
+    cancelConfirmAction: 'Yes, cancel it',
+    cancelDismiss: 'Keep it',
+    cancelDone: 'Appointment cancelled.',
+    cancelEvent: 'Cancelled by the customer',
+    cancelNoticeBody:
+      'Hello\n\nYour appointment on {date} is cancelled. {feeNote}\n\nKind regards\nHomivaro',
+    cancelFeeNoneNote: 'There is nothing to pay.',
+    cancelFeeLateNote: 'Under §12 we charge {percent}% of the job value.',
+    /* The three reasons the button is absent. A greyed-out button with no
+       sentence is exactly what this replaces. */
+    cancelRunning: 'The job is already under way — please give us a ring.',
+    cancelFinished: 'This job is behind us and can no longer be cancelled.',
+    cancelAlready: 'This appointment is already cancelled.',
+    /* A plan visit is skipped, not cancelled: skipping counts against the
+       monthly allowance, and cancelling here would not. */
+    cancelPlanVisit:
+      'This job belongs to your plan. Plan visits are skipped from the plan itself — which is also where you can see how many skips you have left this month.',
+    cancelPlanVisitAction: 'To the plan',
+
+    linkQuote: 'To the quote',
+    linkRequest: 'To the request',
+    linkInvoice: 'To the invoice',
+    linkPlan: 'To the plan',
+    linkProperty: 'To the property',
+    linkReview: 'Review this job',
+    historyTitle: 'History',
+    /*
+     * The timeline is built from the kind of the event, not from the stored
+     * text. That text comes from the seed and the store, is English by
+     * lang-check — «Booked and paid» on a German customer page — and carries
+     * internal detail besides: who is driving the job, and the §5.3 discussion
+     * about hours. Neither is the customer's business.
+     */
+    historyCreated: 'Booked and paid',
+    historyRescheduled: 'Moved by us',
+    historyCheckIn: 'Team on site',
+    historyCheckOut: 'Work finished',
+    historyNoAccess: 'No access — nobody there',
+    historyCompleted: 'Completed',
+    historyInvoiced: 'Invoiced',
+    historyClosed: 'Paid and closed',
+    historyCancelled: 'Cancelled',
+    /* The customer's own words, verbatim — they wrote them. */
+    historyNote: 'Your reason: {text}',
   },
 
   requests: {
@@ -528,6 +664,26 @@ export const accountEn: typeof accountDe = {
     thanksToOverview: 'Back to the overview',
     thanksToRequests: 'Go to your requests',
     emptyAction: 'See your requests',
+
+    /*
+     * What became of the reviews they wrote.
+     *
+     * A review used to leave the account and never come back: the same form
+     * afterwards offered the next job as though the first had never happened.
+     * A review has four states, and all four are the business of the person
+     * who wrote it — two of them especially.
+     */
+    mineTitle: 'Your reviews',
+    mineLead: 'What became of what you wrote to us.',
+    mineOn: 'Job on {date}, {service}',
+    mineStars: '{n} out of 5 stars',
+    minePending: 'We are reading it. Without your consent it does not go on the website.',
+    minePublished: 'On the website — with your first name and the initial of your surname.',
+    mineHidden: 'It was published and is no longer visible.',
+    mineRejected: 'We are not publishing this one. Your feedback did reach us.',
+    mineConsentOff: 'You did not agree to publication.',
+    mineEmptyTitle: 'No reviews written yet',
+    mineEmptyBody: 'What you write to us appears here afterwards, along with what became of it.',
   },
 
   photos: {

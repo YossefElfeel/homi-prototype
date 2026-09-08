@@ -264,7 +264,7 @@ export const TRACKS: Track[] = [
       done('32', 'Anmelden', 'Sign in', '/sign-in', ['error', 'magic link sent'], 'The email link leads; most customers here never chose a password'),
       done('33', 'Konto aktivieren', 'Activate account', '/activate-account', ['live rules']),
       done('34', 'Passwort zurücksetzen', 'Reset password', '/password', ['sent'], 'The confirmation never reveals whether the account exists'),
-      done('35', 'Übersicht', 'Dashboard', '/account', ['empty']),
+      done('35', 'Übersicht', 'Dashboard', '/account', ['empty', 'no appointment booked'], 'The next-appointment card opens the job now rather than the address it is at — «Termin ansehen» led to /account/properties until wave 116, which is the only place the product held anything about a visit'),
       done('36', 'Meine Anfragen', 'My requests', '/account/requests', ['empty', 'searched', 'filtered', 'nothing found', 'paged'], 'Twenty requests on the demo account — one in every state it can be in, two years of settled history behind them — so search, both menus and the second page all have something to act on'),
       done('37', 'Anfrage-Detail', 'Request detail', '/account/requests/req_3', ['waiting', 'quote ready', 'quote closed', 'withdrawn'], 'req_acc_new waits, req_acc_accepted runs the rail to the end, req_acc_expired and req_acc_withdrawn stop it early. The badge, the quote card and the rail all read the derived state, so a quote that lapses by date closes all three at once — a state no scenario can stage, because moving the demo clock rebuilds the seed along with it'),
       done('38', 'Meine Offerten', 'My quotes', '/account/quotes', ['empty', 'expiring', 'searched', 'filtered', 'nothing found', 'sorted', 'paged'], 'Thirteen quotes on the demo account across five states, so the menu, the search and the second page all have something to act on'),
@@ -272,6 +272,8 @@ export const TRACKS: Track[] = [
       done('40', 'Rechnungs-Detail', 'Invoice detail', '/account/invoices/inv_paid', ['overdue', 'paid']),
       done('41', 'Meine Objekte', 'My properties', '/account/properties', ['empty', 'searched', 'filtered', 'nothing found', 'sorted'], 'Two properties, a flat and an office, so the type menu has both of its live options'),
       done('42', 'Objekt-Detail', 'Property detail', '/account/properties/prp_2', ['no access details'], 'States who sees the access details and when — in the customer own account. The visit history pages at ten; prp_2 carries four, so the line under it states the capacity and no scenario reaches a second page'),
+      done('50', 'Meine Termine', 'My appointments', '/account/appointments', ['empty', 'upcoming', 'searched', 'filtered by status', 'filtered by property', 'nothing found', 'sorted', 'paged'], 'Fourteen jobs on the demo account carrying all nine states, across three addresses and four years — so the status menu, the property menu, the date sort and the second page all have something to act on. The list did not exist before wave 116: `useAccount` returned `bookings` and two screens read them, neither of which could open one'),
+      done('51', 'Termin-Detail', 'Appointment detail', '/account/appointments/bkg_acc_noaccess', ['scheduled (cancellable)', 'inside the fee window', 'moved', 'running', 'no access', 'awaiting approval', 'done', 'cancelled', 'plan visit — skip it on the plan instead'], 'Every one of the nine states carries a sentence saying what it means for the customer, because two of them put money on an invoice — §4.2 for a locked door, §12 for a late cancellation — and a coloured pill cannot explain a charge. The cancel button belongs to §12: the deadline had been printed on the dashboard and at checkout since wave 1 with no control anywhere behind it. bkg_acc_running is the job under way, bkg_acc_approval the one being priced, bkg_acc_called_off the one we called off, and bkg_plan_2 the plan visit that sends you to the plan rather than cancelling — skipping counts against the monthly allowance and cancelling here would not'),
       done('43', 'Meine Abos', 'My plans', '/account/plan', [
         'no plan',
         'two plans, two properties',
@@ -291,14 +293,14 @@ export const TRACKS: Track[] = [
         ['TWINT unavailable', 'card form', 'TWINT form', 'wallet form', 'nothing on file'],
         'Each of the four kinds opens the form it needs. Saving used to be the click itself — every card came out labelled «Karte», so two of them were one row. The four tiles that open those forms are real cards rather than buttons wearing a copy of the card treatment',
       ),
-      done('46', 'Bewertung schreiben', 'Write a review', '/account/review', ['nothing to review', 'sent']),
+      done('46', 'Bewertung schreiben', 'Write a review', '/account/review', ['nothing to review', 'sent', 'own reviews: pending, published, hidden, not published', 'consent withheld'], 'The screen could take a review and never give one back: four states in `ReviewStatus`, none of them visible to the person who wrote the words. All four are on the demo account now, under the form and under both of the other two branches — «noch nichts zu bewerten» is its commonest state and used to be its entire content'),
       /* No longer a screen of its own. `empty` went with the tab: a card that
          renders nothing when the job has no photographs needs no empty state,
          and the one it had spoke for a list across every job the customer ever
          had. What it costs is named in the note — a plan visit carries a
          `subscriptionId` and no request, so its pair has no customer-facing
          home until §20.6a on /open-questions is answered. */
-      done('47', 'Vorher / Nachher', 'Before & after', '/account/requests/req_acc_h4', ['consent off'], 'A card on the request that produced the job, not a tab. Photos on a plan visit or on a booking with no quote behind it (bkg_3) are unreachable from the account until a job screen exists'),
+      done('47', 'Vorher / Nachher', 'Before & after', '/account/requests/req_acc_h4', ['consent off'], 'A card on the request that produced the job, not a tab — and, since wave 116, a second one on the job itself. That is what makes the other two kinds reachable: a plan visit carries a `subscriptionId` and no request, and bkg_3 was never quoted, so neither had a customer-facing home while the request was the only way in'),
       /* Wave 76 gave this search over a stack of open threads; the note then
          read «the threads stay bubbles, so there is no table state to show».
          They are a rail now, so there is: which thread is open, and which kind

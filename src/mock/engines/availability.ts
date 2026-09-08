@@ -192,8 +192,27 @@ export function bookingsFiledOn(day: Date, bookings: Booking[]) {
   return filedOn(day, bookings);
 }
 
+/**
+ * The jobs that still stand on this day.
+ *
+ * `cancelled` joined `closed` here when the customer got a way to call a job
+ * off. Without it a cancellation freed nothing: the hour stayed blocked
+ * against `slotsFor`, the day went on counting towards §1.2's two-job ceiling,
+ * and the owner's dashboard kept the job in «heute». The van was not coming
+ * and every number on the console said it was.
+ *
+ * `eventsOnDay` one function up had always excluded its own `cancelled` — the
+ * two were simply inconsistent, which nothing caught because nothing could
+ * cancel a booking.
+ *
+ * Note this is the *scheduling* view, not the drawn one: `calendar-entries`
+ * reads `bookingsFiledOn` and still shows the called-off job on the grid,
+ * which is what the office needs to see.
+ */
 export function bookingsOnDay(day: Date, bookings: Booking[]) {
-  return bookingsFiledOn(day, bookings).filter((b) => b.status !== 'closed');
+  return bookingsFiledOn(day, bookings).filter(
+    (b) => b.status !== 'closed' && b.status !== 'cancelled',
+  );
 }
 
 /* ---------------------------------------------------------------- travel */

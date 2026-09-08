@@ -1137,6 +1137,36 @@ interface StoreState {
    */
   approveBooking: (id: ID, label: string, now: Date) => void;
   /**
+   * Calling a job off — the customer's half of §12.
+   *
+   * The office could already cancel a booking; the customer could not, and had
+   * been told twice that they could. `quote/[id]/payment` lists «kostenlos bis
+   * {hours} h vorher, danach {percent} %» before they pay, and the dashboard
+   * repeats the deadline every time they open the account. Neither sentence
+   * had a control behind it, so the only way to act on either was the
+   * telephone.
+   *
+   * `feeNote` rather than a computed amount: §12 fixes a percentage, and the
+   * base it applies to is unsettled for a plan visit (see `booking-facts`).
+   * The caller passes the sentence it showed on the screen, so the record and
+   * the confirmation cannot say different things about what this costs.
+   *
+   * Shaped like `rescheduleBooking` — status, history and the customer notice
+   * in one call — because the two are the same event from opposite ends and a
+   * cancellation that forgot the message would be a van arriving anyway.
+   */
+  cancelBooking: (
+    input: {
+      id: ID;
+      /** Free text from the customer. Kept whole; the office reads it. */
+      reason: string;
+      historyLabel: string;
+      /** Keyed by the booking reference, so it lands in that thread. */
+      notice: { subject: string; body: string };
+    },
+    now: Date,
+  ) => void;
+  /**
    * Moving a confirmed job — and telling the customer, in the same call.
    *
    * The booking screen did this inline: patch `start`, patch `status`, push a
@@ -4167,6 +4197,65 @@ export const useStore = create<StoreState>()(
           },
         });
         return invoice.id;
+      },
+
+      cancelBooking: ({ id, reason, historyLabel, notice }, now) => {
+        const booking = get().data.bookings.find((b) => b.id === id);
+        if (!booking) return;
+
+        set((s) => ({
+          data: {
+            ...s.data,
+            bookings: s.data.bookings.map((b) =>
+              b.id !== id
+                ? b
+                : {
+                    ...b,
+                    status: 'cancelled' as const,
+                    history: [
+                      ...b.history,
+                      {
+                        at: now.toISOString(),
+                        kind: 'cancelled',
+                        label: historyLabel,
+                        /* The office needs to know which of the two ends called
+                           it off before phoning back — the same reason
+                           `cancelRequest` splits into two statuses. A booking
+                           has one `cancelled`, so the actor carries it. */
+                        actor: 'customer',
+                      },
+                      ...(reason.trim()
+                        ? [
+                            {
+                              at: now.toISOString(),
+                              kind: 'note',
+                              label: reason.trim(),
+                              actor: 'customer',
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+            ),
+          },
+          /*
+           * No hold to release: `payOffer` drops it the moment the booking is
+           * created, so a job that exists never has one. The slot goes back to
+           * the calendar through `bookingsOnDay`, which stopped counting
+           * cancelled jobs in this wave — before that a cancellation freed
+           * nothing at all.
+           */
+        }));
+
+        get().sendMessage(
+          {
+            customerId: booking.customerId,
+            subject: notice.subject,
+            body: notice.body,
+            from: 'homivaro',
+          },
+          now,
+        );
       },
 
       rescheduleBooking: ({ id, start, historyLabel, notice }, now) => {
