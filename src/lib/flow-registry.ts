@@ -440,9 +440,9 @@ export const FLOWS: Flow[] = [
         'There was no way to do it. «Für das Abo» printed the first card in the list — not the one marked «Standard», not anything the customer had chosen, and read-only — so the only way to move a package off a card was to delete the card. A customer now holds one row per running package and picks its card there, and `Subscription.paymentMethodId` is what the dialog that opens a package writes',
       ),
       added(
-        'Refuse to delete a card a package is running on',
+        'Ask before removing a card — and refuse when a package is on it',
         '/account/payment-methods',
-        'The bin used to take it and report success, leaving the package pointing at an id that was not there any more. The refusal names the package — «Diese Karte belastet S-0013» — because "cannot delete" without a reason reads as a broken button',
+        'The bin was immediate — one click and a saved instrument was gone, with a toast afterwards; nothing else in the product destroys a record that quietly. Worse, on a card a running package was billed to it deleted anyway and reported success, leaving the package pointing at an id that was not there. Now it asks, in one dialog with two states. Removing the default says what happens next — the following card takes over — which is otherwise discovered at the next checkout. Refused, the box names the package, «Diese Karte belastet S-0013», and «Entfernen» is shown disabled beside the way out rather than hidden: the same call the plan catalogue makes, because a control that simply does nothing reads as a broken button',
       ),
       added(
         'The customer’s invoices, with amount and payment route',

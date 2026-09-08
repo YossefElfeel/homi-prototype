@@ -10,6 +10,11 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { Select } from '@/components/ui/field';
 import {
   Dialog,
@@ -34,7 +39,7 @@ import {
   methodDraftRecord,
   type PaymentDraft,
 } from '@/lib/payment-methods';
-import type { SavedMethodKind } from '@/mock/schema';
+import type { SavedMethodKind, SavedPaymentMethod } from '@/mock/schema';
 
 /**
  * What each savable method is called on this screen. The glyphs are not here:
@@ -113,6 +118,22 @@ export default function AccountPaymentPage() {
    */
   const [adding, setAdding] = useState<SavedMethodKind | null>(null);
   const [draft, setDraft] = useState<PaymentDraft>(() => blankDraft('card'));
+  /*
+   * Removing a card asks first, and the same box carries the refusal.
+   *
+   * The bin used to be immediate: one click and a saved instrument was gone,
+   * with a toast to say so afterwards. Nothing else in the product destroys a
+   * record that quietly — closing the account asks, deleting a plan asks — and
+   * a toast is the wrong shape for either half of this. It cannot be answered,
+   * and when the act is refused it slides away on its own timer while the
+   * customer is still reading which package it named.
+   *
+   * One dialog rather than two, switching on `plans`: the question and the
+   * refusal are the same box seen in two states, and splitting them would put
+   * the same card behind two different-looking modals.
+   */
+  const removing = useConfirmTarget<{ method: SavedPaymentMethod; plans: string[] }>();
+  const dismissLabel = useDismissLabel();
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -143,6 +164,26 @@ export default function AccountPaymentPage() {
     addPaymentMethod({ customerId, kind: adding, ...methodDraftRecord(adding, draft) }, now);
     setAdding(null);
     toast.success(t('added'));
+  }
+
+  /*
+   * Read here so the dialog can name the packages before anything is
+   * attempted. The store reads the same thing again on the confirm, which is
+   * not redundant: this pair is a render old, and a plan opened in another tab
+   * — or on `/account/plan` behind this one — could have landed on the card in
+   * between. That second read is what `removeRaced` reports.
+   */
+  function heldBy(methodId: string): string[] {
+    return billable.filter((s) => s.paymentMethodId === methodId).map((s) => s.reference);
+  }
+
+  function confirmRemove() {
+    const method = removing.target?.method;
+    if (!method) return;
+    const result = removePaymentMethod(method.id);
+    if ('blocked' in result) toast.error(t('removeRaced'));
+    else toast.success(t('removed'));
+    removing.dismiss();
   }
 
   return (
@@ -200,19 +241,11 @@ export default function AccountPaymentPage() {
                     <Button
                       variant="quiet"
                       size="sm"
-                      onClick={() => {
-                        /* The refusal is the whole point. This click used to
-                           delete a card a running package was billed to and
-                           report success; the package was left pointing at an
-                           id that no longer existed, and nothing on any screen
-                           said so. */
-                        const result = removePaymentMethod(method.id);
-                        if ('blocked' in result) {
-                          toast.error(t('removeBlocked', { plans: result.plans.join(', ') }));
-                          return;
-                        }
-                        toast.success(t('removed'));
-                      }}
+                      /* Asks; it does not act. The click used to delete on the
+                         spot — and where a running package was billed to the
+                         card, it deleted anyway and reported success, leaving
+                         the package pointing at an id that no longer existed. */
+                      onClick={() => removing.ask({ method, plans: heldBy(method.id) })}
                     >
                       <Trash2 className="size-4" aria-hidden />
                       <span className="sr-only">{t('remove')}</span>
@@ -390,6 +423,33 @@ export default function AccountPaymentPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* One box, two states. Refused, «Entfernen» stays visible and goes
+          disabled rather than disappearing — the same call the plan catalogue
+          makes: somebody who pressed the bin needs to see that the act was
+          understood and declined, with the package named beside it. A control
+          that simply does nothing reads as a broken button. */}
+      <ConfirmDialog
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        title={
+          removing.target && removing.target.plans.length > 0
+            ? t('removeBlockedTitle', { label: removing.target.method.label })
+            : t('removeTitle', { label: removing.target?.method.label ?? '' })
+        }
+        body={
+          removing.target && removing.target.plans.length > 0
+            ? t('removeBlocked', { plans: removing.target.plans.join(', ') })
+            : /* The promotion is a consequence the customer cannot see coming:
+                 removing the default silently makes another card the default.
+                 It is said here or it is discovered on the next checkout. */
+              t(removing.target?.method.isDefault ? 'removeBodyDefault' : 'removeBody')
+        }
+        action={t('remove')}
+        dismiss={dismissLabel}
+        disabled={Boolean(removing.target && removing.target.plans.length > 0)}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }
