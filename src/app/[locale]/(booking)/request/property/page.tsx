@@ -178,7 +178,7 @@ export default function PropertyStep() {
 
   return (
     <BookingStep
-      step="objekt"
+      step="property"
       title={t('title')}
       canContinue={complete && coverage.state !== 'outside'}
     >

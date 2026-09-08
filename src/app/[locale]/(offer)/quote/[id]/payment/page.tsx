@@ -93,7 +93,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
     window.setTimeout(() => {
       const result = payOffer(offer.id, method, outcome, now);
       if (result.bookingReference) {
-        router.push(`/quote/${offer.id}/bestaetigt`);
+        router.push(`/quote/${offer.id}/confirmed`);
       } else {
         setState('failed');
       }
@@ -102,7 +102,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
 
   if (covered) {
     return (
-      <OfferShell offer={offer} step="zahlung">
+      <OfferShell offer={offer} step="payment">
         <div className="max-w-2xl">
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-status-success text-status-success-fg">
             <Wallet className="size-6" aria-hidden />
@@ -144,7 +144,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
 
   if (state === 'failed') {
     return (
-      <OfferShell offer={offer} step="zahlung">
+      <OfferShell offer={offer} step="payment">
         <div className="max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-sm border border-status-danger-line bg-status-danger px-2 py-1 text-xs font-medium text-status-danger-fg">
             <AlertTriangle className="size-3.5" aria-hidden />
@@ -175,7 +175,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
             ) : (
               <Button
                 size="lg"
-                onClick={() => router.push(`/quote/${offer.id}/termin`)}
+                onClick={() => router.push(`/quote/${offer.id}/slot`)}
               >
                 {f('pickNewSlot')}
               </Button>
@@ -195,7 +195,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <OfferShell offer={offer} step="zahlung">
+    <OfferShell offer={offer} step="payment">
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">{t('title')}</h1>

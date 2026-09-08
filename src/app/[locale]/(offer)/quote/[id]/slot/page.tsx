@@ -139,7 +139,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
 
   if (awaitingOffice) {
     return (
-      <OfferShell offer={offer} step="termin">
+      <OfferShell offer={offer} step="slot">
         <div className="max-w-2xl">
           <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">
             {t('waitingTitle')}
@@ -178,7 +178,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <OfferShell offer={offer} step="termin">
+    <OfferShell offer={offer} step="slot">
       <div className="max-w-3xl">
         <h1 className="display-type text-[clamp(2.25rem,3.6vw,2.75rem)]">
           {returning ? t('title') : t('titleProposal')}
@@ -304,7 +304,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
           <HoldTimer hold={hold} />
           <Button
             size="lg"
-            onClick={() => router.push(`/quote/${offer.id}/unterschrift`)}
+            onClick={() => router.push(`/quote/${offer.id}/signature`)}
           >
             {t('continue')}
             <ArrowRight className="size-4" aria-hidden />
@@ -319,7 +319,7 @@ export default function SlotPage({ params }: { params: Promise<{ id: string }> }
           <HoldTimer hold={hold} />
           <Button
             size="lg"
-            onClick={() => router.push(`/quote/${offer.id}/unterschrift`)}
+            onClick={() => router.push(`/quote/${offer.id}/signature`)}
           >
             {t('continue')}
             <ArrowRight className="size-4" aria-hidden />

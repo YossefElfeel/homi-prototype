@@ -13,9 +13,9 @@ export const offerEn: typeof offerDe = {
     for: 'For',
     steps: {
       offer: 'Quote',
-      termin: 'Slot',
-      unterschrift: 'Signature',
-      zahlung: 'Payment',
+      slot: 'Slot',
+      signature: 'Signature',
+      payment: 'Payment',
     },
   },
 

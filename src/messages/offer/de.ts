@@ -19,9 +19,9 @@ export const offerDe = {
     for: 'Für',
     steps: {
       offer: 'Offerte',
-      termin: 'Termin',
-      unterschrift: 'Unterschrift',
-      zahlung: 'Zahlung',
+      slot: 'Termin',
+      signature: 'Unterschrift',
+      payment: 'Zahlung',
     },
   },
 

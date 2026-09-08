@@ -244,10 +244,10 @@ export const FLOWS: Flow[] = [
         'A `Booking` has no `requestId`, so the job reaches its collection stop through the quote it came from. The crew screen carries it above the tasks, with the floor, the lift and its own route link — the office knowing about a second stop is worth nothing if the van does not',
       ),
       ok('Optional lines on and off', '/quote/off_1', 'Price and duration move together'),
-      ok('Pick a date, held 15 minutes', '/quote/off_1/termin'),
+      ok('Pick a date, held 15 minutes', '/quote/off_1/slot'),
       added(
         'Read the contract and sign it',
-        '/quote/off_1/unterschrift',
+        '/quote/off_1/signature',
         'The screen showed three key figures and a link to the terms. Three figures are something you check — what gets signed is a document, and it was nowhere: not on the screen, not in the account afterwards, and not on the owner’s copy either',
       ),
       added(
@@ -260,7 +260,7 @@ export const FLOWS: Flow[] = [
         '/admin/settings?tab=contract',
         'sendOffer was already reading the value; without this screen the application put a signature under every contract that the owner could neither see nor change',
       ),
-      ok('Ask for a change', '/quote/off_1/aenderung'),
+      ok('Ask for a change', '/quote/off_1/change'),
       added(
         'Free slots: the five rules',
         '/admin/requests/req_2/quote',
@@ -288,7 +288,7 @@ export const FLOWS: Flow[] = [
       ),
       added(
         'Propose three dates (first-time customer)',
-        '/quote/off_propose/termin',
+        '/quote/off_propose/slot',
         'Regulars book straight on — we know the property, the access and the history. On a first job the customer proposes up to three dates, and nothing is blocked while they sit unanswered',
       ),
       added(
@@ -308,8 +308,8 @@ export const FLOWS: Flow[] = [
         '/admin/requests/req_q_rejected',
         'Declining was a one-way street: "write a quote" switches itself off as soon as a request counts as answered, so exactly one action was left on the screen — decline it again. Applies only to our own refusal; if the customer declined the quote, the new version is the answer',
       ),
-      ok('Paid and booked', '/quote/off_1/bestaetigt'),
-      ok('Payment failed', '/quote/off_1/zahlung', 'The hold runs on, or runs out'),
+      ok('Paid and booked', '/quote/off_1/confirmed'),
+      ok('Payment failed', '/quote/off_1/payment', 'The hold runs on, or runs out'),
       ok('Expired, reissue it', '/quote/off_2'),
       added(
         'Decline the quote',
@@ -317,9 +317,9 @@ export const FLOWS: Flow[] = [
         'There was only accept or amend. A no became silence, and three weeks later "expired" — with no reason in the system. Releases the held time at once',
       ),
       added(
-        'Booked without payment (package or plan)',
-        '/quote/off_pkg/zahlung',
-        '§11.3 — hours already bought are not charged twice. The flow used to demand a card, charge the full amount, and leave the hours sitting untouched in the account',
+        'Booked without payment (covered by a plan)',
+        '/quote/off_plan/payment',
+        '§11.3 — a visit the plan already paid for is not charged again. The flow used to demand a card and take the full amount for it. Was pointed at off_pkg, whose plan covers a different service, so the exit led to the gateway it exists to avoid',
       ),
       added(
         'On to the booking',

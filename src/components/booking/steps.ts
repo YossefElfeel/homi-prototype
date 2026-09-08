@@ -4,16 +4,29 @@ import { hasAddOns } from '@/lib/service-flow';
 /**
  * Every step the wizard can show, in order. Not the list any one visitor
  * walks — that is `stepsForService`.
+ *
+ * **Each name is the URL segment of its step.** `BookingStep` builds every
+ * Continue, every Back and the resume redirect as `/request/{name}`, so these
+ * are not labels — they are half of a route. They were German until now, and
+ * `refactor(routes): jede URL ist jetzt englisch` renamed the directories
+ * without touching this file: from that commit on, Continue from «Leistung»
+ * pushed `/request/objekt` against a folder called `property`, and the whole
+ * request funnel — the one conversion the site is built for — ended on the 404
+ * page at step one. `tsc`, the lint and the build all passed, because a string
+ * that no longer names a directory is still a string.
+ *
+ * Rename a step folder and this list moves with it, or the flow breaks again
+ * in exactly the same silent way.
  */
 export const BOOKING_STEPS = [
-  'leistung',
-  'objekt',
+  'service',
+  'property',
   'extras',
-  'zutritt',
-  'termin',
-  'fotos',
-  'kontakt',
-  'pruefen',
+  'access',
+  'slot',
+  'photos',
+  'contact',
+  'review',
 ] as const;
 
 export type BookingStepName = (typeof BOOKING_STEPS)[number];
@@ -76,5 +89,5 @@ export function resumeStep(
 ): BookingStepName {
   const from = BOOKING_STEPS.indexOf(step);
   const onward = BOOKING_STEPS.slice(Math.max(from, 0)).find((s) => steps.includes(s));
-  return onward ?? steps[0] ?? 'leistung';
+  return onward ?? steps[0] ?? 'service';
 }

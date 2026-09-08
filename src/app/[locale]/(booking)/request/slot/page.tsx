@@ -57,7 +57,7 @@ export default function TimeStep() {
     draft.preferred.flexible || Boolean(draft.preferred.date && draft.preferred.band);
 
   return (
-    <BookingStep step="termin" title={t('title')} lead={t('lead')} canContinue={complete}>
+    <BookingStep step="slot" title={t('title')} lead={t('lead')} canContinue={complete}>
       <div className="flex gap-3 border-l-2 border-rule bg-sunken rounded-[var(--radius-lg)] p-4">
         <Info className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden />
         <div>

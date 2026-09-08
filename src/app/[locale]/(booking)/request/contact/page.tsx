@@ -31,7 +31,7 @@ export default function ContactStep() {
     draft.acceptedPrivacy;
 
   return (
-    <BookingStep step="kontakt" title={t('title')} lead={t('lead')} canContinue={complete}>
+    <BookingStep step="contact" title={t('title')} lead={t('lead')} canContinue={complete}>
       <div className="space-y-6">
         <div className="grid gap-6 sm:grid-cols-2">
           <Field label={t('firstName')}>

@@ -99,7 +99,7 @@ export default function AccessStep() {
   }
 
   return (
-    <BookingStep step="zutritt" title={t('title')} lead={t('lead')} canContinue={complete}>
+    <BookingStep step="access" title={t('title')} lead={t('lead')} canContinue={complete}>
       <div className="flex gap-4 rounded-[var(--radius-lg)] border border-line bg-sunken p-5">
         <Lock className="mt-0.5 size-5 shrink-0 text-ink-accent" aria-hidden />
         <div>
