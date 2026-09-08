@@ -53,10 +53,14 @@ export const adminContentEn: typeof adminContentDe = {
     deactivateConfirm: 'Deactivate',
     deactivateDone: '“{name}” is disabled.',
 
-    deleteTitle: 'Delete “{name}”?',
+    /* Every other delete on the panel asks «for good»; this one said
+       «permanently», and the same act worded two ways reads as two acts. The
+       body now names what actually goes before it offers the way out —
+       «This is permanent» named nothing at all. */
+    deleteTitle: 'Delete “{name}” for good?',
     deleteBody:
-      'This is permanent. If you only want to stop offering it for now, deactivate instead — the service and its price stay.',
-    deleteConfirm: 'Delete permanently',
+      'The service is removed from the catalogue, price and translations included. This cannot be undone. If you only want to stop offering it for now, deactivate instead — all of it stays.',
+    deleteConfirm: 'Delete for good',
     deleteDone: '“{name}” has been deleted.',
     /* States the number rather than just "cannot": a service with fourteen
        jobs behind it is a different case from one with a single job, and the
