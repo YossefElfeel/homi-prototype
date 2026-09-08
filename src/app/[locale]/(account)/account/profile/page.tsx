@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Field, Input, Select, Checkbox } from '@/components/ui/field';
-import { ConfirmPanel } from '@/components/ui/confirm-panel';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
 import type { Customer } from '@/mock/schema';
@@ -33,6 +33,18 @@ import type { Customer } from '@/mock/schema';
  * «Benachrichtigungen» stopped and «Ihre Daten» began was the amount of air
  * above the heading. On a screen whose last control closes the account, that
  * boundary has to be drawn rather than implied.
+ *
+ * That last control asked its question with `ConfirmPanel` — a red block that
+ * *replaced* the two buttons it came from. Closing an account is the one
+ * irreversible thing a customer can do to themselves here, and the inline
+ * shape worked against it three ways: the question opened at the very bottom
+ * of a long settings page, so on a phone it could land below the fold and read
+ * as nothing having happened; «Daten anfordern» vanished at the same moment,
+ * which is the one control somebody about to leave most likely still wants;
+ * and the page behind it stayed live, so the reader could keep editing their
+ * phone number with the deletion question still open. `ConfirmDialog` is the
+ * same question as a modal — over the page, focus trapped, Escape out, and
+ * «Abbrechen» focused rather than the red button.
  */
 export default function AccountProfilePage() {
   const t = useTranslations('account.profile');
@@ -207,52 +219,53 @@ export default function AccountProfilePage() {
         <Card>
           <CardHeader title={t('dataTitle')} description={t('dataBody')} />
           <CardBody>
-            {closing ? (
-              <ConfirmPanel
-                title={t('deleteConfirmTitle')}
-                body={t('deleteConfirmBody')}
-                action={t('deleteConfirmAction')}
-                dismiss={t('dismiss')}
-                onConfirm={() => {
-                  /*
-                   * Deactivate, do not delete. `customerId` is referenced by
-                   * properties, requests, bookings, invoices, subscriptions and
-                   * messages, and three admin screens dereference it with a
-                   * non-null assertion — a hard delete would take them down.
-                   * Retention law says the same thing: the invoices have to stay.
-                   */
-                  // Written directly rather than through `patch`, which also
-                  // flashes the "saved" chip — wrong feedback for closing an
-                  // account, and on a screen the user is about to leave.
-                  patchData({
-                    customers: customers.map((c) =>
-                      c.id === customer.id ? { ...c, status: 'inactive' as const } : c,
-                    ),
-                  });
-                  setClosing(false);
-                  setRole('visitor');
-                  router.push('/');
-                }}
-                onDismiss={() => setClosing(false)}
-              />
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="secondary"
-                    onClick={() => toast.success(t('dataExportToast'))}
-                  >
-                    <Download className="size-4" aria-hidden />
-                    {t('dataExport')}
-                  </Button>
-                  <Button variant="quiet" onClick={() => setClosing(true)}>
-                    <Trash2 className="size-4" aria-hidden />
-                    {t('dataDelete')}
-                  </Button>
-                </div>
-                <p className="mt-3 text-sm text-ink-tertiary">{t('dataDeleteNote')}</p>
-              </>
-            )}
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => toast.success(t('dataExportToast'))}
+              >
+                <Download className="size-4" aria-hidden />
+                {t('dataExport')}
+              </Button>
+              <Button variant="quiet" onClick={() => setClosing(true)}>
+                <Trash2 className="size-4" aria-hidden />
+                {t('dataDelete')}
+              </Button>
+            </div>
+            <p className="mt-3 text-sm text-ink-tertiary">{t('dataDeleteNote')}</p>
+
+            <ConfirmDialog
+              open={closing}
+              onOpenChange={setClosing}
+              title={t('deleteConfirmTitle')}
+              body={t('deleteConfirmBody')}
+              action={t('deleteConfirmAction')}
+              dismiss={t('dismiss')}
+              onConfirm={() => {
+                /*
+                 * Deactivate, do not delete. `customerId` is referenced by
+                 * properties, requests, bookings, invoices, subscriptions and
+                 * messages, and three admin screens dereference it with a
+                 * non-null assertion — a hard delete would take them down.
+                 * Retention law says the same thing: the invoices have to stay.
+                 */
+                // Written directly rather than through `patch`, which also
+                // flashes the "saved" chip — wrong feedback for closing an
+                // account, and on a screen the user is about to leave.
+                patchData({
+                  customers: customers.map((c) =>
+                    c.id === customer.id ? { ...c, status: 'inactive' as const } : c,
+                  ),
+                });
+                // Closed before the redirect, not left to unmount with the
+                // page: Radix locks body scroll and pointer events while a
+                // dialog is open, and a modal that never runs its own close
+                // can leave `/` unclickable.
+                setClosing(false);
+                setRole('visitor');
+                router.push('/');
+              }}
+            />
           </CardBody>
         </Card>
       </div>
