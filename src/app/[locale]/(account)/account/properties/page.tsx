@@ -8,17 +8,24 @@ import { Filter, Home, Plus, Search, X } from 'lucide-react';
 import { useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
+import { PropertyDeleteDialog } from '@/components/account/property-delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { useConfirmTarget } from '@/components/ui/confirm-dialog';
 import { DataView, type Column } from '@/components/ui/data-view';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select } from '@/components/ui/field';
 import { PageHeader } from '@/components/ui/page-header';
-import { RowAction, RowActions } from '@/components/ui/row-actions';
+import {
+  RowAction,
+  RowActionButton,
+  RowActions,
+  RowActionsDivider,
+} from '@/components/ui/row-actions';
 import { ActionIcon } from '@/lib/action-icons';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { Toolbar } from '@/components/ui/toolbar';
-import { propertyVisits } from '@/lib/property-facts';
+import { propertyUsage, propertyVisits, type PropertyUsage } from '@/lib/property-facts';
 import type { Booking, Property, PropertyKind } from '@/mock/schema';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
@@ -49,12 +56,22 @@ export default function AccountPropertiesPage() {
   const allProperties = useStore((s) => s.data.properties);
   const services = useStore((s) => s.services);
   const patchData = useStore((s) => s.patchData);
+  /* The whole set, not the customer's slice: `propertyUsage` counts six record
+     types and two of them — the key register and the change log — are the
+     office's, never filtered into `useAccount`. A guard reading only what the
+     customer can see would clear an address whose keys we are still holding. */
+  const data = useStore((s) => s.data);
+  const deleteProperty = useStore((s) => s.deleteProperty);
   const now = useNow();
   const router = useRouter();
 
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | PropertyKind>('all');
+  /* The one act on this screen that cannot happen on a click. Adding is the
+     other item in the header and is undone by deleting; this is undone by
+     nothing. */
+  const removing = useConfirmTarget<{ property: Property; usage: PropertyUsage }>();
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
   /* No customer record means there is nothing to attach a property to, and the
@@ -93,6 +110,37 @@ export default function AccountPropertiesPage() {
     services.find((s) => s.slug === booking.serviceSlug)?.name[locale] ?? booking.serviceSlug;
 
   const visitsOf = (p: Property) => propertyVisits(bookings, p.id);
+
+  /* Who the change log records as having done it. The log credits whoever
+     `demo.currentMemberId` points at unless it is told otherwise, so without
+     this the office's own log would show one of its employees deleting an
+     address they never touched — and after a delete that line is the only
+     thing left that can say who removed it. */
+  const signature = `${customer.firstName} ${customer.lastName}`;
+
+  /*
+   * Counted when the menu item is clicked rather than per row while the table
+   * renders: the entry is offered on every property, so the number is only
+   * needed once, and the naive version rescans six arrays for every row on
+   * every keystroke in the search box.
+   */
+  function askDelete(property: Property) {
+    removing.ask({ property, usage: propertyUsage(data, property.id) });
+  }
+
+  function confirmDelete() {
+    const property = removing.target?.property;
+    if (!property) return;
+    removing.dismiss();
+    /* The store counts again rather than trusting this screen: the pair above
+       is a render old, and the office books work at these addresses from the
+       other side of the app while the customer is looking at them. */
+    if (!deleteProperty(property.id, signature)) {
+      toast.error(t('deleteRaced'));
+      return;
+    }
+    toast.success(t('deleteDone', { label: property.label || property.street }));
+  }
 
   const columns: Column<Property>[] = [
     {
@@ -341,6 +389,15 @@ export default function AccountPropertiesPage() {
             <RowAction href={`/account/properties/${p.id}`} label={t('rowOpen')}>
               <ActionIcon.open aria-hidden />
             </RowAction>
+            <RowActionsDivider />
+            {/* Offered on every row, including the ones it will refuse. The
+                office's copy of this table greys the entry out and puts the
+                blocking count in its label — behind the counter that reads,
+                because whoever sees it knows what the number counts. Here it
+                would be a dead menu item with a database sentence on it. */}
+            <RowActionButton tone="danger" label={t('rowDelete')} onClick={() => askDelete(p)}>
+              <ActionIcon.delete aria-hidden />
+            </RowActionButton>
           </RowActions>
         )}
         empty={
@@ -384,6 +441,18 @@ export default function AccountPropertiesPage() {
             />
           )
         }
+      />
+
+      <PropertyDeleteDialog
+        target={
+          removing.target && {
+            label: removing.target.property.label || removing.target.property.street,
+            usage: removing.target.usage,
+          }
+        }
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        onConfirm={confirmDelete}
       />
     </>
   );

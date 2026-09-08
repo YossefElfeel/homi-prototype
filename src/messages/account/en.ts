@@ -264,6 +264,30 @@ export const accountEn: typeof accountDe = {
     colNextVisit: 'Next appointment',
     nothingBooked: 'Nothing booked',
     rowOpen: 'View details',
+
+    rowDelete: 'Delete property',
+    deleteTitle: 'Delete “{label}” for good?',
+    deleteBody:
+      'The address leaves your list, together with its size, its access details and its notes. This cannot be undone. Nothing has ever used it, so nothing you might need later goes with it.',
+    deleteConfirm: 'Delete for good',
+    deleteDone: '“{label}” has been deleted.',
+    deleteBlockedTitle: 'We cannot delete “{label}”',
+    deleteBlockedBody:
+      'This address already carries your history. It stays, so that your invoices and appointments for it do not point at nothing.',
+    deleteHoldsLead: 'Still attached to it:',
+    holds: {
+      requests: '{n, plural, one {# request} other {# requests}}',
+      bookings: '{n, plural, one {# appointment} other {# appointments}}',
+      subscriptions: '{n, plural, one {# plan} other {# plans}}',
+      keys: '{n, plural, one {# key with us} other {# keys with us}}',
+      photos: '{n, plural, one {# photo} other {# photos}}',
+      events: '{n, plural, one {# entry in the history} other {# entries in the history}}',
+    },
+    deleteBlockedExit:
+      'If the address should go anyway — because you have moved out, say — write to us.',
+    deleteBlockedExitAction: 'Write a message',
+    deleteRaced:
+      'Something has attached itself to this address in the meantime, so it stays. Please reload the page.',
     search: 'Name or address',
     filterKind: 'Type',
     filterAll: 'All',
@@ -343,6 +367,10 @@ export const accountEn: typeof accountDe = {
     notesHint: 'For example: do not let the cat out, spare key with the neighbour.',
     historyTitle: 'Jobs at this property',
     historyEmpty: 'No jobs yet.',
+
+    deleteSectionTitle: 'Delete property',
+    deleteHint:
+      'Only while nothing is attached to the address yet. After that it stays — and we tell you what is holding it.',
   },
 
   subscription: {

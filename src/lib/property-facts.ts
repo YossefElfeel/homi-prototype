@@ -154,3 +154,40 @@ export function propertyUsage(data: DataSet, propertyId: ID): PropertyUsage {
     total: Object.values(usage).reduce((sum, n) => sum + n, 0),
   };
 }
+
+/**
+ * What is holding the property, named one line at a time.
+ *
+ * `total` is what the guard decides on, and it is the wrong thing to show a
+ * customer: «19 Einträge hängen daran» is a database sentence, and the 19
+ * silently mixes their own requests with rows they have never heard of. The
+ * office can read that number — it is the count of things it would have to
+ * unpick — but the person who typed the address wants to know *what* it is.
+ *
+ * Only the non-zero parts, so the refusal never prints «0 Termine» beside the
+ * reason it actually refused. The order is the order a customer would tell the
+ * story in: what they asked for, when we came, the plan behind it, then the
+ * things they would not have thought of.
+ */
+const USAGE_ORDER: Record<PropertyUsageKind, number> = {
+  requests: 0,
+  bookings: 1,
+  subscriptions: 2,
+  keys: 3,
+  photos: 4,
+  events: 5,
+};
+
+/**
+ * A `Record` rather than an array on purpose: a seventh record type added to
+ * `PropertyUsage` fails to compile here, instead of quietly never being named
+ * by a refusal that still blocks on it.
+ */
+export type PropertyUsageKind = Exclude<keyof PropertyUsage, 'total'>;
+
+export function usageBreakdown(usage: PropertyUsage): { kind: PropertyUsageKind; n: number }[] {
+  return (Object.keys(USAGE_ORDER) as PropertyUsageKind[])
+    .filter((kind) => usage[kind] > 0)
+    .sort((a, b) => USAGE_ORDER[a] - USAGE_ORDER[b])
+    .map((kind) => ({ kind, n: usage[kind] }));
+}

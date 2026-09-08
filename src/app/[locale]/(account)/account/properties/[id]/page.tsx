@@ -5,13 +5,15 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Eye, Home, KeyRound, Pencil } from 'lucide-react';
 
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
 import type { AccessMethod } from '@/mock/schema';
+import { PropertyDeleteDialog } from '@/components/account/property-delete-dialog';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { useConfirmTarget } from '@/components/ui/confirm-dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
@@ -19,6 +21,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Pagination, paginate } from '@/components/ui/pagination';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ActionIcon } from '@/lib/action-icons';
+import { propertyUsage, type PropertyUsage } from '@/lib/property-facts';
 import { areaLabel, figure } from '@/lib/property-size';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useStore } from '@/mock/store';
@@ -52,18 +56,29 @@ export default function AccountPropertyPage({
 }) {
   const { id } = use(params);
   const t = useTranslations('account.property');
+  /* The delete asks the same question here as in the row menu, so it reads the
+     same sentences — a confirm worded twice is two different rules to a
+     reader. Only the card's own heading is local to this screen. */
+  const listT = useTranslations('account.properties');
   const appT = useTranslations('app');
   const format = useFormatter();
   const locale = useLocale() as Locale;
   const hydrated = useHydrated();
 
-  const { properties, bookings } = useAccount();
+  const { customer, properties, bookings } = useAccount();
   const services = useStore((s) => s.services);
   const patchData = useStore((s) => s.patchData);
   const allProperties = useStore((s) => s.data.properties);
+  /* The whole set: two of the six things that hold a property — the key
+     register and the change log — belong to the office and never reach
+     `useAccount`. See the same note on the list. */
+  const data = useStore((s) => s.data);
+  const deleteProperty = useStore((s) => s.deleteProperty);
+  const router = useRouter();
 
   const [editingAccess, setEditingAccess] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
+  const removing = useConfirmTarget<PropertyUsage>();
 
   if (!hydrated) return <SkeletonPage label={t('back')} />;
 
@@ -90,6 +105,25 @@ export default function AccountPropertyPage({
     .filter((b) => b.propertyId === property.id)
     .sort((a, b) => (a.start < b.start ? 1 : -1));
   const historyView = paginate(history, historyPage, 10);
+
+  /* The label the delete asks about and reports back. The street stands in for
+     a property saved without one, so the confirm never asks about «». */
+  const name = property.label || property.street;
+
+  function confirmDelete() {
+    /* The store counts again, and the log is signed with the customer's name
+       rather than the office's — both for the reasons on the list. */
+    if (!deleteProperty(id, customer && `${customer.firstName} ${customer.lastName}`)) {
+      toast.error(listT('deleteRaced'));
+      removing.dismiss();
+      return;
+    }
+    toast.success(listT('deleteDone', { label: name }));
+    /* Back to the list rather than staying on a record that no longer exists,
+       which would swap the page for «Dieses Objekt finden wir nicht» — a dead
+       end that reads as a broken link rather than as a delete that worked. */
+    router.replace('/account/properties');
+  }
 
   const facts: [string, string][] = [
     [t('area'), areaLabel(property.area)],
@@ -319,6 +353,32 @@ export default function AccountPropertyPage({
               />
             </CardBody>
           </Card>
+
+          {/*
+            Its own card, and last. Everything above it is a correction that can
+            be corrected again — the access method, the standing note, the
+            measurements a quote is priced from. This one cannot, so it does not
+            belong under any of their headings. It belongs on this screen all
+            the same: somebody who opened the address they typed wrong should
+            not have to go back to the list to be rid of it.
+
+            The heading is a heading, not the question. «Objekt löschen?»
+            sitting permanently on the page is a prompt the reader answers by
+            ignoring it.
+          */}
+          <Card tone="danger">
+            <CardHeader title={t('deleteSectionTitle')} description={t('deleteHint')} />
+            <CardBody>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => removing.ask(propertyUsage(data, property.id))}
+              >
+                <ActionIcon.delete className="size-3.5" aria-hidden />
+                {listT('rowDelete')}
+              </Button>
+            </CardBody>
+          </Card>
         </div>
 
         <aside className="lg:col-span-5">
@@ -374,6 +434,18 @@ export default function AccountPropertyPage({
           </Card>
         </aside>
       </div>
+
+      <PropertyDeleteDialog
+        target={
+          removing.target && {
+            label: name,
+            usage: removing.target,
+          }
+        }
+        open={removing.open}
+        onOpenChange={(open) => !open && removing.dismiss()}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
