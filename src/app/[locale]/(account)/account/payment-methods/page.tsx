@@ -10,6 +10,11 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import {
+  ConfirmDialog,
+  useConfirmTarget,
+  useDismissLabel,
+} from '@/components/ui/confirm-dialog';
 import { Select } from '@/components/ui/field';
 import {
   Dialog,
@@ -113,6 +118,17 @@ export default function AccountPaymentPage() {
    */
   const [adding, setAdding] = useState<SavedMethodKind | null>(null);
   const [draft, setDraft] = useState<PaymentDraft>(() => blankDraft('card'));
+  /*
+   * The refusal is a modal, not a toast.
+   *
+   * A toast is the wrong shape for this one: it is the answer to a click the
+   * customer has to *undo* their way out of — pick another card for the
+   * package first — and it slid away on its own timer while they were still
+   * reading which package it named. Every other refusal in the product asks
+   * from a box over the page; this one now does too.
+   */
+  const blocked = useConfirmTarget<{ label: string; plans: string[] }>();
+  const dismissLabel = useDismissLabel();
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -208,7 +224,7 @@ export default function AccountPaymentPage() {
                            said so. */
                         const result = removePaymentMethod(method.id);
                         if ('blocked' in result) {
-                          toast.error(t('removeBlocked', { plans: result.plans.join(', ') }));
+                          blocked.ask({ label: method.label, plans: result.plans });
                           return;
                         }
                         toast.success(t('removed'));
@@ -390,6 +406,25 @@ export default function AccountPaymentPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* «Entfernen» is shown and disabled rather than absent — the same call
+          the plan catalogue makes for a package nobody may delete. Somebody who
+          pressed the bin needs to see that the act was understood and declined,
+          with the package named beside it; a control that simply does nothing
+          reads as a broken button. */}
+      <ConfirmDialog
+        open={blocked.open}
+        onOpenChange={(open) => !open && blocked.dismiss()}
+        title={t('removeBlockedTitle', { label: blocked.target?.label ?? '' })}
+        body={t('removeBlocked', { plans: blocked.target?.plans.join(', ') ?? '' })}
+        action={t('remove')}
+        dismiss={dismissLabel}
+        disabled
+        /* Unreachable — the action is disabled for as long as this box is
+           open — but the prop is required and a no-op lambda would read as an
+           oversight. Closing is the only thing that can happen here. */
+        onConfirm={blocked.dismiss}
+      />
     </div>
   );
 }
