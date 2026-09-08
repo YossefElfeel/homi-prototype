@@ -12,10 +12,15 @@ import { cn } from '@/lib/cn';
  *
  * It has one now, and the admin panel has moved to it: see `ConfirmDialog`,
  * which is a modal, cannot open below the fold, and is the same control on
- * every screen. What is left here is the three places a customer withdraws
- * something of their own — a request, a quote, their account — and those were
- * deliberately not touched in that pass. Whether they should follow is a
- * question about the customer surfaces, not about this component.
+ * every screen. Closing an account has followed — `/account/profile`, where
+ * the panel opened at the foot of a long settings page and took «Daten
+ * anfordern» off screen with it.
+ *
+ * What is left here is the two places a customer withdraws something they
+ * asked for rather than something they are: a request and a quote. Both sit
+ * beside the thing being withdrawn, and on both the question is *about* that
+ * thing, so the panel still earns its place. Whether they should follow too is
+ * a question about those two screens, not about this component.
  *
  * Presentational on purpose: the open/closed `useState` stays in the page, so
  * reading a screen still tells you whether it has a confirm step.
