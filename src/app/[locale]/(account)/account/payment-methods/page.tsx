@@ -233,12 +233,6 @@ export default function AccountPaymentPage() {
         </Card>
       </div>
 
-      {/* See the note on the invoice screen: about the prototype, not about
-          the customer's cards, and it had no surface under it. */}
-      <Card className="mt-app-section">
-        <p className="text-sm text-ink-tertiary">{t('demoNote')}</p>
-      </Card>
-
       <Dialog open={adding !== null} onOpenChange={(o) => !o && setAdding(null)}>
         <DialogContent closeLabel={formT('cancel')}>
           {adding && (

@@ -669,7 +669,6 @@ export const accountEn: typeof accountDe = {
     defaultLabel: 'Default',
     makeDefault: 'Make default',
     remove: 'Remove',
-    demoNote: 'Prototype: no real payment details are collected.',
     added: 'Payment method saved.',
     removed: 'Payment method removed.',
     defaultSet: 'Set as the default.',
