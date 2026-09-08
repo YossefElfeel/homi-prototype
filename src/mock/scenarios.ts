@@ -1323,6 +1323,55 @@ function baseData(now: Date): DataSet {
       dueAt: iso(days(now, 25)),
       qrReference: '21 00000 00003 13947 14300 09008',
     },
+    /*
+     * The two states the demo account's list could not reach.
+     *
+     * cus_2 is the account every reviewer signs in as, and its invoices were
+     * `sent` once and `paid` four times. So screen 39 drew a status filter with
+     * «Überfällig» and «Storniert» in it that could only ever return an empty
+     * table, the sidebar's overdue count sat at zero on the one account
+     * anybody opens, and the red notice on screen 40 was unreachable without
+     * switching scenario first.
+     *
+     * Neither carries a `bookingId`, for the same reason `inv_1` in the
+     * `overdue` scenario does not: every finished job of cus_2 is already
+     * billed, and a second live invoice against one visit is a double charge.
+     * A standalone invoice is a first-class thing since the create screen
+     * stopped requiring a job behind it.
+     */
+    {
+      id: 'inv_overdue',
+      reference: 'RE-2026-0045',
+      customerId: 'cus_2',
+      lines: [
+        { label: 'Deep cleaning', quantity: 5, unitPrice: 49 },
+        { label: 'Oven cleaning', quantity: 1, unitPrice: 45 },
+      ],
+      /* Stored `sent`, and overdue only because the date went past. Nothing in
+         the app writes `overdue` — `effectiveInvoiceStatus` derives it from
+         `dueAt` — so storing it here would test the badge against a record the
+         running app can never produce. */
+      status: 'sent',
+      createdAt: iso(days(now, -48)),
+      issuedAt: iso(days(now, -47)),
+      dueAt: iso(days(now, -17)),
+      qrReference: '21 00000 00003 13947 14300 09045',
+    },
+    {
+      id: 'inv_cancelled',
+      reference: 'RE-2026-0046',
+      customerId: 'cus_2',
+      lines: [{ label: 'Regular cleaning', quantity: 4, unitPrice: 49 }],
+      status: 'cancelled',
+      createdAt: iso(days(now, -33)),
+      issuedAt: iso(days(now, -32)),
+      dueAt: iso(days(now, -2)),
+      /* Billed for a visit the plan already covers — the ordinary reason an
+         invoice is withdrawn rather than corrected, and the case §15 keeps in
+         the list holding its number instead of deleting. */
+      cancelReason: 'Billed in error — the visit is covered by the Basic plan.',
+      qrReference: '21 00000 00003 13947 14300 09046',
+    },
     /* §4.2 charges half a job when nobody lets us in, and B-1053's timeline
        already said so — «20 Min. gewartet, 50% verrechnet». Without the
        invoice behind it that sentence was the only trace of the money: the
