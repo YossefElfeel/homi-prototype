@@ -419,6 +419,12 @@ export const accountDe = {
     downloadToast: 'Im Prototyp wird noch keine PDF-Datei erzeugt.',
     overdueTitle: 'Überfällig',
     overdueBody: 'Diese Rechnung war am {date} fällig. Falls Sie bereits bezahlt haben, ist diese Meldung gegenstandslos.',
+    /* Der Grund der Stornierung steht bewusst nicht hier — er ist für die
+       Buchhaltung geschrieben. Was die Kundin wissen muss, ist der Satz
+       darunter: es ist nichts offen. */
+    cancelledTitle: 'Diese Rechnung ist storniert',
+    cancelledBody:
+      'Sie müssen nichts bezahlen. Falls Sie den Betrag bereits überwiesen haben, melden Sie sich — wir erstatten ihn zurück.',
   },
 
   properties: {

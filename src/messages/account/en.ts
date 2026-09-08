@@ -384,6 +384,9 @@ export const accountEn: typeof accountDe = {
     overdueTitle: 'Overdue',
     overdueBody:
       'This invoice was due on {date}. If you have already paid, please disregard this.',
+    cancelledTitle: 'This invoice is cancelled',
+    cancelledBody:
+      'Nothing is owed on it. If you have already transferred the amount, get in touch and we will refund it.',
   },
 
   properties: {
