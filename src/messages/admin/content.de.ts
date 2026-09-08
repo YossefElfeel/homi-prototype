@@ -52,9 +52,13 @@ export const adminContentDe = {
     deactivateConfirm: 'Deaktivieren',
     deactivateDone: '«{name}» ist deaktiviert.',
 
-    deleteTitle: '«{name}» löschen?',
+    /* Sagt «endgültig» wie jedes andere Löschen im Panel — dieselbe Handlung
+       zweimal verschieden benannt liest sich wie zwei Handlungen. Und der Text
+       nennt jetzt zuerst, was tatsächlich weggeht: «Das ist endgültig» nannte
+       gar nichts. */
+    deleteTitle: '«{name}» endgültig löschen?',
     deleteBody:
-      'Das ist endgültig. Wenn Sie die Leistung nur vorübergehend nicht anbieten wollen, deaktivieren Sie sie stattdessen — dann bleibt sie samt Preis erhalten.',
+      'Die Leistung wird aus dem Katalog entfernt, samt Preis und Übersetzungen. Das lässt sich nicht rückgängig machen. Wenn Sie sie nur vorübergehend nicht anbieten wollen, deaktivieren Sie sie stattdessen — dann bleibt alles erhalten.',
     deleteConfirm: 'Endgültig löschen',
     deleteDone: '«{name}» wurde gelöscht.',
     /* Sagt die Zahl, nicht nur «geht nicht»: eine Leistung mit 14 Aufträgen
