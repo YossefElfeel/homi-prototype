@@ -434,6 +434,16 @@ export const adminContentDe = {
     activeLabel: 'Aktiv',
     activeHint: 'Ausgeschaltet lässt sich der Code nicht einlösen. Der Schalter wirkt erst mit dem Speichern.',
     save: 'Speichern',
+
+    /* Nicht «Gutschein archivieren?» — eine Frage, die dauerhaft auf einer
+       Seite steht, beantwortet der Leser damit, dass er sie überliest. Die
+       Frage stellt der Dialog. */
+    archiveSectionTitle: 'Aus dem Verkehr nehmen',
+    archiveSectionBody:
+      'Archivieren schaltet den Code aus und nimmt ihn aus der Arbeitsliste. Der Datensatz bleibt mit allen Einlösungen erhalten; im Tab «{tab}» holen Sie ihn jederzeit zurück.',
+    dangerTitle: 'Zurückholen oder endgültig löschen',
+    dangerBody:
+      'Dieser Gutschein liegt im Archiv. Von hier holen Sie ihn zurück in die Arbeitsliste — oder Sie löschen ihn für immer, und dann ist auch nicht mehr nachvollziehbar, welcher Code den Abzug auf einer alten Rechnung gemacht hat.',
   },
 
   /* Bildschirm 85 — «Unsere Arbeiten», aus dem Büro. */

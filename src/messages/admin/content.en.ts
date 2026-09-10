@@ -431,6 +431,15 @@ export const adminContentEn: typeof adminContentDe = {
     activeLabel: 'Active',
     activeHint: 'Switched off, the code cannot be redeemed. The switch only takes effect when you save.',
     save: 'Save',
+
+    /* Not "Archive this coupon?" — a question standing permanently on a page
+       is one the reader answers by skipping it. The dialog asks. */
+    archiveSectionTitle: 'Take it out of circulation',
+    archiveSectionBody:
+      'Archiving switches the code off and takes it off the working list. The record keeps every redemption on it, and the «{tab}» tab brings it back whenever you want.',
+    dangerTitle: 'Restore, or delete for good',
+    dangerBody:
+      'This coupon is in the archive. From here you can put it back on the working list — or delete it for ever, and then nothing is left to say which code took the deduction off an old invoice.',
   },
 
   gallery: {

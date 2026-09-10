@@ -11,10 +11,12 @@ import type { Locale } from '@/i18n/routing';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { ConfirmDialog, useDismissLabel } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input, NumberField, Select, Checkbox } from '@/components/ui/field';
 import { formatChf } from '@/components/ui/money';
 import { PageHeader } from '@/components/ui/page-header';
+import { ActionIcon } from '@/lib/action-icons';
 import { cn } from '@/lib/cn';
 import { SkeletonPage } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -153,8 +155,12 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
   const coupons = useStore((s) => s.data.coupons);
   const services = useStore((s) => s.services);
   const patchData = useStore((s) => s.patchData);
+  const setCouponArchived = useStore((s) => s.setCouponArchived);
+  const deleteCoupon = useStore((s) => s.deleteCoupon);
+  const dismissLabel = useDismissLabel();
 
   const [form, setForm] = useState<Draft>(() => draftOf(coupon));
+  const [confirming, setConfirming] = useState<'archive' | 'delete' | null>(null);
 
   const stored = draftOf(coupon);
   const dirty =
@@ -226,6 +232,45 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
     }
 
     toast.success(t(isNew ? 'created' : 'saved', { code }));
+    router.push('/admin/coupons');
+  }
+
+  /**
+   * Archiving from here, and the one line that keeps it honest.
+   *
+   * The store switches the code off as it archives — see `setCouponArchived`.
+   * The «Aktiv» switch on this screen is a *draft* field, so without the
+   * second write the form would still be holding `active: true`, and the next
+   * press of «Speichern» would put a code that is sitting in the archive back
+   * on sale. `{ ...coupon, ...form }` is what makes that not a hypothetical.
+   *
+   * Flipping the visible switch is also the better feedback: the reader
+   * watches the thing the confirm just promised.
+   */
+  function archive() {
+    setConfirming(null);
+    setCouponArchived(coupon.id, now.toISOString());
+    setForm((f) => ({ ...f, active: false }));
+    toast.success(listT('archiveDone', { code: coupon.code }));
+  }
+
+  /* No confirm on the way back — it puts a row into a list and switches
+     nothing on. The draft needs no correction either: restoring leaves
+     `active` where the archive left it, which is off. */
+  function restore() {
+    setCouponArchived(coupon.id, undefined);
+    toast.success(listT('restoreDone', { code: coupon.code }));
+  }
+
+  function remove() {
+    setConfirming(null);
+    if (!deleteCoupon(coupon.id)) {
+      toast.error(listT('deleteBlocked'));
+      return;
+    }
+    toast.success(listT('deleteDone', { code: coupon.code }));
+    /* The record this page is about no longer exists, so staying would leave
+       the reader on a screen saying «gibt es nicht mehr» where a coupon was. */
     router.push('/admin/coupons');
   }
 
@@ -520,6 +565,59 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
             />
           </CardBody>
         </Card>
+
+        {/*
+          What the list can do to this record, on the screen the record is on.
+
+          A reader who followed a link into a coupon could read it, change its
+          fields and save — and to take it out of circulation had to go back to
+          the table and find the row again. Every other detail screen in the
+          panel carries its own decisions (screen 75b puts its delete in the
+          same red card at the foot of the form), and this one is where the
+          reader already is when they conclude that a campaign is over.
+
+          The tone follows what is actually on offer rather than the section:
+          archiving is reversible and its card is an ordinary one, and the red
+          only arrives on the screen where «endgültig löschen» does. A form
+          with a permanent danger slab at the bottom teaches the reader to
+          scroll past it.
+        */}
+        {!isNew && (
+          <Card tone={coupon.archivedAt ? 'danger' : undefined}>
+            <CardHeader
+              /* A heading, not the confirm's question. «Gutschein löschen?»
+                 reads as a prompt, and a prompt standing permanently on a page
+                 is one the reader answers by ignoring it. */
+              title={t(coupon.archivedAt ? 'dangerTitle' : 'archiveSectionTitle')}
+              description={
+                coupon.archivedAt
+                  ? t('dangerBody')
+                  : t('archiveSectionBody', { tab: listT('tabArchived') })
+              }
+            />
+            <CardBody>
+              <div className="flex flex-wrap gap-3">
+                {coupon.archivedAt ? (
+                  <>
+                    <Button variant="secondary" onClick={restore}>
+                      <ActionIcon.restore className="size-4" aria-hidden />
+                      {listT('rowRestore')}
+                    </Button>
+                    <Button variant="danger" onClick={() => setConfirming('delete')}>
+                      <ActionIcon.delete className="size-4" aria-hidden />
+                      {listT('rowDelete')}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="secondary" onClick={() => setConfirming('archive')}>
+                    <ActionIcon.archive className="size-4" aria-hidden />
+                    {listT('rowArchive')}
+                  </Button>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        )}
       </div>
 
       {/*
@@ -560,6 +658,31 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
       <p className="mt-6 max-w-[var(--measure)] text-sm text-ink-tertiary">
         {listT('stackingNote')}
       </p>
+
+      {/* The same two questions the list asks, in the same words. A decision
+          that is worded one way on the table and another way here is two
+          decisions to the person reading them. */}
+      <ConfirmDialog
+        open={confirming === 'archive'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={listT('archiveConfirmTitle', { code: coupon.code })}
+        body={listT('archiveConfirm')}
+        action={listT('rowArchive')}
+        dismiss={dismissLabel}
+        onConfirm={archive}
+      />
+
+      <ConfirmDialog
+        open={confirming === 'delete'}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title={listT('deleteConfirmTitle', { code: coupon.code })}
+        body={listT(coupon.usedCount ? 'deleteConfirmRedeemed' : 'deleteConfirm', {
+          n: coupon.usedCount,
+        })}
+        action={listT('rowDelete')}
+        dismiss={dismissLabel}
+        onConfirm={remove}
+      />
     </div>
   );
 }
