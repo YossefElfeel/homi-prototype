@@ -680,7 +680,6 @@ export const adminEn: typeof adminDe = {
        is `status.method` now, next to the payment states. */
     rowActions: 'Actions',
     rowOpen: 'View details',
-    rowConfirmSlot: 'Confirm a date',
     rowOpenBooking: 'Open booking {reference}',
     rowOpenRequest: 'Open the request',
     rowOpenAsCustomer: 'Open the customer view',

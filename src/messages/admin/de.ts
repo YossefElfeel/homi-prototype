@@ -786,7 +786,6 @@ export const adminDe = {
        Jetzt `status.method`, neben den Zahlungszuständen. */
     rowActions: 'Aktionen',
     rowOpen: 'Details ansehen',
-    rowConfirmSlot: 'Termin bestätigen',
     rowOpenBooking: 'Buchung {reference} öffnen',
     rowOpenRequest: 'Anfrage öffnen',
     rowOpenAsCustomer: 'Kundenansicht öffnen',
