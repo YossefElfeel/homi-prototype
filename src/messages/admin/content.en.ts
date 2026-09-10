@@ -329,7 +329,43 @@ export const adminContentEn: typeof adminContentDe = {
     servicesAll: 'All services',
     maxDiscountShort: 'max. {amount}',
     newAction: 'Create a coupon',
-    rowOpen: 'Open coupon',
+    /* Was "Open coupon" while the row ended in a chevron. In the menu it
+       stands next to "Archive", and there what matters is that opening is also
+       how you change it. Same line as the add-ons list. */
+    rowOpen: 'Open and edit',
+    rowArchive: 'Archive',
+    rowRestore: 'Restore',
+    /* Not merely "Delete": this item is only ever in the archive, and there it
+       is the one step that does not come back. The word has to say so before
+       anybody clicks it. */
+    rowDelete: 'Delete for good',
+
+    tabActive: 'Active',
+    tabArchived: 'Archive',
+    colArchivedAt: 'Archived',
+
+    /* The switching off is in the copy because it is the half of the act the
+       word "archive" does not carry. */
+    archiveConfirmTitle: 'Archive {code}?',
+    archiveConfirm:
+      'The code leaves the working list and is switched off — nobody can redeem it after this. The record stays in the archive with every redemption on it, and you can bring it back from there at any time.',
+    archiveDone: '{code} is in the archive and switched off.',
+    restoreDone: '{code} is back on the list — switched off until you switch it on.',
+
+    deleteConfirmTitle: 'Delete {code} for good?',
+    deleteConfirm:
+      'There is no way back from this. Nobody ever redeemed this code, so no invoice hangs off it — though leaving it in the archive costs nothing either.',
+    /* Says the number rather than just warning: a code with 31 redemptions is
+       a different case from one with a single redemption, and that is exactly
+       what the owner decides on. */
+    deleteConfirmRedeemed:
+      'There is no way back from this. The code has been redeemed {n} times. A quote remembers it as text rather than as a reference — remove the record and an invoice sent months ago carries a deduction nobody can account for. Leaving it in the archive costs nothing.',
+    deleteDone: '{code} has been deleted for good.',
+    deleteBlocked: 'Deleting happens from the archive only.',
+
+    archivedEmptyTitle: 'The archive is empty',
+    archivedEmptyBody:
+      'This is where codes go when you take them off the working list — campaigns that are over and you would rather not delete, because the redemptions belong to invoices already sent. Archive the first one from a row’s menu.',
     search: 'Search coupons',
     searchPlaceholder: 'Code or service',
     filterState: 'State',
@@ -351,6 +387,9 @@ export const adminContentEn: typeof adminContentDe = {
 
   coupon: {
     back: 'All coupons',
+    archivedTitle: 'This coupon is in the archive',
+    archivedBody:
+      'Archived on {date}. It is not on the working list and cannot be redeemed. Changes here save as usual; bring it back to the list from the «{tab}» tab.',
     newTitle: 'New coupon',
     newLead: 'Nothing is saved until you press save.',
     notFoundTitle: 'This coupon no longer exists',

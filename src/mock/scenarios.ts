@@ -1515,7 +1515,8 @@ function baseData(now: Date): DataSet {
   ];
 
   /*
-   * Five coupons, one per state.
+   * Six coupons: five in the working list, one per state, and one in the
+   * archive.
    *
    * `coupons: []` was the only list in this seed that was empty on purpose,
    * and the empty state said so — discount messaging reads cheap in this
@@ -1620,6 +1621,39 @@ function baseData(now: Date): DataSet {
       validTo: iso(days(now, 80)),
       usedCount: 0,
       active: true,
+    },
+    {
+      /*
+       * The sixth, and the only one not in the working list — the row the
+       * «Archiv» tab exists to hold.
+       *
+       * The same lesson the customer archive had to learn: a tab whose
+       * populated state can only be reached by archiving something off the
+       * list you are reviewing is, to a reviewer, indistinguishable from a tab
+       * that does not work. So one code arrives already in it.
+       *
+       * It is also the case that makes the archive worth having rather than a
+       * second word for delete. Last winter's campaign ran, ended and was
+       * redeemed 31 times. Switched off it is a fourth dead row in a list of
+       * five live ones; deleted it takes the only explanation of 31 discounted
+       * invoices with it. Archived, the working list is short and the history
+       * is still there for anybody who goes looking.
+       */
+      id: 'cpn_6',
+      code: 'WINTER20',
+      kind: 'percent',
+      value: 20,
+      minOrder: 200,
+      services: ['grundreinigung'],
+      validFrom: iso(days(now, -300)),
+      validTo: iso(days(now, -240)),
+      maxUses: 60,
+      usedCount: 31,
+      /* Off, because archiving switches a code off — a coupon is redeemed by
+         its code, not by being on a screen. A seeded archive row that is still
+         `active` would be the one place in the app where that is not true. */
+      active: false,
+      archivedAt: iso(days(now, -230)),
     },
   ];
 
