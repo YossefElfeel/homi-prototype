@@ -47,6 +47,7 @@ import type { Locale } from '@/i18n/routing';
 import { SEED_ADDONS, SEED_SERVICES, SEED_SETTINGS } from './seed';
 import { buildOfferLines, offerTotal } from './engines/offers';
 import { businessWeekday, fromZoned, zonedParts } from '@/lib/business-time';
+import { assignableTeam } from '@/lib/workforce';
 
 /**
  * Demo scenarios.
@@ -3277,6 +3278,12 @@ function baseData(now: Date): DataSet {
      calendar. */
   const books = financeHistory(now);
 
+  /* The twelve finished jobs that make the workforce board's tables long
+     enough to page. Held in a name rather than spread inline below, because
+     the same list has to reach `labourCosts` too — hours pointing at a
+     booking the data set does not carry are rows that lead nowhere. */
+  const crewJobs = crewBookings(now);
+
   /* The archive, which had never had anything in it. See `archivedRecords`
      for why three rows and why two of them carry invoices. */
   const gone = archivedRecords(now);
@@ -3287,7 +3294,7 @@ function baseData(now: Date): DataSet {
     properties: [...properties, ...extraProperties(), ...gone.properties],
     requests: [...queue, ...quoteRequests, ...accountRequests, ...requests],
     offers: [...offers, ...quoteOffers, ...accountOffers],
-    bookings: [...bookings, ...quoteBookings, ...accountBookings],
+    bookings: [...bookings, ...quoteBookings, ...accountBookings, ...crewJobs],
     events,
     payments: [...payments, ...books.payments, ...gone.payments],
     subscriptions,
@@ -3298,7 +3305,11 @@ function baseData(now: Date): DataSet {
        `nextExpenseSeq` expects when the office records the next one. */
     expenses: [
       ...books.expenses,
-      ...labourCosts(now, [...bookings, ...quoteBookings, ...accountBookings], books.expenses.length),
+      ...labourCosts(
+        now,
+        [...bookings, ...quoteBookings, ...accountBookings, ...crewJobs],
+        books.expenses.length,
+      ),
     ],
     reviews,
     posts: blogPosts(now),
@@ -3413,7 +3424,7 @@ function baseData(now: Date): DataSet {
     coupons,
     changeLog,
     photos: [...photos, ...accountPhotos],
-    team: [owner(now), ...hiredMembers(now)],
+    team: [owner(now), ...hiredMembers(now), ...crewMembers(now)],
     /*
      * The hiring track, in the scenario the app opens on.
      *
@@ -4785,16 +4796,27 @@ function hiredMembers(now: Date): TeamMember[] {
  * back over finished jobs, whose recorded hours name the person who actually
  * worked them: moving `assigneeId` there would have left B-1052 assigned to
  * one contractor and its six and a half hours credited to another. So only the
- * jobs still to be done move, and they alternate.
+ * jobs still to be done move.
+ *
+ * They used to alternate between the two hires by name, which stopped being
+ * right the moment the roster grew past two: the week went to Marta and Yusuf
+ * and every other contractor sat behind an option in the demo bar with an
+ * empty day behind it — the exact failure the paragraph above describes, one
+ * roster size later. Round-robin over everybody who can be sent somewhere
+ * instead, so the open jobs reach as many different people as there are jobs
+ * to give. There are fewer open jobs than contractors, so the tail of the
+ * roster still has nothing this week — which is what a quiet Tuesday looks
+ * like, and the field screen has an empty state that says so.
  */
 function withHiring(data: DataSet): DataSet {
   const OPEN: Booking['status'][] = ['scheduled', 'rescheduled', 'inProgress'];
+  const crew = assignableTeam(data.team).map((m) => m.id);
   let n = 0;
   return {
     ...data,
     bookings: data.bookings.map((b) =>
-      OPEN.includes(b.status)
-        ? { ...b, assigneeId: n++ % 2 === 0 ? 'tm_marta' : 'tm_yusuf' }
+      OPEN.includes(b.status) && crew.length > 0
+        ? { ...b, assigneeId: crew[n++ % crew.length]! }
         : b,
     ),
   };
@@ -5568,8 +5590,218 @@ function financeHistory(now: Date): {
   return { invoices, expenses, payments };
 }
 
+/* ------------------------------------------------- the rest of the roster */
+
 /**
- * What five of the seeded jobs cost in people.
+ * Ten more contractors, and the workforce board is the reason they exist.
+ *
+ * Two people on the roster made «Nach Person» a two-row table. So its ranking,
+ * its paging and its own rule that anybody without hours in the period is left
+ * out had nothing to act on, and the card could never grow past the card
+ * beside it — a summary that cannot outgrow one screen is a summary nobody has
+ * reviewed. A firm running five jobs a day is not two people; the seed claimed
+ * it was.
+ *
+ * No permissions on any of them, which is the common case Yusuf already stands
+ * for: a contractor works from the field screens and has no business in the
+ * console. What these ten add over him is volume, and volume is the thing the
+ * board's own controls were never tested against.
+ *
+ * Each carries one rate across every job below. The rate is stored nowhere —
+ * `rateOf` divides the amount by the hours — so a person paid 32 on one job
+ * and 28 on the next would make «Ansatz» a blend the reader cannot account
+ * for, on a screen whose own hint says there is no rate card behind it.
+ */
+const CREW: {
+  id: ID;
+  first: string;
+  last: string;
+  /** The local part. Spelled out rather than derived, because stripping the
+      accents off «Tomáš Novák» by rule produces `tom.novk`. */
+  mail: string;
+  phone: string;
+  /** Days back they started — always before their oldest job in
+      `CREW_HISTORY`. A contractor who worked in June and joined in August is a
+      fixture contradicting itself, and the user screen prints both dates. */
+  since: number;
+  regions: string[];
+  skills: string[];
+  /** CHF per hour, and it exists only to build the amounts below. */
+  rate: number;
+}[] = [
+  { id: 'tm_ana', first: 'Ana', last: 'Sousa', mail: 'ana.sousa', phone: '+41 78 000 01 01', since: 135, regions: ['8700', '8706', '8707'], skills: ['grundreinigung', 'unterhaltsreinigung', 'einmalreinigung'], rate: 32 },
+  { id: 'tm_ilir', first: 'Ilir', last: 'Krasniqi', mail: 'ilir.krasniqi', phone: '+41 78 000 01 02', since: 132, regions: ['8700', '8707', '8712'], skills: ['grundreinigung', 'bueroreinigung'], rate: 28 },
+  { id: 'tm_fatou', first: 'Fatou', last: 'Ndiaye', mail: 'fatou.ndiaye', phone: '+41 78 000 01 03', since: 128, regions: ['8700', '8706', '8708'], skills: ['umzugsreinigung', 'grundreinigung'], rate: 28 },
+  { id: 'tm_aylin', first: 'Aylin', last: 'Yılmaz', mail: 'aylin.yilmaz', phone: '+41 78 000 01 04', since: 140, regions: ['8706', '8707', '8712'], skills: ['grundreinigung', 'umzugsreinigung'], rate: 29 },
+  { id: 'tm_petra', first: 'Petra', last: 'Horvat', mail: 'petra.horvat', phone: '+41 78 000 01 05', since: 126, regions: ['8700', '8706', '8707'], skills: ['fensterreinigung', 'unterhaltsreinigung'], rate: 30 },
+  { id: 'tm_rosa', first: 'Rosa', last: 'Lima', mail: 'rosa.lima', phone: '+41 78 000 01 06', since: 100, regions: ['8707', '8708', '8627'], skills: ['bueroreinigung', 'unterhaltsreinigung'], rate: 30 },
+  { id: 'tm_luca', first: 'Luca', last: 'Bernasconi', mail: 'luca.bernasconi', phone: '+41 78 000 01 07', since: 96, regions: ['8708', '8712', '8627'], skills: ['bueroreinigung', 'grundreinigung'], rate: 31 },
+  { id: 'tm_dragan', first: 'Dragan', last: 'Petrović', mail: 'dragan.petrovic', phone: '+41 78 000 01 08', since: 104, regions: ['8708', '8627', '8634'], skills: ['bueroreinigung', 'grundreinigung'], rate: 29 },
+  { id: 'tm_tomas', first: 'Tomáš', last: 'Novák', mail: 'tomas.novak', phone: '+41 78 000 01 09', since: 98, regions: ['8700', '8706', '8712'], skills: ['grundreinigung', 'unterhaltsreinigung', 'umzugsreinigung'], rate: 28 },
+  { id: 'tm_emir', first: 'Emir', last: 'Hoxha', mail: 'emir.hoxha', phone: '+41 78 000 01 10', since: 70, regions: ['8712', '8132', '8634'], skills: ['moebelmontage', 'umzugsreinigung'], rate: 31 },
+];
+
+function crewMembers(now: Date): TeamMember[] {
+  return CREW.map((c) => ({
+    id: c.id,
+    firstName: c.first,
+    lastName: c.last,
+    email: `${c.mail}@homivaro.ch`,
+    phone: c.phone,
+    role: 'contractor' as const,
+    active: true,
+    permissions: [],
+    regions: c.regions,
+    skills: c.skills,
+    startedAt: iso(days(now, -c.since)),
+  }));
+}
+
+/** Built once so `CREW_LABOUR` cannot hand out a rate that is not the one on
+    the roster — the drift `TEAM_NAMES` exists to prevent, applied to money. */
+const CREW_RATE = new Map(CREW.map((c) => [c.id, c.rate]));
+
+/**
+ * Twelve finished jobs, and the twenty hours rows booked against them.
+ *
+ * The board's other two tables had the roster's problem. «Auftrag für Auftrag»
+ * ran to five rows and «Nach Auftrag» to four, so the paging under them, the
+ * count in the toolbar and the «Filter zurücksetzen» empty state were all
+ * built against a table that never filled a single page — and a `Weiter`
+ * button nobody has seen enabled is a control that has not been reviewed.
+ *
+ * Three months back and no further, which is a limit the rest of the seed sets
+ * rather than a choice: the oldest household in it was created 150 days ago.
+ * A job dated before its own customer is a fixture contradicting itself, and
+ * the customer screen prints «Kunde seit» directly above the job list. The
+ * three quarters behind these therefore stay what they were — `financeHistory`
+ * invoices and monthly `wages` lumps, with no jobs to hang hours on.
+ *
+ * `closed` on every one of them, because it is the one finished status that
+ * adds nothing to a queue. Twelve `completed` jobs would put twelve approvals
+ * the office never has to make in front of it, and twelve `invoiced` ones
+ * would claim bills that are not in `financeHistory`.
+ */
+const CREW_HISTORY: {
+  ref: string;
+  /** `cus_m<n>` and `prp_m<n>` — the households already in the seed, never a
+      new one. Offices only ever get `bueroreinigung`, the rule `OFFICE_IDS`
+      states for the request queue. */
+  household: number;
+  service: string;
+  /** Calendar months back. Never 0 — the demo clock moves, and a job dated
+      into the running month can land ahead of it. */
+  back: number;
+  /** Day of the month, never past the 28th, so February needs no special case
+      and the date is always behind `now`. */
+  day: number;
+  hour: number;
+  /** Planned minutes, which is what the reported time is read against. */
+  duration: number;
+  /** Everyone who booked hours to it, the assignee first. */
+  crew: { worker: ID; hours: number; termDays?: number; paidAfterDays?: number }[];
+  note: string;
+}[] = [
+  { ref: 'B-1069', household: 1, service: 'grundreinigung', back: 3, day: 9, hour: 8, duration: 390, note: 'Spring clean, whole house', crew: [{ worker: 'tm_ana', hours: 7, paidAfterDays: 4 }, { worker: 'tm_ilir', hours: 7, paidAfterDays: 4 }] },
+  { ref: 'B-1070', household: 2, service: 'umzugsreinigung', back: 3, day: 18, hour: 8, duration: 480, note: 'Handover clean with acceptance', crew: [{ worker: 'tm_fatou', hours: 8, paidAfterDays: 3 }, { worker: 'tm_aylin', hours: 8, paidAfterDays: 3 }] },
+  { ref: 'B-1071', household: 1, service: 'fensterreinigung', back: 3, day: 26, hour: 9, duration: 180, note: 'Windows, garden side', crew: [{ worker: 'tm_petra', hours: 3, paidAfterDays: 0 }] },
+  { ref: 'B-1072', household: 3, service: 'unterhaltsreinigung', back: 2, day: 4, hour: 9, duration: 240, note: 'Fortnightly visit', crew: [{ worker: 'tm_ana', hours: 4, paidAfterDays: 5 }, { worker: 'tm_rosa', hours: 4, paidAfterDays: 5 }] },
+  { ref: 'B-1073', household: 4, service: 'bueroreinigung', back: 2, day: 11, hour: 7, duration: 360, note: 'Office, before opening', crew: [{ worker: 'tm_luca', hours: 6, termDays: 15, paidAfterDays: 11 }, { worker: 'tm_dragan', hours: 6, termDays: 15, paidAfterDays: 11 }] },
+  /* A payout still owed and still inside its term, two months old. Without it
+     «offen» could only be read on a row from last week, and the period select
+     had nothing to prove it narrows money as well as hours. */
+  { ref: 'B-1074', household: 2, service: 'grundreinigung', back: 2, day: 17, hour: 8, duration: 420, note: 'Deep clean after the tenants', crew: [{ worker: 'tm_tomas', hours: 7, termDays: 75 }, { worker: 'tm_aylin', hours: 7, paidAfterDays: 2 }] },
+  { ref: 'B-1075', household: 3, service: 'fensterreinigung', back: 2, day: 24, hour: 9, duration: 150, note: 'Windows, two floors', crew: [{ worker: 'tm_petra', hours: 2.5, paidAfterDays: 0 }] },
+  { ref: 'B-1076', household: 5, service: 'grundreinigung', back: 1, day: 5, hour: 8, duration: 390, note: 'Move-in clean', crew: [{ worker: 'tm_ilir', hours: 6.5, paidAfterDays: 6 }, { worker: 'tm_emir', hours: 6.5, paidAfterDays: 6 }] },
+  { ref: 'B-1077', household: 6, service: 'moebelmontage', back: 1, day: 12, hour: 13, duration: 180, note: 'Two wardrobes and a desk', crew: [{ worker: 'tm_emir', hours: 3, paidAfterDays: 0 }] },
+  { ref: 'B-1078', household: 7, service: 'bueroreinigung', back: 1, day: 16, hour: 7, duration: 300, note: 'Office, reception and kitchen', crew: [{ worker: 'tm_rosa', hours: 5, paidAfterDays: 4 }, { worker: 'tm_dragan', hours: 5, paidAfterDays: 4 }] },
+  /* Past the day it was promised for, and a month older than the overdue row
+     on B-1048 — so «überfällig» is not one row a reader can put down to an
+     accident of the demo clock. */
+  { ref: 'B-1079', household: 4, service: 'bueroreinigung', back: 1, day: 21, hour: 7, duration: 240, note: 'Office, after the refit', crew: [{ worker: 'tm_luca', hours: 4, termDays: 5 }] },
+  { ref: 'B-1080', household: 1, service: 'unterhaltsreinigung', back: 1, day: 26, hour: 9, duration: 210, note: 'Fortnightly visit', crew: [{ worker: 'tm_tomas', hours: 3.5, paidAfterDays: 3 }, { worker: 'tm_fatou', hours: 3.5, paidAfterDays: 3 }] },
+];
+
+/**
+ * The hours rows, derived from the twelve jobs rather than typed beside them.
+ *
+ * Every one of these is paid by the owner. The three-way split of worker,
+ * payer and responsible has a record of its own on B-1052 and it is the
+ * exception — repeating it twenty times would teach the reader that «Bezahlt
+ * von» is normally somebody else, which is the opposite of what that column is
+ * on the screen to show.
+ */
+const CREW_LABOUR = CREW_HISTORY.flatMap((job, i) =>
+  job.crew.map((c) => ({
+    bookingId: `bkg_h${i + 1}`,
+    workerId: c.worker,
+    paidById: 'tm_owner',
+    responsibleId: 'tm_owner',
+    hours: c.hours,
+    /* Never typed beside the hours. Two numbers that can disagree is the whole
+       reason `rateOf` divides rather than reading a stored rate. */
+    amount: c.hours * (CREW_RATE.get(c.worker) ?? 0),
+    termDays: c.termDays,
+    paidAfterDays: c.paidAfterDays,
+    note: job.note,
+  })),
+);
+
+function crewBookings(now: Date): Booking[] {
+  const here = zonedParts(now);
+
+  return CREW_HISTORY.map((job, i) => {
+    const start = fromZoned(here.year, here.month - job.back, job.day, job.hour);
+    /* The assignee, and the only person whose time is on the booking. `work`
+       is what one person reported at check-out — B-1052 carries two paid crew
+       and a single report — so mirroring the whole crew into it here would
+       invent a claim the field screens never made. */
+    const lead = job.crew[0]!;
+    const out = new Date(start.getTime() + lead.hours * 3_600_000);
+    /* A job cannot have been closed tomorrow. Six days after the work is what
+       «invoiced and settled» looks like, unless that lands past the clock. */
+    const closedAt = new Date(Math.min(out.getTime() + 6 * 86_400_000, now.getTime()));
+
+    return {
+      id: `bkg_h${i + 1}`,
+      reference: job.ref,
+      customerId: `cus_m${job.household}`,
+      propertyId: `prp_m${job.household}`,
+      serviceSlug: job.service,
+      start: iso(start),
+      duration: job.duration,
+      arrivalWindow: 60,
+      assigneeId: lead.worker,
+      status: 'closed' as const,
+      photoIds: [],
+      checkInAt: iso(new Date(start.getTime() + 5 * 60_000)),
+      checkOutAt: iso(out),
+      work: [
+        {
+          id: `wrk_h${i + 1}`,
+          memberId: lead.worker,
+          minutes: lead.hours * 60,
+          source: 'field' as const,
+          recordedAt: iso(out),
+        },
+      ],
+      history: [
+        { at: iso(days(start, -9)), kind: 'created', label: 'Booked' },
+        { at: iso(out), kind: 'checkOut', label: `Checked out · ${lead.hours} h worked` },
+        { at: iso(closedAt), kind: 'closed', label: 'Closed and paid' },
+      ],
+    };
+  });
+}
+
+/**
+ * What the seeded jobs cost in people.
+ *
+ * Five rows written out one at a time, because each carries a case the board
+ * has to be able to draw: the three-way split of worker, payer and
+ * responsible, a payout with no deadline, one inside its term and one past
+ * it. `CREW_LABOUR` adds twenty more that carry no case at all — they are
+ * there so that every table on the board runs past its first page.
  *
  * Separate from `financeHistory` because it needs something that function does
  * not have: the jobs. A labour cost points at a booking, and a seed that
@@ -5673,6 +5905,7 @@ const LABOUR_SEED: {
     termDays: 2,
     note: 'Maintenance visit, cover',
   },
+  ...CREW_LABOUR,
 ];
 
 function labourCosts(now: Date, bookings: Booking[], startSeq: number): Expense[] {
@@ -5731,7 +5964,7 @@ function labourCosts(now: Date, bookings: Booking[], startSeq: number): Expense[
 }
 
 /**
- * The three names, spelled once.
+ * The roster, spelled once.
  *
  * `supplier` on a labour row is a copy of the worker's name — see
  * `createExpense` for why it is copied rather than looked up — and a seed that
@@ -5741,6 +5974,9 @@ const TEAM_NAMES: Record<string, string> = {
   tm_owner: 'Marco Brunner',
   tm_marta: 'Marta Nowak',
   tm_yusuf: 'Yusuf Demir',
+  /* Spread rather than listed out again, so a contractor added to `CREW`
+     cannot end up as «—» in the supplier column of every row they worked. */
+  ...Object.fromEntries(CREW.map((c) => [c.id, `${c.first} ${c.last}`])),
 };
 
 /* Offices only for office cleaning, homes for everything else — routing a
