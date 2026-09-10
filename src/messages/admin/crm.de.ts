@@ -819,6 +819,11 @@ export const adminCrmDe = {
     overdueTitle: 'Überfällig',
     overdueBody: 'Diese Rechnung war am {date} fällig und ist noch nicht bezahlt.',
     customerView: 'Kundenansicht',
+    /* Steht in der Entwurfs-Meldung, weil der Knopf im Kopf dann ausgegraut
+       ist — ein gesperrtes Bedienelement ohne Begründung ist genau das, was
+       `invoice-permissions` abschaffen soll. */
+    customerViewDraftHint:
+      'Die Kundenansicht öffnet sich erst nach der Freigabe — einen Entwurf bekommt die Kundin nicht zu sehen.',
     quantityDown: 'Menge verringern',
     quantityUp: 'Menge erhöhen',
     bookingLink: 'Zum Einsatz',

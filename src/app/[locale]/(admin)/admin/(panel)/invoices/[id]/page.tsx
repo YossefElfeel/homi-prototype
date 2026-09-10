@@ -49,8 +49,11 @@ import type { PaymentMethod } from '@/mock/schema';
  *
  * Two things moved in this pass, both about *whose* screen this is. The
  * QR-bill is the document the customer receives, and it sat in the middle of
- * the owner's screen unlabelled, between two panels of office controls — so
- * it now says so and links to the page the customer actually reads. And the
+ * the owner's screen unlabelled, between two panels of office controls — so it
+ * now says so. The link to the page the customer actually reads went into the
+ * QR card's header with it, and has since moved up to `PageHeader`: it opens
+ * the whole document, not that one card, and hanging it there was what made it
+ * disappear on states where the card does not survive the trip. And the
  * office's own irreversible actions were scattered: approve at the top, a red
  * «stornieren» alone at the very bottom below the message box, and no way at
  * all to delete a draft or correct an invoice already sent. They are one
@@ -145,9 +148,24 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const canCancel = mayInvoice('cancel', role, status);
   const canReissue = mayInvoice('reissue', role, status);
   const canDelete = mayInvoice('delete', role, status);
-  /* Not a permission — a question about whether the customer's page has
-     anything on it worth opening. See the QR card's own note. */
-  const showCustomerView = invoice.status !== 'draft' && invoice.status !== 'paid';
+  /*
+   * «Kundenansicht» used to be gated on `status !== 'draft' && status !== 'paid'`,
+   * hand-rolled here and defended in the QR card as "does the customer's page
+   * still show a payment part". That test does not survive being written down:
+   * a cancelled invoice drops the payment part exactly like a paid one, and it
+   * kept the link anyway. Worse, the exclusion of `paid` hid the link at the
+   * moment its answer is most useful — *is the customer still being asked for
+   * money?* — and no reader could predict any of it from the screen.
+   *
+   * Opening someone else's page has one honest precondition: that the page
+   * exists for them. That is `read`, asked from the customer's side, which is
+   * the same call `/account/invoices/[id]` makes on arrival — so the button and
+   * the page it opens can no longer disagree.
+   *
+   * Derived `status`, not `invoice.status`: this was the last raw read left on
+   * a screen that moved everything else onto the derivation.
+   */
+  const canOpenCustomerView = mayInvoice('read', 'customer', status);
 
   function send() {
     setState('sending');
@@ -226,6 +244,43 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         meta={<StatusBadge entity="invoice" state={status} />}
         actions={
           <>
+            {/*
+             * Not an office action, and the only control here that does nothing
+             * to the invoice — it opens the customer's copy so the owner can
+             * check what was actually sent. It sat in the QR card's header for
+             * that reason, which made its rule about the QR block rather than
+             * about the page, and made it vanish on two of five states.
+             *
+             * It belongs beside the other page-level controls: this reads the
+             * whole document, not one card on it. Rendered in every state so
+             * that finding it never depends on knowing the permission table —
+             * a read-only link costs nothing when there is little to see, and
+             * on a paid invoice "no payment part any more" is the confirmation
+             * the owner came for.
+             */}
+            {canOpenCustomerView ? (
+              <Button asChild variant="secondary">
+                <a
+                  href={`/${locale}/account/invoices/${invoice.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ActionIcon.customerView className="size-4" aria-hidden />
+                  {t('customerView')}
+                </a>
+              </Button>
+            ) : (
+              /* A real <button>, not an inert <a>: there is no page at the far
+                 end of a draft, so there is no href to put in the markup. The
+                 reason it is greyed is spelled out in the draft notice below —
+                 `invoice-permissions` says a refusal has to name its axis, and
+                 a disabled control with nothing beside it is what that rule
+                 was written against. */
+              <Button variant="secondary" disabled>
+                <ActionIcon.customerView className="size-4" aria-hidden />
+                {t('customerView')}
+              </Button>
+            )}
             {canApprove && (
               <Button onClick={send} loading={state === 'sending'}>
                 {t('sendAction')}
@@ -279,6 +334,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       {canEdit && (
         <Alert tone="warning" className="mb-app" title={t('draftBadge')}>
           {t('editHint')}
+          {/* The other half of what «Entwurf» means, and the sentence the
+              greyed «Kundenansicht» in the header would otherwise be missing:
+              §10 keeps an unapproved amount internal, so the customer has no
+              page to open yet. Tied to the same condition that disables the
+              button, so the two cannot drift apart. */}
+          {!canOpenCustomerView && ` ${t('customerViewDraftHint')}`}
         </Alert>
       )}
       {status === 'overdue' && (
@@ -330,39 +391,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       />
 
       <Card className="mt-app-section">
-        <CardHeader
-          title={t('qrTitle')}
-          description={t('qrLead')}
-          actions={
-            /*
-             * The one control on this screen that is not an office action, and
-             * that is exactly why it sits here rather than in the header beside
-             * «Freigeben und senden». The block below is the customer's own
-             * document rendered on the owner's screen; this opens the page they
-             * actually read.
-             *
-             * Two states do not get it. A draft, because §10 keeps an
-             * unapproved amount internal and the account screens refuse one —
-             * the link would open a page that says no. And a settled invoice,
-             * because there is nothing left for the customer to do with it:
-             * their copy drops the payment part once it is paid, so the link
-             * would send the owner to a page that no longer shows the thing
-             * this card is about.
-             */
-            showCustomerView ? (
-              <Button asChild variant="secondary" size="sm">
-                <a
-                  href={`/${locale}/account/invoices/${invoice.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ActionIcon.customerView className="size-4" aria-hidden />
-                  {t('customerView')}
-                </a>
-              </Button>
-            ) : undefined
-          }
-        />
+        {/* «Kundenansicht» used to hang off this header. It is a page-level
+            control — see the note on it up in `PageHeader` — and keeping it
+            here is what tied its visibility to whether *this card* survives on
+            the customer's copy. */}
+        <CardHeader title={t('qrTitle')} description={t('qrLead')} />
 
         {/*
           The Swiss payment part: receipt on the left, payment part on the

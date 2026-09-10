@@ -791,6 +791,8 @@ export const adminCrmEn: typeof adminCrmDe = {
     overdueTitle: 'Overdue',
     overdueBody: 'This invoice was due on {date} and has not been paid.',
     customerView: 'Customer view',
+    customerViewDraftHint:
+      'The customer view opens once the invoice is approved — a draft is never shown to them.',
     quantityDown: 'Decrease quantity',
     quantityUp: 'Increase quantity',
     bookingLink: 'Go to the job',
