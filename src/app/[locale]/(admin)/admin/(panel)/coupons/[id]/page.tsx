@@ -3,10 +3,12 @@
 import { use, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { TicketPercent } from 'lucide-react';
+import { Archive, TicketPercent } from 'lucide-react';
 
 import { Link, useRouter } from '@/i18n/navigation';
+import { useFormatter } from '@/i18n/format';
 import type { Locale } from '@/i18n/routing';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -26,9 +28,12 @@ function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-/** Everything on a coupon the form may change. `id` and `usedCount` are not
-    editable: one is the record's identity, the other is what happened. */
-type Draft = Omit<Coupon, 'id' | 'usedCount'>;
+/** Everything on a coupon the form may change. `id`, `usedCount` and
+    `archivedAt` are not: one is the record's identity, one is what happened,
+    and the third is a decision that belongs to the list — `save` writes
+    `{ ...coupon, ...form }`, so leaving it in the draft would quietly restore
+    an archived code the moment somebody opened it and pressed save. */
+type Draft = Omit<Coupon, 'id' | 'usedCount' | 'archivedAt'>;
 
 function draftOf(coupon: Coupon): Draft {
   return {
@@ -141,6 +146,7 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
   const t = useTranslations('admin.coupon');
   const listT = useTranslations('admin.coupons');
   const locale = useLocale() as Locale;
+  const format = useFormatter();
   const router = useRouter();
   const now = useNow();
 
@@ -251,6 +257,30 @@ function CouponEditor({ coupon, isNew = false }: { coupon: Coupon; isNew?: boole
               : t('usageCapped', { used: coupon.usedCount, max: coupon.maxUses })
         }
       />
+
+      {/*
+        A record can be opened from the archive, and nothing on this screen
+        said so.
+ 
+        The badge above reads «Deaktiviert», which is true and is not the
+        answer: every archived code is switched off, and not every switched-off
+        code is archived. Without this line the reader edits a coupon that is
+        not in the list they came from and has no way to learn why — the way
+        back is a tab on the other screen, so the note is where it says so.
+      */}
+      {coupon.archivedAt && (
+        <Alert
+          tone="neutral"
+          icon={Archive}
+          title={t('archivedTitle')}
+          className="mb-app"
+        >
+          {t('archivedBody', {
+            date: format.dateTime(new Date(coupon.archivedAt), 'short'),
+            tab: listT('tabArchived'),
+          })}
+        </Alert>
+      )}
 
       <div className="space-y-app-section">
         <Card>

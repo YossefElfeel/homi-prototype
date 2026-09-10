@@ -330,7 +330,44 @@ export const adminContentDe = {
     servicesAll: 'Alle Leistungen',
     maxDiscountShort: 'max. {amount}',
     newAction: 'Gutschein anlegen',
-    rowOpen: 'Gutschein öffnen',
+    /* Hiess «Gutschein öffnen», solange die Zeile nur einen Pfeil hatte. Im
+       Menü steht der Eintrag neben «Archivieren» — und dort ist entscheidend,
+       dass Öffnen auch Ändern heisst. Dieselbe Zeile wie bei den
+       Zusatzleistungen. */
+    rowOpen: 'Öffnen und bearbeiten',
+    rowArchive: 'Archivieren',
+    rowRestore: 'Wiederherstellen',
+    /* Nicht nur «Löschen»: dieser Eintrag steht ausschliesslich im Archiv, und
+       dort ist er der einzige Schritt, der nicht mehr zurückgeht. Das Wort
+       muss das sagen, bevor jemand darauf klickt. */
+    rowDelete: 'Endgültig löschen',
+
+    tabActive: 'Aktiv',
+    tabArchived: 'Archiv',
+    colArchivedAt: 'Archiviert',
+
+    /* Das Ausschalten steht im Text, weil es die Hälfte der Handlung ist, die
+       im Wort «archivieren» nicht drinsteckt. */
+    archiveConfirmTitle: '{code} archivieren?',
+    archiveConfirm:
+      'Der Code verschwindet aus der Arbeitsliste und wird ausgeschaltet — einlösen lässt er sich danach nicht mehr. Der Datensatz bleibt mit allen Einlösungen im Archiv bestehen, und von dort holen Sie ihn jederzeit zurück.',
+    archiveDone: '{code} liegt jetzt im Archiv und ist ausgeschaltet.',
+    restoreDone: '{code} steht wieder in der Liste — ausgeschaltet, bis Sie ihn einschalten.',
+
+    deleteConfirmTitle: '{code} endgültig löschen?',
+    deleteConfirm:
+      'Das geht nicht mehr zurück. Dieser Code wurde nie eingelöst, es hängt also keine Rechnung daran — im Archiv kostet er nichts, wenn Sie ihn lieber behalten.',
+    /* Nennt die Zahl statt nur zu warnen: ein Code mit 31 Einlösungen ist ein
+       anderer Fall als einer mit einer, und genau daran entscheidet der
+       Inhaber, ob er ihn wirklich wegwirft. */
+    deleteConfirmRedeemed:
+      'Das geht nicht mehr zurück. Der Code wurde {n} Mal eingelöst. Eine Offerte merkt sich ihn als Text, nicht als Verweis — verschwindet der Datensatz, steht auf einer längst versendeten Rechnung ein Abzug, den niemand mehr erklären kann. Im Archiv liegen lassen kostet nichts.',
+    deleteDone: '{code} wurde endgültig gelöscht.',
+    deleteBlocked: 'Gelöscht wird nur aus dem Archiv.',
+
+    archivedEmptyTitle: 'Das Archiv ist leer',
+    archivedEmptyBody:
+      'Hier landen Codes, die Sie aus der Arbeitsliste nehmen — abgelaufene Aktionen, die Sie nicht löschen wollen, weil die Einlösungen zu bereits versendeten Rechnungen gehören. Über das Menü einer Zeile archivieren Sie den ersten.',
     search: 'Gutscheine durchsuchen',
     searchPlaceholder: 'Code oder Leistung',
     filterState: 'Zustand',
@@ -353,6 +390,9 @@ export const adminContentDe = {
 
   coupon: {
     back: 'Alle Gutscheine',
+    archivedTitle: 'Dieser Gutschein liegt im Archiv',
+    archivedBody:
+      'Archiviert am {date}. Er steht nicht in der Arbeitsliste und lässt sich nicht einlösen. Änderungen speichern Sie hier ganz normal; zurück in die Liste holen Sie ihn im Tab «{tab}».',
     newTitle: 'Neuer Gutschein',
     newLead: 'Gespeichert wird erst mit dem Klick auf «Speichern».',
     notFoundTitle: 'Diesen Gutschein gibt es nicht mehr',

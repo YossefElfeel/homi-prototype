@@ -379,8 +379,17 @@ Marco Brunner`;
    `subscriptions` is present in every blob since 1 and is kept whole, so a
    store persisted under 44 hands back running plans with no instrument at
    all, and screen 45 would report every one of them as «noch nicht
-   festgelegt» on a build whose seed sets all three. */
-const SCHEMA_VERSION = 45;
+   festgelegt» on a build whose seed sets all three.
+
+   46: `Coupon` gained `archivedAt`, and the seed gained the one coupon that
+   carries it. The field alone would survive `merge` — absent reads as "not
+   archived", which is right for every code written before this wave. The seed
+   row is why the version moves: `coupons` is kept whole in any blob from 28,
+   so a store persisted under 45 hands back five codes and none of them
+   archived, and the «Archiv» tab opens on its empty state on a build whose
+   seed puts a row in it. That is the exact failure the customer archive was
+   fixed for two waves ago. */
+const SCHEMA_VERSION = 46;
 
 /**
  * §10 — the default payment term.
@@ -1711,6 +1720,33 @@ interface StoreState {
    * when the button is pressed.
    */
   setCouponActive: (id: ID, active: boolean) => void;
+  /**
+   * Out of the working list, or back into it. Pass a timestamp to archive and
+   * `undefined` to restore.
+   *
+   * Archiving switches the code off, and restoring does not switch it back on.
+   * Both halves of that are deliberate. A coupon is redeemed by its code, not
+   * by being on a screen, so an archived code left `active` is one the office
+   * has filed away and the pricing engine would still honour — the archive
+   * would be a view rather than a decision. Coming back is the other
+   * direction: a code returning from the archive is being looked at again, not
+   * put back on sale, and re-opening a discount is a decision that belongs to
+   * the switch the office can see.
+   */
+  setCouponArchived: (id: ID, archivedAt: ISODate | undefined) => void;
+  /**
+   * Gone for good. Refuses anything that is not archived first, and returns
+   * false so the caller can say why rather than silently doing nothing.
+   *
+   * Nothing points at a coupon — an offer stores the code as a string, so
+   * removing the record breaks no link a type can see. What it breaks is the
+   * explanation: a deduction on an invoice that went out months ago, with
+   * nothing left to say where it came from. That is not a reason to refuse
+   * deletion outright, but it is a reason not to put it one click from the
+   * working list. The archive is the pause — you cannot delete a code from the
+   * screen you were reading it on.
+   */
+  deleteCoupon: (id: ID) => boolean;
 
   patchData: (patch: Partial<DataSet>) => void;
   addHold: (hold: SlotHold) => void;
@@ -6165,6 +6201,48 @@ export const useStore = create<StoreState>()(
           entityId: id,
           summary: `"${coupon.code}" ${active ? 'switched on' : 'switched off'}`,
         });
+      },
+
+      setCouponArchived: (id, archivedAt) => {
+        const s = get();
+        const coupon = s.data.coupons.find((c) => c.id === id);
+        if (!coupon) return;
+        set({
+          data: {
+            ...s.data,
+            coupons: s.data.coupons.map((c) =>
+              c.id === id
+                ? /* One write, two fields. Archiving a code that is still on
+                     leaves it redeemable, and a second store call to switch it
+                     off would put two lines in the Protokoll for one decision
+                     the office made once. */
+                  { ...c, archivedAt, active: archivedAt ? false : c.active }
+                : c,
+            ),
+          },
+        });
+        get().logChange({
+          entity: 'coupon',
+          entityId: id,
+          summary: `"${coupon.code}" ${archivedAt ? 'archived' : 'restored from the archive'}`,
+        });
+      },
+
+      deleteCoupon: (id) => {
+        const s = get();
+        const coupon = s.data.coupons.find((c) => c.id === id);
+        if (!coupon) return false;
+        /* Re-checked here rather than trusted from the menu, which is only on
+           the archive tab: the tab is a view, and a view is not a guarantee
+           about what the store will accept. */
+        if (!coupon.archivedAt) return false;
+        set({ data: { ...s.data, coupons: s.data.coupons.filter((c) => c.id !== id) } });
+        get().logChange({
+          entity: 'coupon',
+          entityId: id,
+          summary: `"${coupon.code}" deleted from the archive`,
+        });
+        return true;
       },
 
       patchData: (patch) => set((s) => ({ data: { ...s.data, ...patch } })),

@@ -1153,6 +1153,16 @@ export const FLOWS: Flow[] = [
         '/admin/coupons',
         'On the derived state, not on the `active` field. Filtering the raw boolean would file SPRING25 — switched on, expired four months ago — under "valid", which is the exact wrong answer the badge was rewritten to stop giving',
       ),
+      added(
+        'The archive',
+        '/admin/coupons',
+        'The «Archiv» tab beside «Aktiv», with the count of what is in it. The seed puts WINTER20 there — last winter’s campaign, 31 redemptions, over. Without a seeded row the tab could only be filled by archiving something off the list you were reviewing, which is exactly how the customer archive spent two waves looking like a feature that did not work',
+      ),
+      added(
+        'Open an archived coupon',
+        '/admin/coupons/cpn_6',
+        'The edit screen says it is archived and when, because the badge alone cannot: every archived code reads «Deaktiviert», and not every deactivated code is archived. The way back is a tab on the other screen, so the note names it',
+      ),
     ],
     actions: [
       added(
@@ -1217,9 +1227,20 @@ export const FLOWS: Flow[] = [
         'Redeem a coupon',
         '`pricing.ts` has been able to do both since §20.2 — percent and amount, and it never stacks with the plan discount. It respects the new ceiling as of this wave, and `couponDiscount` in `lib/coupon-facts.ts` applies floor, percentage and ceiling in one place so the engine and the form cannot disagree. Only, no screen ever hands it one: the request flow has no code field, so `usedCount` moves nowhere and the redemption figures in the seed are history rather than bookkeeping. Deliberately open — whether the code is entered in the wizard, on the quote or only at payment decides where the discount goes on record; see §9.4a on /open-questions',
       ),
-      open(
-        'Delete a coupon',
-        'No deleting, and that is the opposite position to the add-on. A redeemed code stands on a quote that has gone out; if the record disappears, the deduction on an old invoice can no longer be explained. Switching it off takes it out of circulation just as well and keeps the trace',
+      added(
+        'Archive a coupon',
+        '/admin/coupons',
+        'There was no way to take a code off this screen at all. Switching it off leaves it in the table for ever, so a company that runs four campaigns a year reads thirty rows to find the two that matter — and deleting was refused outright, on the argument that a redeemed code is the only record of why an invoice carries a deduction. Both are answered by the move the customer list made two waves ago: «archivieren» takes the row off the desk and keeps the record. It switches the code off on its way, because a coupon is redeemed by its code rather than by being on a screen',
+      ),
+      added(
+        'Restore a coupon from the archive',
+        '/admin/coupons',
+        'No confirm, unlike the way in — it puts a row back into a list and switches nothing on. It comes back switched off deliberately: a code returning from the archive is being looked at again, not put back on sale, and re-opening a discount belongs to the switch the office can see',
+      ),
+      added(
+        'Delete a coupon for good',
+        '/admin/coupons',
+        'Only from «Archiv», and `deleteCoupon` refuses anything that is not archived rather than trusting the tab — a view is not a guarantee. That is the whole guard, and it is the reason the delete can exist at all: nobody reaches it from the screen they were reading the code on. The confirm names the redemptions when there are any, because that is what is actually being thrown away',
       ),
     ],
   },

@@ -1131,6 +1131,25 @@ export interface Coupon {
   maxUses?: number;
   usedCount: number;
   active: boolean;
+  /**
+   * Out of the working list, still in the data — the same position `Customer`
+   * takes, for a reason of its own.
+   *
+   * A campaign that is over has nothing more to say and cannot be taken off
+   * the screen: switching it off leaves it in the list for ever, so a company
+   * that runs four codes a year reads thirty rows to find the two that matter.
+   * Deleting it outright is the other extreme — a redeemed code is the only
+   * record of why an invoice that went out months ago has a deduction on it.
+   * Archiving is the answer to both, and the archive tab is where it is honest
+   * about that: nothing is destroyed until somebody stands in the archive and
+   * says so a second time.
+   *
+   * Archiving also switches the code off — see `setCouponArchived`. A coupon
+   * is redeemed by code rather than by being on a screen, so an archived one
+   * left `active` would be a code the office believes is retired and the
+   * pricing engine would still honour.
+   */
+  archivedAt?: ISODate;
 }
 
 /* ------------------------------------------------------------- what goes out */
