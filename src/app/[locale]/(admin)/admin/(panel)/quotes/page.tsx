@@ -447,30 +447,24 @@ export default function OffersPage() {
           )
         }
         /*
-         * The menu was two clicks to reach anything and said nothing from the
-         * row: whether a quote had produced a booking, or was sitting on three
-         * dates waiting for us, was only visible once it was open. As icons the
-         * conditional two announce themselves by existing.
+         * Where a row can take you, and nothing else.
+         *
+         * «Termin bestätigen» sat here too, pointing at `#termin` on the
+         * detail page — a menu item that read as an action but only ever
+         * scrolled you down to the real one, so one decision looked like it
+         * could be started from two places. It is offered now only where it
+         * is actually taken: on the quote, beside the three dates being
+         * chosen between, none of which this list shows. The booking entry
+         * stays conditional — whether a quote has produced a job is worth
+         * answering from the row.
          */
         rowActions={(o) => {
           const booking = offerBooking(o.id, bookings);
-          const awaitingConfirmation = Boolean(
-            o.proposedSlots?.length && !o.slotConfirmedAt,
-          );
           return (
             <RowActions>
               <RowAction href={`/admin/quotes/${o.id}`} label={t('rowOpen')}>
                 <ActionIcon.open aria-hidden />
               </RowAction>
-              {awaitingConfirmation && (
-                <RowAction
-                  href={`/admin/quotes/${o.id}#termin`}
-                  label={t('rowConfirmSlot')}
-                  className="text-status-warning-fg"
-                >
-                  <ActionIcon.confirmSlot aria-hidden />
-                </RowAction>
-              )}
               {booking && (
                 <RowAction
                   href={`/admin/bookings/${booking.id}`}
