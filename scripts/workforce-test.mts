@@ -186,10 +186,31 @@ const NOW = new Date('2026-08-25T10:00:00Z');
 
   const hiring = buildScenario('hiring', NOW);
   const contractors = hiring.team.filter((m) => m.role === 'contractor');
-  check('the hiring scenario has two contractors', contractors.length === 2);
   check(
-    'and open work for both of them — a member picker with an empty day behind one option is a control that looks broken',
-    contractors.every((m) => hiring.bookings.some((b) => b.assigneeId === m.id)),
+    'the hiring scenario carries both hires — they are what it is about',
+    ['tm_marta', 'tm_yusuf'].every((id) => contractors.some((m) => m.id === id)),
+  );
+  /*
+   * This used to read «open work for both of them», and both meant two: the
+   * roster was Marta and Yusuf. It cannot mean everybody now — there are nine
+   * open jobs and twelve contractors, and a scenario cannot hand out more
+   * days than it has. What is still worth protecting is the reason that check
+   * was written: nobody gets a second job while somebody else has none, so
+   * the demo bar's member picker offers as many useful options as the week
+   * can fill.
+   */
+  const openJobs = hiring.bookings.filter((b) =>
+    ['scheduled', 'rescheduled', 'inProgress'].includes(b.status),
+  );
+  check(
+    'every open job has somebody on it',
+    openJobs.every((b) => Boolean(b.assigneeId)),
+  );
+  check(
+    'and the week is spread as thin as it goes — no second day for one person while another has none',
+    new Set(openJobs.map((b) => b.assigneeId)).size ===
+      Math.min(openJobs.length, assignableTeam(hiring.team).length),
+    `${new Set(openJobs.map((b) => b.assigneeId)).size} of ${openJobs.length} jobs`,
   );
 }
 
