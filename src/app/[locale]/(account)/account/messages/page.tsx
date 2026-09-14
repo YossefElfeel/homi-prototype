@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Info, MessageSquare, Search, Send, X } from 'lucide-react';
+import { Info, MessageSquare, MessageSquarePlus, Search, Send, X } from 'lucide-react';
 
 import { Link } from '@/i18n/navigation';
 import { useFormatter } from '@/i18n/format';
@@ -19,6 +19,11 @@ import { SkeletonPage } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toolbar } from '@/components/ui/toolbar';
 import { MessageAttachments } from '@/components/messages/message-attachments';
+import {
+  COMPOSE_KINDS,
+  NewMessageDialog,
+  useMessageTargets,
+} from '@/components/messages/new-message-dialog';
 import { useAccount } from '@/lib/use-account';
 import { useHydrated, useNow, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
@@ -89,6 +94,7 @@ export default function AccountMessagesPage() {
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<Kind | 'all'>('all');
   const [openSubject, setOpenSubject] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
   /*
    * Keyed by thread. This was a single `reply` string shared by every thread
    * on the screen: with two conversations open, typing into one wrote the same
@@ -97,6 +103,15 @@ export default function AccountMessagesPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const [seenCount, setSeenCount] = useState(0);
+
+  /*
+   * What a new conversation could hang off. Also the gate on offering one at
+   * all: an account with no request, quote, job or invoice yet has nothing for
+   * a message to be *about*, and a button that opens a dialog whose every
+   * choice is empty is worse than no button.
+   */
+  const targets = useMessageTargets();
+  const canCompose = COMPOSE_KINDS.some((k) => targets[k].length > 0);
 
   const threads = useMemo(() => {
     const map = new Map<string, typeof messages>();
@@ -171,34 +186,81 @@ export default function AccountMessagesPage() {
   }
   const view = paginate(filtered, page, 10);
 
-  function send() {
-    if (!open) return;
-    const body = draft.trim();
-    if (!body) return;
-    sendMessage({ customerId, subject: open.subject, body, from: 'customer' }, now);
-    setDrafts((d) => ({ ...d, [open.subject]: '' }));
+  function post(subject: string, body: string) {
+    sendMessage({ customerId, subject, body, from: 'customer' }, now);
     /* Was silent. Sending a message with no acknowledgement is the one case
        where the reader genuinely cannot tell whether it worked. */
     toast.success(t('sent'));
   }
 
+  function send() {
+    if (!open) return;
+    const body = draft.trim();
+    if (!body) return;
+    post(open.subject, body);
+    setDrafts((d) => ({ ...d, [open.subject]: '' }));
+  }
+
+  /**
+   * A conversation the customer started, from the dialog.
+   *
+   * Nothing here distinguishes a first message from a reply — a thread *is*
+   * every message carrying one reference, so writing to a reference that
+   * already has one lands in that conversation rather than opening a second
+   * one beside it, which is what the dialog says will happen.
+   *
+   * The filters are cleared with it. A new thread that lands under a tab you
+   * are not on, or outside the search you typed, would leave the rail looking
+   * exactly as it did before you pressed send.
+   */
+  function startThread(reference: string, body: string) {
+    post(reference, body);
+    setKind('all');
+    setQuery('');
+    setOpenSubject(reference);
+    setComposing(false);
+  }
+
   return (
     <div>
-      <PageHeader title={t('title')} lead={t('lead')} />
+      <PageHeader
+        title={t('title')}
+        lead={t('lead')}
+        /* Not while the list is empty: the empty state below carries the same
+           button, and it is the thing the eye lands on there. Two primaries
+           saying the same word is the review smell `Button`'s own variants
+           exist to make obvious. */
+        actions={
+          canCompose && threads.length > 0 ? (
+            <Button onClick={() => setComposing(true)}>
+              <MessageSquarePlus className="size-4" aria-hidden />
+              {t('compose')}
+            </Button>
+          ) : undefined
+        }
+      />
 
       {threads.length === 0 ? (
         <EmptyState
           icon={MessageSquare}
           title={t('emptyTitle')}
           body={t('emptyBody')}
-          /* There is no way to start a thread here — a message hangs off a
-             reference — so the escape is the screen where those references
-             live, rather than a compose box that would have nothing to attach
-             itself to. */
+          /* The escape used to be a link away to the requests list, because a
+             message hangs off a reference and there was no way to pick one.
+             Now that there is, the empty state ends where it says it does —
+             the link stays only for an account that has no reference to pick
+             yet, where writing to us genuinely is not the next step. */
           action={
-            <Button asChild variant="secondary">
-              <Link href="/account/requests">{t('emptyAction')}</Link>
-            </Button>
+            canCompose ? (
+              <Button onClick={() => setComposing(true)}>
+                <MessageSquarePlus className="size-4" aria-hidden />
+                {t('compose')}
+              </Button>
+            ) : (
+              <Button asChild variant="secondary">
+                <Link href="/account/requests">{t('emptyAction')}</Link>
+              </Button>
+            )
           }
         />
       ) : (
@@ -419,6 +481,16 @@ export default function AccountMessagesPage() {
       <Alert tone="neutral" icon={Info} className="mt-app-section" title={t('noteTitle')}>
         {t('noteBody')}
       </Alert>
+
+      {/* Outside the branch above: the empty state is one of the two places
+          that opens it, and it is the half of the screen that renders when
+          there are no threads at all. */}
+      <NewMessageDialog
+        open={composing}
+        targets={targets}
+        onClose={() => setComposing(false)}
+        onSend={startThread}
+      />
     </div>
   );
 }
