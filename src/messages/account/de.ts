@@ -873,9 +873,27 @@ export const accountDe = {
     emptyTitle: 'Keine Nachrichten',
     emptyBody: 'Sobald zu einem Auftrag etwas geschrieben wird, erscheint es hier.',
     sent: 'Nachricht gesendet.',
-    /* Die leere Liste war eine Sackgasse: es gab keine Möglichkeit, ein
-       Gespräch zu beginnen — nur auf ein bestehendes zu antworten. */
+    /* Bleibt für den einen Fall, in dem es wirklich nichts zu schreiben gibt:
+       ein Konto ganz ohne Anfrage, Offerte, Auftrag oder Rechnung. Sonst
+       öffnet die leere Liste jetzt den Dialog. */
     emptyAction: 'Zu Ihren Anfragen',
+    compose: 'Neue Nachricht',
+    composeTitle: 'Neue Nachricht schreiben',
+    /* Sagt im Voraus, warum gleich zwei Auswahlfelder kommen, bevor man
+       schreiben darf — sonst liest sich der Dialog als Formular um des
+       Formulars willen. */
+    composeLead:
+      'Jede Nachricht gehört zu einem Vorgang. Sagen Sie uns, zu welchem — dann steht sie dort, wo wir sie beantworten.',
+    composeKindLabel: 'Worum geht es?',
+    composeRefLabel: 'Welcher Vorgang?',
+    /* Die eine Frage, die der Dialog sonst offenlässt: schreibt man zu einer
+       Referenz, über die schon gesprochen wird, entsteht kein zweites
+       Gespräch daneben. */
+    composeRefHint: 'Gibt es dazu schon ein Gespräch, landet Ihre Nachricht darin.',
+    composeBodyLabel: 'Ihre Nachricht',
+    composeBodyPlaceholder: 'Schreiben Sie uns, worum es geht.',
+    composeEmptyKind:
+      'Zu «{kind}» gibt es in Ihrem Konto noch nichts, worauf sich eine Nachricht beziehen könnte. Wählen Sie oben etwas anderes.',
   },
 
   profile: {

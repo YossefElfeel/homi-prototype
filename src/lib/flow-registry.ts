@@ -873,6 +873,11 @@ export const FLOWS: Flow[] = [
     actors: ['owner', 'customer'],
     entries: [
       ok('The customer writes about a reference', '/account/messages'),
+      added(
+        'The customer starts the conversation',
+        '/account/messages',
+        'Only the office could put the first message against a reference, so the customer had a reply box under every conversation except the one that did not exist yet — and the question went by phone instead. The reference is picked in two steps, what kind of record and then which one, rather than typed: a mistyped «RE-2026-0048» would open a thread hanging off nothing, invisible to the tabs on both sides, which file by that same prefix',
+      ),
       ok('The owner opens a conversation', '/admin/messages'),
       ok(
         'Out of an invoice',

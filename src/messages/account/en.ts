@@ -778,6 +778,17 @@ export const accountEn: typeof accountDe = {
     emptyBody: 'As soon as something is written about a job, it appears here.',
     sent: 'Message sent.',
     emptyAction: 'Go to your requests',
+    compose: 'New message',
+    composeTitle: 'Write a new message',
+    composeLead:
+      'Every message belongs to one record. Tell us which — then it sits where we answer it.',
+    composeKindLabel: 'What is it about?',
+    composeRefLabel: 'Which one?',
+    composeRefHint: 'If a conversation about it already exists, your message lands there.',
+    composeBodyLabel: 'Your message',
+    composeBodyPlaceholder: 'Tell us what it is about.',
+    composeEmptyKind:
+      'There is nothing under «{kind}» in your account yet for a message to refer to. Pick something else above.',
   },
 
   profile: {
