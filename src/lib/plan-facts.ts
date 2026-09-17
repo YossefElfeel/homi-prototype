@@ -422,3 +422,24 @@ export function activeSubscriberCount(
     (s) => s.planId === planId && subscriptionState(s, now) === 'active',
   ).length;
 }
+
+/* ------------------------------------------------- where «buy» actually goes */
+
+/**
+ * The target of every «Abo kaufen» on the marketing site.
+ *
+ * One function because the same button is drawn twice — once by the plan rail
+ * on /plans and once by the landing direction's own card — and the two used to
+ * agree only by accident. Both pointed at `/request?plan=<id>`: the six-step
+ * request wizard, which asks for a service the plan already fixes and a
+ * preferred date a package does not have, and which produced a *wish* rather
+ * than a subscription. A customer already signed in got that same road, past
+ * the three-answer dialog sitting unused one route away in their own account.
+ *
+ * `signedIn` rather than the role itself, so this file stays free of the store
+ * — `plan-facts` is imported *by* the store, and taking `DemoRole` here would
+ * close the loop.
+ */
+export function planCheckoutHref(planId: ID, signedIn: boolean): string {
+  return signedIn ? `/account/plan?buy=${planId}` : `/plans/${planId}/subscribe`;
+}

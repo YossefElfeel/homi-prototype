@@ -11,8 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContent, useLocale } from "@/components/landing/use-landing-content";
 import { Money, formatChf } from "@/components/ui/money";
 import { planRhythm } from "@/lib/offer-facts";
-import { planSaving, plansByService, recommendedPlan } from "@/lib/plan-facts";
-import { useStore } from "@/mock/store";
+import {
+  planCheckoutHref,
+  planSaving,
+  plansByService,
+  recommendedPlan,
+} from "@/lib/plan-facts";
+import { useRole, useStore } from "@/mock/store";
 import type { Plan } from "@/mock/schema";
 import type { Locale } from "@/i18n/routing";
 
@@ -285,6 +290,9 @@ function PlanCard({
   const rhythmT = useTranslations("admin.rhythm");
   const routingLocale = useRoutingLocale() as Locale;
   const saving = planSaving(plan);
+  /* The same rule the other rail follows — see `planCheckoutHref`. Both
+     buttons pointed at the request wizard, which never bought anything. */
+  const signedIn = useRole() === "customer";
 
   return (
     <motion.article
@@ -385,7 +393,7 @@ function PlanCard({
       </motion.ul>
 
       <Button
-        href={`/request?plan=${plan.id}`}
+        href={planCheckoutHref(plan.id, signedIn)}
         variant={featured ? "red" : "navy"}
         surface={featured ? "inverse" : "page"}
         className="mt-9 w-full"

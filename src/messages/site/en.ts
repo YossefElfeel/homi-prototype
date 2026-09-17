@@ -207,6 +207,102 @@ export const siteEn: typeof siteDe = {
     cta: 'Start a plan',
   },
 
+  /**
+   * The checkout on the marketing site. Its own block rather than more keys
+   * under `plans`, because that page sells and this one takes money — and the
+   * two registers are not the same.
+   */
+  subscribe: {
+    meta: { title: 'Take out a plan' },
+    title: 'Take out a plan',
+    lead: 'Address, contact, card. We open an account for you along the way — no need to register first.',
+    close: 'Cancel',
+    backToPlans: 'Back to the plans',
+    planGoneTitle: 'This plan is no longer on sale',
+    planGoneBody:
+      'It was withdrawn while this page was open. What we currently offer is on the overview.',
+
+    addressTitle: 'Where are we cleaning?',
+    addressLead: 'The address the visits happen at. It doubles as your billing address.',
+    street: 'Street and number',
+    addressDetail: 'Floor, entrance, bell',
+    addressDetailHint: 'What gets somebody to the door of the flat.',
+    postcode: 'Postcode',
+    city: 'Town',
+    kind: 'Type',
+    kindApartment: 'Apartment',
+    kindHouse: 'House',
+    kindOffice: 'Office',
+    floor: 'Floor',
+    floorHint: '0 is the ground floor.',
+    hasElevator: 'There is a lift',
+    coverageInside: 'We work in {region}.',
+    coverageInvalid: 'A postcode has four digits.',
+    coverageOutside:
+      'This postcode is outside our area, so we cannot sell a plan for it — write to us and we will tell you when that changes.',
+    coverageOutsideCta: 'Write to us',
+
+    contactTitle: 'Who are you?',
+    contactLead: 'So we know whose bell to ring and who the invoice goes to.',
+    firstName: 'First name',
+    lastName: 'Last name',
+    email: 'Email',
+    emailHint: 'The invoice goes here, and this is how you sign in afterwards.',
+    emailInvalid: 'That address looks incomplete.',
+    phone: 'Phone',
+    language: 'Language',
+    consentTerms: 'I accept the',
+    consentPrivacy: 'I have read the privacy policy:',
+
+    paymentTitle: 'How are you paying?',
+    /* Says the restriction out loud instead of only offering one option. A form
+       with a single choice and no reason reads as unfinished. */
+    paymentLead:
+      'A plan runs on a card. We cannot charge TWINT or a wallet for the renewal, which is why this asks for a card only.',
+    cardNumber: 'Card number',
+    cardName: 'Name on the card',
+    cardExpiry: 'Expires',
+    cardCvc: 'Security code',
+    cardNumberInvalid: 'That number has too few digits.',
+    cardExpiryInvalid: 'Month and year, for example 09/28.',
+    cardCvcInvalid: 'Three or four digits.',
+    cardStored:
+      'We keep the brand, the last four digits and the expiry date. The number and the security code are not stored.',
+
+    summaryTitle: 'What you are buying',
+    summaryVisits: 'Visits included',
+    summaryTerm: 'Valid for',
+    summaryRhythm: 'Rhythm',
+    summaryPerVisit: 'Per visit',
+    months: '{n} months',
+    dueNow: 'Due now',
+    dueNote:
+      'Payable once. {visits} visits, valid {months} months. You may withdraw within {days} days, as long as no visit has taken place.',
+    beforeTitle: 'What happens next',
+    before1: 'Your account exists straight away — you land in it.',
+    before2: 'We get in touch within one working day to arrange the first visit.',
+    before3: 'The invoice is in your account under «Invoices».',
+    beforeContact: 'Questions: {name}, {phone}.',
+    pay: 'Pay {amount}',
+    processing: 'Payment running …',
+    secure: 'Sent encrypted',
+
+    blockedOutOfArea: 'This postcode is outside our area. Nothing was charged.',
+    blockedPropertyTaken:
+      'There is already a plan running for this address. Two plans on one address is not possible — nothing was charged.',
+    blockedPlanGone: 'This plan has just been withdrawn. Nothing was charged.',
+    done: '{name} is running. Welcome to Homivaro.',
+
+    failedBadge: 'Failed',
+    failedTitle: 'The payment did not go through',
+    failedBody:
+      'Nothing was charged and no plan was opened. Try again, or use a different card.',
+    retry: 'Try again',
+    mockNotice: 'Prototype: pick the outcome of the payment.',
+    mockSucceed: 'Succeeded',
+    mockFail: 'Failed',
+  },
+
   gallery: {
     meta: { title: 'Our work' },
     eyebrow: 'Our work',

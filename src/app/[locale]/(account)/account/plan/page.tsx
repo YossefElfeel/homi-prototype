@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ArrowUp, Check, Pause, RefreshCw, SkipForward } from 'lucide-react';
@@ -65,6 +66,33 @@ export default function AccountSubscriptionPage() {
   const [view, setView] = useState<PlanView>('side');
   const [upgradeFor, setUpgradeFor] = useState<Subscription | null>(null);
   const [intent, setIntent] = useState<SubscribeIntent | null>(null);
+
+  /**
+   * `?buy=<planId>` — the package the customer clicked on the marketing site,
+   * opened here.
+   *
+   * /plans sends a signed-in reader to this screen instead of the public
+   * checkout, because their address and card are already on file and the dialog
+   * below asks three questions instead of nine. Landing them on the catalogue
+   * and making them find the same card a second time would be a worse version
+   * of the trip they just took.
+   *
+   * Derived from the URL rather than copied into state by an effect. The effect
+   * version needed a ref to stop it reopening the dialog on every render, and
+   * it wrote state during render as a side effect of a value that was already
+   * available — two mechanisms to express "the link said buy this". `dismissed`
+   * is the only thing state is needed for, because closing the dialog cannot
+   * change the URL that opened it.
+   */
+  const search = useSearchParams();
+  const buy = search.get('buy');
+  const [dismissed, setDismissed] = useState(false);
+
+  /* Only while it is still on sale. A retired plan reaching this screen from a
+     stale link would otherwise open a dialog whose confirm button the store
+     then refuses — a dead end dressed as a purchase. */
+  const linked = !dismissed && buy ? plans.find((p) => p.id === buy && p.active) : undefined;
+  const openIntent = intent ?? (linked ? { plan: linked } : null);
 
   if (!hydrated) return <SkeletonPage label={t('title')} />;
 
@@ -134,9 +162,13 @@ export default function AccountSubscriptionPage() {
       />
 
       <SubscribeDialog
-        intent={intent}
+        intent={openIntent}
         onClose={() => {
           setIntent(null);
+          /* Closes the `?buy=` dialog for good. Without it the derived intent
+             would reopen on the very next render, and the close button would
+             read as broken. */
+          setDismissed(true);
           /* The filter clears with the purchase: after an upgrade the plan it
              was filtering for no longer runs on that address, so leaving it on
              would show a rail of upgrades for a package nobody holds. */

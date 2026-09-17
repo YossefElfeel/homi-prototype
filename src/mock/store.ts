@@ -38,10 +38,12 @@ import type {
   PreferredTime,
   Subscription,
   Property,
+  PropertyKind,
   RequestDraft,
   ReviewStatus,
   RevisionReason,
   SavedMethodKind,
+  SavedPaymentMethod,
   Service,
   ServiceRequest,
   ServiceStatus,
@@ -1165,6 +1167,49 @@ interface StoreState {
     },
     now: Date,
   ) => ID | null;
+  /**
+   * Buys a plan from the marketing site, with nothing on file.
+   *
+   * `openSubscription` needs a customer, a property and a saved card, and a
+   * visitor reading /plans has none of the three. Until now the only answer to
+   * that was the six-step request wizard — which asks for a service the plan
+   * already fixes and a preferred date a package does not have — and the plan
+   * it carried was a wish that only became a subscription days later, if the
+   * office sent a quote and the customer paid it. So the one thing the page
+   * said it did, «Abo kaufen», was the one thing it could not do.
+   *
+   * Everything this creates is created together or not at all: a customer
+   * without the package they just paid for is worse than a refusal, and the
+   * refusals are returned rather than thrown so the screen can say which one
+   * happened. §8.3 is deliberately overridden here — an account is created
+   * before any quote exists, because the money has already moved.
+   */
+  subscribeAsGuest: (
+    input: {
+      planId: ID;
+      contact: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+        language: Locale;
+      };
+      property: {
+        street: string;
+        addressDetail?: string;
+        postcode: string;
+        city: string;
+        kind: PropertyKind;
+        floor: number;
+        hasElevator: boolean;
+      };
+      /** The card, already reduced to what may be stored. See `methodDraftRecord`. */
+      card: { label: string; expiresAt?: string };
+    },
+    now: Date,
+  ) =>
+    | { subscriptionId: ID; customerId: ID }
+    | { blocked: 'planGone' | 'outOfArea' | 'propertyTaken' };
   /**
    * Re-points a running package at another saved card.
    *
@@ -4158,6 +4203,184 @@ export const useStore = create<StoreState>()(
        * forgotten, and `Invoice.subscriptionId` existed on the model and was
        * read in two places without anything ever writing it.
        */
+      subscribeAsGuest: ({ planId, contact, property, card }, now) => {
+        const s = get();
+
+        /* Re-checked here rather than trusted from the page. The checkout is an
+           addressable URL and the store is the only place that can be sure the
+           plan is still on sale at the moment the money moves. */
+        const plan = s.plans.find((x) => x.id === planId);
+        if (!plan || !plan.active) return { blocked: 'planGone' };
+
+        /* The same gate `submitDraft` applies to a request, for a stronger
+           reason: a request outside the area is a disappointment, a *package*
+           outside it is a year of visits sold that nobody can drive to. */
+        if (
+          checkCoverage(property.postcode, s.settings.servedPostcodes, s.regions).state !==
+          'inside'
+        )
+          return { blocked: 'outOfArea' };
+
+        /* Matched on email or phone exactly as `submitDraft` matches (§20.1).
+           Somebody who has had a quote before is already a customer, and
+           buying a package must not produce a second copy of them. */
+        const existing = s.data.customers.find(
+          (c) =>
+            c.email.toLowerCase() === contact.email.toLowerCase() ||
+            (contact.phone !== '' && c.phone === contact.phone),
+        );
+
+        /* Length-prefixed like every other id here — see `submitDraft` on why a
+           bare stamp collides when the demo clock is pinned. */
+        const stamp = now.getTime().toString(36).slice(-4);
+        const customerId = existing?.id ?? `cus_${s.data.customers.length}_${stamp}`;
+
+        /*
+         * The address they typed, matched against the ones this customer
+         * already has.
+         *
+         * A returning customer typing the address already on file is the normal
+         * case, not an edge one, and creating a second `Property` for it would
+         * split their history down the middle: the visits land on the twin, the
+         * old jobs stay on the original, and «Objekte» lists the same flat
+         * twice. Street and postcode are the pair that decides it — the label
+         * is ours rather than theirs, and the city follows the postcode.
+         */
+        const sameAddress = (a: string, b: string) =>
+          a.trim().toLowerCase() === b.trim().toLowerCase();
+        const held = s.data.properties.find(
+          (x) =>
+            x.customerId === customerId &&
+            sameAddress(x.street, property.street) &&
+            x.postcode === property.postcode.trim(),
+        );
+
+        /* One plan per address — the rule `openSubscription` enforces, checked
+           here so the refusal can be worded before the card form rather than
+           discovered after it. Two packages on one address would have the same
+           visits to argue over. */
+        if (
+          held &&
+          s.data.subscriptions.some(
+            (x) =>
+              x.propertyId === held.id && x.status !== 'cancelled' && new Date(x.endDate) > now,
+          )
+        )
+          return { blocked: 'propertyTaken' };
+
+        const propertyId = held?.id ?? `prp_${s.data.properties.length}_${stamp}`;
+
+        /*
+         * `isDefault` follows the rule `addPaymentMethod` uses — the first one
+         * saved is the default, so a customer never ends up with a method on
+         * file and nothing marked. The record is built here rather than through
+         * that action because the id is needed *before* the write:
+         * `Subscription.paymentMethodId` is what the following terms are billed
+         * to, and an action returning void cannot hand it over.
+         */
+        const methodId = `pm_${now.getTime().toString(36)}_${s.data.paymentMethods.length}`;
+        const savedMethod: SavedPaymentMethod = {
+          id: methodId,
+          customerId,
+          kind: 'card',
+          label: card.label,
+          expiresAt: card.expiresAt,
+          isDefault: s.data.paymentMethods.filter((m) => m.customerId === customerId).length === 0,
+          addedAt: now.toISOString(),
+        };
+
+        const customer: Customer = {
+          id: customerId,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          language: contact.language,
+          loginMethod: 'magic-link',
+          status: 'active',
+          createdAt: now.toISOString(),
+          notifications: {
+            operational: true,
+            marketing: false,
+            channelEmail: true,
+            channelSms: true,
+          },
+          /* The postal address, which on this path is the only one given. A
+             customer taken down on the phone has none and that is why the field
+             is optional — this one has just paid, so withholding what the form
+             did collect would leave the office without a billing address for a
+             four-figure invoice. */
+          address: {
+            street: property.street,
+            addressDetail: property.addressDetail || undefined,
+            postcode: property.postcode,
+            city: property.city,
+          },
+        };
+
+        const newProperty: Property = {
+          id: propertyId,
+          customerId,
+          label: property.street || 'Property',
+          street: property.street,
+          addressDetail: property.addressDetail || undefined,
+          postcode: property.postcode,
+          city: property.city,
+          kind: property.kind,
+          /*
+           * `area`, `rooms` and `bathrooms` are deliberately absent. The
+           * checkout never asks — a package is priced by the plan, not by the
+           * flat — and zero would be a lie the type system cannot catch: it
+           * reads as a measurement on the office's screens, sorts as the
+           * smallest property on the list, and prices a later one-off job.
+           */
+          floor: property.floor,
+          hasElevator: property.hasElevator,
+          hasPets: false,
+          needsExtraEffort: false,
+        };
+
+        /* Kept so the whole purchase can be undone. Everything below is written
+           before `openSubscription` runs, and a customer left on file without
+           the package they just paid for is worse than any refusal. */
+        const before = s.data;
+
+        set({
+          data: {
+            ...s.data,
+            customers: existing ? s.data.customers : [...s.data.customers, customer],
+            properties: held ? s.data.properties : [...s.data.properties, newProperty],
+            paymentMethods: [...s.data.paymentMethods, savedMethod],
+          },
+        });
+
+        /* After the `set`, because it writes an invoice and a payment of its own
+           and reads the state this call just produced — the same ordering
+           `payOffer` uses. */
+        const subscriptionId = get().openSubscription(
+          { customerId, propertyId, planId, method: 'card', paymentMethodId: methodId },
+          now,
+        );
+
+        if (!subscriptionId) {
+          set({ data: before });
+          return { blocked: 'planGone' };
+        }
+
+        /*
+         * Sign them in. §8.3 says the account is created when the quote goes
+         * out, and the sign-in screen still says accounts are not self-serve —
+         * both describe the path through a quote, and neither survives a
+         * customer who has already paid. Leaving them a visitor would drop them
+         * on the access gate of the account just created for them.
+         */
+        set((state) => ({
+          demo: { ...state.demo, role: 'customer' as const, currentCustomerId: customerId },
+        }));
+
+        return { subscriptionId, customerId };
+      },
+
       openSubscription: ({ customerId, propertyId, planId, method, paymentMethodId }, now) => {
         const s = get();
         const plan = s.plans.find((x) => x.id === planId);
