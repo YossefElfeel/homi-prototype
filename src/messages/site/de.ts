@@ -226,6 +226,104 @@ export const siteDe = {
     cta: 'Abo starten',
   },
 
+  /**
+   * The checkout on the marketing site. Its own block rather than more keys
+   * under `plans`, because that page sells and this one takes money — and the
+   * two registers are not the same.
+   */
+  subscribe: {
+    meta: { title: 'Abo abschliessen' },
+    title: 'Abo abschliessen',
+    lead: 'Adresse, Kontakt, Karte. Ein Konto legen wir dabei an — Sie müssen sich vorher nicht registrieren.',
+    close: 'Abbrechen',
+    backToPlans: 'Zurück zu den Abos',
+    planGoneTitle: 'Dieses Abo gibt es nicht mehr',
+    planGoneBody:
+      'Es wurde zurückgezogen, während diese Seite offen war. Was wir aktuell anbieten, steht auf der Übersicht.',
+
+    addressTitle: 'Wo sollen wir reinigen?',
+    addressLead:
+      'Die Adresse, an der die Einsätze stattfinden. Sie gilt zugleich als Ihre Rechnungsadresse.',
+    street: 'Strasse und Nummer',
+    addressDetail: 'Stockwerk, Eingang, Klingel',
+    addressDetailHint: 'Was jemanden bis an die Wohnungstür bringt.',
+    postcode: 'PLZ',
+    city: 'Ort',
+    kind: 'Art',
+    kindApartment: 'Wohnung',
+    kindHouse: 'Haus',
+    kindOffice: 'Büro',
+    floor: 'Stockwerk',
+    floorHint: '0 ist das Erdgeschoss.',
+    hasElevator: 'Es gibt einen Lift',
+    coverageInside: 'Wir sind in {region} unterwegs.',
+    coverageInvalid: 'Eine PLZ hat vier Ziffern.',
+    coverageOutside:
+      'Diese PLZ liegt ausserhalb unseres Gebiets. Ein Abo können wir dort nicht anbieten — schreiben Sie uns, dann sagen wir Ihnen, ab wann.',
+    coverageOutsideCta: 'Schreiben Sie uns',
+
+    contactTitle: 'Wer sind Sie?',
+    contactLead: 'Damit wir wissen, bei wem wir klingeln und an wen die Rechnung geht.',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    email: 'E-Mail',
+    emailHint: 'Hierhin geht die Rechnung, und hierüber melden Sie sich später an.',
+    emailInvalid: 'Diese Adresse sieht nicht vollständig aus.',
+    phone: 'Telefon',
+    language: 'Sprache',
+    consentTerms: 'Ich akzeptiere die',
+    consentPrivacy: 'Ich habe die Datenschutzerklärung gelesen:',
+
+    paymentTitle: 'Womit zahlen Sie?',
+    /* Says the restriction out loud instead of only offering one option. A form
+       with a single choice and no reason reads as unfinished. */
+    paymentLead:
+      'Ein Abo läuft über eine Karte. TWINT und Wallets können wir für die Verlängerung nicht belasten — darum fragen wir hier nur nach der Karte.',
+    cardNumber: 'Kartennummer',
+    cardName: 'Name auf der Karte',
+    cardExpiry: 'Gültig bis',
+    cardCvc: 'Prüfziffer',
+    cardNumberInvalid: 'Diese Nummer hat zu wenige Ziffern.',
+    cardExpiryInvalid: 'Monat und Jahr, zum Beispiel 09/28.',
+    cardCvcInvalid: 'Drei oder vier Ziffern.',
+    cardStored:
+      'Gespeichert werden nur die Marke, die letzten vier Ziffern und das Ablaufdatum. Die Nummer und die Prüfziffer behalten wir nicht.',
+
+    summaryTitle: 'Das kaufen Sie',
+    summaryVisits: 'Enthaltene Einsätze',
+    summaryTerm: 'Gültigkeit',
+    summaryRhythm: 'Rhythmus',
+    summaryPerVisit: 'Pro Einsatz',
+    months: '{n} Monate',
+    dueNow: 'Jetzt zu zahlen',
+    dueNote:
+      'Einmalig zahlbar. {visits} Einsätze, {months} Monate gültig. Innerhalb von {days} Tagen können Sie zurücktreten, solange kein Einsatz stattgefunden hat.',
+    beforeTitle: 'Was danach passiert',
+    before1: 'Ihr Konto steht sofort — Sie landen direkt darin.',
+    before2: 'Wir melden uns innerhalb eines Werktags, um den ersten Termin abzumachen.',
+    before3: 'Die Rechnung liegt im Konto unter «Rechnungen».',
+    beforeContact: 'Bei Fragen: {name}, {phone}.',
+    pay: '{amount} zahlen',
+    processing: 'Zahlung läuft …',
+    secure: 'Verschlüsselt übertragen',
+
+    blockedOutOfArea:
+      'Diese PLZ liegt ausserhalb unseres Gebiets. Es wurde nichts belastet.',
+    blockedPropertyTaken:
+      'Für diese Adresse läuft bereits ein Abo. Zwei Abos auf einer Adresse gehen nicht — es wurde nichts belastet.',
+    blockedPlanGone: 'Dieses Abo wurde gerade zurückgezogen. Es wurde nichts belastet.',
+    done: '{name} läuft. Willkommen bei Homivaro.',
+
+    failedBadge: 'Fehlgeschlagen',
+    failedTitle: 'Die Zahlung ist nicht durchgegangen',
+    failedBody:
+      'Es wurde nichts belastet und kein Abo eröffnet. Versuchen Sie es noch einmal oder nehmen Sie eine andere Karte.',
+    retry: 'Nochmals versuchen',
+    mockNotice: 'Prototyp: Ausgang der Zahlung wählen.',
+    mockSucceed: 'Erfolgreich',
+    mockFail: 'Fehlgeschlagen',
+  },
+
   gallery: {
     meta: { title: 'Referenzen' },
     eyebrow: 'Referenzen',

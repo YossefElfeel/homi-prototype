@@ -789,9 +789,19 @@ export const FLOWS: Flow[] = [
       added('Edit a plan', '/admin/subscriptions/pln_basic/edit'),
       ok('The plans page on the website', '/plans'),
       added(
+        'Bought on the website, with nothing on file',
+        '/plans/pln_basic/subscribe',
+        '«Abo kaufen» went to /request — the six-step wizard for a *one-time job*, which asks for a service the plan already fixes and a date a package does not have. What came out was a `planIntent` on a request: the package opened days later if the office sent a quote and the customer paid it, and nothing on that path ever said they had not yet bought anything. The checkout asks the three things a package actually needs — where, who, which card — and opens the package, the paid invoice and the account together',
+      ),
+      added(
         'Bought from the account itself',
         '/account/plan',
         'Every route to a plan led out of the account: the empty state to the marketing page, the marketing page into the six-step request wizard — for somebody whose address and card are both already on file. The catalogue is on the plan screen now and the purchase is three answers: which address, which saved method, confirm',
+      ),
+      added(
+        'A signed-in customer buying from the marketing page',
+        '/account/plan?buy=pln_premium',
+        'The two rails on /plans drew the same button and sent everybody down the same road, signed in or not — past the three-answer dialog sitting unused one route away in their own account. `planCheckoutHref` is the one place that decides, and a customer arriving with `?buy=` lands with the dialog already open on the package they clicked',
       ),
       added(
         'A plan out of a paid quote',

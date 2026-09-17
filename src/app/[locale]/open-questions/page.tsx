@@ -135,6 +135,14 @@ const ENTRIES: Entry[] = [
     state: 'overridden',
   },
   {
+    ref: '§8.3a',
+    question: 'Does buying a plan on the website create an account there and then?',
+    decision:
+      'OVERRIDDEN, and this is the one worth reading back against the original. §8.3 says a request goes in as a guest and the account is created when the *quote* is sent — the sign-in screen still says so in as many words, and offers no registration because «a registration form that produces an empty account is a dead end». Every word of that is about the path through a quote, and none of it survives a customer who has already paid: the account is not empty, it holds a running package, a paid invoice and a saved card. So the checkout creates it, and signs them straight into it. What the business has to confirm is not the account — it is what creating it implies. Nobody verifies the email address before the money moves, so a typo in it buys a real package onto an address nobody can sign in to, and the only route back is the telephone. The cheap fix is asking for the address twice; the honest one is a magic link sent before the charge, which puts a mail client in the middle of a checkout. Neither is guessed here. A returning customer is matched on email or phone exactly as §20.1 requires, so buying twice does not produce two of the same person — but that match is unverified too, which means somebody who types a known customer\'s email buys a package onto that customer\'s account.',
+    screens: '4, 4a, 43, 45',
+    state: 'overridden',
+  },
+  {
     ref: '§11.4',
     question: 'When can a plan be cancelled, and is it refunded?',
     decision:

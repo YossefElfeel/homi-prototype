@@ -8,10 +8,15 @@ import type { Locale } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/ui/money';
 import { planRhythm } from '@/lib/offer-facts';
-import { planSaving, plansByService, recommendedPlan } from '@/lib/plan-facts';
+import {
+  planCheckoutHref,
+  planSaving,
+  plansByService,
+  recommendedPlan,
+} from '@/lib/plan-facts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Plan } from '@/mock/schema';
-import { useStore } from '@/mock/store';
+import { useRole, useStore } from '@/mock/store';
 import { cn } from '@/lib/cn';
 
 /**
@@ -92,6 +97,10 @@ function Rail({ plans: shown, compact }: { plans: Plan[]; compact: boolean }) {
   const rhythmT = useTranslations('admin.rhythm');
   const locale = useLocale() as Locale;
   const recommended = recommendedPlan(shown);
+  /* Somebody already signed in has an address and a card on file, so the
+     account sells them the package in three answers. See `planCheckoutHref`
+     for why this button had one destination for both readers until now. */
+  const signedIn = useRole() === 'customer';
 
   return (
     <ul className={cn('grid gap-5', shown.length > 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2')}>
@@ -157,7 +166,7 @@ function Rail({ plans: shown, compact }: { plans: Plan[]; compact: boolean }) {
 
             <div className="mt-7 flex-1" />
             <Button asChild block variant={featured ? 'primary' : 'secondary'}>
-              <Link href={`/request?plan=${plan.id}`}>{t('cta')}</Link>
+              <Link href={planCheckoutHref(plan.id, signedIn)}>{t('cta')}</Link>
             </Button>
           </li>
         );
